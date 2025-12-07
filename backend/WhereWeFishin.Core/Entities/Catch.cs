@@ -11,7 +11,6 @@ public class Catch : BaseEntity
     public int UserId { get; set; }
     public int FishingSpotId { get; set; }
 
-    // Navigation properties
     public User User { get; set; } = null!;
     public FishingSpot FishingSpot { get; set; } = null!;
 }

@@ -9,7 +9,6 @@ public class FishingSpot : BaseEntity
     public string? ImageUrl { get; set; }
     public int UserId { get; set; }
 
-    // Navigation properties
     public User User { get; set; } = null!;
     public ICollection<Catch> Catches { get; set; } = new List<Catch>();
 }

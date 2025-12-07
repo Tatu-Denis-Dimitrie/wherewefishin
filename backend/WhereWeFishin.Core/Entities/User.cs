@@ -9,7 +9,6 @@ public class User : BaseEntity
     public string? LastName { get; set; }
     public string? ProfilePictureUrl { get; set; }
 
-    // Navigation properties
     public ICollection<FishingSpot> FishingSpots { get; set; } = new List<FishingSpot>();
     public ICollection<Catch> Catches { get; set; } = new List<Catch>();
 }

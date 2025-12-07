@@ -40,7 +40,7 @@ public class FishingSpotsController : ControllerBase
             Latitude = createSpotDto.Latitude,
             Longitude = createSpotDto.Longitude,
             ImageUrl = createSpotDto.ImageUrl,
-            UserId = 1 // TODO: Get from authenticated user
+            UserId = 1 
         };
 
         await _unitOfWork.FishingSpots.AddAsync(spot);

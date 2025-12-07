@@ -41,7 +41,7 @@ public class CatchesController : ControllerBase
             CaughtAt = createCatchDto.CaughtAt,
             ImageUrl = createCatchDto.ImageUrl,
             Notes = createCatchDto.Notes,
-            UserId = 1, // TODO: Get from authenticated user
+            UserId = 1, 
             FishingSpotId = createCatchDto.FishingSpotId
         };
 
