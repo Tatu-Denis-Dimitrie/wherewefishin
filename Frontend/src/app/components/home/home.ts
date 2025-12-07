@@ -11,15 +11,15 @@ import { AuthService } from '../../services/auth.service';
       <header>
         <h1>Where We Fishin'</h1>
         <div class="user-info">
-          <span>Bine ai venit!</span>
-          <button (click)="logout()" class="logout-btn">Deconectare</button>
+          <span>Welcome!</span>
+          <button (click)="logout()" class="logout-btn">Logout</button>
         </div>
       </header>
       
       <main>
         <div class="welcome-section">
-          <h2>Bine ai venit la aplicația de pescuit!</h2>
-          <p>Aici vei putea găsi și împărtăși cele mai bune locuri de pescuit.</p>
+          <h2>Welcome to the fishing app!</h2>
+          <p>Here you can find and share the best fishing spots.</p>
         </div>
       </main>
     </div>

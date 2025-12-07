@@ -10,36 +10,36 @@
         </svg>
       </div>
       <h1>WhereWeFishin</h1>
-      <p>Bun venit înapoi! Conectează-te la contul tău</p>
+      <p>Welcome back! Sign in to your account</p>
     </div>
 
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
       <div class="form-group">
-        <label for="usernameOrEmail">Username sau Email</label>
+        <label for="usernameOrEmail">Username or Email</label>
         <input
           type="text"
           id="usernameOrEmail"
           formControlName="usernameOrEmail"
-          placeholder="Introdu username-ul sau email-ul"
+          placeholder="Enter your username or email"
           [class.error]="usernameOrEmail?.invalid && usernameOrEmail?.touched"
         />
         <div class="error-message" *ngIf="usernameOrEmail?.invalid && usernameOrEmail?.touched">
-          <span *ngIf="usernameOrEmail?.errors?.['required']">Username sau email este obligatoriu</span>
+          <span *ngIf="usernameOrEmail?.errors?.['required']">Username or email is required</span>
         </div>
       </div>
 
       <div class="form-group">
-        <label for="password">Parolă</label>
+        <label for="password">Password</label>
         <input
           type="password"
           id="password"
           formControlName="password"
-          placeholder="Introdu parola"
+          placeholder="Enter your password"
           [class.error]="password?.invalid && password?.touched"
         />
         <div class="error-message" *ngIf="password?.invalid && password?.touched">
-          <span *ngIf="password?.errors?.['required']">Parola este obligatorie</span>
-          <span *ngIf="password?.errors?.['minlength']">Parola trebuie să aibă minim 6 caractere</span>
+          <span *ngIf="password?.errors?.['required']">Password is required</span>
+          <span *ngIf="password?.errors?.['minlength']">Password must be at least 6 characters</span>
         </div>
       </div>
 
@@ -48,12 +48,12 @@
       </div>
 
       <button type="submit" class="btn-login" [disabled]="loginForm.invalid || isLoading">
-        <span *ngIf="!isLoading">Conectează-te</span>
-        <span *ngIf="isLoading">Se încarcă...</span>
+        <span *ngIf="!isLoading">Sign In</span>
+        <span *ngIf="isLoading">Loading...</span>
       </button>
 
       <div class="register-link">
-        <p>Nu ai cont? <a routerLink="/register">Înregistrează-te aici</a></p>
+        <p>Don't have an account? <a routerLink="/register">Register here</a></p>
       </div>
     </form>
   </div>

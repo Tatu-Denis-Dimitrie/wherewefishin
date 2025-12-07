@@ -28,7 +28,7 @@ public class AuthController : ControllerBase
         if (response == null)
         {
             _logger.LogWarning("Login failed for: {UsernameOrEmail}", request.UsernameOrEmail);
-            return Unauthorized(new { message = "Username sau parolă incorectă" });
+            return Unauthorized(new { message = "Invalid username or password" });
         }
 
         return Ok(response);
@@ -41,11 +41,11 @@ public class AuthController : ControllerBase
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
         if (await _authService.UserExistsAsync(request.Username, request.Email))
-            return Conflict(new { message = "Username-ul sau email-ul există deja" });
+            return Conflict(new { message = "Username or email already exists" });
 
         var response = await _authService.RegisterAsync(request);
         return response == null 
-            ? StatusCode(500, new { message = "Eroare la înregistrare" })
+            ? StatusCode(500, new { message = "Registration failed" })
             : CreatedAtAction(nameof(Register), new { id = response.UserId }, response);
     }
 

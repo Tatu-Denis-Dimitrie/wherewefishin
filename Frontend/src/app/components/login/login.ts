@@ -38,7 +38,7 @@ export class Login {
         },
         error: (error) => {
           this.isLoading = false;
-          this.errorMessage = error.error?.message || 'Username sau parolă incorectă';
+          this.errorMessage = error.error?.message || 'Invalid username or password';
         }
       });
     }

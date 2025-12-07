@@ -9,29 +9,29 @@
           <path d="M6 12h.01"/>
         </svg>
       </div>
-      <h1>Creează cont nou</h1>
-      <p>Înregistrează-te pentru a descoperi cele mai bune locuri de pescuit</p>
+      <h1>Create New Account</h1>
+      <p>Register to discover the best fishing spots</p>
     </div>
 
     <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
       <div class="form-row">
         <div class="form-group">
-          <label for="firstName">Prenume (opțional)</label>
+          <label for="firstName">First Name (optional)</label>
           <input
             type="text"
             id="firstName"
             formControlName="firstName"
-            placeholder="Prenumele tău"
+            placeholder="Your first name"
           />
         </div>
 
         <div class="form-group">
-          <label for="lastName">Nume (opțional)</label>
+          <label for="lastName">Last Name (optional)</label>
           <input
             type="text"
             id="lastName"
             formControlName="lastName"
-            placeholder="Numele tău"
+            placeholder="Your last name"
           />
         </div>
       </div>
@@ -42,13 +42,13 @@
           type="text"
           id="username"
           formControlName="username"
-          placeholder="Alege un username"
+          placeholder="Choose a username"
           [class.error]="username?.invalid && username?.touched"
         />
         <div class="error-message" *ngIf="username?.invalid && username?.touched">
-          <span *ngIf="username?.errors?.['required']">Username-ul este obligatoriu</span>
-          <span *ngIf="username?.errors?.['minlength']">Username-ul trebuie să aibă minim 3 caractere</span>
-          <span *ngIf="username?.errors?.['maxlength']">Username-ul poate avea maxim 50 de caractere</span>
+          <span *ngIf="username?.errors?.['required']">Username is required</span>
+          <span *ngIf="username?.errors?.['minlength']">Username must be at least 3 characters</span>
+          <span *ngIf="username?.errors?.['maxlength']">Username can be at most 50 characters</span>
         </div>
       </div>
 
@@ -58,41 +58,41 @@
           type="email"
           id="email"
           formControlName="email"
-          placeholder="adresa@email.com"
+          placeholder="your@email.com"
           [class.error]="email?.invalid && email?.touched"
         />
         <div class="error-message" *ngIf="email?.invalid && email?.touched">
-          <span *ngIf="email?.errors?.['required']">Email-ul este obligatoriu</span>
-          <span *ngIf="email?.errors?.['email']">Email-ul nu este valid</span>
+          <span *ngIf="email?.errors?.['required']">Email is required</span>
+          <span *ngIf="email?.errors?.['email']">Email is not valid</span>
         </div>
       </div>
 
       <div class="form-group">
-        <label for="password">Parolă *</label>
+        <label for="password">Password *</label>
         <input
           type="password"
           id="password"
           formControlName="password"
-          placeholder="Alege o parolă"
+          placeholder="Choose a password"
           [class.error]="password?.invalid && password?.touched"
         />
         <div class="error-message" *ngIf="password?.invalid && password?.touched">
-          <span *ngIf="password?.errors?.['required']">Parola este obligatorie</span>
-          <span *ngIf="password?.errors?.['minlength']">Parola trebuie să aibă minim 6 caractere</span>
+          <span *ngIf="password?.errors?.['required']">Password is required</span>
+          <span *ngIf="password?.errors?.['minlength']">Password must be at least 6 characters</span>
         </div>
       </div>
 
       <div class="form-group">
-        <label for="confirmPassword">Confirmă parola *</label>
+        <label for="confirmPassword">Confirm Password *</label>
         <input
           type="password"
           id="confirmPassword"
           formControlName="confirmPassword"
-          placeholder="Confirmă parola"
+          placeholder="Confirm your password"
           [class.error]="confirmPassword?.invalid && confirmPassword?.touched"
         />
         <div class="error-message" *ngIf="confirmPassword?.invalid && confirmPassword?.touched">
-          <span *ngIf="confirmPassword?.errors?.['required']">Confirmarea parolei este obligatorie</span>
+          <span *ngIf="confirmPassword?.errors?.['required']">Password confirmation is required</span>
         </div>
       </div>
 
@@ -101,12 +101,12 @@
       </div>
 
       <button type="submit" class="btn-register" [disabled]="registerForm.invalid || isLoading">
-        <span *ngIf="!isLoading">Înregistrează-te</span>
-        <span *ngIf="isLoading">Se încarcă...</span>
+        <span *ngIf="!isLoading">Register</span>
+        <span *ngIf="isLoading">Loading...</span>
       </button>
 
       <div class="login-link">
-        <p>Ai deja cont? <a routerLink="/login">Conectează-te aici</a></p>
+        <p>Already have an account? <a routerLink="/login">Sign in here</a></p>
       </div>
     </form>
   </div>

@@ -50,7 +50,7 @@ export class Register {
         },
         error: (error) => {
           this.isLoading = false;
-          this.errorMessage = error.error?.message || 'A apărut o eroare la înregistrare';
+          this.errorMessage = error.error?.message || 'An error occurred during registration';
         }
       });
     }

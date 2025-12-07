@@ -104,7 +104,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// app.UseHttpsRedirection(); // Dezactivat pentru development - cauza probleme cu CORS
+// app.UseHttpsRedirection(); // Disabled for development - causes CORS issues
 
 app.UseCors("AllowAll");
 
