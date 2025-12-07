@@ -1,0 +1,113 @@
+<div class="register-container">
+  <div class="register-card">
+    <div class="register-header">
+      <div class="logo">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-1 3.46-3.44 6-7 6s-7.56-2.54-8.5-6Z"/>
+          <path d="M18 5L22 9"/>
+          <path d="M14 4v2"/>
+          <path d="M6 12h.01"/>
+        </svg>
+      </div>
+      <h1>Creează cont nou</h1>
+      <p>Înregistrează-te pentru a descoperi cele mai bune locuri de pescuit</p>
+    </div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="firstName">Prenume (opțional)</label>
+          <input
+            type="text"
+            id="firstName"
+            formControlName="firstName"
+            placeholder="Prenumele tău"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="lastName">Nume (opțional)</label>
+          <input
+            type="text"
+            id="lastName"
+            formControlName="lastName"
+            placeholder="Numele tău"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="username">Username *</label>
+        <input
+          type="text"
+          id="username"
+          formControlName="username"
+          placeholder="Alege un username"
+          [class.error]="username?.invalid && username?.touched"
+        />
+        <div class="error-message" *ngIf="username?.invalid && username?.touched">
+          <span *ngIf="username?.errors?.['required']">Username-ul este obligatoriu</span>
+          <span *ngIf="username?.errors?.['minlength']">Username-ul trebuie să aibă minim 3 caractere</span>
+          <span *ngIf="username?.errors?.['maxlength']">Username-ul poate avea maxim 50 de caractere</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email *</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          placeholder="adresa@email.com"
+          [class.error]="email?.invalid && email?.touched"
+        />
+        <div class="error-message" *ngIf="email?.invalid && email?.touched">
+          <span *ngIf="email?.errors?.['required']">Email-ul este obligatoriu</span>
+          <span *ngIf="email?.errors?.['email']">Email-ul nu este valid</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Parolă *</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          placeholder="Alege o parolă"
+          [class.error]="password?.invalid && password?.touched"
+        />
+        <div class="error-message" *ngIf="password?.invalid && password?.touched">
+          <span *ngIf="password?.errors?.['required']">Parola este obligatorie</span>
+          <span *ngIf="password?.errors?.['minlength']">Parola trebuie să aibă minim 6 caractere</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirmă parola *</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          formControlName="confirmPassword"
+          placeholder="Confirmă parola"
+          [class.error]="confirmPassword?.invalid && confirmPassword?.touched"
+        />
+        <div class="error-message" *ngIf="confirmPassword?.invalid && confirmPassword?.touched">
+          <span *ngIf="confirmPassword?.errors?.['required']">Confirmarea parolei este obligatorie</span>
+        </div>
+      </div>
+
+      <div class="error-message server-error" *ngIf="errorMessage">
+        {{ errorMessage }}
+      </div>
+
+      <button type="submit" class="btn-register" [disabled]="registerForm.invalid || isLoading">
+        <span *ngIf="!isLoading">Înregistrează-te</span>
+        <span *ngIf="isLoading">Se încarcă...</span>
+      </button>
+
+      <div class="login-link">
+        <p>Ai deja cont? <a routerLink="/login">Conectează-te aici</a></p>
+      </div>
+    </form>
+  </div>
+</div>

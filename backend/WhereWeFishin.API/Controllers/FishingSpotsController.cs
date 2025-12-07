@@ -10,63 +10,29 @@ namespace WhereWeFishin.API.Controllers;
 public class FishingSpotsController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILogger<FishingSpotsController> _logger;
 
-    public FishingSpotsController(IUnitOfWork unitOfWork, ILogger<FishingSpotsController> logger)
+    public FishingSpotsController(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
-        _logger = logger;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<FishingSpotDto>>> GetFishingSpots()
     {
         var spots = await _unitOfWork.FishingSpots.GetAllAsync();
-        var spotDtos = spots.Select(s => new FishingSpotDto
-        {
-            Id = s.Id,
-            Name = s.Name,
-            Description = s.Description,
-            Latitude = s.Latitude,
-            Longitude = s.Longitude,
-            ImageUrl = s.ImageUrl,
-            UserId = s.UserId,
-            CreatedAt = s.CreatedAt
-        });
-
-        return Ok(spotDtos);
+        return Ok(spots.Select(MapToDto));
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<FishingSpotDto>> GetFishingSpot(Guid id)
+    public async Task<ActionResult<FishingSpotDto>> GetFishingSpot(int id)
     {
         var spot = await _unitOfWork.FishingSpots.GetByIdAsync(id);
-        if (spot == null)
-        {
-            return NotFound();
-        }
-
-        var spotDto = new FishingSpotDto
-        {
-            Id = spot.Id,
-            Name = spot.Name,
-            Description = spot.Description,
-            Latitude = spot.Latitude,
-            Longitude = spot.Longitude,
-            ImageUrl = spot.ImageUrl,
-            UserId = spot.UserId,
-            CreatedAt = spot.CreatedAt
-        };
-
-        return Ok(spotDto);
+        return spot == null ? NotFound() : Ok(MapToDto(spot));
     }
 
     [HttpPost]
     public async Task<ActionResult<FishingSpotDto>> CreateFishingSpot(CreateFishingSpotDto createSpotDto)
     {
-        // TODO: Get userId from authenticated user
-        var userId = Guid.NewGuid(); // Temporary, should come from auth
-
         var spot = new FishingSpot
         {
             Name = createSpotDto.Name,
@@ -74,60 +40,50 @@ public class FishingSpotsController : ControllerBase
             Latitude = createSpotDto.Latitude,
             Longitude = createSpotDto.Longitude,
             ImageUrl = createSpotDto.ImageUrl,
-            UserId = userId
+            UserId = 1 // TODO: Get from authenticated user
         };
 
         await _unitOfWork.FishingSpots.AddAsync(spot);
         await _unitOfWork.SaveChangesAsync();
-
-        var spotDto = new FishingSpotDto
-        {
-            Id = spot.Id,
-            Name = spot.Name,
-            Description = spot.Description,
-            Latitude = spot.Latitude,
-            Longitude = spot.Longitude,
-            ImageUrl = spot.ImageUrl,
-            UserId = spot.UserId,
-            CreatedAt = spot.CreatedAt
-        };
-
-        return CreatedAtAction(nameof(GetFishingSpot), new { id = spot.Id }, spotDto);
+        return CreatedAtAction(nameof(GetFishingSpot), new { id = spot.Id }, MapToDto(spot));
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateFishingSpot(Guid id, UpdateFishingSpotDto updateSpotDto)
+    public async Task<IActionResult> UpdateFishingSpot(int id, UpdateFishingSpotDto updateSpotDto)
     {
         var spot = await _unitOfWork.FishingSpots.GetByIdAsync(id);
-        if (spot == null)
-        {
-            return NotFound();
-        }
+        if (spot == null) return NotFound();
 
-        if (updateSpotDto.Name != null) spot.Name = updateSpotDto.Name;
-        if (updateSpotDto.Description != null) spot.Description = updateSpotDto.Description;
-        if (updateSpotDto.Latitude.HasValue) spot.Latitude = updateSpotDto.Latitude.Value;
-        if (updateSpotDto.Longitude.HasValue) spot.Longitude = updateSpotDto.Longitude.Value;
-        if (updateSpotDto.ImageUrl != null) spot.ImageUrl = updateSpotDto.ImageUrl;
+        spot.Name = updateSpotDto.Name ?? spot.Name;
+        spot.Description = updateSpotDto.Description ?? spot.Description;
+        spot.Latitude = updateSpotDto.Latitude ?? spot.Latitude;
+        spot.Longitude = updateSpotDto.Longitude ?? spot.Longitude;
+        spot.ImageUrl = updateSpotDto.ImageUrl ?? spot.ImageUrl;
 
         await _unitOfWork.FishingSpots.UpdateAsync(spot);
         await _unitOfWork.SaveChangesAsync();
-
         return NoContent();
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteFishingSpot(Guid id)
+    public async Task<IActionResult> DeleteFishingSpot(int id)
     {
-        var exists = await _unitOfWork.FishingSpots.ExistsAsync(id);
-        if (!exists)
-        {
-            return NotFound();
-        }
-
+        if (!await _unitOfWork.FishingSpots.ExistsAsync(id)) return NotFound();
+        
         await _unitOfWork.FishingSpots.DeleteAsync(id);
         await _unitOfWork.SaveChangesAsync();
-
         return NoContent();
     }
+
+    private static FishingSpotDto MapToDto(FishingSpot spot) => new()
+    {
+        Id = spot.Id,
+        Name = spot.Name,
+        Description = spot.Description,
+        Latitude = spot.Latitude,
+        Longitude = spot.Longitude,
+        ImageUrl = spot.ImageUrl,
+        UserId = spot.UserId,
+        CreatedAt = spot.CreatedAt
+    };
 }

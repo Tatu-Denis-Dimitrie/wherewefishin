@@ -1,15 +1,17 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using WhereWeFishin.Core.Interfaces;
+using WhereWeFishin.Core.Services;
 using WhereWeFishin.Database.Context;
 using WhereWeFishin.Database.MockData;
 using WhereWeFishin.Database.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllers();
 
-// Configure CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -20,7 +22,31 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configure Entity Framework and SQL Server
+var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured");
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("JWT Issuer not configured");
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? throw new InvalidOperationException("JWT Audience not configured");
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+});
+
+builder.Services.AddAuthorization();
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -28,10 +54,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     )
 );
 
-// Register repositories and Unit of Work
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-// Configure Swagger/OpenAPI
+builder.Services.AddScoped<IAuthService, AuthService>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -41,11 +67,34 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1",
         Description = "API for WhereWeFishin fishing spots and catches management"
     });
+
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -55,39 +104,42 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Dezactivat pentru development - cauza probleme cu CORS
 
 app.UseCors("AllowAll");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 
-// Seed database with mock data in Development
 if (app.Environment.IsDevelopment())
 {
     using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        // Ensure database is created
         context.Database.EnsureCreated();
 
-        // Check if data already exists
         if (!context.Users.Any())
         {
-            // Add users
             var users = SeedData.GetUsers();
+            foreach (var user in users)
+            {
+                user.Id = 0;
+            }
             context.Users.AddRange(users);
             context.SaveChanges();
+            
+            var userIds = users.Select(u => u.Id).ToList();
 
-            // Add fishing spots
-            var fishingSpots = SeedData.GetFishingSpots();
+            var fishingSpots = SeedData.GetFishingSpots(userIds);
             context.FishingSpots.AddRange(fishingSpots);
             context.SaveChanges();
+            
+            var spotIds = fishingSpots.Select(s => s.Id).ToList();
 
-            // Add catches
-            var catches = SeedData.GetCatches();
+            var catches = SeedData.GetCatches(userIds, spotIds);
             context.Catches.AddRange(catches);
             context.SaveChanges();
 

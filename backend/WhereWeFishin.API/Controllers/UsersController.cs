@@ -10,116 +10,60 @@ namespace WhereWeFishin.API.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILogger<UsersController> _logger;
 
-    public UsersController(IUnitOfWork unitOfWork, ILogger<UsersController> logger)
+    public UsersController(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
-        _logger = logger;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
     {
         var users = await _unitOfWork.Users.GetAllAsync();
-        var userDtos = users.Select(u => new UserDto
-        {
-            Id = u.Id,
-            Username = u.Username,
-            Email = u.Email,
-            FirstName = u.FirstName,
-            LastName = u.LastName,
-            ProfilePictureUrl = u.ProfilePictureUrl,
-            CreatedAt = u.CreatedAt
-        });
-
-        return Ok(userDtos);
+        return Ok(users.Select(MapToDto));
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<UserDto>> GetUser(Guid id)
+    public async Task<ActionResult<UserDto>> GetUser(int id)
     {
         var user = await _unitOfWork.Users.GetByIdAsync(id);
-        if (user == null)
-        {
-            return NotFound();
-        }
-
-        var userDto = new UserDto
-        {
-            Id = user.Id,
-            Username = user.Username,
-            Email = user.Email,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            ProfilePictureUrl = user.ProfilePictureUrl,
-            CreatedAt = user.CreatedAt
-        };
-
-        return Ok(userDto);
-    }
-
-    [HttpPost]
-    public async Task<ActionResult<UserDto>> CreateUser(CreateUserDto createUserDto)
-    {
-        // Note: In a real application, you should hash the password here
-        var user = new User
-        {
-            Username = createUserDto.Username,
-            Email = createUserDto.Email,
-            PasswordHash = createUserDto.Password, // TODO: Hash password
-            FirstName = createUserDto.FirstName,
-            LastName = createUserDto.LastName
-        };
-
-        await _unitOfWork.Users.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
-
-        var userDto = new UserDto
-        {
-            Id = user.Id,
-            Username = user.Username,
-            Email = user.Email,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            ProfilePictureUrl = user.ProfilePictureUrl,
-            CreatedAt = user.CreatedAt
-        };
-
-        return CreatedAtAction(nameof(GetUser), new { id = user.Id }, userDto);
+        return user == null ? NotFound() : Ok(MapToDto(user));
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateUser(Guid id, UpdateUserDto updateUserDto)
+    public async Task<IActionResult> UpdateUser(int id, UpdateUserDto updateUserDto)
     {
         var user = await _unitOfWork.Users.GetByIdAsync(id);
-        if (user == null)
-        {
-            return NotFound();
-        }
+        if (user == null) return NotFound();
 
-        if (updateUserDto.FirstName != null) user.FirstName = updateUserDto.FirstName;
-        if (updateUserDto.LastName != null) user.LastName = updateUserDto.LastName;
-        if (updateUserDto.ProfilePictureUrl != null) user.ProfilePictureUrl = updateUserDto.ProfilePictureUrl;
+        user.FirstName = updateUserDto.FirstName ?? user.FirstName;
+        user.LastName = updateUserDto.LastName ?? user.LastName;
+        user.ProfilePictureUrl = updateUserDto.ProfilePictureUrl ?? user.ProfilePictureUrl;
 
         await _unitOfWork.Users.UpdateAsync(user);
         await _unitOfWork.SaveChangesAsync();
-
         return NoContent();
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteUser(Guid id)
+    public async Task<IActionResult> DeleteUser(int id)
     {
-        var exists = await _unitOfWork.Users.ExistsAsync(id);
-        if (!exists)
-        {
-            return NotFound();
-        }
-
+        if (!await _unitOfWork.Users.ExistsAsync(id)) return NotFound();
+        
         await _unitOfWork.Users.DeleteAsync(id);
         await _unitOfWork.SaveChangesAsync();
-
         return NoContent();
     }
+
+    private static UserDto MapToDto(User user) => new()
+    {
+        Id = user.Id,
+        Username = user.Username,
+        Email = user.Email,
+        FirstName = user.FirstName,
+        LastName = user.LastName,
+        ProfilePictureUrl = user.ProfilePictureUrl,
+        PasswordHash = user.PasswordHash,
+        CreatedAt = user.CreatedAt
+    };
 }

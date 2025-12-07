@@ -7,7 +7,7 @@ public class FishingSpot : BaseEntity
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public string? ImageUrl { get; set; }
-    public Guid UserId { get; set; }
+    public int UserId { get; set; }
 
     // Navigation properties
     public User User { get; set; } = null!;

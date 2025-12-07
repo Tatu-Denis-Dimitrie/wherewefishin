@@ -8,8 +8,8 @@ public class Catch : BaseEntity
     public DateTime CaughtAt { get; set; }
     public string? ImageUrl { get; set; }
     public string? Notes { get; set; }
-    public Guid UserId { get; set; }
-    public Guid FishingSpotId { get; set; }
+    public int UserId { get; set; }
+    public int FishingSpotId { get; set; }
 
     // Navigation properties
     public User User { get; set; } = null!;

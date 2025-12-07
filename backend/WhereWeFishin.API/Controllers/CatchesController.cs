@@ -10,67 +10,29 @@ namespace WhereWeFishin.API.Controllers;
 public class CatchesController : ControllerBase
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILogger<CatchesController> _logger;
 
-    public CatchesController(IUnitOfWork unitOfWork, ILogger<CatchesController> logger)
+    public CatchesController(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
-        _logger = logger;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<CatchDto>>> GetCatches()
     {
         var catches = await _unitOfWork.Catches.GetAllAsync();
-        var catchDtos = catches.Select(c => new CatchDto
-        {
-            Id = c.Id,
-            FishSpecies = c.FishSpecies,
-            Weight = c.Weight,
-            Length = c.Length,
-            CaughtAt = c.CaughtAt,
-            ImageUrl = c.ImageUrl,
-            Notes = c.Notes,
-            UserId = c.UserId,
-            FishingSpotId = c.FishingSpotId,
-            CreatedAt = c.CreatedAt
-        });
-
-        return Ok(catchDtos);
+        return Ok(catches.Select(MapToDto));
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<CatchDto>> GetCatch(Guid id)
+    public async Task<ActionResult<CatchDto>> GetCatch(int id)
     {
         var catchEntity = await _unitOfWork.Catches.GetByIdAsync(id);
-        if (catchEntity == null)
-        {
-            return NotFound();
-        }
-
-        var catchDto = new CatchDto
-        {
-            Id = catchEntity.Id,
-            FishSpecies = catchEntity.FishSpecies,
-            Weight = catchEntity.Weight,
-            Length = catchEntity.Length,
-            CaughtAt = catchEntity.CaughtAt,
-            ImageUrl = catchEntity.ImageUrl,
-            Notes = catchEntity.Notes,
-            UserId = catchEntity.UserId,
-            FishingSpotId = catchEntity.FishingSpotId,
-            CreatedAt = catchEntity.CreatedAt
-        };
-
-        return Ok(catchDto);
+        return catchEntity == null ? NotFound() : Ok(MapToDto(catchEntity));
     }
 
     [HttpPost]
     public async Task<ActionResult<CatchDto>> CreateCatch(CreateCatchDto createCatchDto)
     {
-        // TODO: Get userId from authenticated user
-        var userId = Guid.NewGuid(); // Temporary, should come from auth
-
         var catchEntity = new Catch
         {
             FishSpecies = createCatchDto.FishSpecies,
@@ -79,64 +41,54 @@ public class CatchesController : ControllerBase
             CaughtAt = createCatchDto.CaughtAt,
             ImageUrl = createCatchDto.ImageUrl,
             Notes = createCatchDto.Notes,
-            UserId = userId,
+            UserId = 1, // TODO: Get from authenticated user
             FishingSpotId = createCatchDto.FishingSpotId
         };
 
         await _unitOfWork.Catches.AddAsync(catchEntity);
         await _unitOfWork.SaveChangesAsync();
-
-        var catchDto = new CatchDto
-        {
-            Id = catchEntity.Id,
-            FishSpecies = catchEntity.FishSpecies,
-            Weight = catchEntity.Weight,
-            Length = catchEntity.Length,
-            CaughtAt = catchEntity.CaughtAt,
-            ImageUrl = catchEntity.ImageUrl,
-            Notes = catchEntity.Notes,
-            UserId = catchEntity.UserId,
-            FishingSpotId = catchEntity.FishingSpotId,
-            CreatedAt = catchEntity.CreatedAt
-        };
-
-        return CreatedAtAction(nameof(GetCatch), new { id = catchEntity.Id }, catchDto);
+        return CreatedAtAction(nameof(GetCatch), new { id = catchEntity.Id }, MapToDto(catchEntity));
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCatch(Guid id, UpdateCatchDto updateCatchDto)
+    public async Task<IActionResult> UpdateCatch(int id, UpdateCatchDto updateCatchDto)
     {
         var catchEntity = await _unitOfWork.Catches.GetByIdAsync(id);
-        if (catchEntity == null)
-        {
-            return NotFound();
-        }
+        if (catchEntity == null) return NotFound();
 
-        if (updateCatchDto.FishSpecies != null) catchEntity.FishSpecies = updateCatchDto.FishSpecies;
-        if (updateCatchDto.Weight.HasValue) catchEntity.Weight = updateCatchDto.Weight;
-        if (updateCatchDto.Length.HasValue) catchEntity.Length = updateCatchDto.Length;
-        if (updateCatchDto.CaughtAt.HasValue) catchEntity.CaughtAt = updateCatchDto.CaughtAt.Value;
-        if (updateCatchDto.ImageUrl != null) catchEntity.ImageUrl = updateCatchDto.ImageUrl;
-        if (updateCatchDto.Notes != null) catchEntity.Notes = updateCatchDto.Notes;
+        catchEntity.FishSpecies = updateCatchDto.FishSpecies ?? catchEntity.FishSpecies;
+        catchEntity.Weight = updateCatchDto.Weight ?? catchEntity.Weight;
+        catchEntity.Length = updateCatchDto.Length ?? catchEntity.Length;
+        catchEntity.CaughtAt = updateCatchDto.CaughtAt ?? catchEntity.CaughtAt;
+        catchEntity.ImageUrl = updateCatchDto.ImageUrl ?? catchEntity.ImageUrl;
+        catchEntity.Notes = updateCatchDto.Notes ?? catchEntity.Notes;
 
         await _unitOfWork.Catches.UpdateAsync(catchEntity);
         await _unitOfWork.SaveChangesAsync();
-
         return NoContent();
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteCatch(Guid id)
+    public async Task<IActionResult> DeleteCatch(int id)
     {
-        var exists = await _unitOfWork.Catches.ExistsAsync(id);
-        if (!exists)
-        {
-            return NotFound();
-        }
-
+        if (!await _unitOfWork.Catches.ExistsAsync(id)) return NotFound();
+        
         await _unitOfWork.Catches.DeleteAsync(id);
         await _unitOfWork.SaveChangesAsync();
-
         return NoContent();
     }
+
+    private static CatchDto MapToDto(Catch c) => new()
+    {
+        Id = c.Id,
+        FishSpecies = c.FishSpecies,
+        Weight = c.Weight,
+        Length = c.Length,
+        CaughtAt = c.CaughtAt,
+        ImageUrl = c.ImageUrl,
+        Notes = c.Notes,
+        UserId = c.UserId,
+        FishingSpotId = c.FishingSpotId,
+        CreatedAt = c.CreatedAt
+    };
 }

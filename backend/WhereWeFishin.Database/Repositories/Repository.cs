@@ -17,7 +17,7 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
         _dbSet = context.Set<T>();
     }
 
-    public virtual async Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public virtual async Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _dbSet.FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted, cancellationToken);
     }
@@ -34,7 +34,6 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
 
     public virtual async Task<T> AddAsync(T entity, CancellationToken cancellationToken = default)
     {
-        entity.Id = Guid.NewGuid();
         entity.CreatedAt = DateTime.UtcNow;
         await _dbSet.AddAsync(entity, cancellationToken);
         return entity;
@@ -47,7 +46,7 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
         return Task.CompletedTask;
     }
 
-    public virtual async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public virtual async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         var entity = await GetByIdAsync(id, cancellationToken);
         if (entity != null)
@@ -58,7 +57,7 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
         }
     }
 
-    public virtual async Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)
+    public virtual async Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _dbSet.AnyAsync(e => e.Id == id && !e.IsDeleted, cancellationToken);
     }
