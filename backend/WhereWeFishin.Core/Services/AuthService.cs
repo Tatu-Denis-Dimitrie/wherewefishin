@@ -12,18 +12,18 @@ namespace WhereWeFishin.Core.Services;
 
 public class AuthService : IAuthService
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IRepository<User> _userRepository;
     private readonly IConfiguration _configuration;
 
-    public AuthService(IUnitOfWork unitOfWork, IConfiguration configuration)
+    public AuthService(IRepository<User> userRepository, IConfiguration configuration)
     {
-        _unitOfWork = unitOfWork;
+        _userRepository = userRepository;
         _configuration = configuration;
     }
 
     public async Task<AuthResponse?> LoginAsync(LoginRequest request)
     {
-        var users = await _unitOfWork.Users.GetAllAsync();
+        var users = await _userRepository.GetAllAsync();
         var user = users.FirstOrDefault(u => 
             u.Username.Equals(request.UsernameOrEmail, StringComparison.OrdinalIgnoreCase) ||
             u.Email.Equals(request.UsernameOrEmail, StringComparison.OrdinalIgnoreCase));
@@ -64,8 +64,7 @@ public class AuthService : IAuthService
             UpdatedAt = DateTime.UtcNow
         };
 
-        await _unitOfWork.Users.AddAsync(user);
-        await _unitOfWork.SaveChangesAsync();
+        await _userRepository.AddAsync(user);
 
         var token = GenerateJwtToken(user.Id, user.Username, user.Email);
         var expiresAt = DateTime.UtcNow.AddHours(
@@ -83,7 +82,7 @@ public class AuthService : IAuthService
 
     public async Task<bool> UserExistsAsync(string username, string email)
     {
-        var users = await _unitOfWork.Users.GetAllAsync();
+        var users = await _userRepository.GetAllAsync();
         return users.Any(u => 
             u.Username.Equals(username, StringComparison.OrdinalIgnoreCase) ||
             u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));

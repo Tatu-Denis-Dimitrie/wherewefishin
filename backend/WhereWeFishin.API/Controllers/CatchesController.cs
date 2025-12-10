@@ -9,24 +9,24 @@ namespace WhereWeFishin.API.Controllers;
 [Route("api/[controller]")]
 public class CatchesController : ControllerBase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IRepository<Catch> _catchRepository;
 
-    public CatchesController(IUnitOfWork unitOfWork)
+    public CatchesController(IRepository<Catch> catchRepository)
     {
-        _unitOfWork = unitOfWork;
+        _catchRepository = catchRepository;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<CatchDto>>> GetCatches()
     {
-        var catches = await _unitOfWork.Catches.GetAllAsync();
+        var catches = await _catchRepository.GetAllAsync();
         return Ok(catches.Select(MapToDto));
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<CatchDto>> GetCatch(int id)
     {
-        var catchEntity = await _unitOfWork.Catches.GetByIdAsync(id);
+        var catchEntity = await _catchRepository.GetByIdAsync(id);
         return catchEntity == null ? NotFound() : Ok(MapToDto(catchEntity));
     }
 
@@ -45,15 +45,14 @@ public class CatchesController : ControllerBase
             FishingSpotId = createCatchDto.FishingSpotId
         };
 
-        await _unitOfWork.Catches.AddAsync(catchEntity);
-        await _unitOfWork.SaveChangesAsync();
+        await _catchRepository.AddAsync(catchEntity);
         return CreatedAtAction(nameof(GetCatch), new { id = catchEntity.Id }, MapToDto(catchEntity));
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateCatch(int id, UpdateCatchDto updateCatchDto)
     {
-        var catchEntity = await _unitOfWork.Catches.GetByIdAsync(id);
+        var catchEntity = await _catchRepository.GetByIdAsync(id);
         if (catchEntity == null) return NotFound();
 
         catchEntity.FishSpecies = updateCatchDto.FishSpecies ?? catchEntity.FishSpecies;
@@ -63,18 +62,16 @@ public class CatchesController : ControllerBase
         catchEntity.ImageUrl = updateCatchDto.ImageUrl ?? catchEntity.ImageUrl;
         catchEntity.Notes = updateCatchDto.Notes ?? catchEntity.Notes;
 
-        await _unitOfWork.Catches.UpdateAsync(catchEntity);
-        await _unitOfWork.SaveChangesAsync();
+        await _catchRepository.UpdateAsync(catchEntity);
         return NoContent();
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteCatch(int id)
     {
-        if (!await _unitOfWork.Catches.ExistsAsync(id)) return NotFound();
+        if (!await _catchRepository.ExistsAsync(id)) return NotFound();
         
-        await _unitOfWork.Catches.DeleteAsync(id);
-        await _unitOfWork.SaveChangesAsync();
+        await _catchRepository.DeleteAsync(id);
         return NoContent();
     }
 

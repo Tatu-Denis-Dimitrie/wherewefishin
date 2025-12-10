@@ -4,9 +4,9 @@ namespace WhereWeFishin.Core.DTOs;
 
 public class LoginRequest
 {
-    [Required(ErrorMessage = "Username sau Email este obligatoriu")]
+    [Required(ErrorMessage = "Username or Email is required")]
     public string UsernameOrEmail { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Parola este obligatorie")]
+    [Required(ErrorMessage = "Password is required")]
     public string Password { get; set; } = string.Empty;
 }
