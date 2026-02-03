@@ -31,10 +31,10 @@ public class AuthService : IAuthService
         if (user == null)
             return null;
 
-        if (!VerifyPassword(request.Password, user.PasswordHash))
+        if (request.Password != user.PasswordHash)
             return null;
 
-        var token = GenerateJwtToken(user.Id, user.Username, user.Email);
+        var token = GenerateJwtToken(user.Id, user.Username, user.Email, user.Role);
         var expiresAt = DateTime.UtcNow.AddHours(
             double.Parse(_configuration["Jwt:ExpirationHours"] ?? "24"));
 
@@ -43,6 +43,7 @@ public class AuthService : IAuthService
             Token = token,
             Username = user.Username,
             Email = user.Email,
+            Role = user.Role,
             UserId = user.Id,
             ExpiresAt = expiresAt
         };
@@ -57,16 +58,17 @@ public class AuthService : IAuthService
         {
             Username = request.Username,
             Email = request.Email,
-            PasswordHash = HashPassword(request.Password),
+            PasswordHash = request.Password, // Stocați parola text-clar pentru dev
             FirstName = request.FirstName,
             LastName = request.LastName,
+            Role = "User",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
 
         await _userRepository.AddAsync(user);
 
-        var token = GenerateJwtToken(user.Id, user.Username, user.Email);
+        var token = GenerateJwtToken(user.Id, user.Username, user.Email, user.Role);
         var expiresAt = DateTime.UtcNow.AddHours(
             double.Parse(_configuration["Jwt:ExpirationHours"] ?? "24"));
 
@@ -75,6 +77,7 @@ public class AuthService : IAuthService
             Token = token,
             Username = user.Username,
             Email = user.Email,
+            Role = user.Role,
             UserId = user.Id,
             ExpiresAt = expiresAt
         };
@@ -88,7 +91,7 @@ public class AuthService : IAuthService
             u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
     }
 
-    public string GenerateJwtToken(int userId, string username, string email)
+    public string GenerateJwtToken(int userId, string username, string email, string role)
     {
         var key = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured")));
@@ -99,6 +102,7 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim(ClaimTypes.Name, username),
             new Claim(ClaimTypes.Email, email),
+            new Claim(ClaimTypes.Role, role),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

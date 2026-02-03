@@ -119,7 +119,7 @@ if (app.Environment.IsDevelopment())
     {
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        context.Database.EnsureCreated();
+        context.Database.Migrate();
 
         if (!context.Users.Any())
         {

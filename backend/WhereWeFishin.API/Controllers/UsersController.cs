@@ -61,6 +61,7 @@ public class UsersController : ControllerBase
         FirstName = user.FirstName,
         LastName = user.LastName,
         ProfilePictureUrl = user.ProfilePictureUrl,
+        Role = user.Role,
         PasswordHash = user.PasswordHash,
         CreatedAt = user.CreatedAt
     };

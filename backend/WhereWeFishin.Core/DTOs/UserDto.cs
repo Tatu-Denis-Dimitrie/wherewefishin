@@ -9,6 +9,7 @@ public class UserDto
     public string? LastName { get; set; }
     public string? ProfilePictureUrl { get; set; }
     public string PasswordHash { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
 }
 

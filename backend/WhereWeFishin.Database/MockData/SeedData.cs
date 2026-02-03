@@ -12,28 +12,51 @@ public static class SeedData
             {
                 Username = "ion_pescar",
                 Email = "ion@email.com",
-                PasswordHash = "hash123",
+                PasswordHash = "password", // Parola simplă
                 FirstName = "Ion",
                 LastName = "Popescu",
+                Role = "User",
                 CreatedAt = DateTime.UtcNow.AddMonths(-6)
             },
             new User
             {
                 Username = "maria_fisher",
                 Email = "maria@email.com",
-                PasswordHash = "hash456",
+                PasswordHash = "password", // Parola simplă
                 FirstName = "Maria",
                 LastName = "Ionescu",
+                Role = "User",
                 CreatedAt = DateTime.UtcNow.AddMonths(-3)
             },
             new User
             {
                 Username = "andrei_pescuit",
                 Email = "andrei@email.com",
-                PasswordHash = "hash789",
+                PasswordHash = "password", // Parola simplă
                 FirstName = "Andrei",
                 LastName = "Popa",
+                Role = "User",
                 CreatedAt = DateTime.UtcNow.AddMonths(-1)
+            },
+            new User
+            {
+                Username = "admin",
+                Email = "admin@email.com",
+                PasswordHash = "admin123", // Parola pt Admin
+                FirstName = "Admin",
+                LastName = "System",
+                Role = "Admin",
+                CreatedAt = DateTime.UtcNow
+            },
+            new User
+            {
+                Username = "manager",
+                Email = "manager@email.com",
+                PasswordHash = "manager123", // Parola pt Manager
+                FirstName = "Manager",
+                LastName = "System",
+                Role = "Manager",
+                CreatedAt = DateTime.UtcNow
             }
         };
     }

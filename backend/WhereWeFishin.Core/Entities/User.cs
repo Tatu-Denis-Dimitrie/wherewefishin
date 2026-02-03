@@ -8,6 +8,7 @@ public class User : BaseEntity
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string? ProfilePictureUrl { get; set; }
+    public string Role { get; set; } = "User";
 
     public ICollection<FishingSpot> FishingSpots { get; set; } = new List<FishingSpot>();
     public ICollection<Catch> Catches { get; set; } = new List<Catch>();
