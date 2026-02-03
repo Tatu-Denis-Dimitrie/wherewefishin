@@ -25,6 +25,9 @@
               }
             ],
             "styles": [
+              "node_modules/leaflet/dist/leaflet.css",
+              "node_modules/leaflet-draw/dist/leaflet.draw.css",
+              "src/leaflet-path-transform-custom.css",
               "src/styles.css"
             ]
           },

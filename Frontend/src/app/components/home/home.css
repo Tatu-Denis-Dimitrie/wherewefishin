@@ -1,6 +1,8 @@
 .home-container {
   min-height: 100vh;
   background: #0f172a;
+  display: flex;
+  flex-direction: column;
 }
 
 header {
@@ -12,7 +14,7 @@ header {
   backdrop-filter: blur(24px) saturate(180%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   position: relative;
-  z-index: 1;
+  z-index: 1000;
 }
 
 h1 {
@@ -27,6 +29,65 @@ h1 {
   align-items: center;
   gap: 20px;
   color: #e2e8f0;
+}
+
+.save-btn-floating {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 12px 24px;
+  background: #1e293b;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #f8fafc;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  margin-top: 110px;
+}
+
+.save-btn-floating:hover {
+  background: #334155;
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.delete-btn-floating {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 12px 24px;
+  background: #1e293b;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #f8fafc;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  margin-top: 160px;
+}
+
+.delete-btn-floating:hover {
+  background: #334155;
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.delete-btn-floating.active {
+  background: #dc2626;
+  border-color: rgba(220, 38, 38, 0.5);
+  color: white;
+}
+
+.delete-btn-floating.active:hover {
+  background: #b91c1c;
+  border-color: rgba(220, 38, 38, 0.7);
 }
 
 .logout-btn {
@@ -47,35 +108,121 @@ h1 {
   box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
 }
 
+.save-message {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 12px 20px;
+  background: #1e293b;
+  border: 2px solid rgba(16, 185, 129, 0.5);
+  color: #10b981;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 2000;
+  animation: slideInRight 0.3s ease;
+  margin-top: 170px;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 main {
+  flex: 1;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 60px 20px;
+  flex-direction: column;
+  padding: 20px;
   position: relative;
   z-index: 1;
 }
 
-.welcome-section {
+.map-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   background: rgba(30, 41, 59, 0.8);
   backdrop-filter: blur(24px) saturate(180%);
-  padding: 48px;
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  max-width: 600px;
-  text-align: center;
+  overflow: hidden;
+  position: relative;
 }
 
-.welcome-section h2 {
+.map-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.map-header h2 {
   color: #f8fafc;
-  margin-bottom: 20px;
-  font-size: 32px;
+  margin: 0 0 8px 0;
+  font-size: 24px;
   font-weight: 700;
 }
 
-.welcome-section p {
-  color: #cbd5e1;
-  font-size: 18px;
-  line-height: 1.6;
+.map-header p {
+  color: #94a3b8;
+  margin: 0;
+  font-size: 14px;
+}
+
+.map-container {
+  flex: 1;
+  min-height: 500px;
+  width: 100%;
+  border-radius: 0 0 24px 24px;
+}
+
+/* Stilizare controale Leaflet Draw */
+:host ::ng-deep .leaflet-draw-toolbar a {
+  background-color: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+:host ::ng-deep .leaflet-draw-toolbar a:hover {
+  background-color: #334155 !important;
+}
+
+:host ::ng-deep .leaflet-draw-actions {
+  background-color: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+:host ::ng-deep .leaflet-draw-actions a {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+:host ::ng-deep .leaflet-draw-actions a:hover {
+  background-color: #334155 !important;
+}
+
+:host ::ng-deep .leaflet-popup-content-wrapper {
+  background: #1e293b;
+  color: #f8fafc;
+  border-radius: 12px;
+}
+
+:host ::ng-deep .leaflet-popup-tip {
+  background: #1e293b;
+}
+
+:host ::ng-deep .leaflet-control-zoom a {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+:host ::ng-deep .leaflet-control-zoom a:hover {
+  background-color: #334155 !important;
 }

@@ -1,0 +1,29 @@
+/* Stiluri pentru Path Transform - mânere de rotație și scalare */
+.leaflet-path-transform-handler {
+  fill: #fff;
+  stroke: #06b6d4;
+  stroke-width: 2;
+  cursor: move;
+}
+
+.leaflet-path-transform-handler.rotation {
+  fill: #06b6d4;
+  stroke: #0891b2;
+  cursor: grab;
+}
+
+.leaflet-path-transform-handler.rotation:active {
+  cursor: grabbing;
+}
+
+.leaflet-path-transform-handler.scale {
+  fill: #fff;
+  stroke: #06b6d4;
+  cursor: nwse-resize;
+}
+
+.leaflet-path-transform-selected {
+  stroke-dasharray: 5, 5;
+  stroke-width: 2;
+  stroke: #06b6d4;
+}
