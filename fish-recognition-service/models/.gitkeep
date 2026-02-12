@@ -1,0 +1,12 @@
+# Place your trained YOLO model here
+# Model name should be: best.pt
+
+## How to copy:
+
+From: `FishTracking/fish_env/runs/detect/runs/detect/fish_detector5/weights/best.pt`
+To: `fish-recognition-service/models/best.pt`
+
+## Or run the setup script:
+```powershell
+.\setup.ps1
+```

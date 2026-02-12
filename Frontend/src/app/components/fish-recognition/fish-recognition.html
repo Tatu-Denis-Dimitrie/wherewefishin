@@ -1,0 +1,236 @@
+<div class="recognition-container">
+  <header>
+    <div class="header-left">
+      <button (click)="goBack()" class="back-btn">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back
+      </button>
+      <h1>Fish Recognition</h1>
+      @if (serviceHealthy) {
+        <span class="service-status healthy">
+          <span class="status-dot"></span>
+          Service Online
+        </span>
+      } @else {
+        <span class="service-status unhealthy">
+          <span class="status-dot"></span>
+          Service Offline
+        </span>
+      }
+    </div>
+    <button (click)="logout()" class="logout-btn">Logout</button>
+  </header>
+
+  @if (successMessage) {
+    <div class="success-message">
+      ✓ {{ successMessage }}
+    </div>
+  }
+
+  @if (error) {
+    <div class="error-message">
+      ✗ {{ error }}
+    </div>
+  }
+
+  <main>
+    <!-- Upload Section -->
+    <div class="upload-section">
+      <div class="upload-card">
+        <div class="upload-icon">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        
+        <h2>Upload Video for Fish Detection</h2>
+        <p class="upload-description">
+          Upload a fishing video to automatically detect and identify fish species
+        </p>
+
+        @if (supportedFish.length > 0) {
+          <div class="supported-fish">
+            <strong>Supported Fish:</strong>
+            <div class="fish-tags">
+              @for (fish of supportedFish; track fish) {
+                <span class="fish-tag">{{ fish }}</span>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="file-input-wrapper">
+          <input 
+            type="file" 
+            id="videoFile" 
+            accept="video/mp4,video/avi,video/quicktime,video/x-matroska"
+            (change)="onFileSelected($event)"
+            [disabled]="uploading">
+          <label for="videoFile" class="file-label">
+            @if (selectedFile) {
+              <span class="file-name">{{ selectedFile.name }}</span>
+            } @else {
+              <span>Choose video file</span>
+            }
+          </label>
+        </div>
+
+        @if (videoPreviewUrl) {
+          <div class="video-preview">
+            <h3>Preview</h3>
+            <video controls [src]="videoPreviewUrl" class="preview-video">
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        }
+
+        @if (uploading) {
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+          </div>
+          <p class="upload-status">Analyzing video... {{ uploadProgress }}%</p>
+        }
+
+        <button 
+          (click)="uploadVideo()" 
+          class="upload-btn"
+          [disabled]="!selectedFile || uploading || !serviceHealthy">
+          @if (uploading) {
+            <span class="btn-spinner"></span>
+            Processing...
+          } @else {
+            Upload & Analyze
+          }
+        </button>
+
+        <div class="upload-notes">
+          <p>• Supported formats: MP4, AVI, MOV, MKV</p>
+          <p>• Maximum file size: 100MB</p>
+          <p>• Processing time depends on video length</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analyses List -->
+    <div class="analyses-section">
+      <h2>Your Video Analyses</h2>
+
+      @if (loading) {
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Loading analyses...</p>
+        </div>
+      }
+
+      @if (!loading && analyses.length === 0) {
+        <div class="empty-state">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke-width="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+            <polyline points="21 15 16 10 5 21" stroke-width="2"/>
+          </svg>
+          <h3>No analyses yet</h3>
+          <p>Upload your first video to get started with fish recognition</p>
+        </div>
+      }
+
+      @if (!loading && analyses.length > 0) {
+        <div class="analyses-grid">
+          @for (analysis of analyses; track analysis.id) {
+            <div class="analysis-card">
+              <div class="card-header">
+                <div class="card-title">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <polygon points="23 7 16 12 23 17 23 7" stroke-width="2"/>
+                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2" stroke-width="2"/>
+                  </svg>
+                  <span>{{ analysis.fileName }}</span>
+                </div>
+                <span class="status-badge" [ngClass]="getStatusClass(analysis.status)">
+                  {{ analysis.status }}
+                </span>
+              </div>
+
+              <div class="card-body">
+                @if (analysis.processedVideoUrl || analysis.videoUrl) {
+                  <div class="video-player">
+                    @if (analysis.processedVideoUrl) {
+                      <div class="video-header">
+                        <span class="video-label">YOLO Detection Output</span>
+                      </div>
+                      <video controls [src]="analysis.processedVideoUrl" class="analysis-video">
+                        Your browser does not support the video tag.
+                      </video>
+                    } @else {
+                      <video controls [src]="analysis.videoUrl" class="analysis-video">
+                        Your browser does not support the video tag.
+                      </video>
+                    }
+                  </div>
+                }
+
+                <div class="analysis-info">
+                  <div class="info-item">
+                    <label>Duration</label>
+                    <span>{{ formatDuration(analysis.duration) }}</span>
+                  </div>
+                  <div class="info-item">
+                    <label>FPS</label>
+                    <span>{{ analysis.fps }}</span>
+                  </div>
+                  <div class="info-item">
+                    <label>Total Frames</label>
+                    <span>{{ analysis.totalFrames }}</span>
+                  </div>
+                </div>
+
+                @if (analysis.status === 'Completed') {
+                  <div class="detection-results">
+                    <div class="dominant-fish">
+                      @if (analysis.dominantFishType) {
+                        <h4>Dominant Species</h4>
+                        <div class="fish-badge">
+                          <span class="fish-name">{{ analysis.dominantFishType }}</span>
+                          <span class="fish-count">{{ analysis.dominantFishCount }} detections</span>
+                        </div>
+                      }
+                    </div>
+
+                    @if (analysis.fishCounts) {
+                      <div class="all-detections">
+                        <h4>All Detections ({{ analysis.totalDetections }} total)</h4>
+                        <div class="fish-counts">
+                          @for (item of getFishCountsArray(analysis.fishCounts); track item.type) {
+                            <div class="count-item">
+                              <span class="fish-type">{{ item.type }}</span>
+                              <span class="count-badge">{{ item.count }}</span>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+
+                @if (analysis.status === 'Failed' && analysis.errorMessage) {
+                  <div class="error-details">
+                    <strong>Error:</strong> {{ analysis.errorMessage }}
+                  </div>
+                }
+              </div>
+
+              <div class="card-footer">
+                <span class="analysis-date">{{ formatDate(analysis.analyzedAt) }}</span>
+                <button (click)="deleteAnalysis(analysis.id)" class="delete-btn">
+                  Delete
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </main>
+</div>

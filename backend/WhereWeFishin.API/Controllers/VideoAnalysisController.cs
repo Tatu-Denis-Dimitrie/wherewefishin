@@ -1,0 +1,270 @@
+using Microsoft.AspNetCore.Mvc;
+using WhereWeFishin.Core.DTOs;
+using WhereWeFishin.Core.Entities;
+using WhereWeFishin.Core.Interfaces;
+
+namespace WhereWeFishin.API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class VideoAnalysisController : ControllerBase
+{
+    private readonly IFishRecognitionService _fishRecognitionService;
+    private readonly IRepository<VideoAnalysis> _videoRepository;
+    private readonly ILogger<VideoAnalysisController> _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
+
+    public VideoAnalysisController(
+        IFishRecognitionService fishRecognitionService,
+        IRepository<VideoAnalysis> videoRepository,
+        ILogger<VideoAnalysisController> logger,
+        IHttpClientFactory httpClientFactory)
+    {
+        _fishRecognitionService = fishRecognitionService;
+        _videoRepository = videoRepository;
+        _logger = logger;
+        _httpClientFactory = httpClientFactory;
+    }
+
+    [HttpPost("upload")]
+    public async Task<ActionResult<AnalysisResultDto>> UploadVideo([FromForm] IFormFile video, [FromForm] int userId)
+    {
+        if (video == null || video.Length == 0)
+        {
+            return BadRequest(new { error = "No video file provided" });
+        }
+
+        var allowedExtensions = new[] { ".mp4", ".avi", ".mov", ".mkv" };
+        var fileExtension = Path.GetExtension(video.FileName).ToLowerInvariant();
+        
+        if (!allowedExtensions.Contains(fileExtension))
+        {
+            return BadRequest(new { error = "Invalid file type. Allowed: mp4, avi, mov, mkv" });
+        }
+
+        if (video.Length > 100 * 1024 * 1024)
+        {
+            return BadRequest(new { error = "File size exceeds 100MB limit" });
+        }
+
+        try
+        {
+            var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+            if (!Directory.Exists(uploadsPath))
+            {
+                Directory.CreateDirectory(uploadsPath);
+            }
+
+            var uniqueFileName = $"{Guid.NewGuid()}_{video.FileName}";
+            var filePath = Path.Combine(uploadsPath, uniqueFileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await video.CopyToAsync(fileStream);
+            }
+
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            var result = await _fishRecognitionService.AnalyzeVideoAsync(stream, uniqueFileName, userId);
+            
+            if (result.Success)
+            {
+                return Ok(result);
+            }
+            
+            return StatusCode(500, result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading and analyzing video");
+            return StatusCode(500, new { error = "Failed to process video", details = ex.Message });
+        }
+    }
+
+    [HttpGet("user/{userId}")]
+    public async Task<ActionResult<IEnumerable<VideoAnalysisDto>>> GetUserAnalyses(int userId)
+    {
+        var analyses = await _videoRepository.GetAllAsync();
+        var userAnalyses = analyses
+            .Where(a => a.UserId == userId)
+            .OrderByDescending(a => a.CreatedAt)
+            .Select(MapToDto);
+
+        return Ok(userAnalyses);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<VideoAnalysisDto>> GetAnalysis(int id)
+    {
+        var analysis = await _videoRepository.GetByIdAsync(id);
+        if (analysis == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(MapToDto(analysis));
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteAnalysis(int id)
+    {
+        if (!await _videoRepository.ExistsAsync(id))
+        {
+            return NotFound();
+        }
+
+        await _videoRepository.DeleteAsync(id);
+        return NoContent();
+    }
+
+    [HttpGet("health")]
+    public async Task<ActionResult> CheckServiceHealth()
+    {
+        var isHealthy = await _fishRecognitionService.IsServiceHealthyAsync();
+        
+        if (isHealthy)
+        {
+            return Ok(new { status = "healthy", service = "fish-recognition" });
+        }
+
+        return StatusCode(503, new { status = "unhealthy", service = "fish-recognition" });
+    }
+
+    [HttpGet("supported-fish")]
+    public async Task<ActionResult<List<string>>> GetSupportedFish()
+    {
+        var fishTypes = await _fishRecognitionService.GetSupportedFishTypesAsync();
+        return Ok(new { fishTypes, total = fishTypes.Count });
+    }
+
+    [HttpGet("processed-video/{*filename}")]
+    public async Task<IActionResult> GetProcessedVideo(string filename)
+    {
+        try
+        {
+            var pythonServiceUrl = "http://localhost:5001";
+            var videoUrl = $"{pythonServiceUrl}/outputs/{filename}";
+            
+            var httpClient = _httpClientFactory.CreateClient();
+            var response = await httpClient.GetAsync(videoUrl);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                return NotFound();
+            }
+            
+            var stream = await response.Content.ReadAsStreamAsync();
+            var contentType = response.Content.Headers.ContentType?.ToString() ?? "video/mp4";
+            
+            return File(stream, contentType, enableRangeProcessing: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error proxying processed video: {Filename}", filename);
+            return StatusCode(500, new { error = "Failed to retrieve processed video" });
+        }
+    }
+
+    [HttpGet("test-uploads")]
+    public IActionResult TestUploadsAccess()
+    {
+        try
+        {
+            var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+            
+            if (!Directory.Exists(uploadsPath))
+            {
+                return Ok(new { 
+                    status = "error",
+                    message = "Uploads directory does not exist",
+                    path = uploadsPath 
+                });
+            }
+
+            var files = Directory.GetFiles(uploadsPath)
+                .Select(f => new {
+                    filename = Path.GetFileName(f),
+                    size = new FileInfo(f).Length,
+                    url = $"{Request.Scheme}://{Request.Host}/uploads/{Path.GetFileName(f)}"
+                })
+                .ToList();
+
+            return Ok(new {
+                status = "success",
+                uploadsPath = uploadsPath,
+                fileCount = files.Count,
+                files = files,
+                testUrl = files.Any() ? files[0].url : null
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error testing uploads access");
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    private VideoAnalysisDto MapToDto(VideoAnalysis entity)
+    {
+        Dictionary<string, int>? fishCounts = null;
+        List<FishDetectionDto>? detections = null;
+
+        if (!string.IsNullOrEmpty(entity.FishCountsJson))
+        {
+            try
+            {
+                fishCounts = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(entity.FishCountsJson);
+            }
+            catch { }
+        }
+
+        if (!string.IsNullOrEmpty(entity.DetectionsJson))
+        {
+            try
+            {
+                detections = System.Text.Json.JsonSerializer.Deserialize<List<FishDetectionDto>>(entity.DetectionsJson);
+            }
+            catch { }
+        }
+
+        string videoUrl = entity.VideoUrl;
+        if (!string.IsNullOrEmpty(videoUrl) && !videoUrl.StartsWith("http"))
+        {
+            var request = HttpContext.Request;
+            var baseUrl = $"{request.Scheme}://{request.Host}";
+            videoUrl = $"{baseUrl}/{videoUrl}";
+        }
+
+        string? processedVideoUrl = entity.ProcessedVideoUrl;
+        if (!string.IsNullOrEmpty(processedVideoUrl) && !processedVideoUrl.StartsWith("http"))
+        {
+            // Use the proxy endpoint to serve processed videos from Python service
+            var request = HttpContext.Request;
+            var baseUrl = $"{request.Scheme}://{request.Host}";
+            
+            // Extract filename from path like "outputs/filename.mp4"
+            var filename = processedVideoUrl.Replace("outputs/", "");
+            processedVideoUrl = $"{baseUrl}/api/videoanalysis/processed-video/{filename}";
+        }
+
+        return new VideoAnalysisDto
+        {
+            Id = entity.Id,
+            UserId = entity.UserId,
+            FileName = entity.FileName,
+            VideoUrl = videoUrl,
+            ProcessedVideoUrl = processedVideoUrl,
+            Duration = entity.Duration,
+            TotalFrames = entity.TotalFrames,
+            Fps = entity.Fps,
+            TotalDetections = entity.TotalDetections,
+            DominantFishType = entity.DominantFishType,
+            DominantFishCount = entity.DominantFishCount,
+            FishCounts = fishCounts,
+            Detections = detections,
+            AnalyzedAt = entity.AnalyzedAt,
+            Status = entity.Status,
+            ErrorMessage = entity.ErrorMessage,
+            CreatedAt = entity.CreatedAt
+        };
+    }
+}

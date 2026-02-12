@@ -10,6 +10,7 @@ import { LoginRequest, RegisterRequest, AuthResponse } from '../models/auth.mode
 export class AuthService {
   private apiUrl = 'http://localhost:5033/api';
   private tokenKey = 'auth_token';
+  private userIdKey = 'user_id';
 
   constructor(
     private http: HttpClient,
@@ -21,6 +22,7 @@ export class AuthService {
       .pipe(
         tap(response => {
           localStorage.setItem(this.tokenKey, response.token);
+          localStorage.setItem(this.userIdKey, response.userId.toString());
         })
       );
   }
@@ -30,17 +32,24 @@ export class AuthService {
       .pipe(
         tap(response => {
           localStorage.setItem(this.tokenKey, response.token);
+          localStorage.setItem(this.userIdKey, response.userId.toString());
         })
       );
   }
 
   logout(): void {
     localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.userIdKey);
     this.router.navigate(['/login']);
   }
 
   getToken(): string | null {
     return localStorage.getItem(this.tokenKey);
+  }
+
+  getUserId(): number | null {
+    const userId = localStorage.getItem(this.userIdKey);
+    return userId ? parseInt(userId, 10) : null;
   }
 
   isLoggedIn(): boolean {

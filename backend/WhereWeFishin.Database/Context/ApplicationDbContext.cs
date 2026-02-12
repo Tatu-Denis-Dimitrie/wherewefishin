@@ -12,6 +12,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<FishingSpot> FishingSpots { get; set; }
     public DbSet<Catch> Catches { get; set; }
+    public DbSet<VideoAnalysis> VideoAnalyses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

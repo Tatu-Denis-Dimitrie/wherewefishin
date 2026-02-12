@@ -1,0 +1,16 @@
+models/*.pt
+!models/.gitkeep
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+uploads/
+*.log
+.env
+.vscode/
+*.mp4
+*.avi
+*.mov
+*.mkv

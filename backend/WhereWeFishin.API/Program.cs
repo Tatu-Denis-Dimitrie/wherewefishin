@@ -1,27 +1,70 @@
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Microsoft.OpenApi.Models;
+using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Interfaces;
 using WhereWeFishin.Core.Services;
 using WhereWeFishin.Database.Context;
-using WhereWeFishin.Database.MockData;
 using WhereWeFishin.Database.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add services to the container
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddCors(options =>
+// Configure Swagger/OpenAPI
+builder.Services.AddSwaggerGen(c =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    c.SwaggerDoc("v1", new OpenApiInfo 
+    { 
+        Title = "WhereWeFishin API", 
+        Version = "v1",
+        Description = "API pentru aplicația WhereWeFishin - gestionarea locațiilor de pescuit și capturilor"
+    });
+
+    // Add JWT Authentication to Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
     });
 });
 
+// Configure Database
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlServerOptionsAction: sqlOptions =>
+        {
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(30),
+                errorNumbersToAdd: null);
+        }));
+
+// Configure JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("JWT Issuer not configured");
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? throw new InvalidOperationException("JWT Audience not configured");
@@ -41,115 +84,102 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtIssuer,
         ValidAudience = jwtAudience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        ClockSkew = TimeSpan.Zero
     };
 });
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        sqlOptions => sqlOptions.EnableRetryOnFailure()
-    )
-);
-
-builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-
-builder.Services.AddScoped<IAuthService, AuthService>();
-
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
+// Configure CORS
+builder.Services.AddCors(options =>
 {
-    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    options.AddPolicy("AllowAngularApp", policy =>
     {
-        Title = "WhereWeFishin API",
-        Version = "v1",
-        Description = "API for WhereWeFishin fishing spots and catches management"
-    });
-
-    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-    {
-        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
-        Name = "Authorization",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
-    });
-
-    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-    {
-        {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-            {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials()
+              .WithExposedHeaders("Content-Length", "Content-Range", "Accept-Ranges");
     });
 });
 
+// Register Repositories
+builder.Services.AddScoped<IRepository<User>, Repository<User>>();
+builder.Services.AddScoped<IRepository<FishingSpot>, Repository<FishingSpot>>();
+builder.Services.AddScoped<IRepository<Catch>, Repository<Catch>>();
+builder.Services.AddScoped<IRepository<VideoAnalysis>, Repository<VideoAnalysis>>();
+
+// Register Services
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddHttpClient<IFishRecognitionService, FishRecognitionService>(client =>
+{
+    var fishServiceUrl = builder.Configuration["FishRecognitionService:Url"] 
+        ?? throw new InvalidOperationException("Fish Recognition Service URL not configured");
+    client.BaseAddress = new Uri(fishServiceUrl);
+    client.Timeout = TimeSpan.FromMinutes(5); // For video processing
+});
+
+// Register HttpClientFactory for general use
+builder.Services.AddHttpClient();
+
 var app = builder.Build();
 
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "WhereWeFishin API V1");
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "WhereWeFishin API v1");
+        c.RoutePrefix = string.Empty; // Set Swagger UI at app's root
     });
 }
 
-// app.UseHttpsRedirection(); // Disabled for development - causes CORS issues
+app.UseHttpsRedirection();
 
-app.UseCors("AllowAll");
+app.UseCors("AllowAngularApp");
 
+// Ensure uploads directory exists
+var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "uploads");
+if (!Directory.Exists(uploadsPath))
+{
+    Directory.CreateDirectory(uploadsPath);
+}
+
+// Serve static files from uploads directory - MUST be before Authentication/Authorization
+var provider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+provider.Mappings[".mp4"] = "video/mp4";
+provider.Mappings[".avi"] = "video/x-msvideo";
+provider.Mappings[".mov"] = "video/quicktime";
+provider.Mappings[".mkv"] = "video/x-matroska";
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads",
+    ContentTypeProvider = provider,
+    ServeUnknownFileTypes = false,
+    OnPrepareResponse = ctx =>
+    {
+        // Enable CORS for video files
+        ctx.Context.Response.Headers["Access-Control-Allow-Origin"] = "*";
+        ctx.Context.Response.Headers["Access-Control-Allow-Methods"] = "GET, HEAD, OPTIONS";
+        ctx.Context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type, Range";
+        ctx.Context.Response.Headers["Access-Control-Expose-Headers"] = "Content-Length, Content-Range";
+        
+        // Enable partial content support for video streaming
+        ctx.Context.Response.Headers["Accept-Ranges"] = "bytes";
+        
+        // Cache for 1 hour
+        ctx.Context.Response.Headers["Cache-Control"] = "public, max-age=3600";
+    }
+});
+
+// Authentication/Authorization middleware - after static files
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-if (app.Environment.IsDevelopment())
-{
-    using (var scope = app.Services.CreateScope())
-    {
-        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-        context.Database.Migrate();
-
-        if (!context.Users.Any())
-        {
-            var users = SeedData.GetUsers();
-            foreach (var user in users)
-            {
-                user.Id = 0;
-            }
-            context.Users.AddRange(users);
-            context.SaveChanges();
-            
-            var userIds = users.Select(u => u.Id).ToList();
-
-            var fishingSpots = SeedData.GetFishingSpots(userIds);
-            context.FishingSpots.AddRange(fishingSpots);
-            context.SaveChanges();
-            
-            var spotIds = fishingSpots.Select(s => s.Id).ToList();
-
-            var catches = SeedData.GetCatches(userIds, spotIds);
-            context.Catches.AddRange(catches);
-            context.SaveChanges();
-
-            Console.WriteLine("Mock data seeded successfully!");
-        }
-        else
-        {
-            Console.WriteLine("Database already contains data. Skipping seed.");
-        }
-    }
-}
 
 app.Run();

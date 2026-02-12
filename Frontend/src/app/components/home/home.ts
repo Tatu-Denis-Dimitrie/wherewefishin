@@ -108,17 +108,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       }
       
       this.saveShapes();
-      
-      console.log('Shape created:', event.layerType, layer.toGeoJSON());
     });
 
     this.map.on(L.Draw.Event.EDITED, (event: any) => {
       this.saveShapes();
-      
-      const layers = event.layers;
-      layers.eachLayer((layer: any) => {
-        console.log('Shape edited:', layer.toGeoJSON());
-      });
     });
 
     this.map.on(L.Draw.Event.DELETED, (event: any) => {
@@ -127,11 +120,6 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       setTimeout(() => {
         this.showSaveMessage = false;
       }, 2000);
-      
-      const layers = event.layers;
-      layers.eachLayer((layer: any) => {
-        console.log('Shape deleted');
-      });
     });
   }
 
@@ -227,6 +215,14 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
   logout(): void {
     this.authService.logout();
+  }
+
+  goToProfile(): void {
+    this.router.navigate(['/profile']);
+  }
+
+  goToFishRecognition(): void {
+    this.router.navigate(['/fish-recognition']);
   }
 
   getDrawnShapes(): any[] {

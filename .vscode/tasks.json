@@ -38,6 +38,57 @@
         "${workspaceFolder}/backend/WhereWeFishin.API/WhereWeFishin.API.csproj"
       ],
       "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "Start Python Service",
+      "type": "shell",
+      "command": "cd fish-recognition-service; .\\venv\\Scripts\\Activate.ps1; python app.py",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "services"
+      }
+    },
+    {
+      "label": "Start Backend API",
+      "type": "shell",
+      "command": "dotnet run",
+      "options": {
+        "cwd": "${workspaceFolder}/backend/WhereWeFishin.API"
+      },
+      "isBackground": true,
+      "problemMatcher": "$msCompile",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "services"
+      }
+    },
+    {
+      "label": "Start Frontend",
+      "type": "shell",
+      "command": "ng serve",
+      "options": {
+        "cwd": "${workspaceFolder}/Frontend"
+      },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "services"
+      }
+    },
+    {
+      "label": "Start All Services",
+      "dependsOn": [
+        "Start Python Service",
+        "Start Backend API",
+        "Start Frontend"
+      ],
+      "problemMatcher": []
     }
   ]
 }
