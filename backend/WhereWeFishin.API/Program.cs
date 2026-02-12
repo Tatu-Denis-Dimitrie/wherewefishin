@@ -117,7 +117,7 @@ builder.Services.AddHttpClient<IFishRecognitionService, FishRecognitionService>(
     var fishServiceUrl = builder.Configuration["FishRecognitionService:Url"] 
         ?? throw new InvalidOperationException("Fish Recognition Service URL not configured");
     client.BaseAddress = new Uri(fishServiceUrl);
-    client.Timeout = TimeSpan.FromMinutes(5); // For video processing
+    client.Timeout = TimeSpan.FromMinutes(20); // For video processing - increased for longer videos
 });
 
 // Register HttpClientFactory for general use

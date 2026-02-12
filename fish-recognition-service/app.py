@@ -153,8 +153,8 @@ def process_video(video_path, output_path, use_ffmpeg_reencode=True, use_av1=Fal
                 # Get class name (fish type)
                 fish_type = model.names[class_id] if class_id in model.names else f"Class_{class_id}"
                 
-                # Only include detections with confidence > 0.3
-                if confidence > 0.3:
+                # Only include detections with confidence > 0.6
+                if confidence > 0.6:
                     # Add to detections list
                     detection = {
                         "fishType": fish_type,
