@@ -4,6 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { FishingSpotService, FishingSpot, CreateFishingSpot } from '../../services/fishing-spot.service';
+import { AdminService, AdminStats } from '../../services/admin.service';
+import { VideoAnalysisService } from '../../services/video-analysis.service';
+import { VideoAnalysis } from '../../models/video-analysis.model';
 import * as L from 'leaflet';
 
 @Component({
@@ -24,6 +27,19 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   messageType: 'success' | 'error' = 'success';
   canEdit = false;
   mapExpanded = false;
+  
+  // Dashboard data - Admin stats
+  stats: AdminStats | null = null;
+  
+  // User/Manager specific data
+  userAnalysesCount = 0;
+  userCompletedCount = 0;
+  userSpotsCount = 0;
+  recentAnalyses: VideoAnalysis[] = [];
+  loadingStats = true;
+  
+  // Role helpers
+  currentRole: string = '';
 
   // New spot form
   showSpotForm = false;
@@ -36,6 +52,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private fishingSpotService: FishingSpotService,
+    private adminService: AdminService,
+    private videoAnalysisService: VideoAnalysisService,
     private router: Router
   ) {}
 
@@ -45,11 +63,56 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     this.canEdit = this.authService.isManagerOrAdmin();
+    this.currentRole = this.authService.getRole() || 'User';
+    this.loadDashboardData();
   }
 
   ngAfterViewInit(): void {
     this.initMap();
     this.loadSpots();
+  }
+
+  private loadDashboardData(): void {
+    this.loadingStats = true;
+    const userId = this.authService.getUserId();
+    
+    if (!userId) {
+      this.loadingStats = false;
+      return;
+    }
+
+    // Load user's analyses (for all roles)
+    this.videoAnalysisService.getUserAnalyses(userId).subscribe({
+      next: (analyses) => {
+        this.userAnalysesCount = analyses.length;
+        this.userCompletedCount = analyses.filter(a => a.status === 'Completed').length;
+        this.recentAnalyses = analyses.slice(0, 3);
+        this.loadingStats = false;
+      },
+      error: () => {
+        this.loadingStats = false;
+      }
+    });
+
+    // Load manager/admin specific data
+    if (this.isManager() || this.isAdmin()) {
+      this.fishingSpotService.getAll().subscribe({
+        next: (allSpots) => {
+          this.userSpotsCount = allSpots.filter(s => s.userId === userId).length;
+        },
+        error: () => {}
+      });
+    }
+    
+    // Load admin system stats
+    if (this.isAdmin()) {
+      this.adminService.getStats().subscribe({
+        next: (stats) => {
+          this.stats = stats;
+        },
+        error: () => {}
+      });
+    }
   }
 
   ngOnDestroy(): void {
@@ -220,5 +283,26 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => {
       this.map.invalidateSize();
     }, 350);
+  }
+
+  getStatusClass(status: string): string {
+    switch (status.toLowerCase()) {
+      case 'completed': return 'status-completed';
+      case 'processing': return 'status-processing';
+      case 'failed': return 'status-failed';
+      default: return 'status-pending';
+    }
+  }
+
+  isAdmin(): boolean {
+    return this.currentRole === 'Admin';
+  }
+
+  isManager(): boolean {
+    return this.currentRole === 'Manager';
+  }
+
+  isUser(): boolean {
+    return this.currentRole === 'User';
   }
 }

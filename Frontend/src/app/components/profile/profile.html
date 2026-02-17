@@ -74,6 +74,138 @@
     </div>
   </div>
 
+  <!-- User Statistics Section -->
+  <div class="stats-section" *ngIf="user && !loadingStats">
+    <h3 class="section-heading">My Activity</h3>
+    
+    <div class="activity-grid">
+      <div class="activity-card">
+        <div class="activity-icon analyses-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="23 7 16 12 23 17 23 7"/>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+        </div>
+        <div class="activity-info">
+          <div class="activity-value">{{ userAnalysesCount }}</div>
+          <div class="activity-label">Total Analyses</div>
+        </div>
+      </div>
+
+      <div class="activity-card">
+        <div class="activity-icon success-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <div class="activity-info">
+          <div class="activity-value">{{ userCompletedCount }}</div>
+          <div class="activity-label">Completed</div>
+        </div>
+      </div>
+
+      <div class="activity-card" *ngIf="isManager() || isAdmin()">
+        <div class="activity-icon spots-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+        </div>
+        <div class="activity-info">
+          <div class="activity-value">{{ userSpotsCount }}</div>
+          <div class="activity-label">Spots Added</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Analyses -->
+    <div class="recent-section" *ngIf="recentAnalyses.length > 0">
+      <h4 class="subsection-heading">Recent Analyses</h4>
+      <div class="recent-list">
+        @for (analysis of recentAnalyses; track analysis.id) {
+          <div class="recent-item">
+            <div class="recent-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="23 7 16 12 23 17 23 7"/>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+              </svg>
+            </div>
+            <div class="recent-info">
+              <div class="recent-name">{{ analysis.fileName }}</div>
+              <div class="recent-meta">
+                <span class="badge-mini" [ngClass]="getStatusClass(analysis.status)">{{ analysis.status }}</span>
+                @if (analysis.status === 'Completed' && analysis.totalDetections) {
+                  <span class="recent-count">{{ analysis.totalDetections }} fish detected</span>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin Dashboard Section -->
+  <div class="admin-section" *ngIf="isAdmin() && adminStats && !loadingStats">
+    <h3 class="section-heading">System Overview</h3>
+    
+    <div class="admin-grid">
+      <div class="admin-card">
+        <div class="admin-icon users-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div class="admin-info">
+          <div class="admin-value">{{ adminStats.totalUsers }}</div>
+          <div class="admin-label">Total Users</div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-icon spots-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+        </div>
+        <div class="admin-info">
+          <div class="admin-value">{{ adminStats.totalSpots }}</div>
+          <div class="admin-label">Fishing Spots</div>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-icon analyses-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="23 7 16 12 23 17 23 7"/>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+          </svg>
+        </div>
+        <div class="admin-info">
+          <div class="admin-value">{{ adminStats.totalAnalyses }}</div>
+          <div class="admin-label">System Analyses</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-actions">
+      <a routerLink="/admin" class="btn-admin">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"/>
+          <rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Go to Admin Panel
+      </a>
+    </div>
+  </div>
+
   <!-- Loading -->
   <div class="loading-spinner" *ngIf="loading && !user">
     <div class="spinner"></div>
