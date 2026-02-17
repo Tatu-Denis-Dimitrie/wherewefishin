@@ -1,0 +1,39 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { User } from '../models/user.model';
+
+export interface AdminStats {
+  totalUsers: number;
+  totalManagers: number;
+  totalAdmins: number;
+  totalAnalyses: number;
+  completedAnalyses: number;
+  failedAnalyses: number;
+  totalSpots: number;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AdminService {
+  private apiUrl = 'http://localhost:5033/api/admin';
+
+  constructor(private http: HttpClient) {}
+
+  getStats(): Observable<AdminStats> {
+    return this.http.get<AdminStats>(`${this.apiUrl}/stats`);
+  }
+
+  getUsers(): Observable<User[]> {
+    return this.http.get<User[]>(`${this.apiUrl}/users`);
+  }
+
+  updateUserRole(userId: number, role: string): Observable<any> {
+    return this.http.put(`${this.apiUrl}/users/${userId}/role`, { role });
+  }
+
+  deleteUser(userId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/users/${userId}`);
+  }
+}

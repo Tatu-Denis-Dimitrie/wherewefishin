@@ -11,6 +11,7 @@ export class AuthService {
   private apiUrl = 'http://localhost:5033/api';
   private tokenKey = 'auth_token';
   private userIdKey = 'user_id';
+  private roleKey = 'user_role';
 
   constructor(
     private http: HttpClient,
@@ -23,6 +24,7 @@ export class AuthService {
         tap(response => {
           localStorage.setItem(this.tokenKey, response.token);
           localStorage.setItem(this.userIdKey, response.userId.toString());
+          localStorage.setItem(this.roleKey, response.role);
         })
       );
   }
@@ -33,6 +35,7 @@ export class AuthService {
         tap(response => {
           localStorage.setItem(this.tokenKey, response.token);
           localStorage.setItem(this.userIdKey, response.userId.toString());
+          localStorage.setItem(this.roleKey, response.role);
         })
       );
   }
@@ -40,6 +43,7 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userIdKey);
+    localStorage.removeItem(this.roleKey);
     this.router.navigate(['/login']);
   }
 
@@ -50,6 +54,22 @@ export class AuthService {
   getUserId(): number | null {
     const userId = localStorage.getItem(this.userIdKey);
     return userId ? parseInt(userId, 10) : null;
+  }
+
+  getRole(): string {
+    return localStorage.getItem(this.roleKey) || 'User';
+  }
+
+  isAdmin(): boolean {
+    return this.getRole() === 'Admin';
+  }
+
+  isManager(): boolean {
+    return this.getRole() === 'Manager';
+  }
+
+  isManagerOrAdmin(): boolean {
+    return this.isAdmin() || this.isManager();
   }
 
   isLoggedIn(): boolean {

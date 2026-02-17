@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Interfaces;
+using System.Security.Claims;
 
 namespace WhereWeFishin.API.Controllers;
 
@@ -31,6 +33,7 @@ public class FishingSpotsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,Manager")]
     public async Task<ActionResult<FishingSpotDto>> CreateFishingSpot(CreateFishingSpotDto createSpotDto)
     {
         var spot = new FishingSpot
@@ -40,7 +43,7 @@ public class FishingSpotsController : ControllerBase
             Latitude = createSpotDto.Latitude,
             Longitude = createSpotDto.Longitude,
             ImageUrl = createSpotDto.ImageUrl,
-            UserId = 1 
+            UserId = createSpotDto.UserId
         };
 
         await _spotRepository.AddAsync(spot);
@@ -48,6 +51,7 @@ public class FishingSpotsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Admin,Manager")]
     public async Task<IActionResult> UpdateFishingSpot(int id, UpdateFishingSpotDto updateSpotDto)
     {
         var spot = await _spotRepository.GetByIdAsync(id);
@@ -64,6 +68,7 @@ public class FishingSpotsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin,Manager")]
     public async Task<IActionResult> DeleteFishingSpot(int id)
     {
         if (!await _spotRepository.ExistsAsync(id)) return NotFound();

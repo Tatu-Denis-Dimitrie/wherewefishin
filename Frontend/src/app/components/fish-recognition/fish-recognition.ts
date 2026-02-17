@@ -96,30 +96,33 @@ export class FishRecognition implements OnInit, OnDestroy {
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-      
-      // Validare tip fișier
-      const allowedTypes = ['video/mp4', 'video/avi', 'video/quicktime', 'video/x-matroska'];
-      if (!allowedTypes.includes(file.type)) {
-        this.error = 'Invalid file type. Please upload MP4, AVI, MOV, or MKV';
-        return;
-      }
-
-      // Validare dimensiune (100MB)
-      if (file.size > 100 * 1024 * 1024) {
-        this.error = 'File size exceeds 100MB limit';
-        return;
-      }
-
-      // Cleanup old preview URL
-      this.cleanupPreviewUrl();
-
-      this.selectedFile = file;
-      this.error = '';
-
-      // Create preview URL
-      this.videoPreviewUrl = URL.createObjectURL(file);
+      this.handleFile(input.files[0]);
     }
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
+      this.handleFile(event.dataTransfer.files[0]);
+    }
+  }
+
+  private handleFile(file: File): void {
+    const allowedTypes = ['video/mp4', 'video/avi', 'video/quicktime', 'video/x-matroska'];
+    if (!allowedTypes.includes(file.type)) {
+      this.error = 'Invalid file type. Please upload MP4, AVI, MOV, or MKV';
+      return;
+    }
+
+    if (file.size > 100 * 1024 * 1024) {
+      this.error = 'File size exceeds 100MB limit';
+      return;
+    }
+
+    this.cleanupPreviewUrl();
+    this.selectedFile = file;
+    this.error = '';
+    this.videoPreviewUrl = URL.createObjectURL(file);
   }
 
   uploadVideo(): void {

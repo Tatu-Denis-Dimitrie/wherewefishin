@@ -27,7 +27,7 @@ h1 {
 .user-info {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
   color: #e2e8f0;
 }
 
@@ -70,63 +70,26 @@ h1 {
   box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
-.save-btn-floating {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 12px 24px;
-  background: #1e293b;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: #f8fafc;
+.admin-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 12px;
+  color: #f87171;
   cursor: pointer;
   font-weight: 600;
   font-size: 14px;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
-  margin-top: 110px;
+  transition: all 0.3s ease;
 }
 
-.save-btn-floating:hover {
-  background: #334155;
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-}
-
-.delete-btn-floating {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 12px 24px;
-  background: #1e293b;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: #f8fafc;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
-  margin-top: 160px;
-}
-
-.delete-btn-floating:hover {
-  background: #334155;
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-}
-
-.delete-btn-floating.active {
-  background: #dc2626;
-  border-color: rgba(220, 38, 38, 0.5);
-  color: white;
-}
-
-.delete-btn-floating.active:hover {
-  background: #b91c1c;
-  border-color: rgba(220, 38, 38, 0.7);
+.admin-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .logout-btn {
@@ -147,32 +110,34 @@ h1 {
   box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
 }
 
-.save-message {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 12px 20px;
+/* Toast message */
+.toast-message {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  padding: 16px 24px;
   background: #1e293b;
-  border: 2px solid rgba(16, 185, 129, 0.5);
-  color: #10b981;
-  border-radius: 8px;
+  border-radius: 12px;
   font-weight: 600;
   font-size: 14px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   z-index: 2000;
   animation: slideInRight 0.3s ease;
-  margin-top: 170px;
+}
+
+.toast-message.success {
+  border: 2px solid rgba(16, 185, 129, 0.5);
+  color: #10b981;
+}
+
+.toast-message.error {
+  border: 2px solid rgba(239, 68, 68, 0.5);
+  color: #ef4444;
 }
 
 @keyframes slideInRight {
-  from {
-    transform: translateX(100px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(100px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
 main {
@@ -198,13 +163,16 @@ main {
 }
 
 .map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 20px 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .map-header h2 {
   color: #f8fafc;
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
   font-size: 24px;
   font-weight: 700;
 }
@@ -215,6 +183,20 @@ main {
   font-size: 14px;
 }
 
+.spot-count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(6, 182, 212, 0.15);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: 20px;
+  color: #06b6d4;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .map-container {
   flex: 1;
   min-height: 500px;
@@ -222,30 +204,177 @@ main {
   border-radius: 0 0 24px 24px;
 }
 
-/* Stilizare controale Leaflet Draw */
-:host ::ng-deep .leaflet-draw-toolbar a {
-  background-color: #1e293b !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
+/* Floating action buttons */
+.add-btn-floating,
+.delete-btn-floating {
+  position: absolute;
+  right: 10px;
+  padding: 12px 24px;
+  background: #1e293b;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #f8fafc;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
 }
 
-:host ::ng-deep .leaflet-draw-toolbar a:hover {
-  background-color: #334155 !important;
+.add-btn-floating {
+  top: 10px;
+  margin-top: 110px;
 }
 
-:host ::ng-deep .leaflet-draw-actions {
-  background-color: #1e293b !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
+.delete-btn-floating {
+  top: 10px;
+  margin-top: 160px;
 }
 
-:host ::ng-deep .leaflet-draw-actions a {
-  background-color: #1e293b !important;
-  color: #f8fafc !important;
+.add-btn-floating:hover,
+.delete-btn-floating:hover {
+  background: #334155;
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
-:host ::ng-deep .leaflet-draw-actions a:hover {
-  background-color: #334155 !important;
+.add-btn-floating.active {
+  background: #0891b2;
+  border-color: rgba(6, 182, 212, 0.5);
+  color: white;
 }
 
+.delete-btn-floating.active {
+  background: #dc2626;
+  border-color: rgba(220, 38, 38, 0.5);
+  color: white;
+}
+
+.delete-btn-floating.active:hover {
+  background: #b91c1c;
+}
+
+/* Spot Form Overlay */
+.spot-form-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spot-form {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 32px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+}
+
+.spot-form h3 {
+  color: #f8fafc;
+  margin: 0 0 4px 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.spot-form .coords {
+  color: #64748b;
+  font-size: 13px;
+  margin: 0 0 24px 0;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: #f8fafc;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #06b6d4;
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.btn-cancel {
+  padding: 12px 24px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  color: #f8fafc;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-confirm {
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+}
+
+.btn-confirm:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4);
+}
+
+.btn-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Leaflet overrides */
 :host ::ng-deep .leaflet-popup-content-wrapper {
   background: #1e293b;
   color: #f8fafc;
@@ -264,4 +393,23 @@ main {
 
 :host ::ng-deep .leaflet-control-zoom a:hover {
   background-color: #334155 !important;
+}
+
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 20px;
+  }
+
+  .user-info {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .map-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
 }

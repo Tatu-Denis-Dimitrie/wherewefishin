@@ -125,6 +125,72 @@ builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
+// Seed database with test data - only if SEED_DATABASE environment variable is set to "true"
+var seedDatabase = builder.Configuration.GetValue<bool>("SeedDatabase", false);
+if (seedDatabase)
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        try
+        {
+            var context = services.GetRequiredService<ApplicationDbContext>();
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            
+            logger.LogInformation("Starting database seeding...");
+            
+            // Delete existing data in the correct order (respecting foreign keys)
+            await context.Database.ExecuteSqlRawAsync("DELETE FROM VideoAnalyses");
+            await context.Database.ExecuteSqlRawAsync("DELETE FROM Catches");
+            await context.Database.ExecuteSqlRawAsync("DELETE FROM FishingSpots");
+            await context.Database.ExecuteSqlRawAsync("DELETE FROM Users");
+            
+            // Reset identity columns
+            await context.Database.ExecuteSqlRawAsync("DBCC CHECKIDENT ('Users', RESEED, 0)");
+            await context.Database.ExecuteSqlRawAsync("DBCC CHECKIDENT ('FishingSpots', RESEED, 0)");
+            await context.Database.ExecuteSqlRawAsync("DBCC CHECKIDENT ('Catches', RESEED, 0)");
+            await context.Database.ExecuteSqlRawAsync("DBCC CHECKIDENT ('VideoAnalyses', RESEED, 0)");
+            
+            logger.LogInformation("Existing data cleared.");
+            
+            // Add seed data
+            var users = WhereWeFishin.Database.MockData.SeedData.GetUsers();
+            await context.Users.AddRangeAsync(users);
+            await context.SaveChangesAsync();
+            
+            logger.LogInformation("Added {Count} users", users.Count);
+            
+            // Get user IDs for fishing spots
+            var userIds = context.Users.Select(u => u.Id).ToList();
+            var fishingSpots = WhereWeFishin.Database.MockData.SeedData.GetFishingSpots(userIds);
+            await context.FishingSpots.AddRangeAsync(fishingSpots);
+            await context.SaveChangesAsync();
+            
+            logger.LogInformation("Added {Count} fishing spots", fishingSpots.Count);
+            
+            // Get fishing spot and user IDs for catches
+            var spotIds = context.FishingSpots.Select(f => f.Id).ToList();
+            var catches = WhereWeFishin.Database.MockData.SeedData.GetCatches(userIds, spotIds);
+            await context.Catches.AddRangeAsync(catches);
+            await context.SaveChangesAsync();
+            
+            logger.LogInformation("Added {Count} catches", catches.Count);
+            
+            logger.LogInformation("Database seeding completed successfully!");
+            logger.LogInformation("TEST ACCOUNTS:");
+            logger.LogInformation("  Admin: admin / admin123");
+            logger.LogInformation("  Manager: manager1, manager2 / manager123");
+            logger.LogInformation("  Users: ion_pescar, maria_fisher, etc. / password123");
+        }
+        catch (Exception ex)
+        {
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "An error occurred while seeding the database.");
+            throw;
+        }
+    }
+}
+
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {

@@ -2,61 +2,146 @@ using WhereWeFishin.Core.Entities;
 
 namespace WhereWeFishin.Database.MockData;
 
+/// <summary>
+/// Date de test pentru popularea bazei de date
+/// 
+/// CONTURI DE TEST:
+/// ================
+/// Admin:
+///   - Username: admin | Password: admin123 | Email: admin@wherewefishin.com
+///   - Acces complet: gestionare utilizatori, statistici, toate functiile
+/// 
+/// Manageri:
+///   - Username: manager1 | Password: manager123 | Email: manager1@wherewefishin.com
+///   - Username: manager2 | Password: manager123 | Email: manager2@wherewefishin.com
+///   - Acces: adaugare/stergere locuri de pescuit
+/// 
+/// Utilizatori:
+///   - Username: ion_pescar, maria_fisher, andrei_pescuit, petre_balanescu, 
+///              carmen_nistor, dan_cretu, adriana_dobre
+///   - Password: password123 (pentru toti)
+///   - Acces: vizualizare locuri, analiza video
+/// </summary>
 public static class SeedData
 {
     public static List<User> GetUsers()
     {
         return new List<User>
         {
+            // Admin account
+            new User
+            {
+                Username = "admin",
+                Email = "admin@wherewefishin.com",
+                PasswordHash = "admin123",
+                FirstName = "Administrator",
+                LastName = "System",
+                Role = "Admin",
+                CreatedAt = DateTime.UtcNow.AddYears(-1),
+                UpdatedAt = DateTime.UtcNow
+            },
+            
+            // Manager accounts
+            new User
+            {
+                Username = "manager1",
+                Email = "manager1@wherewefishin.com",
+                PasswordHash = "manager123",
+                FirstName = "George",
+                LastName = "Marinescu",
+                Role = "Manager",
+                CreatedAt = DateTime.UtcNow.AddMonths(-10),
+                UpdatedAt = DateTime.UtcNow
+            },
+            new User
+            {
+                Username = "manager2",
+                Email = "manager2@wherewefishin.com",
+                PasswordHash = "manager123",
+                FirstName = "Elena",
+                LastName = "Vasilescu",
+                Role = "Manager",
+                CreatedAt = DateTime.UtcNow.AddMonths(-8),
+                UpdatedAt = DateTime.UtcNow
+            },
+            
+            // Regular user accounts
             new User
             {
                 Username = "ion_pescar",
                 Email = "ion@email.com",
-                PasswordHash = "password", // Parola simplă
+                PasswordHash = "password123",
                 FirstName = "Ion",
                 LastName = "Popescu",
                 Role = "User",
-                CreatedAt = DateTime.UtcNow.AddMonths(-6)
+                CreatedAt = DateTime.UtcNow.AddMonths(-6),
+                UpdatedAt = DateTime.UtcNow.AddMonths(-2)
             },
             new User
             {
                 Username = "maria_fisher",
                 Email = "maria@email.com",
-                PasswordHash = "password", // Parola simplă
+                PasswordHash = "password123",
                 FirstName = "Maria",
                 LastName = "Ionescu",
                 Role = "User",
-                CreatedAt = DateTime.UtcNow.AddMonths(-3)
+                CreatedAt = DateTime.UtcNow.AddMonths(-5),
+                UpdatedAt = DateTime.UtcNow.AddMonths(-1)
             },
             new User
             {
                 Username = "andrei_pescuit",
                 Email = "andrei@email.com",
-                PasswordHash = "password", // Parola simplă
+                PasswordHash = "password123",
                 FirstName = "Andrei",
                 LastName = "Popa",
                 Role = "User",
-                CreatedAt = DateTime.UtcNow.AddMonths(-1)
+                CreatedAt = DateTime.UtcNow.AddMonths(-4),
+                UpdatedAt = DateTime.UtcNow.AddDays(-10)
             },
             new User
             {
-                Username = "admin",
-                Email = "admin@email.com",
-                PasswordHash = "admin123", // Parola pt Admin
-                FirstName = "Admin",
-                LastName = "System",
-                Role = "Admin",
-                CreatedAt = DateTime.UtcNow
+                Username = "petre_balanescu",
+                Email = "petre@email.com",
+                PasswordHash = "password123",
+                FirstName = "Petre",
+                LastName = "Balanescu",
+                Role = "User",
+                CreatedAt = DateTime.UtcNow.AddMonths(-3),
+                UpdatedAt = DateTime.UtcNow.AddDays(-5)
             },
             new User
             {
-                Username = "manager",
-                Email = "manager@email.com",
-                PasswordHash = "manager123", // Parola pt Manager
-                FirstName = "Manager",
-                LastName = "System",
-                Role = "Manager",
-                CreatedAt = DateTime.UtcNow
+                Username = "carmen_nistor",
+                Email = "carmen@email.com",
+                PasswordHash = "password123",
+                FirstName = "Carmen",
+                LastName = "Nistor",
+                Role = "User",
+                CreatedAt = DateTime.UtcNow.AddMonths(-2),
+                UpdatedAt = DateTime.UtcNow.AddDays(-3)
+            },
+            new User
+            {
+                Username = "dan_cretu",
+                Email = "dan@email.com",
+                PasswordHash = "password123",
+                FirstName = "Dan",
+                LastName = "Cretu",
+                Role = "User",
+                CreatedAt = DateTime.UtcNow.AddMonths(-1),
+                UpdatedAt = DateTime.UtcNow.AddDays(-1)
+            },
+            new User
+            {
+                Username = "adriana_dobre",
+                Email = "adriana@email.com",
+                PasswordHash = "password123",
+                FirstName = "Adriana",
+                LastName = "Dobre",
+                Role = "User",
+                CreatedAt = DateTime.UtcNow.AddDays(-20),
+                UpdatedAt = DateTime.UtcNow
             }
         };
     }

@@ -19,6 +19,7 @@ public class CreateFishingSpotDto
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public string? ImageUrl { get; set; }
+    public int UserId { get; set; }
 }
 
 public class UpdateFishingSpotDto

@@ -1,0 +1,137 @@
+<div class="admin-container">
+  <header>
+    <div class="header-left">
+      <button (click)="goBack()" class="back-btn">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Back
+      </button>
+      <h1>Admin Panel</h1>
+    </div>
+    <button (click)="logout()" class="logout-btn">Logout</button>
+  </header>
+
+  @if (successMessage) {
+    <div class="toast success">{{ successMessage }}</div>
+  }
+  @if (error) {
+    <div class="toast error">{{ error }}</div>
+  }
+
+  <main>
+    @if (loading) {
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+      </div>
+    } @else {
+      <!-- Stats Cards -->
+      @if (stats) {
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon users-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ stats.totalUsers }}</span>
+              <span class="stat-label">Total Users</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon managers-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M22 11l-2 2-2-2"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ stats.totalManagers }}</span>
+              <span class="stat-label">Managers</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon analyses-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="23 7 16 12 23 17 23 7"/>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ stats.totalAnalyses }}</span>
+              <span class="stat-label">Video Analyses</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon spots-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value">{{ stats.totalSpots }}</span>
+              <span class="stat-label">Fishing Spots</span>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Users Table -->
+      <div class="users-section">
+        <h2>User Management</h2>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (user of users; track user.id) {
+                <tr>
+                  <td>{{ user.id }}</td>
+                  <td class="username-cell">{{ user.username }}</td>
+                  <td>{{ user.email }}</td>
+                  <td>{{ user.firstName || '' }} {{ user.lastName || '' }}</td>
+                  <td>
+                    <span class="role-badge" [ngClass]="getRoleBadgeClass(user.role)">{{ user.role }}</span>
+                  </td>
+                  <td>{{ user.createdAt | date:'dd MMM yyyy' }}</td>
+                  <td class="actions-cell">
+                    <select
+                      [value]="user.role"
+                      (change)="changeRole(user, $any($event.target).value)"
+                      class="role-select">
+                      <option value="User">User</option>
+                      <option value="Manager">Manager</option>
+                      <option value="Admin">Admin</option>
+                    </select>
+                    <button (click)="deleteUser(user)" class="delete-btn" title="Delete user">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  </main>
+</div>
