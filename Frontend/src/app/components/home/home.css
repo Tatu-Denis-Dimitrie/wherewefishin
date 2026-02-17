@@ -1,124 +1,15 @@
 /* ========================
    HOME — Woodland Angler
    ======================== */
-.home-container {
-  display: flex;
-  min-height: 100vh;
-  background: var(--bg-deep);
-}
-
-/* ---- Sidebar ---- */
-.sidebar {
-  width: 220px;
-  background: var(--bg-surface);
-  border-right: 1px solid var(--border-subtle);
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  z-index: 100;
-}
-
-.sidebar-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 24px 20px 20px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.brand-icon {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, var(--accent-moss) 0%, #5a8f30 100%);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  flex-shrink: 0;
-}
-
-.brand-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-heading);
-  letter-spacing: -0.3px;
-}
-
-.sidebar-nav {
-  flex: 1;
-  padding: 16px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all var(--transition);
-  text-decoration: none;
-  border: 1px solid transparent;
-}
-
-.nav-item:hover {
-  background: var(--accent-moss-dim);
+:host {
+  display: block;
   color: var(--text-primary);
 }
 
-.nav-item.active {
-  background: var(--accent-moss-dim);
-  color: var(--accent-moss);
-  border-color: var(--border-default);
-  font-weight: 600;
-}
-
-.sidebar-bottom {
-  padding: 16px 12px;
-  border-top: 1px solid var(--border-subtle);
-}
-
-.logout-btn {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 10px 14px;
-  background: transparent;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all var(--transition);
-  font-family: inherit;
-}
-
-.logout-btn:hover {
-  background: rgba(196, 68, 45, 0.1);
-  border-color: rgba(196, 68, 45, 0.3);
-  color: var(--color-error);
-}
-
-/* ---- Main Content ---- */
-.main-content {
-  flex: 1;
-  margin-left: 220px;
+.home-page {
   padding: 24px 28px;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
 }
 
 /* Toast */
@@ -456,12 +347,7 @@
 
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
-  .sidebar {
-    display: none;
-  }
-
-  .main-content {
-    margin-left: 0;
+  .home-page {
     padding: 16px;
   }
 

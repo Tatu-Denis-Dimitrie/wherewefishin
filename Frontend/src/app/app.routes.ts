@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { Login } from './components/login/login';
 import { Register } from './components/register/register';
+import { Layout } from './components/layout/layout';
 import { Home } from './components/home/home';
 import { Profile } from './components/profile/profile';
 import { FishRecognition } from './components/fish-recognition/fish-recognition';
@@ -11,8 +12,15 @@ export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: 'login', component: Login },
   { path: 'register', component: Register },
-  { path: 'home', component: Home, canActivate: [authGuard] },
-  { path: 'profile', component: Profile, canActivate: [authGuard] },
-  { path: 'fish-recognition', component: FishRecognition, canActivate: [authGuard] },
-  { path: 'admin', component: Admin, canActivate: [authGuard, adminGuard] }
+  {
+    path: '',
+    component: Layout,
+    canActivate: [authGuard],
+    children: [
+      { path: 'home', component: Home },
+      { path: 'profile', component: Profile },
+      { path: 'fish-recognition', component: FishRecognition },
+      { path: 'admin', component: Admin, canActivate: [adminGuard] }
+    ]
+  }
 ];

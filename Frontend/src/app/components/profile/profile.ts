@@ -111,14 +111,6 @@ export class Profile implements OnInit {
     });
   }
 
-  goBack(): void {
-    this.router.navigate(['/home']);
-  }
-
-  logout(): void {
-    this.authService.logout();
-  }
-
   getInitials(): string {
     if (!this.user) return '?';
     

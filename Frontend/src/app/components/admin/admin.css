@@ -1,29 +1,15 @@
 /* ── Admin Panel – Woodland Angler ── */
-:host { display: block; min-height: 100vh; background: var(--bg-deep); color: var(--text-primary); }
+:host { display: block; color: var(--text-primary); }
 
-.page-shell { max-width: 1020px; margin: 0 auto; padding: 0 1.5rem 3rem; }
+.page-shell { max-width: 1020px; margin: 0 auto; padding: 1.5rem 1.5rem 3rem; }
 
-/* ── Top bar ── */
-.top-bar {
-  display: flex; align-items: center; gap: .75rem;
+/* ── Page header ── */
+.page-header {
   padding: 1.25rem 0;
   border-bottom: 1px solid var(--border-subtle);
   margin-bottom: 1.5rem;
 }
-.top-bar h1 { font-size: 1.3rem; font-weight: 700; color: var(--text-heading); margin: 0; }
-.bar-right { margin-left: auto; display: flex; gap: .5rem; }
-
-.btn-icon {
-  width: 36px; height: 36px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--bg-surface);
-  color: var(--text-secondary);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  transition: border-color var(--transition), color var(--transition);
-}
-.btn-icon:hover { border-color: var(--accent-moss); color: var(--accent-moss); }
+.page-header h1 { font-size: 1.3rem; font-weight: 700; color: var(--text-heading); margin: 0; }
 
 /* ── Toasts ── */
 .toast { text-align: center; padding: .65rem 1rem; border-radius: var(--radius-md); font-size: .88rem; font-weight: 500; margin-bottom: 1rem; }

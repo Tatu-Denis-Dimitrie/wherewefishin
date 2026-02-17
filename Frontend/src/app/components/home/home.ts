@@ -23,7 +23,6 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   showMessage = '';
   messageType: 'success' | 'error' = 'success';
   canEdit = false;
-  isAdmin = false;
   mapExpanded = false;
 
   // New spot form
@@ -46,7 +45,6 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     this.canEdit = this.authService.isManagerOrAdmin();
-    this.isAdmin = this.authService.isAdmin();
   }
 
   ngAfterViewInit(): void {
@@ -214,22 +212,6 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.showMessage = message;
     this.messageType = type;
     setTimeout(() => this.showMessage = '', 3000);
-  }
-
-  logout(): void {
-    this.authService.logout();
-  }
-
-  goToProfile(): void {
-    this.router.navigate(['/profile']);
-  }
-
-  goToFishRecognition(): void {
-    this.router.navigate(['/fish-recognition']);
-  }
-
-  goToAdmin(): void {
-    this.router.navigate(['/admin']);
   }
 
   toggleMapExpanded(): void {

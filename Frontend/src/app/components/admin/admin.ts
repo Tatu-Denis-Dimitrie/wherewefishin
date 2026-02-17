@@ -103,12 +103,4 @@ export class Admin implements OnInit {
       default: return 'badge-user';
     }
   }
-
-  goBack(): void {
-    this.router.navigate(['/home']);
-  }
-
-  logout(): void {
-    this.authService.logout();
-  }
 }

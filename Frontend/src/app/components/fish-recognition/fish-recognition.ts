@@ -238,11 +238,11 @@ export class FishRecognition implements OnInit, OnDestroy {
     }
   }
 
-  goBack(): void {
-    this.router.navigate(['/home']);
-  }
-
-  logout(): void {
-    this.authService.logout();
+  getVideoUrl(url: string | undefined): string {
+    if (!url) return '';
+    // If URL already starts with http, use it directly (backend returns full URL)
+    if (url.startsWith('http')) return url;
+    // Otherwise prepend the backend URL
+    return 'http://localhost:5033' + url;
   }
 }
