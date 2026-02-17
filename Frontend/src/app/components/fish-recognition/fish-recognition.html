@@ -1,239 +1,142 @@
-<div class="recognition-container">
-  <header>
-    <div class="header-left">
-      <button (click)="goBack()" class="back-btn">
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Back
+<div class="page-shell">
+  <!-- Top bar -->
+  <header class="top-bar">
+    <button class="btn-icon" (click)="goBack()" title="Back to map">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+    </button>
+    <h1>Fish Recognition</h1>
+    <div class="bar-right">
+      <span class="status-chip" [class.online]="serviceHealthy" [class.offline]="!serviceHealthy">
+        <span class="status-dot"></span>
+        {{ serviceHealthy ? 'Service Online' : 'Service Offline' }}
+      </span>
+      <button class="btn-icon" (click)="logout()" title="Logout">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </button>
-      <h1>Fish Recognition</h1>
-      @if (serviceHealthy) {
-        <span class="service-status healthy">
-          <span class="status-dot"></span>
-          Online
-        </span>
-      } @else {
-        <span class="service-status unhealthy">
-          <span class="status-dot"></span>
-          Offline
-        </span>
-      }
     </div>
-    <button (click)="logout()" class="logout-btn">Logout</button>
   </header>
 
-  @if (successMessage) {
-    <div class="success-message">✓ {{ successMessage }}</div>
-  }
-  @if (error) {
-    <div class="error-message">✗ {{ error }}</div>
-  }
+  <!-- Toast messages -->
+  <div class="toast toast-error" *ngIf="error">{{ error }}</div>
+  <div class="toast toast-success" *ngIf="successMessage">{{ successMessage }}</div>
 
-  <main>
-    <!-- Upload Section -->
-    <div class="upload-section">
-      <div class="upload-card">
-        <div class="upload-top">
-          <div class="upload-zone"
-               (dragover)="$event.preventDefault()"
-               (drop)="onDrop($event)"
-               [class.has-file]="!!selectedFile">
-            @if (!selectedFile) {
-              <div class="upload-icon">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+  <!-- Upload section -->
+  <section class="upload-section">
+    <div class="upload-card">
+      <div
+        class="drop-zone"
+        [class.has-file]="selectedFile"
+        (dragover)="$event.preventDefault()"
+        (drop)="onDrop($event)"
+      >
+        <div class="drop-content" *ngIf="!selectedFile">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <p class="drop-title">Drop your video here</p>
+          <p class="drop-hint">or click to browse &mdash; MP4, AVI, MOV, MKV up to 100 MB</p>
+          <input type="file" id="videoFile" (change)="onFileSelected($event)" accept="video/mp4,video/avi,video/quicktime,video/x-matroska" hidden />
+          <label for="videoFile" class="btn-outline">Choose file</label>
+        </div>
+
+        <div class="preview-content" *ngIf="selectedFile">
+          <video *ngIf="videoPreviewUrl" [src]="videoPreviewUrl" controls class="video-preview"></video>
+          <div class="preview-info">
+            <span class="file-name">{{ selectedFile.name }}</span>
+            <span class="file-size">{{ (selectedFile.size / 1024 / 1024).toFixed(1) }} MB</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="progress-wrap" *ngIf="uploading">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+        </div>
+        <span class="progress-label">{{ uploadProgress }}%</span>
+      </div>
+
+      <button
+        class="btn-primary upload-btn"
+        (click)="uploadVideo()"
+        [disabled]="!selectedFile || uploading || !serviceHealthy"
+      >
+        <span *ngIf="!uploading">Analyze Video</span>
+        <span *ngIf="uploading">Processing…</span>
+      </button>
+    </div>
+
+    <!-- Supported fish tags -->
+    <div class="fish-tags" *ngIf="supportedFish.length">
+      <span class="tags-label">Detectable species</span>
+      <div class="tags-list">
+        <span class="tag" *ngFor="let fish of supportedFish">{{ fish }}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Analyses section -->
+  <section class="analyses-section" *ngIf="analyses.length">
+    <h2>Your Analyses</h2>
+
+    <div class="analyses-grid">
+      @for (a of analyses; track a.id) {
+        <div class="analysis-card">
+          <div class="card-media" *ngIf="a.processedVideoUrl">
+            <video [src]="'http://localhost:5033' + a.processedVideoUrl" controls></video>
+          </div>
+          <div class="card-body">
+            <div class="card-meta">
+              <span class="badge" [ngClass]="getStatusClass(a.status)">{{ a.status }}</span>
+              <span class="meta-date">{{ formatDate(a.createdAt) }}</span>
+            </div>
+            <div class="card-info-grid" *ngIf="a.status === 'Completed'">
+              <div class="info-item">
+                <span class="info-label">Total Fish</span>
+                <span class="info-value">{{ a.totalDetections }}</span>
               </div>
-              <h2>Drop your video here</h2>
-              <p class="upload-description">or click to browse files</p>
-              <input type="file" id="videoFile"
-                     accept="video/mp4,video/avi,video/quicktime,video/x-matroska"
-                     (change)="onFileSelected($event)" [disabled]="uploading">
-              <label for="videoFile" class="file-label">Choose Video</label>
-            } @else {
-              <div class="selected-file-info">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polygon points="23 7 16 12 23 17 23 7"/>
-                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-                </svg>
-                <div>
-                  <span class="file-name">{{ selectedFile.name }}</span>
-                  <span class="file-size">{{ (selectedFile.size / (1024*1024)).toFixed(1) }} MB</span>
+              <div class="info-item">
+                <span class="info-label">Duration</span>
+                <span class="info-value">{{ formatDuration(a.duration) }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">FPS</span>
+                <span class="info-value">{{ a.fps }}</span>
+              </div>
+            </div>
+
+            <!-- Fish counts -->
+            <div class="fish-counts" *ngIf="getFishCountsArray(a.fishCounts).length">
+              @for (fc of getFishCountsArray(a.fishCounts); track fc.type) {
+                <div class="fish-row">
+                  <span class="fish-name">{{ fc.type }}</span>
+                  <span class="fish-count">{{ fc.count }}</span>
                 </div>
-              </div>
-              <input type="file" id="videoFile"
-                     accept="video/mp4,video/avi,video/quicktime,video/x-matroska"
-                     (change)="onFileSelected($event)" [disabled]="uploading">
-              <label for="videoFile" class="file-label change-file">Change File</label>
-            }
-          </div>
-
-          @if (videoPreviewUrl) {
-            <div class="video-preview">
-              <video controls [src]="videoPreviewUrl" class="preview-video">
-                Your browser does not support the video tag.
-              </video>
-            </div>
-          }
-        </div>
-
-        @if (uploading) {
-          <div class="progress-section">
-            <div class="progress-bar">
-              <div class="progress-fill" [style.width.%]="uploadProgress"></div>
-            </div>
-            <p class="upload-status">Analyzing video... {{ uploadProgress }}%</p>
-          </div>
-        }
-
-        <div class="upload-bottom">
-          <div class="upload-meta">
-            <span>MP4, AVI, MOV, MKV</span>
-            <span>Max 100 MB</span>
-          </div>
-          <button (click)="uploadVideo()" class="upload-btn"
-                  [disabled]="!selectedFile || uploading || !serviceHealthy">
-            @if (uploading) {
-              <span class="btn-spinner"></span> Processing...
-            } @else {
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              Upload & Analyze
-            }
-          </button>
-        </div>
-
-        @if (supportedFish.length > 0) {
-          <div class="supported-fish">
-            <strong>Detectable Species:</strong>
-            <div class="fish-tags">
-              @for (fish of supportedFish; track fish) {
-                <span class="fish-tag">{{ fish }}</span>
               }
             </div>
+
+            <button class="btn-danger-sm" (click)="deleteAnalysis(a.id)">Delete</button>
           </div>
-        }
-      </div>
-    </div>
-
-    <!-- Analyses List -->
-    <div class="analyses-section">
-      <div class="section-header">
-        <h2>Your Analyses</h2>
-        @if (analyses.length > 0) {
-          <span class="analyses-count">{{ analyses.length }}</span>
-        }
-      </div>
-
-      @if (loading) {
-        <div class="loading">
-          <div class="spinner"></div>
-          <p>Loading analyses...</p>
-        </div>
-      }
-
-      @if (!loading && analyses.length === 0) {
-        <div class="empty-state">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <polygon points="23 7 16 12 23 17 23 7"/>
-            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-          </svg>
-          <h3>No analyses yet</h3>
-          <p>Upload a video to get started</p>
-        </div>
-      }
-
-      @if (!loading && analyses.length > 0) {
-        <div class="analyses-grid">
-          @for (analysis of analyses; track analysis.id) {
-            <div class="analysis-card">
-              <div class="card-header">
-                <div class="card-title">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="23 7 16 12 23 17 23 7"/>
-                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-                  </svg>
-                  <span>{{ analysis.fileName }}</span>
-                </div>
-                <span class="status-badge" [ngClass]="getStatusClass(analysis.status)">
-                  {{ analysis.status }}
-                </span>
-              </div>
-
-              <div class="card-body">
-                @if (analysis.processedVideoUrl || analysis.videoUrl) {
-                  <div class="video-player">
-                    @if (analysis.processedVideoUrl) {
-                      <div class="video-header">
-                        <span class="video-label">YOLO Detection Output</span>
-                      </div>
-                      <video controls [src]="analysis.processedVideoUrl" class="analysis-video"></video>
-                    } @else {
-                      <video controls [src]="analysis.videoUrl" class="analysis-video"></video>
-                    }
-                  </div>
-                }
-
-                <div class="analysis-info">
-                  <div class="info-item">
-                    <label>Duration</label>
-                    <span>{{ formatDuration(analysis.duration) }}</span>
-                  </div>
-                  <div class="info-item">
-                    <label>FPS</label>
-                    <span>{{ analysis.fps }}</span>
-                  </div>
-                  <div class="info-item">
-                    <label>Frames</label>
-                    <span>{{ analysis.totalFrames }}</span>
-                  </div>
-                </div>
-
-                @if (analysis.status === 'Completed') {
-                  <div class="detection-results">
-                    @if (analysis.dominantFishType) {
-                      <div class="dominant-fish">
-                        <h4>Dominant Species</h4>
-                        <div class="fish-badge">
-                          <span class="fish-name">{{ analysis.dominantFishType }}</span>
-                          <span class="fish-count">{{ analysis.dominantFishCount }} detections</span>
-                        </div>
-                      </div>
-                    }
-
-                    @if (analysis.fishCounts) {
-                      <div class="all-detections">
-                        <h4>All Detections ({{ analysis.totalDetections }} total)</h4>
-                        <div class="fish-counts">
-                          @for (item of getFishCountsArray(analysis.fishCounts); track item.type) {
-                            <div class="count-item">
-                              <span class="fish-type">{{ item.type }}</span>
-                              <span class="count-badge">{{ item.count }}</span>
-                            </div>
-                          }
-                        </div>
-                      </div>
-                    }
-                  </div>
-                }
-
-                @if (analysis.status === 'Failed' && analysis.errorMessage) {
-                  <div class="error-details">
-                    <strong>Error:</strong> {{ analysis.errorMessage }}
-                  </div>
-                }
-              </div>
-
-              <div class="card-footer">
-                <span class="analysis-date">{{ formatDate(analysis.analyzedAt) }}</span>
-                <button (click)="deleteAnalysis(analysis.id)" class="delete-btn">Delete</button>
-              </div>
-            </div>
-          }
         </div>
       }
     </div>
-  </main>
+  </section>
+
+  <!-- Empty state -->
+  <div class="empty-state" *ngIf="!loading && !analyses.length">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10z"/>
+      <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+      <line x1="9" y1="9" x2="9.01" y2="9"/>
+      <line x1="15" y1="9" x2="15.01" y2="9"/>
+    </svg>
+    <p>No analyses yet. Upload a video to get started!</p>
+  </div>
+
+  <!-- Loading spinner -->
+  <div class="loading-spinner" *ngIf="loading">
+    <div class="spinner"></div>
+  </div>
 </div>

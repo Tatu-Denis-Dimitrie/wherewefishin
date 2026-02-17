@@ -1,77 +1,142 @@
 <div class="home-container">
-  <header>
-    <h1>Where We Fishin'</h1>
-    <div class="user-info">
-      <button (click)="goToFishRecognition()" class="fish-recognition-btn">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke-width="2"/>
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-1 3.46-3.44 6-7 6s-7.56-2.54-8.5-6Z"/>
+          <path d="M18 5L22 9"/>
+          <path d="M14 4v2"/>
+          <path d="M6 12h.01"/>
         </svg>
-        Fish Recognition
-      </button>
+      </div>
+      <span class="brand-name">WhereWeFishin</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        <span>Map</span>
+      </a>
+      <a class="nav-item" (click)="goToFishRecognition()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="23 7 16 12 23 17 23 7"/>
+          <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+        </svg>
+        <span>Fish Recognition</span>
+      </a>
+      <a class="nav-item" (click)="goToProfile()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+        <span>Profile</span>
+      </a>
       @if (isAdmin) {
-        <button (click)="goToAdmin()" class="admin-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <a class="nav-item" (click)="goToAdmin()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </svg>
-          Admin
-        </button>
+          <span>Admin</span>
+        </a>
       }
-      <button (click)="goToProfile()" class="profile-btn">Profile</button>
-      <button (click)="logout()" class="logout-btn">Logout</button>
-    </div>
-  </header>
+    </nav>
 
-  @if (showMessage) {
-    <div class="toast-message" [class.success]="messageType === 'success'" [class.error]="messageType === 'error'">
-      {{ messageType === 'success' ? '✓' : '✗' }} {{ showMessage }}
+    <div class="sidebar-bottom">
+      <button (click)="logout()" class="logout-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        <span>Log out</span>
+      </button>
     </div>
-  }
+  </aside>
 
-  <main>
-    <div class="map-section">
-      <div class="map-header">
-        <div>
-          <h2>Fishing Spots Map</h2>
-          @if (canEdit) {
-            <p>Click "Add Spot" then click on the map to place a fishing spot</p>
-          } @else {
-            <p>Browse fishing spots added by managers</p>
-          }
-        </div>
-        <div class="spot-count">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <!-- Main Content -->
+  <div class="main-content">
+    @if (showMessage) {
+      <div class="toast-message" [class.success]="messageType === 'success'" [class.error]="messageType === 'error'">
+        {{ messageType === 'success' ? '✓' : '✗' }} {{ showMessage }}
+      </div>
+    }
+
+    <!-- Top bar -->
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <h2>Fishing Spots</h2>
+        <div class="spot-badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
             <circle cx="12" cy="10" r="3"/>
           </svg>
-          {{ spots.length }} spots
+          {{ spots.length }}
         </div>
       </div>
-      <div id="map" class="map-container"></div>
+      <div class="top-bar-actions">
+        @if (canEdit) {
+          <button (click)="toggleAddMode()" class="btn-action btn-add" [class.active]="isAddMode">
+            @if (isAddMode) {
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Cancel
+            } @else {
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Spot
+            }
+          </button>
+          <button (click)="toggleDeleteMode()" class="btn-action btn-delete" [class.active]="isDeleteMode">
+            @if (isDeleteMode) {
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Cancel
+            } @else {
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Delete
+            }
+          </button>
+        }
+      </div>
+    </div>
 
-      @if (canEdit) {
-        <button (click)="toggleAddMode()" class="add-btn-floating" [class.active]="isAddMode">
-          {{ isAddMode ? 'Cancel' : 'Add Spot' }}
-        </button>
-        <button (click)="toggleDeleteMode()" class="delete-btn-floating" [class.active]="isDeleteMode">
-          {{ isDeleteMode ? 'Cancel' : 'Delete Spot' }}
-        </button>
-      }
+    @if (canEdit && isAddMode) {
+      <div class="hint-bar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Click on the map to place a new fishing spot
+      </div>
+    }
+
+    <!-- Map Section -->
+    <div class="map-card" [class.expanded]="mapExpanded">
+      <div id="map" class="map-container"></div>
+      <button (click)="toggleMapExpanded()" class="map-expand-btn" [title]="mapExpanded ? 'Collapse map' : 'Expand map'">
+        @if (mapExpanded) {
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+        } @else {
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+        }
+      </button>
     </div>
 
     <!-- Add Spot Form overlay -->
     @if (showSpotForm) {
       <div class="spot-form-overlay" (click)="cancelAddSpot()">
         <div class="spot-form" (click)="$event.stopPropagation()">
-          <h3>Add Fishing Spot</h3>
-          <p class="coords">{{ newSpotLat.toFixed(5) }}, {{ newSpotLng.toFixed(5) }}</p>
+          <h3>New Fishing Spot</h3>
+          <p class="coords">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            {{ newSpotLat.toFixed(5) }}, {{ newSpotLng.toFixed(5) }}
+          </p>
           <div class="form-group">
             <label for="spotName">Name *</label>
-            <input id="spotName" type="text" [(ngModel)]="newSpotName" placeholder="e.g. Lake Balaton East Shore" autofocus>
+            <input id="spotName" type="text" [(ngModel)]="newSpotName" placeholder="e.g. Lake Snagov North Shore" autofocus>
           </div>
           <div class="form-group">
             <label for="spotDesc">Description</label>
-            <textarea id="spotDesc" [(ngModel)]="newSpotDescription" placeholder="Optional description..." rows="3"></textarea>
+            <textarea id="spotDesc" [(ngModel)]="newSpotDescription" placeholder="Tell us about this spot..." rows="3"></textarea>
           </div>
           <div class="form-actions">
             <button (click)="cancelAddSpot()" class="btn-cancel">Cancel</button>
@@ -80,5 +145,5 @@
         </div>
       </div>
     }
-  </main>
+  </div>
 </div>

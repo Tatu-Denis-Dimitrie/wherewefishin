@@ -1,113 +1,100 @@
-<div class="register-container">
-  <div class="register-card">
-    <div class="register-header">
-      <div class="logo">
-        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<div class="auth-page">
+  <div class="auth-side">
+    <div class="auth-side-content">
+      <div class="auth-brand">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-1 3.46-3.44 6-7 6s-7.56-2.54-8.5-6Z"/>
           <path d="M18 5L22 9"/>
           <path d="M14 4v2"/>
           <path d="M6 12h.01"/>
         </svg>
       </div>
-      <h1>Create New Account</h1>
-      <p>Register to discover the best fishing spots</p>
+      <h2>WhereWeFishin</h2>
+      <p>Join the community and explore the best fishing spots across Romania.</p>
     </div>
+  </div>
 
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="register-form">
-      <div class="form-row">
-        <div class="form-group">
-          <label for="firstName">First Name (optional)</label>
+  <div class="auth-main">
+    <div class="auth-card">
+      <h1>Create account</h1>
+      <p class="auth-subtitle">Register to get started</p>
+
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form">
+        <div class="field-row">
+          <div class="field">
+            <label for="firstName">First Name</label>
+            <input type="text" id="firstName" formControlName="firstName" placeholder="First name" />
+          </div>
+          <div class="field">
+            <label for="lastName">Last Name</label>
+            <input type="text" id="lastName" formControlName="lastName" placeholder="Last name" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="username">Username *</label>
           <input
-            type="text"
-            id="firstName"
-            formControlName="firstName"
-            placeholder="First name"
+            type="text" id="username" formControlName="username"
+            placeholder="Choose a username"
+            [class.has-error]="username?.invalid && username?.touched"
           />
+          <div class="field-error" *ngIf="username?.invalid && username?.touched">
+            <span *ngIf="username?.errors?.['required']">Username is required</span>
+            <span *ngIf="username?.errors?.['minlength']">At least 3 characters</span>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label for="lastName">Last Name (optional)</label>
+        <div class="field">
+          <label for="email">Email *</label>
           <input
-            type="text"
-            id="lastName"
-            formControlName="lastName"
-            placeholder="Last name"
+            type="email" id="email" formControlName="email"
+            placeholder="your@email.com"
+            [class.has-error]="email?.invalid && email?.touched"
           />
+          <div class="field-error" *ngIf="email?.invalid && email?.touched">
+            <span *ngIf="email?.errors?.['required']">Email is required</span>
+            <span *ngIf="email?.errors?.['email']">Invalid email</span>
+          </div>
         </div>
-      </div>
 
-      <div class="form-group">
-        <label for="username">Username *</label>
-        <input
-          type="text"
-          id="username"
-          formControlName="username"
-          placeholder="Choose a username"
-          [class.error]="username?.invalid && username?.touched"
-        />
-        <div class="error-message" *ngIf="username?.invalid && username?.touched">
-          <span *ngIf="username?.errors?.['required']">Username is required</span>
-          <span *ngIf="username?.errors?.['minlength']">Username must be at least 3 characters</span>
-          <span *ngIf="username?.errors?.['maxlength']">Username can be at most 50 characters</span>
+        <div class="field">
+          <label for="password">Password *</label>
+          <input
+            type="password" id="password" formControlName="password"
+            placeholder="Choose a password"
+            [class.has-error]="password?.invalid && password?.touched"
+          />
+          <div class="field-error" *ngIf="password?.invalid && password?.touched">
+            <span *ngIf="password?.errors?.['required']">Password is required</span>
+            <span *ngIf="password?.errors?.['minlength']">At least 6 characters</span>
+          </div>
         </div>
-      </div>
 
-      <div class="form-group">
-        <label for="email">Email *</label>
-        <input
-          type="email"
-          id="email"
-          formControlName="email"
-          placeholder="your@email.com"
-          [class.error]="email?.invalid && email?.touched"
-        />
-        <div class="error-message" *ngIf="email?.invalid && email?.touched">
-          <span *ngIf="email?.errors?.['required']">Email is required</span>
-          <span *ngIf="email?.errors?.['email']">Email is not valid</span>
+        <div class="field">
+          <label for="confirmPassword">Confirm Password *</label>
+          <input
+            type="password" id="confirmPassword" formControlName="confirmPassword"
+            placeholder="Confirm your password"
+            [class.has-error]="confirmPassword?.invalid && confirmPassword?.touched"
+          />
+          <div class="field-error" *ngIf="confirmPassword?.invalid && confirmPassword?.touched">
+            <span *ngIf="confirmPassword?.errors?.['required']">Confirmation required</span>
+          </div>
         </div>
-      </div>
 
-      <div class="form-group">
-        <label for="password">Password *</label>
-        <input
-          type="password"
-          id="password"
-          formControlName="password"
-          placeholder="Choose a password"
-          [class.error]="password?.invalid && password?.touched"
-        />
-        <div class="error-message" *ngIf="password?.invalid && password?.touched">
-          <span *ngIf="password?.errors?.['required']">Password is required</span>
-          <span *ngIf="password?.errors?.['minlength']">Password must be at least 6 characters</span>
+        <div class="field-error server-error" *ngIf="errorMessage">
+          {{ errorMessage }}
         </div>
-      </div>
 
-      <div class="form-group">
-        <label for="confirmPassword">Confirm Password *</label>
-        <input
-          type="password"
-          id="confirmPassword"
-          formControlName="confirmPassword"
-          placeholder="Confirm your password"
-          [class.error]="confirmPassword?.invalid && confirmPassword?.touched"
-        />
-        <div class="error-message" *ngIf="confirmPassword?.invalid && confirmPassword?.touched">
-          <span *ngIf="confirmPassword?.errors?.['required']">Password confirmation is required</span>
+        <button type="submit" class="btn-primary" [disabled]="registerForm.invalid || isLoading">
+          <span *ngIf="!isLoading">Create Account</span>
+          <span *ngIf="isLoading" class="loading-text"><span class="dot-loader"></span> Creating...</span>
+        </button>
+
+        <div class="auth-footer">
+          <p>Already have an account? <a routerLink="/login">Sign in</a></p>
         </div>
-      </div>
-
-      <div class="error-message server-error" *ngIf="errorMessage">
-        {{ errorMessage }}
-      </div>
-
-      <button type="submit" class="btn-register" [disabled]="registerForm.invalid || isLoading">
-        <span *ngIf="!isLoading">Register</span>
-        <span *ngIf="isLoading">Loading...</span>
-      </button>
-
-      <div class="login-link">
-        <p>Already have an account? <a routerLink="/login">Sign in here</a></p>
-      </div>
-    </form>
+      </form>
+    </div>
   </div>
 </div>

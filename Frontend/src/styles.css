@@ -1,4 +1,56 @@
-/* Global Styles */
+/* ============================================
+   WhereWeFishin — "Woodland Angler" Theme
+   Earthy olive, warm sand, deep forest palette
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+:root {
+  /* Forest depths */
+  --bg-deep: #141e0f;
+  --bg-surface: #1c2a16;
+  --bg-card: #243420;
+  --bg-card-hover: #2c3f27;
+  --bg-input: #1a2614;
+  --bg-elevated: #2e422a;
+
+  /* Accent - Moss & Amber */
+  --accent-moss: #7db34a;
+  --accent-moss-light: #9dd06a;
+  --accent-moss-dim: rgba(125, 179, 74, 0.15);
+  --accent-moss-glow: rgba(125, 179, 74, 0.3);
+  --accent-amber: #d4a84b;
+  --accent-amber-dim: rgba(212, 168, 75, 0.15);
+  --accent-water: #4a90a4;
+  --accent-water-dim: rgba(74, 144, 164, 0.15);
+
+  /* Text */
+  --text-primary: #e8e0d0;
+  --text-secondary: #a09882;
+  --text-muted: #6b6352;
+  --text-heading: #f0ead6;
+
+  /* Borders */
+  --border-subtle: rgba(125, 179, 74, 0.1);
+  --border-default: rgba(125, 179, 74, 0.18);
+  --border-strong: rgba(125, 179, 74, 0.3);
+
+  /* Status */
+  --color-success: #5cb85c;
+  --color-error: #c4442d;
+  --color-warning: #d4a84b;
+  --color-info: #4a90a4;
+
+  /* Misc */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.45);
+  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
 * {
   margin: 0;
@@ -6,19 +58,41 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
 html, body {
   height: 100%;
 }
 
-/* Prevent default body margin and padding */
 body {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg-deep);
+  color: var(--text-primary);
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-elevated);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-moss-dim);
+}
+
+/* Selection */
+::selection {
+  background: var(--accent-moss);
+  color: var(--bg-deep);
 }

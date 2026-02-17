@@ -1,305 +1,361 @@
+/* ========================
+   HOME — Woodland Angler
+   ======================== */
 .home-container {
+  display: flex;
   min-height: 100vh;
-  background: #0f172a;
+  background: var(--bg-deep);
+}
+
+/* ---- Sidebar ---- */
+.sidebar {
+  width: 220px;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
 }
 
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 40px;
-  background: rgba(30, 41, 59, 0.8);
-  backdrop-filter: blur(24px) saturate(180%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  position: relative;
-  z-index: 1000;
-}
-
-h1 {
-  color: #f8fafc;
-  margin: 0;
-  font-size: 28px;
-  font-weight: 700;
-}
-
-.user-info {
+.sidebar-brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #e2e8f0;
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-.profile-btn {
-  padding: 10px 24px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  color: #f8fafc;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.3s ease;
-}
-
-.profile-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-}
-
-.fish-recognition-btn {
+.brand-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--accent-moss) 0%, #5a8f30 100%);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 24px;
-  background: rgba(139, 92, 246, 0.2);
-  border: 1px solid rgba(139, 92, 246, 0.4);
-  border-radius: 12px;
-  color: #a78bfa;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.3s ease;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
 }
 
-.fish-recognition-btn:hover {
-  background: rgba(139, 92, 246, 0.3);
-  border-color: rgba(139, 92, 246, 0.6);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+.brand-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-heading);
+  letter-spacing: -0.3px;
 }
 
-.admin-btn {
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 24px;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.4);
-  border-radius: 12px;
-  color: #f87171;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
   cursor: pointer;
-  font-weight: 600;
   font-size: 14px;
-  transition: all 0.3s ease;
+  font-weight: 500;
+  transition: all var(--transition);
+  text-decoration: none;
+  border: 1px solid transparent;
 }
 
-.admin-btn:hover {
-  background: rgba(239, 68, 68, 0.25);
-  border-color: rgba(239, 68, 68, 0.6);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+.nav-item:hover {
+  background: var(--accent-moss-dim);
+  color: var(--text-primary);
+}
+
+.nav-item.active {
+  background: var(--accent-moss-dim);
+  color: var(--accent-moss);
+  border-color: var(--border-default);
+  font-weight: 600;
+}
+
+.sidebar-bottom {
+  padding: 16px 12px;
+  border-top: 1px solid var(--border-subtle);
 }
 
 .logout-btn {
-  padding: 10px 24px;
-  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-  border: none;
-  border-radius: 12px;
-  color: white;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
   cursor: pointer;
-  font-weight: 600;
   font-size: 14px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  font-weight: 500;
+  transition: all var(--transition);
+  font-family: inherit;
 }
 
 .logout-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+  background: rgba(196, 68, 45, 0.1);
+  border-color: rgba(196, 68, 45, 0.3);
+  color: var(--color-error);
 }
 
-/* Toast message */
+/* ---- Main Content ---- */
+.main-content {
+  flex: 1;
+  margin-left: 220px;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Toast */
 .toast-message {
   position: fixed;
-  top: 100px;
-  right: 20px;
-  padding: 16px 24px;
-  background: #1e293b;
-  border-radius: 12px;
+  top: 24px;
+  right: 24px;
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
   font-weight: 600;
-  font-size: 14px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  font-size: 13px;
   z-index: 2000;
-  animation: slideInRight 0.3s ease;
+  animation: toastIn 0.3s ease;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
 }
 
 .toast-message.success {
-  border: 2px solid rgba(16, 185, 129, 0.5);
-  color: #10b981;
+  border-color: rgba(92, 184, 92, 0.5);
+  color: var(--color-success);
 }
 
 .toast-message.error {
-  border: 2px solid rgba(239, 68, 68, 0.5);
-  color: #ef4444;
+  border-color: rgba(196, 68, 45, 0.5);
+  color: var(--color-error);
 }
 
-@keyframes slideInRight {
-  from { transform: translateX(100px); opacity: 0; }
+@keyframes toastIn {
+  from { transform: translateX(60px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
 
-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  position: relative;
-  z-index: 1;
-}
-
-.map-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: rgba(30, 41, 59, 0.8);
-  backdrop-filter: blur(24px) saturate(180%);
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  overflow: hidden;
-  position: relative;
-}
-
-.map-header {
+/* Top bar */
+.top-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 20px;
 }
 
-.map-header h2 {
-  color: #f8fafc;
-  margin: 0 0 4px 0;
+.top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.top-bar-left h2 {
+  color: var(--text-heading);
   font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.spot-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: var(--accent-moss-dim);
+  border: 1px solid var(--border-default);
+  border-radius: 20px;
+  color: var(--accent-moss);
+  font-size: 13px;
   font-weight: 700;
 }
 
-.map-header p {
-  color: #94a3b8;
-  margin: 0;
-  font-size: 14px;
+.top-bar-actions {
+  display: flex;
+  gap: 10px;
 }
 
-.spot-count {
-  display: flex;
+.btn-action {
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  background: rgba(6, 182, 212, 0.15);
-  border: 1px solid rgba(6, 182, 212, 0.3);
-  border-radius: 20px;
-  color: #06b6d4;
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
   font-size: 13px;
   font-weight: 600;
-  white-space: nowrap;
-}
-
-.map-container {
-  flex: 1;
-  min-height: 500px;
-  width: 100%;
-  border-radius: 0 0 24px 24px;
-}
-
-/* Floating action buttons */
-.add-btn-floating,
-.delete-btn-floating {
-  position: absolute;
-  right: 10px;
-  padding: 12px 24px;
-  background: #1e293b;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: #f8fafc;
   cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
+  transition: all var(--transition);
+  border: 1px solid var(--border-default);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: inherit;
 }
 
-.add-btn-floating {
-  top: 10px;
-  margin-top: 110px;
+.btn-action:hover {
+  background: var(--bg-card-hover);
 }
 
-.delete-btn-floating {
-  top: 10px;
-  margin-top: 160px;
+.btn-add.active {
+  background: var(--accent-moss-dim);
+  border-color: var(--accent-moss);
+  color: var(--accent-moss);
 }
 
-.add-btn-floating:hover,
-.delete-btn-floating:hover {
-  background: #334155;
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+.btn-delete.active {
+  background: rgba(196, 68, 45, 0.12);
+  border-color: var(--color-error);
+  color: var(--color-error);
 }
 
-.add-btn-floating.active {
-  background: #0891b2;
-  border-color: rgba(6, 182, 212, 0.5);
-  color: white;
+/* Hint bar */
+.hint-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--accent-amber-dim);
+  border: 1px solid rgba(212, 168, 75, 0.25);
+  border-radius: var(--radius-sm);
+  color: var(--accent-amber);
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 16px;
 }
 
-.delete-btn-floating.active {
-  background: #dc2626;
-  border-color: rgba(220, 38, 38, 0.5);
-  color: white;
+/* ---- Map Card ---- */
+.map-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
 }
 
-.delete-btn-floating.active:hover {
-  background: #b91c1c;
+.map-card .map-container {
+  width: 100%;
+  flex: 1;
+  min-height: 380px;
 }
 
-/* Spot Form Overlay */
+/* Expanded map — fills the viewport */
+.map-card.expanded {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 500;
+  border-radius: 0;
+  border: none;
+}
+
+.map-card.expanded .map-container {
+  min-height: 100vh;
+}
+
+.map-expand-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 600;
+  transition: all var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+
+.map-expand-btn:hover {
+  background: var(--accent-moss-dim);
+  border-color: var(--accent-moss);
+  color: var(--accent-moss);
+}
+
+/* ---- Spot Form Overlay ---- */
 .spot-form-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
   z-index: 3000;
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .spot-form {
-  background: #1e293b;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
   padding: 32px;
   width: 100%;
-  max-width: 440px;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+  max-width: 420px;
+  box-shadow: var(--shadow-lg);
+  animation: formSlideUp 0.3s ease;
+}
+
+@keyframes formSlideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .spot-form h3 {
-  color: #f8fafc;
+  color: var(--text-heading);
   margin: 0 0 4px 0;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
 }
 
 .spot-form .coords {
-  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
   font-size: 13px;
   margin: 0 0 24px 0;
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .form-group label {
   display: block;
-  color: #94a3b8;
-  font-size: 13px;
+  color: var(--text-secondary);
+  font-size: 12px;
   font-weight: 600;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -307,21 +363,22 @@ main {
 .form-group input,
 .form-group textarea {
   width: 100%;
-  padding: 12px 16px;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  color: #f8fafc;
+  padding: 10px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
   font-size: 14px;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color var(--transition);
   font-family: inherit;
   box-sizing: border-box;
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
-  border-color: #06b6d4;
+  border-color: var(--accent-moss);
+  box-shadow: 0 0 0 3px var(--accent-moss-dim);
 }
 
 .form-group textarea {
@@ -330,84 +387,85 @@ main {
 
 .form-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: flex-end;
   margin-top: 24px;
 }
 
 .btn-cancel {
-  padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 10px;
-  color: #f8fafc;
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
   cursor: pointer;
   font-weight: 600;
-  font-size: 14px;
-  transition: all 0.2s;
+  font-size: 13px;
+  transition: all var(--transition);
+  font-family: inherit;
 }
 
 .btn-cancel:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--bg-card);
 }
 
 .btn-confirm {
-  padding: 12px 28px;
-  background: linear-gradient(135deg, #06b6d4, #0891b2);
+  padding: 10px 24px;
+  background: var(--accent-moss);
   border: none;
-  border-radius: 10px;
-  color: white;
+  border-radius: var(--radius-sm);
+  color: #fff;
   cursor: pointer;
   font-weight: 600;
-  font-size: 14px;
-  transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  font-size: 13px;
+  transition: all var(--transition);
+  font-family: inherit;
 }
 
 .btn-confirm:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(6, 182, 212, 0.4);
+  background: var(--accent-moss-light);
 }
 
 .btn-confirm:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
-/* Leaflet overrides */
+/* ---- Leaflet overrides ---- */
 :host ::ng-deep .leaflet-popup-content-wrapper {
-  background: #1e293b;
-  color: #f8fafc;
-  border-radius: 12px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-md);
 }
 
 :host ::ng-deep .leaflet-popup-tip {
-  background: #1e293b;
+  background: var(--bg-surface);
 }
 
 :host ::ng-deep .leaflet-control-zoom a {
-  background-color: #1e293b !important;
-  color: #f8fafc !important;
-  border-color: rgba(255, 255, 255, 0.2) !important;
+  background-color: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-default) !important;
 }
 
 :host ::ng-deep .leaflet-control-zoom a:hover {
-  background-color: #334155 !important;
+  background-color: var(--bg-card) !important;
 }
 
+/* ---- Responsive ---- */
 @media (max-width: 768px) {
-  header {
-    flex-direction: column;
-    gap: 16px;
-    padding: 16px 20px;
+  .sidebar {
+    display: none;
   }
 
-  .user-info {
-    flex-wrap: wrap;
-    justify-content: center;
+  .main-content {
+    margin-left: 0;
+    padding: 16px;
   }
 
-  .map-header {
+  .top-bar {
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;

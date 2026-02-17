@@ -24,6 +24,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   messageType: 'success' | 'error' = 'success';
   canEdit = false;
   isAdmin = false;
+  mapExpanded = false;
 
   // New spot form
   showSpotForm = false;
@@ -229,5 +230,13 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
   goToAdmin(): void {
     this.router.navigate(['/admin']);
+  }
+
+  toggleMapExpanded(): void {
+    this.mapExpanded = !this.mapExpanded;
+    // Give the DOM time to update, then invalidate map size
+    setTimeout(() => {
+      this.map.invalidateSize();
+    }, 350);
   }
 }

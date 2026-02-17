@@ -1,60 +1,69 @@
-<div class="login-container">
-  <div class="login-card">
-    <div class="login-header">
-      <div class="logo">
-        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+<div class="auth-page">
+  <div class="auth-side">
+    <div class="auth-side-content">
+      <div class="auth-brand">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M6.5 12c.94-3.46 4.94-6 8.5-6 3.56 0 6.06 2.54 7 6-1 3.46-3.44 6-7 6s-7.56-2.54-8.5-6Z"/>
           <path d="M18 5L22 9"/>
           <path d="M14 4v2"/>
           <path d="M6 12h.01"/>
         </svg>
       </div>
-      <h1>WhereWeFishin</h1>
-      <p>Welcome back! Sign in to your account</p>
+      <h2>WhereWeFishin</h2>
+      <p>Discover and share the best fishing spots with fellow anglers.</p>
     </div>
+  </div>
 
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
-      <div class="form-group">
-        <label for="usernameOrEmail">Username or Email</label>
-        <input
-          type="text"
-          id="usernameOrEmail"
-          formControlName="usernameOrEmail"
-          placeholder="Enter your username or email"
-          [class.error]="usernameOrEmail?.invalid && usernameOrEmail?.touched"
-        />
-        <div class="error-message" *ngIf="usernameOrEmail?.invalid && usernameOrEmail?.touched">
-          <span *ngIf="usernameOrEmail?.errors?.['required']">Username or email is required</span>
+  <div class="auth-main">
+    <div class="auth-card">
+      <h1>Welcome back</h1>
+      <p class="auth-subtitle">Sign in to your account</p>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
+        <div class="field">
+          <label for="usernameOrEmail">Username or Email</label>
+          <input
+            type="text"
+            id="usernameOrEmail"
+            formControlName="usernameOrEmail"
+            placeholder="Enter your username or email"
+            [class.has-error]="usernameOrEmail?.invalid && usernameOrEmail?.touched"
+          />
+          <div class="field-error" *ngIf="usernameOrEmail?.invalid && usernameOrEmail?.touched">
+            <span *ngIf="usernameOrEmail?.errors?.['required']">Username or email is required</span>
+          </div>
         </div>
-      </div>
 
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input
-          type="password"
-          id="password"
-          formControlName="password"
-          placeholder="Enter your password"
-          [class.error]="password?.invalid && password?.touched"
-        />
-        <div class="error-message" *ngIf="password?.invalid && password?.touched">
-          <span *ngIf="password?.errors?.['required']">Password is required</span>
-          <span *ngIf="password?.errors?.['minlength']">Password must be at least 6 characters</span>
+        <div class="field">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            formControlName="password"
+            placeholder="Enter your password"
+            [class.has-error]="password?.invalid && password?.touched"
+          />
+          <div class="field-error" *ngIf="password?.invalid && password?.touched">
+            <span *ngIf="password?.errors?.['required']">Password is required</span>
+            <span *ngIf="password?.errors?.['minlength']">Must be at least 6 characters</span>
+          </div>
         </div>
-      </div>
 
-      <div class="error-message server-error" *ngIf="errorMessage">
-        {{ errorMessage }}
-      </div>
+        <div class="field-error server-error" *ngIf="errorMessage">
+          {{ errorMessage }}
+        </div>
 
-      <button type="submit" class="btn-login" [disabled]="loginForm.invalid || isLoading">
-        <span *ngIf="!isLoading">Sign In</span>
-        <span *ngIf="isLoading">Loading...</span>
-      </button>
+        <button type="submit" class="btn-primary" [disabled]="loginForm.invalid || isLoading">
+          <span *ngIf="!isLoading">Sign In</span>
+          <span *ngIf="isLoading" class="loading-text">
+            <span class="dot-loader"></span> Signing in...
+          </span>
+        </button>
 
-      <div class="register-link">
-        <p>Don't have an account? <a routerLink="/register">Register here</a></p>
-      </div>
-    </form>
+        <div class="auth-footer">
+          <p>Don't have an account? <a routerLink="/register">Create one</a></p>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
