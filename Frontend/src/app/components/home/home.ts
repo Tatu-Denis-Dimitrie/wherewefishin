@@ -8,6 +8,8 @@ import { AdminService, AdminStats } from '../../services/admin.service';
 import { VideoAnalysisService } from '../../services/video-analysis.service';
 import { VideoAnalysis } from '../../models/video-analysis.model';
 import { CartService } from '../../services/cart.service';
+import { UserService } from '../../services/user.service';
+import { User } from '../../models/user.model';
 import * as L from 'leaflet';
 
 @Component({
@@ -48,6 +50,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   newSpotLng = 0;
   newSpotName = '';
   newSpotDescription = '';
+  newSpotManagerId: number | null = null;
+  managers: User[] = [];
   private pendingMarker: L.Marker | null = null;
 
   constructor(
@@ -56,7 +60,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     private adminService: AdminService,
     private videoAnalysisService: VideoAnalysisService,
     private router: Router,
-    public cartService: CartService
+    public cartService: CartService,
+    private userService: UserService
   ) {}
 
   ngOnInit(): void {
@@ -102,6 +107,11 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         next: (allSpots) => {
           this.userSpotsCount = allSpots.filter(s => s.userId === userId).length;
         },
+        error: () => {}
+      });
+
+      this.userService.getManagers().subscribe({
+        next: (managers) => { this.managers = managers; },
         error: () => {}
       });
     }
@@ -298,7 +308,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       description: this.newSpotDescription.trim() || undefined,
       latitude: this.newSpotLat,
       longitude: this.newSpotLng,
-      userId: userId
+      userId: userId,
+      managerId: this.newSpotManagerId ?? undefined
     };
 
     this.fishingSpotService.create(spot).subscribe({
@@ -313,6 +324,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
   cancelAddSpot(): void {
     this.showSpotForm = false;
+    this.newSpotManagerId = null;
     if (this.pendingMarker) {
       this.map.removeLayer(this.pendingMarker);
       this.pendingMarker = null;

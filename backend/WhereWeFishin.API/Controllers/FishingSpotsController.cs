@@ -44,7 +44,8 @@ public class FishingSpotsController : ControllerBase
             Longitude = createSpotDto.Longitude,
             ImageUrl = createSpotDto.ImageUrl,
             PricePerHour = createSpotDto.PricePerHour,
-            UserId = createSpotDto.UserId
+            UserId = createSpotDto.UserId,
+            ManagerId = createSpotDto.ManagerId
         };
 
         await _spotRepository.AddAsync(spot);
@@ -64,6 +65,8 @@ public class FishingSpotsController : ControllerBase
         spot.Longitude = updateSpotDto.Longitude ?? spot.Longitude;
         spot.ImageUrl = updateSpotDto.ImageUrl ?? spot.ImageUrl;
         spot.PricePerHour = updateSpotDto.PricePerHour ?? spot.PricePerHour;
+        if (updateSpotDto.ManagerId.HasValue) spot.ManagerId = updateSpotDto.ManagerId;
+        else if (updateSpotDto.ManagerId == null && updateSpotDto.Name != null) spot.ManagerId = null; // explicit clear
 
         await _spotRepository.UpdateAsync(spot);
         return NoContent();
@@ -89,6 +92,12 @@ public class FishingSpotsController : ControllerBase
         ImageUrl = spot.ImageUrl,
         PricePerHour = spot.PricePerHour,
         UserId = spot.UserId,
+        ManagerId = spot.ManagerId,
+        ManagerName = spot.Manager != null
+            ? $"{spot.Manager.FirstName} {spot.Manager.LastName}".Trim().Length > 0
+                ? $"{spot.Manager.FirstName} {spot.Manager.LastName}".Trim()
+                : spot.Manager.Username
+            : null,
         CreatedAt = spot.CreatedAt
     };
 }

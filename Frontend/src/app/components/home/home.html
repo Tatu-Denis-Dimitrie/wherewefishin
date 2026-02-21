@@ -231,6 +231,17 @@
           <label for="spotDesc">Description</label>
           <textarea id="spotDesc" [(ngModel)]="newSpotDescription" placeholder="Tell us about this spot..." rows="3"></textarea>
         </div>
+        @if (managers.length > 0) {
+          <div class="form-group">
+            <label for="spotManager">Assign Manager</label>
+            <select id="spotManager" [(ngModel)]="newSpotManagerId">
+              <option [ngValue]="null">— No manager —</option>
+              @for (m of managers; track m.id) {
+                <option [ngValue]="m.id">{{ m.firstName || m.username }} {{ m.lastName || '' }}</option>
+              }
+            </select>
+          </div>
+        }
         <div class="form-actions">
           <button (click)="cancelAddSpot()" class="btn-cancel">Cancel</button>
           <button (click)="confirmAddSpot()" class="btn-confirm" [disabled]="!newSpotName.trim()">Add Spot</button>

@@ -10,6 +10,8 @@ public class FishingSpotDto
     public string? ImageUrl { get; set; }
     public decimal PricePerHour { get; set; }
     public int UserId { get; set; }
+    public int? ManagerId { get; set; }
+    public string? ManagerName { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
@@ -22,6 +24,7 @@ public class CreateFishingSpotDto
     public string? ImageUrl { get; set; }
     public decimal PricePerHour { get; set; } = 0;
     public int UserId { get; set; }
+    public int? ManagerId { get; set; }
 }
 
 public class UpdateFishingSpotDto
@@ -32,4 +35,5 @@ public class UpdateFishingSpotDto
     public double? Longitude { get; set; }
     public string? ImageUrl { get; set; }
     public decimal? PricePerHour { get; set; }
+    public int? ManagerId { get; set; }
 }

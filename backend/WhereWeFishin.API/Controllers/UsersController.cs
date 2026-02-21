@@ -23,6 +23,13 @@ public class UsersController : ControllerBase
         return Ok(users.Select(MapToDto));
     }
 
+    [HttpGet("managers")]
+    public async Task<ActionResult<IEnumerable<UserDto>>> GetManagers()
+    {
+        var users = await _userRepository.GetAllAsync();
+        return Ok(users.Where(u => u.Role == "Manager").Select(MapToDto));
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<UserDto>> GetUser(int id)
     {

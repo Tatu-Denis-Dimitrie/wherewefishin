@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace WhereWeFishin.Database.Migrations
 {
     /// <inheritdoc />
-    public partial class AddFishingSessionAndPricePerHour : Migration
+    public partial class AddFishingSessionsAndManagerId : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -19,6 +19,12 @@ namespace WhereWeFishin.Database.Migrations
                 scale: 2,
                 nullable: false,
                 defaultValue: 0m);
+
+            migrationBuilder.AddColumn<int>(
+                name: "ManagerId",
+                table: "FishingSpots",
+                type: "int",
+                nullable: true);
 
             migrationBuilder.CreateTable(
                 name: "FishingSessions",
@@ -54,6 +60,11 @@ namespace WhereWeFishin.Database.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_FishingSpots_ManagerId",
+                table: "FishingSpots",
+                column: "ManagerId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_FishingSessions_FishingSpotId",
                 table: "FishingSessions",
                 column: "FishingSpotId");
@@ -62,16 +73,35 @@ namespace WhereWeFishin.Database.Migrations
                 name: "IX_FishingSessions_UserId",
                 table: "FishingSessions",
                 column: "UserId");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_FishingSpots_Users_ManagerId",
+                table: "FishingSpots",
+                column: "ManagerId",
+                principalTable: "Users",
+                principalColumn: "Id");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_FishingSpots_Users_ManagerId",
+                table: "FishingSpots");
+
             migrationBuilder.DropTable(
                 name: "FishingSessions");
 
+            migrationBuilder.DropIndex(
+                name: "IX_FishingSpots_ManagerId",
+                table: "FishingSpots");
+
             migrationBuilder.DropColumn(
                 name: "PricePerHour",
+                table: "FishingSpots");
+
+            migrationBuilder.DropColumn(
+                name: "ManagerId",
                 table: "FishingSpots");
         }
     }

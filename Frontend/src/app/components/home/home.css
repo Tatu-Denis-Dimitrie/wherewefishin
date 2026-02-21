@@ -361,23 +361,13 @@
 .map-card .map-container {
   width: 100%;
   flex: 1;
-  min-height: 560px;
+  min-height: 380px;
+  transition: min-height 0.35s ease;
 }
 
-/* Expanded map — fills the viewport */
-.map-card.expanded {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 500;
-  border-radius: 0;
-  border: none;
-}
-
+/* Expanded map — larger but not fullscreen */
 .map-card.expanded .map-container {
-  min-height: 100vh;
+  min-height: 750px;
 }
 
 .map-expand-btn {
@@ -394,7 +384,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 600;
+  z-index: 1000;
   transition: all var(--transition);
   box-shadow: var(--shadow-sm);
 }
@@ -469,7 +459,8 @@
 }
 
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-group select {
   width: 100%;
   padding: 10px 14px;
   background: var(--bg-input);
@@ -484,7 +475,8 @@
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-group select:focus {
   border-color: var(--accent-moss);
   box-shadow: 0 0 0 3px var(--accent-moss-dim);
 }

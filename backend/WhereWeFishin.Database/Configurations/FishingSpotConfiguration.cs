@@ -30,6 +30,12 @@ public class FishingSpotConfiguration : IEntityTypeConfiguration<FishingSpot>
             .HasForeignKey(f => f.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasOne(f => f.Manager)
+            .WithMany()
+            .HasForeignKey(f => f.ManagerId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.ClientSetNull);
+
         builder.Property(f => f.PricePerHour)
             .HasPrecision(10, 2)
             .HasDefaultValue(0m);

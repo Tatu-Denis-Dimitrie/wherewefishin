@@ -74,7 +74,7 @@ namespace WhereWeFishin.Database.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Catches");
+                    b.ToTable("Catches", (string)null);
                 });
 
             modelBuilder.Entity("WhereWeFishin.Core.Entities.FishingSession", b =>
@@ -121,7 +121,7 @@ namespace WhereWeFishin.Database.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("FishingSessions");
+                    b.ToTable("FishingSessions", (string)null);
                 });
 
             modelBuilder.Entity("WhereWeFishin.Core.Entities.FishingSpot", b =>
@@ -153,16 +153,18 @@ namespace WhereWeFishin.Database.Migrations
                         .HasPrecision(9, 6)
                         .HasColumnType("float(9)");
 
+                    b.Property<int?>("ManagerId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal>("PricePerHour")
-                        .ValueGeneratedOnAdd()
                         .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)")
-                        .HasDefaultValue(0m);
+                        .HasDefaultValue(0m)
+                        .HasColumnType("decimal(10,2)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -172,9 +174,11 @@ namespace WhereWeFishin.Database.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ManagerId");
+
                     b.HasIndex("UserId");
 
-                    b.ToTable("FishingSpots");
+                    b.ToTable("FishingSpots", (string)null);
                 });
 
             modelBuilder.Entity("WhereWeFishin.Core.Entities.User", b =>
@@ -234,7 +238,7 @@ namespace WhereWeFishin.Database.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("WhereWeFishin.Core.Entities.VideoAnalysis", b =>
@@ -316,7 +320,7 @@ namespace WhereWeFishin.Database.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("VideoAnalyses");
+                    b.ToTable("VideoAnalyses", (string)null);
                 });
 
             modelBuilder.Entity("WhereWeFishin.Core.Entities.Catch", b =>
@@ -359,11 +363,18 @@ namespace WhereWeFishin.Database.Migrations
 
             modelBuilder.Entity("WhereWeFishin.Core.Entities.FishingSpot", b =>
                 {
+                    b.HasOne("WhereWeFishin.Core.Entities.User", "Manager")
+                        .WithMany()
+                        .HasForeignKey("ManagerId")
+                        .OnDelete(DeleteBehavior.ClientSetNull);
+
                     b.HasOne("WhereWeFishin.Core.Entities.User", "User")
                         .WithMany("FishingSpots")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Manager");
 
                     b.Navigation("User");
                 });

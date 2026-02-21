@@ -11,6 +11,8 @@ export interface FishingSpot {
   imageUrl?: string;
   pricePerHour: number;
   userId: number;
+  managerId?: number;
+  managerName?: string;
   createdAt: Date;
 }
 
@@ -21,6 +23,7 @@ export interface CreateFishingSpot {
   longitude: number;
   pricePerHour?: number;
   userId: number;
+  managerId?: number;
 }
 
 @Injectable({

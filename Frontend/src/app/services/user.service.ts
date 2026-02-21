@@ -15,6 +15,10 @@ export class UserService {
     return this.http.get<User>(`${this.apiUrl}/${id}`);
   }
 
+  getManagers(): Observable<User[]> {
+    return this.http.get<User[]>(`${this.apiUrl}/managers`);
+  }
+
   updateUser(id: number, userData: UpdateUser): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}`, userData);
   }
