@@ -72,6 +72,16 @@ public class VideoAnalysisController : ControllerBase
 
             using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             var result = await _fishRecognitionService.AnalyzeVideoAsync(stream, uniqueFileName, userId);
+
+            try
+            {
+                if (System.IO.File.Exists(filePath))
+                    System.IO.File.Delete(filePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not delete uploaded file: {FilePath}", filePath);
+            }
             
             if (result.Success)
             {
@@ -114,9 +124,37 @@ public class VideoAnalysisController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAnalysis(int id)
     {
-        if (!await _videoRepository.ExistsAsync(id))
-        {
+        var analysis = await _videoRepository.GetByIdAsync(id);
+        if (analysis == null)
             return NotFound();
+
+        if (!string.IsNullOrEmpty(analysis.ProcessedVideoUrl))
+        {
+            try
+            {
+                var outputFilename = Path.GetFileName(analysis.ProcessedVideoUrl.Replace('/', Path.DirectorySeparatorChar));
+                var httpClient = _httpClientFactory.CreateClient();
+                await httpClient.DeleteAsync($"http://localhost:5001/api/delete-output/{outputFilename}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not delete processed video for analysis {Id}", id);
+            }
+        }
+
+        if (!string.IsNullOrEmpty(analysis.VideoUrl))
+        {
+            try
+            {
+                var uploadFilename = Path.GetFileName(analysis.VideoUrl.Replace('/', Path.DirectorySeparatorChar));
+                var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", uploadFilename);
+                if (System.IO.File.Exists(uploadPath))
+                    System.IO.File.Delete(uploadPath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not delete original video for analysis {Id}", id);
+            }
         }
 
         await _videoRepository.DeleteAsync(id);
@@ -244,11 +282,9 @@ public class VideoAnalysisController : ControllerBase
         string? processedVideoUrl = entity.ProcessedVideoUrl;
         if (!string.IsNullOrEmpty(processedVideoUrl) && !processedVideoUrl.StartsWith("http"))
         {
-            // Use the proxy endpoint to serve processed videos from Python service
             var request = HttpContext.Request;
             var baseUrl = $"{request.Scheme}://{request.Host}";
             
-            // Extract filename from path like "outputs/filename.mp4"
             var filename = processedVideoUrl.Replace("outputs/", "");
             processedVideoUrl = $"{baseUrl}/api/videoanalysis/processed-video/{filename}";
         }

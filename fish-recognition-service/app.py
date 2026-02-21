@@ -205,13 +205,30 @@ def analyze_video():
         
         results = process_video(video_path, output_path, use_ffmpeg_reencode=use_ffmpeg, use_av1=use_av1)
         results['processed_video_url'] = f"outputs/{output_filename}"
-        
+
+        try:
+            if os.path.exists(video_path):
+                os.remove(video_path)
+        except Exception as e:
+            print(f"Warning: could not delete upload file: {e}")
+
         return jsonify({'success': True, 'results': results}), 200
         
     except Exception as e:
         print(f"Error: {str(e)}")
         import traceback
         traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/delete-output/<path:filename>', methods=['DELETE'])
+def delete_output(filename):
+    file_path = os.path.join(OUTPUT_FOLDER, filename)
+    try:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        print(f"Error deleting output file: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 def serve_file(folder, filename):

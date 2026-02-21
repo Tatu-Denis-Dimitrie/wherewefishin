@@ -89,7 +89,7 @@
 
 /* Preview */
 .preview-content { text-align: center; }
-.video-preview { width: 100%; max-height: 260px; border-radius: var(--radius-md); background: #000; }
+.video-preview { width: 100%; max-height: 260px; border-radius: var(--radius-md); background: #000; object-fit: contain; }
 .preview-info { margin-top: .75rem; display: flex; justify-content: center; gap: 1rem; font-size: .85rem; color: var(--text-muted); }
 .file-name { font-weight: 600; color: var(--text-primary); }
 
@@ -166,7 +166,7 @@
 
 .card-media video {
   width: 100%; display: block;
-  max-height: 200px; object-fit: cover;
+  max-height: 200px; object-fit: contain;
   background: #000;
 }
 .card-body { padding: 1rem 1.25rem; }
