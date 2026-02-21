@@ -7,8 +7,10 @@ public class FishingSpot : BaseEntity
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public string? ImageUrl { get; set; }
+    public decimal PricePerHour { get; set; } = 0;
     public int UserId { get; set; }
 
     public User User { get; set; } = null!;
     public ICollection<Catch> Catches { get; set; } = new List<Catch>();
+    public ICollection<FishingSession> Sessions { get; set; } = new List<FishingSession>();
 }

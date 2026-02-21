@@ -11,10 +11,9 @@ export class VideoAnalysisService {
 
   constructor(private http: HttpClient) {}
 
-  uploadVideo(videoFile: File, userId: number): Observable<AnalysisResult> {
+  uploadVideo(videoFile: File): Observable<AnalysisResult> {
     const formData = new FormData();
     formData.append('video', videoFile);
-    formData.append('userId', userId.toString());
 
     return this.http.post<AnalysisResult>(`${this.apiUrl}/upload`, formData);
   }

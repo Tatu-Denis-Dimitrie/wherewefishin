@@ -9,6 +9,7 @@ export interface FishingSpot {
   latitude: number;
   longitude: number;
   imageUrl?: string;
+  pricePerHour: number;
   userId: number;
   createdAt: Date;
 }
@@ -18,6 +19,7 @@ export interface CreateFishingSpot {
   description?: string;
   latitude: number;
   longitude: number;
+  pricePerHour?: number;
   userId: number;
 }
 

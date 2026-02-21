@@ -131,9 +131,10 @@
 /* ---- Dashboard Grid ---- */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 380px 1fr;
+  grid-template-columns: 360px 1fr;
   gap: 24px;
   flex: 1;
+  align-items: start;
 }
 
 /* ---- Statistics Section ---- */
@@ -360,7 +361,7 @@
 .map-card .map-container {
   width: 100%;
   flex: 1;
-  min-height: 380px;
+  min-height: 560px;
 }
 
 /* Expanded map — fills the viewport */

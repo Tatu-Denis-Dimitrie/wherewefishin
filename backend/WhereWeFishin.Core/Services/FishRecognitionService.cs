@@ -108,7 +108,12 @@ public class FishRecognitionService : IFishRecognitionService
         {
             analysis.Status = "Failed";
             analysis.ErrorMessage = ex.Message;
-            await _videoRepository.UpdateAsync(analysis);
+
+            // Only update if the row was actually persisted (AddAsync succeeded)
+            if (analysis.Id > 0)
+            {
+                try { await _videoRepository.UpdateAsync(analysis); } catch { /* best-effort */ }
+            }
 
             return new AnalysisResultDto
             {

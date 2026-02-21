@@ -7,6 +7,7 @@ import { FishingSpotService, FishingSpot, CreateFishingSpot } from '../../servic
 import { AdminService, AdminStats } from '../../services/admin.service';
 import { VideoAnalysisService } from '../../services/video-analysis.service';
 import { VideoAnalysis } from '../../models/video-analysis.model';
+import { CartService } from '../../services/cart.service';
 import * as L from 'leaflet';
 
 @Component({
@@ -54,7 +55,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     private fishingSpotService: FishingSpotService,
     private adminService: AdminService,
     private videoAnalysisService: VideoAnalysisService,
-    private router: Router
+    private router: Router,
+    public cartService: CartService
   ) {}
 
   ngOnInit(): void {
@@ -119,28 +121,45 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     if (this.map) this.map.remove();
   }
 
-  private initMap(): void {
-    const iconDefault = L.icon({
-      iconRetinaUrl: 'assets/marker-icon-2x.png',
-      iconUrl: 'assets/marker-icon.png',
-      shadowUrl: 'assets/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      tooltipAnchor: [16, -28],
-      shadowSize: [41, 41]
+  private createSpotIcon(inCart: boolean): L.DivIcon {
+    const fillColor = inCart ? '#166534' : '#4a7c30';
+    const ringColor = inCart ? '#4ade80' : '#c8e6c0';
+    return L.divIcon({
+      className: '',
+      html: `
+        <div style="filter:drop-shadow(0 3px 6px rgba(0,0,0,0.45))">
+          <svg xmlns="http://www.w3.org/2000/svg" width="34" height="46" viewBox="0 0 34 46">
+            <path d="M17 0C7.611 0 0 7.611 0 17c0 11.046 17 29 17 29S34 28.046 34 17C34 7.611 26.389 0 17 0z"
+              fill="${fillColor}"/>
+            <circle cx="17" cy="16" r="9.5" fill="white" opacity="0.15"/>
+            <circle cx="17" cy="16" r="8" fill="white"/>
+            <g transform="translate(17,16)">
+              <path d="M-5.5 0 C-3.5 -3.5 1 -5 4 0 C1 5 -3.5 3.5 -5.5 0Z"
+                fill="${fillColor}" stroke="${fillColor}" stroke-width="0.5"/>
+              <path d="M-7.5 -1.5 L-5.5 0 L-7.5 1.5Z"
+                fill="${fillColor}"/>
+              <circle cx="2" cy="-0.8" r="1.1" fill="white"/>
+              <circle cx="2" cy="-0.8" r="0.5" fill="${fillColor}"/>
+            </g>
+          </svg>
+        </div>`,
+      iconSize: [34, 46],
+      iconAnchor: [17, 46],
+      popupAnchor: [0, -48]
     });
-    L.Marker.prototype.options.icon = iconDefault;
+  }
 
+  private initMap(): void {
     this.map = L.map('map', {
       center: [45.9432, 24.9668],
       zoom: 8,
-      maxZoom: 18
+      maxZoom: 20
     });
 
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri',
-      maxZoom: 18
+    L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+      attribution: '&copy; <a href="https://maps.google.com">Google Maps</a>',
+      maxZoom: 20,
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
     }).addTo(this.map);
 
     this.markersLayer = new L.LayerGroup();
@@ -162,12 +181,21 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.markerSpotMap.clear();
 
     this.spots.forEach(spot => {
-      const marker = L.marker([spot.latitude, spot.longitude])
-        .bindPopup(this.buildPopupContent(spot));
+      const marker = L.marker([spot.latitude, spot.longitude], {
+        icon: this.createSpotIcon(this.cartService.isInCart(spot.id))
+      }).bindPopup(this.buildPopupContent(spot), { maxWidth: 220 });
 
       marker.on('click', () => {
         if (this.isDeleteMode && this.canEdit) {
           this.deleteSpot(spot, marker);
+        }
+      });
+
+      marker.on('popupopen', (e: any) => {
+        const container: HTMLElement | undefined = e.popup.getElement();
+        const btn = container?.querySelector<HTMLButtonElement>('.popup-cart-btn');
+        if (btn) {
+          btn.onclick = () => this.addToCart(spot);
         }
       });
 
@@ -177,14 +205,55 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private buildPopupContent(spot: FishingSpot): string {
-    let html = `<div style="min-width:160px">
-      <strong style="font-size:15px">${spot.name}</strong>`;
+    const inCart = this.cartService.isInCart(spot.id);
+
+    const cartIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;margin-bottom:1px"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`;
+    const checkIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;margin-bottom:1px"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+    const btnIcon = inCart ? checkIconSvg : cartIconSvg;
+    const btnLabel = inCart ? 'In Cart — Go to Cart' : 'Add to Cart';
+    const btnStyle = inCart
+      ? 'background:#14532d;color:#4ade80;border:1px solid #166534;'
+      : 'background:#4a7c30;color:#fff;border:none;';
+
+    const priceHtml = spot.pricePerHour > 0
+      ? `<div style="display:flex;align-items:center;gap:6px;margin:6px 0 2px">
+           <span style="background:#4a7c3022;color:#4a7c30;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #4a7c3044">${spot.pricePerHour} RON / h</span>
+         </div>`
+      : '';
+
+    let html = `<div style="min-width:195px;font-family:inherit">`;
+    html += `<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:3px">${spot.name}</div>`;
     if (spot.description) {
-      html += `<br><span style="color:#64748b;font-size:13px">${spot.description}</span>`;
+      html += `<div style="color:#64748b;font-size:12px;margin-bottom:4px;line-height:1.4">${spot.description}</div>`;
     }
-    html += `<br><span style="color:#94a3b8;font-size:11px">${spot.latitude.toFixed(5)}, ${spot.longitude.toFixed(5)}</span>`;
+    html += priceHtml;
+    html += `<div style="color:#94a3b8;font-size:10px;margin-bottom:10px">${spot.latitude.toFixed(5)}, ${spot.longitude.toFixed(5)}</div>`;
+    html += `<button class="popup-cart-btn" style="display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;transition:filter .15s;${btnStyle}">${btnIcon}${btnLabel}</button>`;
     html += `</div>`;
     return html;
+  }
+
+  addToCart(spot: FishingSpot): void {
+    if (this.cartService.isInCart(spot.id)) {
+      this.router.navigate(['/cart']);
+      return;
+    }
+    const defaultStart = new Date();
+    defaultStart.setHours(defaultStart.getHours() + 1, 0, 0, 0);
+    defaultStart.setMinutes(defaultStart.getMinutes() - defaultStart.getTimezoneOffset());
+    this.cartService.addItem({
+      spotId: spot.id,
+      spotName: spot.name,
+      latitude: spot.latitude,
+      longitude: spot.longitude,
+      pricePerHour: spot.pricePerHour,
+      durationHours: 24,
+      startDate: defaultStart.toISOString().slice(0, 16)
+    });
+    this.showToast(`"${spot.name}" added to cart`, 'success');
+    // Re-render markers so button state updates
+    this.renderMarkers();
   }
 
   toggleAddMode(): void {

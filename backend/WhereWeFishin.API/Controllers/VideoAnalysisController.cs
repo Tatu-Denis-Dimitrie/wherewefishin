@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Interfaces;
@@ -27,8 +29,13 @@ public class VideoAnalysisController : ControllerBase
     }
 
     [HttpPost("upload")]
-    public async Task<ActionResult<AnalysisResultDto>> UploadVideo([FromForm] IFormFile video, [FromForm] int userId)
+    [Authorize]
+    public async Task<ActionResult<AnalysisResultDto>> UploadVideo([FromForm] IFormFile video)
     {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId))
+            return Unauthorized(new { error = "Invalid token" });
+
         if (video == null || video.Length == 0)
         {
             return BadRequest(new { error = "No video file provided" });

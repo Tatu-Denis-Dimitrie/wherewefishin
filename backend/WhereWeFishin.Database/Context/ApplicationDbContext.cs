@@ -13,6 +13,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<FishingSpot> FishingSpots { get; set; }
     public DbSet<Catch> Catches { get; set; }
     public DbSet<VideoAnalysis> VideoAnalyses { get; set; }
+    public DbSet<FishingSession> FishingSessions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -43,6 +43,7 @@ public class FishingSpotsController : ControllerBase
             Latitude = createSpotDto.Latitude,
             Longitude = createSpotDto.Longitude,
             ImageUrl = createSpotDto.ImageUrl,
+            PricePerHour = createSpotDto.PricePerHour,
             UserId = createSpotDto.UserId
         };
 
@@ -62,6 +63,7 @@ public class FishingSpotsController : ControllerBase
         spot.Latitude = updateSpotDto.Latitude ?? spot.Latitude;
         spot.Longitude = updateSpotDto.Longitude ?? spot.Longitude;
         spot.ImageUrl = updateSpotDto.ImageUrl ?? spot.ImageUrl;
+        spot.PricePerHour = updateSpotDto.PricePerHour ?? spot.PricePerHour;
 
         await _spotRepository.UpdateAsync(spot);
         return NoContent();
@@ -85,6 +87,7 @@ public class FishingSpotsController : ControllerBase
         Latitude = spot.Latitude,
         Longitude = spot.Longitude,
         ImageUrl = spot.ImageUrl,
+        PricePerHour = spot.PricePerHour,
         UserId = spot.UserId,
         CreatedAt = spot.CreatedAt
     };

@@ -136,12 +136,6 @@ export class FishRecognition implements OnInit, OnDestroy {
       return;
     }
 
-    const userId = this.authService.getUserId();
-    if (!userId) {
-      this.error = 'User not authenticated';
-      return;
-    }
-
     this.uploading = true;
     this.error = '';
     this.uploadProgress = 0;
@@ -153,7 +147,7 @@ export class FishRecognition implements OnInit, OnDestroy {
       }
     }, 500);
 
-    this.videoAnalysisService.uploadVideo(this.selectedFile, userId).subscribe({
+    this.videoAnalysisService.uploadVideo(this.selectedFile).subscribe({
       next: (result) => {
         clearInterval(progressInterval);
         this.uploadProgress = 100;

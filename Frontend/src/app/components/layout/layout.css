@@ -123,6 +123,32 @@
   min-height: 100vh;
 }
 
+/* ── Cart icon with badge ── */
+.cart-icon-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  background: var(--accent-moss);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px var(--bg-surface);
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .sidebar {
