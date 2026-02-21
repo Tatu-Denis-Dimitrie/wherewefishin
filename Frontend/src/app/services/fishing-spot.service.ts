@@ -38,6 +38,10 @@ export class FishingSpotService {
     return this.http.get<FishingSpot[]>(this.apiUrl);
   }
 
+  getById(id: number): Observable<FishingSpot> {
+    return this.http.get<FishingSpot>(`${this.apiUrl}/${id}`);
+  }
+
   create(spot: CreateFishingSpot): Observable<FishingSpot> {
     return this.http.post<FishingSpot>(this.apiUrl, spot);
   }

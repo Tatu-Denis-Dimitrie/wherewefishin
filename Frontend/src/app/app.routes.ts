@@ -7,6 +7,7 @@ import { Profile } from './components/profile/profile';
 import { FishRecognition } from './components/fish-recognition/fish-recognition';
 import { Admin } from './components/admin/admin';
 import { Cart } from './components/cart/cart';
+import { FishingSpotDetail } from './components/fishing-spot-detail/fishing-spot-detail';
 import { authGuard, adminGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
@@ -22,7 +23,8 @@ export const routes: Routes = [
       { path: 'profile', component: Profile },
       { path: 'fish-recognition', component: FishRecognition },
       { path: 'admin', component: Admin, canActivate: [adminGuard] },
-      { path: 'cart', component: Cart }
+      { path: 'cart', component: Cart },
+      { path: 'spots/:id', component: FishingSpotDetail }
     ]
   }
 ];

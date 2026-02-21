@@ -207,6 +207,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         if (btn) {
           btn.onclick = () => this.addToCart(spot);
         }
+        const viewBtn = container?.querySelector<HTMLButtonElement>('.popup-view-btn');
+        if (viewBtn) {
+          viewBtn.onclick = () => this.router.navigate(['/spots', spot.id]);
+        }
       });
 
       this.markerSpotMap.set(marker, spot);
@@ -240,6 +244,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     html += priceHtml;
     html += `<div style="color:#94a3b8;font-size:10px;margin-bottom:10px">${spot.latitude.toFixed(5)}, ${spot.longitude.toFixed(5)}</div>`;
     html += `<button class="popup-cart-btn" style="display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;transition:filter .15s;${btnStyle}">${btnIcon}${btnLabel}</button>`;
+    const eyeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;margin-bottom:1px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    html += `<button class="popup-view-btn" style="display:flex;align-items:center;justify-content:center;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;margin-top:6px;background:transparent;color:#94a3b8;border:1px solid #334155;transition:all .15s">${eyeSvg}View Spot</button>`;
     html += `</div>`;
     return html;
   }
