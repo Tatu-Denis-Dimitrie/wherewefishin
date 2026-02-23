@@ -114,8 +114,8 @@ export class FishRecognition implements OnInit, OnDestroy {
       return;
     }
 
-    if (file.size > 100 * 1024 * 1024) {
-      this.error = 'File size exceeds 100MB limit';
+    if (file.size > 150 * 1024 * 1024) {
+      this.error = 'File size exceeds 150MB limit';
       return;
     }
 
@@ -123,6 +123,18 @@ export class FishRecognition implements OnInit, OnDestroy {
     this.selectedFile = file;
     this.error = '';
     this.videoPreviewUrl = URL.createObjectURL(file);
+  }
+
+  clearSelection(): void {
+    this.selectedFile = null;
+    this.error = '';
+    this.successMessage = '';
+    this.uploadProgress = 0;
+    this.cleanupPreviewUrl();
+    
+    // Reset file input
+    const fileInput = document.getElementById('videoFile') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
   }
 
   uploadVideo(): void {

@@ -106,7 +106,7 @@ def process_video(video_path, output_path, use_ffmpeg_reencode=True, use_av1=Fal
         batch_frames = all_frames[batch_start:batch_end]
         
         results = model(batch_frames, stream=False, verbose=False, imgsz=IMG_SIZE, 
-                       half=(device == 'cuda' and USE_HALF_PRECISION), conf=0.3)
+                       half=(device == 'cuda' and USE_HALF_PRECISION), conf=0.6)
         
         for i, result in enumerate(results):
             frame_number = batch_start + i + 1

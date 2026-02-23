@@ -30,6 +30,8 @@ public class VideoAnalysisController : ControllerBase
 
     [HttpPost("upload")]
     [Authorize]
+    [RequestSizeLimit(150 * 1024 * 1024)] // 150MB
+    [RequestFormLimits(MultipartBodyLengthLimit = 150 * 1024 * 1024)]
     public async Task<ActionResult<AnalysisResultDto>> UploadVideo([FromForm] IFormFile video)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -49,9 +51,9 @@ public class VideoAnalysisController : ControllerBase
             return BadRequest(new { error = "Invalid file type. Allowed: mp4, avi, mov, mkv" });
         }
 
-        if (video.Length > 100 * 1024 * 1024)
+        if (video.Length > 150 * 1024 * 1024)
         {
-            return BadRequest(new { error = "File size exceeds 100MB limit" });
+            return BadRequest(new { error = "File size exceeds 150MB limit" });
         }
 
         try

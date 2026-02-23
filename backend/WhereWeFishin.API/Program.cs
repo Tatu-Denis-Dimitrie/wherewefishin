@@ -12,8 +12,21 @@ using WhereWeFishin.Database.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure Kestrel to accept larger files (up to 150MB)
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.Limits.MaxRequestBodySize = 150 * 1024 * 1024; // 150MB
+});
+
 // Add services to the container
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.MaxModelBindingCollectionSize = int.MaxValue;
+})
+.AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+});
 builder.Services.AddEndpointsApiExplorer();
 
 // Configure Swagger/OpenAPI

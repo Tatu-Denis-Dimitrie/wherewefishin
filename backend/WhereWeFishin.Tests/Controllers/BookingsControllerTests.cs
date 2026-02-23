@@ -64,7 +64,6 @@ public class BookingsControllerTests
         Status = SessionStatus.Confirmed
     };
 
-    // ─── CreateBooking ────────────────────────────────────────────────────────
 
     [Fact]
     public async Task CreateBooking_WithValidData_ReturnsCreated()
@@ -213,7 +212,6 @@ public class BookingsControllerTests
         Assert.Equal(360m, booking.TotalPrice); // 7.5 * 48
     }
 
-    // ─── GetMyBookings ────────────────────────────────────────────────────────
 
     [Fact]
     public async Task GetMyBookings_ReturnsOnlyCurrentUserBookings()
@@ -235,7 +233,6 @@ public class BookingsControllerTests
         Assert.Single(bookings);
     }
 
-    // ─── GetBooking ───────────────────────────────────────────────────────────
 
     [Fact]
     public async Task GetBooking_WhenOwner_ReturnsBooking()
@@ -299,7 +296,6 @@ public class BookingsControllerTests
         Assert.IsType<NotFoundResult>(result.Result);
     }
 
-    // ─── CancelBooking ────────────────────────────────────────────────────────
 
     [Fact]
     public async Task CancelBooking_WhenOwnerAndConfirmed_ReturnsNoContent()
