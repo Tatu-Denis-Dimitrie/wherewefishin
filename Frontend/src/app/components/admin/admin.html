@@ -94,6 +94,71 @@
     </div>
   </section>
 
+  <!-- Fishing Spots table -->
+  <section class="users-section">
+    <h2>Fishing Spots Management</h2>
+    <div class="table-wrap">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>Spot Name</th>
+            <th>Location</th>
+            <th>Manager</th>
+            <th>Price per Hour</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (spot of fishingSpots; track spot.id) {
+            <tr>
+              <td class="cell-user">
+                <div class="spot-info">
+                  <span class="spot-name">{{ spot.name }}</span>
+                  @if (spot.description) {
+                    <span class="spot-desc">{{ spot.description }}</span>
+                  }
+                </div>
+              </td>
+              <td class="cell-location">
+                {{ spot.latitude.toFixed(4) }}, {{ spot.longitude.toFixed(4) }}
+              </td>
+              <td>
+                @if (spot.managerName) {
+                  <span class="manager-name">{{ spot.managerName }}</span>
+                } @else {
+                  <span class="no-manager">No manager</span>
+                }
+              </td>
+              <td class="cell-price">
+                @if (editingSpotId === spot.id) {
+                  <div class="price-edit">
+                    <input 
+                      type="number" 
+                      [(ngModel)]="editingSpotPrice" 
+                      min="0" 
+                      step="0.01"
+                      class="price-input"
+                    >
+                    <button class="btn-save-sm" (click)="saveFishingSpotPrice(spot)">Save</button>
+                    <button class="btn-cancel-sm" (click)="cancelEditingPrice()">Cancel</button>
+                  </div>
+                } @else {
+                  <div class="price-display">
+                    <span class="price-value">${{ spot.pricePerHour.toFixed(2) }}</span>
+                    <button class="btn-edit-sm" (click)="startEditingPrice(spot)">Edit</button>
+                  </div>
+                }
+              </td>
+              <td class="cell-actions">
+                <button class="btn-danger-sm" (click)="deleteFishingSpot(spot)">Delete</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   <!-- Loading -->
   <div class="loading-spinner" *ngIf="loading">
     <div class="spinner"></div>

@@ -231,6 +231,10 @@
           <label for="spotDesc">Description</label>
           <textarea id="spotDesc" [(ngModel)]="newSpotDescription" placeholder="Tell us about this spot..." rows="3"></textarea>
         </div>
+        <div class="form-group">
+          <label for="spotPrice">Price per Hour (RON)</label>
+          <input id="spotPrice" type="number" [(ngModel)]="newSpotPrice" min="0" step="0.01" placeholder="0.00">
+        </div>
         @if (managers.length > 0) {
           <div class="form-group">
             <label for="spotManager">Assign Manager</label>

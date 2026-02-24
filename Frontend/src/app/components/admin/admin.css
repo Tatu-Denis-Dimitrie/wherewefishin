@@ -139,6 +139,93 @@
 }
 .btn-danger-sm:hover { background: rgba(196,68,45,.12); }
 
+/* ── Fishing Spots Specific Styles ── */
+.spot-info { display: flex; flex-direction: column; }
+.spot-name { font-weight: 600; color: var(--text-primary); font-size: .88rem; }
+.spot-desc { font-size: .78rem; color: var(--text-muted); }
+
+.cell-location { color: var(--text-secondary); font-size: .82rem; font-family: 'Courier New', monospace; }
+
+.manager-name { font-size: .88rem; color: var(--text-primary); }
+.no-manager { font-size: .82rem; color: var(--text-muted); font-style: italic; }
+
+.cell-price { min-width: 200px; }
+
+.price-display {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.price-value {
+  font-weight: 600;
+  color: var(--accent-moss);
+  font-size: .95rem;
+  min-width: 60px;
+}
+
+.btn-edit-sm {
+  padding: .3rem .6rem;
+  border: 1px solid var(--accent-moss);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--accent-moss);
+  font-size: .75rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.btn-edit-sm:hover { background: rgba(125,179,74,.12); }
+
+.price-edit {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+.price-input {
+  width: 80px;
+  padding: .35rem .5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-size: .85rem;
+  font-family: inherit;
+}
+.price-input:focus {
+  outline: none;
+  border-color: var(--accent-moss);
+}
+
+.btn-save-sm {
+  padding: .3rem .6rem;
+  border: 1px solid var(--accent-moss);
+  border-radius: var(--radius-md);
+  background: var(--accent-moss);
+  color: white;
+  font-size: .75rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity var(--transition);
+}
+.btn-save-sm:hover { opacity: 0.85; }
+
+.btn-cancel-sm {
+  padding: .3rem .6rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: .75rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.btn-cancel-sm:hover { background: var(--bg-card); }
+
 /* ── Loading ── */
 .loading-spinner { display: flex; justify-content: center; padding: 3rem; }
 .spinner {

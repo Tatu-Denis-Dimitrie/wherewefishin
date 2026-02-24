@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { AdminService, AdminStats } from '../../services/admin.service';
 import { User } from '../../models/user.model';
+import { FishingSpot } from '../../services/fishing-spot.service';
 
 @Component({
   selector: 'app-admin',
@@ -15,9 +16,12 @@ import { User } from '../../models/user.model';
 export class Admin implements OnInit {
   stats: AdminStats | null = null;
   users: User[] = [];
+  fishingSpots: FishingSpot[] = [];
   loading = true;
   error = '';
   successMessage = '';
+  editingSpotId: number | null = null;
+  editingSpotPrice: number = 0;
 
   constructor(
     private authService: AuthService,
@@ -50,6 +54,15 @@ export class Admin implements OnInit {
       error: () => {
         this.error = 'Failed to load users';
         this.loading = false;
+      }
+    });
+
+    this.adminService.getFishingSpots().subscribe({
+      next: (spots) => {
+        this.fishingSpots = spots;
+      },
+      error: () => {
+        this.error = 'Failed to load fishing spots';
       }
     });
   }
@@ -91,6 +104,55 @@ export class Admin implements OnInit {
       },
       error: () => {
         this.error = 'Failed to delete user';
+        setTimeout(() => this.error = '', 3000);
+      }
+    });
+  }
+
+  startEditingPrice(spot: FishingSpot): void {
+    this.editingSpotId = spot.id;
+    this.editingSpotPrice = spot.pricePerHour;
+  }
+
+  cancelEditingPrice(): void {
+    this.editingSpotId = null;
+    this.editingSpotPrice = 0;
+  }
+
+  saveFishingSpotPrice(spot: FishingSpot): void {
+    if (this.editingSpotPrice < 0) {
+      this.error = 'Price cannot be negative';
+      setTimeout(() => this.error = '', 3000);
+      return;
+    }
+
+    this.adminService.updateFishingSpot(spot.id, { 
+      pricePerHour: this.editingSpotPrice 
+    }).subscribe({
+      next: () => {
+        spot.pricePerHour = this.editingSpotPrice;
+        this.editingSpotId = null;
+        this.successMessage = `Price updated for "${spot.name}"`;
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: () => {
+        this.error = 'Failed to update fishing spot price';
+        setTimeout(() => this.error = '', 3000);
+      }
+    });
+  }
+
+  deleteFishingSpot(spot: FishingSpot): void {
+    if (!confirm(`Delete fishing spot "${spot.name}"? This cannot be undone.`)) return;
+
+    this.adminService.deleteFishingSpot(spot.id).subscribe({
+      next: () => {
+        this.successMessage = `Fishing spot "${spot.name}" deleted`;
+        this.loadData();
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: () => {
+        this.error = 'Failed to delete fishing spot';
         setTimeout(() => this.error = '', 3000);
       }
     });

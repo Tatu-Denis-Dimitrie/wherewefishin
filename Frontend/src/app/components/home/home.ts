@@ -50,6 +50,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   newSpotLng = 0;
   newSpotName = '';
   newSpotDescription = '';
+  newSpotPrice = 0;
   newSpotManagerId: number | null = null;
   managers: User[] = [];
   private pendingMarker: L.Marker | null = null;
@@ -166,7 +167,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       maxZoom: 20
     });
 
-    L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+    L.tileLayer('https://mt1.google.com/vt/lyrs=y&hl=ro&x={x}&y={y}&z={z}', {
       attribution: '&copy; <a href="https://maps.google.com">Google Maps</a>',
       maxZoom: 20,
       subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
@@ -293,6 +294,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.newSpotLng = e.latlng.lng;
     this.newSpotName = '';
     this.newSpotDescription = '';
+    this.newSpotPrice = 0;
     this.showSpotForm = true;
 
     this.pendingMarker = L.marker([e.latlng.lat, e.latlng.lng], { opacity: 0.6 }).addTo(this.map);
@@ -314,6 +316,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       description: this.newSpotDescription.trim() || undefined,
       latitude: this.newSpotLat,
       longitude: this.newSpotLng,
+      pricePerHour: this.newSpotPrice,
       userId: userId,
       managerId: this.newSpotManagerId ?? undefined
     };
