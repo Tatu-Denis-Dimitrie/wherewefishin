@@ -22,6 +22,9 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   private map!: L.Map;
   private markersLayer!: L.LayerGroup;
   private markerSpotMap = new Map<L.Marker, FishingSpot>();
+  private userLocationMarker: L.Marker | null = null;
+  private userLocationCircle: L.Circle | null = null;
+  locatingUser = false;
 
   spots: FishingSpot[] = [];
   isAddMode = false;
@@ -78,6 +81,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.initMap();
     this.loadSpots();
+    // Auto-locate user on page load
+    setTimeout(() => this.locateUser(), 500);
   }
 
   private loadDashboardData(): void {
@@ -271,6 +276,59 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.showToast(`"${spot.name}" added to cart`, 'success');
     // Re-render markers so button state updates
     this.renderMarkers();
+  }
+
+  locateUser(): void {
+    if (!navigator.geolocation) {
+      this.showToast('Geolocation is not supported by your browser', 'error');
+      return;
+    }
+    this.locatingUser = true;
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        this.locatingUser = false;
+        const { latitude, longitude, accuracy } = position.coords;
+        const latlng = L.latLng(latitude, longitude);
+
+        // Remove previous location layers
+        if (this.userLocationMarker) this.map.removeLayer(this.userLocationMarker);
+        if (this.userLocationCircle) this.map.removeLayer(this.userLocationCircle);
+
+        // Accuracy circle
+        this.userLocationCircle = L.circle(latlng, {
+          radius: accuracy,
+          color: '#3b82f6',
+          fillColor: '#3b82f6',
+          fillOpacity: 0.1,
+          weight: 1
+        }).addTo(this.map);
+
+        // Pulsing dot icon
+        const icon = L.divIcon({
+          className: '',
+          html: `<div class="user-location-dot"><div class="user-location-pulse"></div></div>`,
+          iconSize: [20, 20],
+          iconAnchor: [10, 10]
+        });
+
+        this.userLocationMarker = L.marker(latlng, { icon })
+          .bindPopup(`<b>Locația ta</b><br>Precizie: ~${Math.round(accuracy)} m`)
+          .addTo(this.map);
+
+        this.map.flyTo(latlng, 14, { duration: 1.5 });
+        this.showToast('Locație găsită!', 'success');
+      },
+      (err) => {
+        this.locatingUser = false;
+        const messages: Record<number, string> = {
+          1: 'Accesul la locație a fost refuzat',
+          2: 'Locația nu poate fi determinată',
+          3: 'Cererea de locație a expirat'
+        };
+        this.showToast(messages[err.code] ?? 'Eroare la obținerea locației', 'error');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   }
 
   toggleAddMode(): void {

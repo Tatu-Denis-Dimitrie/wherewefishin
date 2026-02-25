@@ -395,6 +395,43 @@
   color: var(--accent-moss);
 }
 
+/* ---- Locate Me button ---- */
+.map-locate-btn {
+  position: absolute;
+  top: 60px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: #3b82f6;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  transition: all var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+.map-locate-btn:hover:not(:disabled) {
+  background: #1d3a6e22;
+  border-color: #3b82f6;
+}
+.map-locate-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.locate-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #3b82f644;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* ---- Spot Form Overlay ---- */
 .spot-form-overlay {
   position: fixed;

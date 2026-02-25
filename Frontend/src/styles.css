@@ -96,3 +96,38 @@ body {
   background: var(--accent-moss);
   color: var(--bg-deep);
 }
+
+/* ---- User location marker (Leaflet DivIcon) ---- */
+.user-location-dot {
+  width: 20px;
+  height: 20px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.user-location-dot::after {
+  content: '';
+  width: 14px;
+  height: 14px;
+  background: #3b82f6;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(59,130,246,0.7);
+  position: absolute;
+}
+.user-location-pulse {
+  width: 40px;
+  height: 40px;
+  background: rgba(59, 130, 246, 0.25);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: locationPulse 2s ease-out infinite;
+}
+@keyframes locationPulse {
+  0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+}
