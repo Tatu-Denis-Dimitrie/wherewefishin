@@ -2,10 +2,12 @@ import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CartService } from '../../services/cart.service';
 import { BookingService } from '../../services/booking.service';
 import { AuthService } from '../../services/auth.service';
 import { CartItem, Booking } from '../../models/booking.model';
+import QRCode from 'qrcode';
 
 @Component({
   selector: 'app-cart',
@@ -26,6 +28,9 @@ export class Cart implements OnInit {
 
   checkingOut = false;
 
+  qrCodeMap: Record<number, string> = {};
+  expandedQr = new Set<number>();
+
   constructor(
     public cartService: CartService,
     private bookingService: BookingService,
@@ -43,11 +48,41 @@ export class Cart implements OnInit {
       next: (bookings) => {
         this.myBookings = bookings;
         this.loadingBookings = false;
+        this.generateQrCodes(bookings);
       },
       error: () => {
         this.loadingBookings = false;
       }
     });
+  }
+
+  private async generateQrCodes(bookings: Booking[]): Promise<void> {
+    for (const booking of bookings) {
+      if (this.qrCodeMap[booking.id]) continue;
+      const content = [
+        `WhereWeFishin - Booking #${booking.id}`,
+        `Username: ${this.authService.getUsername()}`,
+        `Booking ID: #${booking.id}`,
+        `Spot: ${booking.fishingSpotName}`,
+        `Start: ${new Date(booking.startDate).toLocaleString('ro-RO')}`,
+        `Duration: ${booking.durationHours}h`,
+        `Total: ${booking.totalPrice.toFixed(2)} RON`,
+        `Status: ${booking.status}`
+      ].join('\n');
+      this.qrCodeMap[booking.id] = await QRCode.toDataURL(content, { width: 180, margin: 1 });
+    }
+  }
+
+  toggleQr(id: number): void {
+    if (this.expandedQr.has(id)) {
+      this.expandedQr.delete(id);
+    } else {
+      this.expandedQr.add(id);
+    }
+  }
+
+  isQrExpanded(id: number): boolean {
+    return this.expandedQr.has(id);
   }
 
   updateDuration(spotId: number, durationStr: string): void {
@@ -109,11 +144,18 @@ export class Cart implements OnInit {
             }
           }
         },
-        error: () => {
+        error: (err: HttpErrorResponse) => {
           errors++;
+          const msg = err.error ?? err.message ?? 'Unknown error';
+          const errorText = typeof msg === 'string' ? msg : JSON.stringify(msg);
           if (completed + errors === items.length) {
             this.checkingOut = false;
-            this.showToast(`${completed} booking(s) confirmed, ${errors} failed`, 'error');
+            this.showToast(
+              errors === items.length
+                ? errorText
+                : `${completed} booking(s) confirmed, ${errors} failed: ${errorText}`,
+              'error'
+            );
             this.loadBookings();
           }
         }
@@ -125,6 +167,8 @@ export class Cart implements OnInit {
     if (!confirm('Are you sure you want to cancel this booking?')) return;
     this.bookingService.cancelBooking(id).subscribe({
       next: () => {
+        // Invalidate cached QR so it's regenerated with "Cancelled" status
+        delete this.qrCodeMap[id];
         this.showToast('Booking cancelled', 'success');
         this.loadBookings();
       },

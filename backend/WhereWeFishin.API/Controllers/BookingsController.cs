@@ -70,6 +70,18 @@ public class BookingsController : ControllerBase
         if (dto.StartDate < DateTime.UtcNow.AddMinutes(-5))
             return BadRequest("Start date cannot be in the past.");
 
+        // Overlap check: prevent duplicate bookings at the same spot in the same time interval
+        var newStart = dto.StartDate.ToUniversalTime();
+        var newEnd = newStart.AddHours(dto.DurationHours);
+        var existingSessions = await _sessionRepository.FindAsync(s =>
+            s.FishingSpotId == dto.FishingSpotId &&
+            s.Status != SessionStatus.Cancelled);
+        var hasOverlap = existingSessions.Any(s =>
+            newStart < s.StartDate.AddHours(s.DurationHours) &&
+            newEnd > s.StartDate);
+        if (hasOverlap)
+            return Conflict("This fishing spot is already booked during the selected time interval.");
+
         var totalPrice = spot.PricePerHour * dto.DurationHours;
 
         var session = new FishingSession

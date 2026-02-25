@@ -12,6 +12,7 @@ export class AuthService {
   private tokenKey = 'auth_token';
   private userIdKey = 'user_id';
   private roleKey = 'user_role';
+  private usernameKey = 'user_name';
 
   constructor(
     private http: HttpClient,
@@ -25,6 +26,7 @@ export class AuthService {
           localStorage.setItem(this.tokenKey, response.token);
           localStorage.setItem(this.userIdKey, response.userId.toString());
           localStorage.setItem(this.roleKey, response.role);
+          localStorage.setItem(this.usernameKey, response.username);
         })
       );
   }
@@ -36,6 +38,7 @@ export class AuthService {
           localStorage.setItem(this.tokenKey, response.token);
           localStorage.setItem(this.userIdKey, response.userId.toString());
           localStorage.setItem(this.roleKey, response.role);
+          localStorage.setItem(this.usernameKey, response.username);
         })
       );
   }
@@ -44,6 +47,7 @@ export class AuthService {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userIdKey);
     localStorage.removeItem(this.roleKey);
+    localStorage.removeItem(this.usernameKey);
     this.router.navigate(['/login']);
   }
 
@@ -54,6 +58,10 @@ export class AuthService {
   getUserId(): number | null {
     const userId = localStorage.getItem(this.userIdKey);
     return userId ? parseInt(userId, 10) : null;
+  }
+
+  getUsername(): string {
+    return localStorage.getItem(this.usernameKey) || '';
   }
 
   getRole(): string {
