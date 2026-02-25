@@ -24,7 +24,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   private markerSpotMap = new Map<L.Marker, FishingSpot>();
   private userLocationMarker: L.Marker | null = null;
   private userLocationCircle: L.Circle | null = null;
+  private userLatLng: L.LatLng | null = null;
+  private routeLayer: L.GeoJSON | null = null;
   locatingUser = false;
+  routeInfo: { distance: string; duration: string; spotName: string } | null = null;
 
   spots: FishingSpot[] = [];
   isAddMode = false;
@@ -217,6 +220,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         if (viewBtn) {
           viewBtn.onclick = () => this.router.navigate(['/spots', spot.id]);
         }
+        const routeBtn = container?.querySelector<HTMLButtonElement>('.popup-route-btn');
+        if (routeBtn) {
+          routeBtn.onclick = () => this.showRouteOnMap(spot);
+        }
       });
 
       this.markerSpotMap.set(marker, spot);
@@ -252,8 +259,85 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     html += `<button class="popup-cart-btn" style="display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;transition:filter .15s;${btnStyle}">${btnIcon}${btnLabel}</button>`;
     const eyeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;margin-bottom:1px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
     html += `<button class="popup-view-btn" style="display:flex;align-items:center;justify-content:center;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;margin-top:6px;background:transparent;color:#94a3b8;border:1px solid #334155;transition:all .15s">${eyeSvg}View Spot</button>`;
+    const navSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;margin-bottom:1px"><polyline points="3 11 22 2 13 21 11 13 3 11"/></svg>`;
+    html += `<button class="popup-route-btn" style="display:flex;align-items:center;justify-content:center;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;margin-top:6px;background:#1e3a5f;color:#60a5fa;border:1px solid #2563eb55;transition:all .15s">${navSvg}Traseu pe hartă</button>`;
     html += `</div>`;
     return html;
+  }
+
+  showRouteOnMap(spot: FishingSpot): void {
+    const drawRoute = (origin: L.LatLng) => {
+      const url =
+        `https://router.project-osrm.org/route/v1/driving/` +
+        `${origin.lng},${origin.lat};${spot.longitude},${spot.latitude}` +
+        `?overview=full&geometries=geojson`;
+
+      fetch(url)
+        .then(r => r.json())
+        .then(data => {
+          if (data.code !== 'Ok' || !data.routes?.length) {
+            this.showToast('Nu s-a putut calcula ruta', 'error');
+            return;
+          }
+          const route = data.routes[0];
+          const distKm = (route.distance / 1000).toFixed(1);
+          const durationMin = Math.round(route.duration / 60);
+          const durationText = durationMin >= 60
+            ? `${Math.floor(durationMin / 60)}h ${durationMin % 60}min`
+            : `${durationMin} min`;
+
+          // Remove existing route
+          if (this.routeLayer) this.map.removeLayer(this.routeLayer);
+
+          this.routeLayer = L.geoJSON(route.geometry, {
+            style: {
+              color: '#3b82f6',
+              weight: 5,
+              opacity: 0.85,
+              lineJoin: 'round',
+              lineCap: 'round'
+            }
+          }).addTo(this.map);
+
+          this.routeInfo = {
+            distance: `${distKm} km`,
+            duration: durationText,
+            spotName: spot.name
+          };
+
+          this.map.fitBounds(this.routeLayer.getBounds(), { padding: [50, 50] });
+        })
+        .catch(() => this.showToast('Eroare la calcularea rutei', 'error'));
+    };
+
+    if (this.userLatLng) {
+      drawRoute(this.userLatLng);
+    } else if (navigator.geolocation) {
+      this.locatingUser = true;
+      this.showToast('Se obține locația...', 'success');
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          this.locatingUser = false;
+          this.userLatLng = L.latLng(pos.coords.latitude, pos.coords.longitude);
+          drawRoute(this.userLatLng);
+        },
+        () => {
+          this.locatingUser = false;
+          this.showToast('Activează locația pentru a vedea ruta pe hartă', 'error');
+        },
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    } else {
+      this.showToast('Geolocation nu este suportat de browser', 'error');
+    }
+  }
+
+  clearRoute(): void {
+    if (this.routeLayer) {
+      this.map.removeLayer(this.routeLayer);
+      this.routeLayer = null;
+    }
+    this.routeInfo = null;
   }
 
   addToCart(spot: FishingSpot): void {
@@ -289,7 +373,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         this.locatingUser = false;
         const { latitude, longitude, accuracy } = position.coords;
         const latlng = L.latLng(latitude, longitude);
-
+        this.userLatLng = latlng;
         // Remove previous location layers
         if (this.userLocationMarker) this.map.removeLayer(this.userLocationMarker);
         if (this.userLocationCircle) this.map.removeLayer(this.userLocationCircle);

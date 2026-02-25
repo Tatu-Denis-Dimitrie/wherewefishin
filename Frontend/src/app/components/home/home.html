@@ -203,6 +203,30 @@
       </div>
       <div class="map-card" [class.expanded]="mapExpanded">
         <div id="map" class="map-container"></div>
+
+        @if (routeInfo) {
+          <div class="route-info-panel">
+            <div class="route-info-left">
+              <div class="route-destination">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                {{ routeInfo.spotName }}
+              </div>
+              <div class="route-stats">
+                <span class="route-stat">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                  {{ routeInfo.distance }}
+                </span>
+                <span class="route-stat">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  {{ routeInfo.duration }}
+                </span>
+              </div>
+            </div>
+            <button class="route-close-btn" (click)="clearRoute()" title="Închide ruta">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        }
         <button (click)="locateUser()" class="map-locate-btn" title="Localizează-mă" [disabled]="locatingUser">
           @if (locatingUser) {
             <span class="locate-spinner"></span>
