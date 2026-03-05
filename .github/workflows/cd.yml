@@ -1,6 +1,5 @@
 name: CD - Build & Push Docker Images
 
-# Trigger on push to main when commit message contains [MAJOR]
 on:
   push:
     branches: [ main ]
