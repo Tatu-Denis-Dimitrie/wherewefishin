@@ -60,7 +60,7 @@ jobs:
           echo "date_tag=$DATE_TAG" >> $GITHUB_OUTPUT
           echo "version=$DATE_TAG-$SHORT_SHA" >> $GITHUB_OUTPUT
 
-      # ======== Backend API ========
+      # ======== Backend API ======== =
       - name: Build & Push Backend API
         uses: docker/build-push-action@v6
         with:
