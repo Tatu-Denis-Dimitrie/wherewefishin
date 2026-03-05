@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
@@ -15,17 +16,20 @@ public class VideoAnalysisController : ControllerBase
     private readonly IRepository<VideoAnalysis> _videoRepository;
     private readonly ILogger<VideoAnalysisController> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly string _fishRecognitionServiceUrl;
 
     public VideoAnalysisController(
         IFishRecognitionService fishRecognitionService,
         IRepository<VideoAnalysis> videoRepository,
         ILogger<VideoAnalysisController> logger,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        IConfiguration configuration)
     {
         _fishRecognitionService = fishRecognitionService;
         _videoRepository = videoRepository;
         _logger = logger;
         _httpClientFactory = httpClientFactory;
+        _fishRecognitionServiceUrl = configuration["FishRecognitionService:Url"] ?? "http://localhost:5001";
     }
 
     [HttpPost("upload")]
@@ -136,7 +140,7 @@ public class VideoAnalysisController : ControllerBase
             {
                 var outputFilename = Path.GetFileName(analysis.ProcessedVideoUrl.Replace('/', Path.DirectorySeparatorChar));
                 var httpClient = _httpClientFactory.CreateClient();
-                await httpClient.DeleteAsync($"http://localhost:5001/api/delete-output/{outputFilename}");
+                await httpClient.DeleteAsync($"{_fishRecognitionServiceUrl}/api/delete-output/{outputFilename}");
             }
             catch (Exception ex)
             {
@@ -188,8 +192,7 @@ public class VideoAnalysisController : ControllerBase
     {
         try
         {
-            var pythonServiceUrl = "http://localhost:5001";
-            var videoUrl = $"{pythonServiceUrl}/outputs/{filename}";
+            var videoUrl = $"{_fishRecognitionServiceUrl}/outputs/{filename}";
             
             var httpClient = _httpClientFactory.CreateClient();
             var response = await httpClient.GetAsync(videoUrl);

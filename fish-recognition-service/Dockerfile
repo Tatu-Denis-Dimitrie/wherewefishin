@@ -20,8 +20,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install Python dependencies - skip torch (already in base image with CUDA)
 COPY requirements.txt .
-RUN grep -vE '^(torch|torchvision|torchaudio)' requirements.txt \
-    | pip install --no-cache-dir -r /dev/stdin
+RUN grep -vE '^(torch|torchvision|torchaudio)' requirements.txt > /tmp/requirements-docker.txt && \
+    pip install --no-cache-dir -r /tmp/requirements-docker.txt && \
+    rm /tmp/requirements-docker.txt
 
 # Copy application code
 COPY . .
