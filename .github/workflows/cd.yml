@@ -56,11 +56,14 @@ jobs:
         run: |
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           DATE_TAG=$(date +'%Y%m%d')
+          # Docker requires all-lowercase image names
+          IMAGE_PREFIX=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
           echo "date_tag=$DATE_TAG" >> $GITHUB_OUTPUT
           echo "version=$DATE_TAG-$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "image_prefix=$IMAGE_PREFIX" >> $GITHUB_OUTPUT
 
-      # ======== Backend API ======== =
+      # ======== Backend API ========
       - name: Build & Push Backend API
         uses: docker/build-push-action@v6
         with:
@@ -68,8 +71,8 @@ jobs:
           file: ./backend/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend:${{ steps.meta.outputs.version }}
+            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_prefix }}/backend:latest
+            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_prefix }}/backend:${{ steps.meta.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -81,8 +84,8 @@ jobs:
           file: ./fish-recognition-service/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/fish-recognition:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/fish-recognition:${{ steps.meta.outputs.version }}
+            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_prefix }}/fish-recognition:latest
+            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_prefix }}/fish-recognition:${{ steps.meta.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -94,8 +97,8 @@ jobs:
           file: ./Frontend/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:latest
-            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ steps.meta.outputs.version }}
+            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_prefix }}/frontend:latest
+            ${{ env.REGISTRY }}/${{ steps.meta.outputs.image_prefix }}/frontend:${{ steps.meta.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -106,6 +109,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Service | Image | Tags |" >> $GITHUB_STEP_SUMMARY
           echo "|---------|-------|------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Backend API | \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/backend\` | \`latest\`, \`${{ steps.meta.outputs.version }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Fish Recognition | \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/fish-recognition\` | \`latest\`, \`${{ steps.meta.outputs.version }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Frontend | \`${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend\` | \`latest\`, \`${{ steps.meta.outputs.version }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Backend API | \`${{ env.REGISTRY }}/${{ steps.meta.outputs.image_prefix }}/backend\` | \`latest\`, \`${{ steps.meta.outputs.version }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Fish Recognition | \`${{ env.REGISTRY }}/${{ steps.meta.outputs.image_prefix }}/fish-recognition\` | \`latest\`, \`${{ steps.meta.outputs.version }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend | \`${{ env.REGISTRY }}/${{ steps.meta.outputs.image_prefix }}/frontend\` | \`latest\`, \`${{ steps.meta.outputs.version }}\` |" >> $GITHUB_STEP_SUMMARY
