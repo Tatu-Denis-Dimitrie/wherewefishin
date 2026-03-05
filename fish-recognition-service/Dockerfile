@@ -1,8 +1,10 @@
 # =============================================
 # WhereWeFishin Fish Recognition Service
+# PyTorch 2.5.1 + CUDA 12.4 (GPU support)
 # =============================================
 
-FROM python:3.11-slim
+# Base image already includes Python 3.11, torch 2.5.1, torchvision, CUDA 12.4, cuDNN 9
+FROM pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime
 
 WORKDIR /app
 
@@ -16,9 +18,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
+# Install Python dependencies - skip torch (already in base image with CUDA)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN grep -vE '^(torch|torchvision|torchaudio)' requirements.txt \
+    | pip install --no-cache-dir -r /dev/stdin
 
 # Copy application code
 COPY . .

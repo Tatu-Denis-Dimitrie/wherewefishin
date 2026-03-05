@@ -42,7 +42,6 @@ services:
       - Jwt__Audience=WhereWeFishinClient
       - Jwt__ExpirationHours=24
       - FishRecognitionService__Url=http://fish-recognition:5001
-      - SeedDatabase=${SEED_DATABASE:-false}
     ports:
       - "8080:8080"
     volumes:
@@ -53,6 +52,8 @@ services:
     restart: unless-stopped
 
   # ==== Python Fish Recognition Service ====
+  # Requires NVIDIA Container Toolkit on the host:
+  #   https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
   fish-recognition:
     build:
       context: ./fish-recognition-service
@@ -61,11 +62,20 @@ services:
     environment:
       - FLASK_ENV=production
       - PYTHONUNBUFFERED=1
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     ports:
       - "5001:5001"
     volumes:
       - fish-uploads:/app/uploads
       - fish-outputs:/app/outputs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     restart: unless-stopped
 
   # ==== Angular Frontend (nginx) ====

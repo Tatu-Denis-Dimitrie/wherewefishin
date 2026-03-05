@@ -143,84 +143,84 @@ builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
-// Seed database with test data - only if SEED_DATABASE environment variable is set to "true"
-var seedDatabase = builder.Configuration.GetValue<bool>("SeedDatabase", false);
-if (seedDatabase)
+// Apply EF Core migrations automatically on startup (creates DB if it doesn't exist)
+using (var scope = app.Services.CreateScope())
 {
-    using (var scope = app.Services.CreateScope())
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    try
     {
-        var services = scope.ServiceProvider;
-        try
+        logger.LogInformation("Applying database migrations...");
+        await context.Database.MigrateAsync();
+        logger.LogInformation("Database migrations applied successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while applying database migrations.");
+        throw;
+    }
+}
+
+// Seed database automatically if empty
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<ApplicationDbContext>();
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        if (context.Users.Any())
         {
-            var context = services.GetRequiredService<ApplicationDbContext>();
-            var logger = services.GetRequiredService<ILogger<Program>>();
-            
-            logger.LogInformation("Starting database seeding...");
-            
-            // Delete existing data in the correct order (respecting foreign keys)
-            await context.Database.ExecuteSqlRawAsync("DELETE FROM VideoAnalyses");
-            await context.Database.ExecuteSqlRawAsync("DELETE FROM Catches");
-            await context.Database.ExecuteSqlRawAsync("DELETE FROM FishingSpots");
-            await context.Database.ExecuteSqlRawAsync("DELETE FROM Users");
-            
-            // Reset identity columns
-            await context.Database.ExecuteSqlRawAsync("DBCC CHECKIDENT ('Users', RESEED, 0)");
-            await context.Database.ExecuteSqlRawAsync("DBCC CHECKIDENT ('FishingSpots', RESEED, 0)");
-            await context.Database.ExecuteSqlRawAsync("DBCC CHECKIDENT ('Catches', RESEED, 0)");
-            await context.Database.ExecuteSqlRawAsync("DBCC CHECKIDENT ('VideoAnalyses', RESEED, 0)");
-            
-            logger.LogInformation("Existing data cleared.");
-            
-            // Add seed data
+            logger.LogInformation("Database already has data - skipping seeding.");
+        }
+        else
+        {
+            logger.LogInformation("Database is empty - starting seeding...");
+
             var users = WhereWeFishin.Database.MockData.SeedData.GetUsers();
             await context.Users.AddRangeAsync(users);
             await context.SaveChangesAsync();
-            
             logger.LogInformation("Added {Count} users", users.Count);
-            
-            // Get user IDs for fishing spots
+
             var userIds = context.Users.Select(u => u.Id).ToList();
             var fishingSpots = WhereWeFishin.Database.MockData.SeedData.GetFishingSpots(userIds);
             await context.FishingSpots.AddRangeAsync(fishingSpots);
             await context.SaveChangesAsync();
-            
             logger.LogInformation("Added {Count} fishing spots", fishingSpots.Count);
-            
-            // Get fishing spot and user IDs for catches
+
             var spotIds = context.FishingSpots.Select(f => f.Id).ToList();
             var catches = WhereWeFishin.Database.MockData.SeedData.GetCatches(userIds, spotIds);
             await context.Catches.AddRangeAsync(catches);
             await context.SaveChangesAsync();
-            
             logger.LogInformation("Added {Count} catches", catches.Count);
-            
-            logger.LogInformation("Database seeding completed successfully!");
-            logger.LogInformation("TEST ACCOUNTS:");
+
+            logger.LogInformation("Seeding completed! TEST ACCOUNTS:");
             logger.LogInformation("  Admin: admin / admin123");
             logger.LogInformation("  Manager: manager1, manager2 / manager123");
             logger.LogInformation("  Users: ion_pescar, maria_fisher, etc. / password123");
         }
-        catch (Exception ex)
-        {
-            var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "An error occurred while seeding the database.");
-            throw;
-        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while seeding the database.");
+        throw;
     }
 }
 
 // Configure the HTTP request pipeline
+// Swagger is always enabled (accessible at /swagger in Docker too)
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "WhereWeFishin API v1");
+    c.RoutePrefix = "swagger";
+});
+
+// HTTPS redirect only in local dev - in Docker, nginx handles TLS termination
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "WhereWeFishin API v1");
-        c.RoutePrefix = string.Empty; // Set Swagger UI at app's root
-    });
+    app.UseHttpsRedirection();
 }
-
-app.UseHttpsRedirection();
 
 app.UseCors("AllowAngularApp");
 
