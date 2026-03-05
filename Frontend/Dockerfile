@@ -25,7 +25,8 @@ FROM nginx:alpine AS runtime
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built Angular app from build stage
-COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
+# Project name in angular.json is "Frontend" (capital F) → output is dist/Frontend/browser
+COPY --from=build /app/dist/Frontend/browser /usr/share/nginx/html
 
 # Expose port
 EXPOSE 80

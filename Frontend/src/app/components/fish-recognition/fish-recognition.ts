@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { VideoAnalysisService } from '../../services/video-analysis.service';
 import { AuthService } from '../../services/auth.service';
 import { VideoAnalysis } from '../../models/video-analysis.model';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-fish-recognition',
@@ -246,9 +247,11 @@ export class FishRecognition implements OnInit, OnDestroy {
 
   getVideoUrl(url: string | undefined): string {
     if (!url) return '';
-    // If URL already starts with http, use it directly (backend returns full URL)
+    // If URL already starts with http, use it directly
     if (url.startsWith('http')) return url;
-    // Otherwise prepend the backend URL
-    return 'http://localhost:5033' + url;
+    // Ensure a leading slash for relative paths (e.g. "outputs/x.mp4" → "/outputs/x.mp4")
+    const path = url.startsWith('/') ? url : '/' + url;
+    // In production (Docker) apiBaseUrl is '' so this becomes a relative URL proxied by nginx
+    return environment.apiBaseUrl + path;
   }
 }

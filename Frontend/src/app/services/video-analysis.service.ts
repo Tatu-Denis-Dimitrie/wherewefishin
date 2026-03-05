@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { VideoAnalysis, AnalysisResult, SupportedFishResponse } from '../models/video-analysis.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class VideoAnalysisService {
-  private apiUrl = 'http://localhost:5033/api/videoanalysis';
+  private apiUrl = `${environment.apiBaseUrl}/api/videoanalysis`;
 
   constructor(private http: HttpClient) {}
 

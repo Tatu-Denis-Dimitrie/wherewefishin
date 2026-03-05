@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User } from '../models/user.model';
 import { FishingSpot } from './fishing-spot.service';
+import { environment } from '../../environments/environment';
 
 export interface AdminStats {
   totalUsers: number;
@@ -28,7 +29,7 @@ export interface UpdateFishingSpot {
   providedIn: 'root'
 })
 export class AdminService {
-  private apiUrl = 'http://localhost:5033/api/admin';
+  private apiUrl = `${environment.apiBaseUrl}/api/admin`;
 
   constructor(private http: HttpClient) {}
 
