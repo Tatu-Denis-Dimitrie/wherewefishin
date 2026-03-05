@@ -91,6 +91,60 @@ public class AdminController : ControllerBase
         await _userRepository.DeleteAsync(id);
         return NoContent();
     }
+
+    [HttpGet("fishing-spots")]
+    public async Task<ActionResult<IEnumerable<FishingSpotDto>>> GetAllFishingSpots()
+    {
+        var spots = await _spotRepository.GetAllAsync();
+        return Ok(spots.Select(s => new FishingSpotDto
+        {
+            Id = s.Id,
+            Name = s.Name,
+            Description = s.Description,
+            Latitude = s.Latitude,
+            Longitude = s.Longitude,
+            ImageUrl = s.ImageUrl,
+            PricePerHour = s.PricePerHour,
+            UserId = s.UserId,
+            ManagerId = s.ManagerId,
+            ManagerName = s.Manager != null
+                ? $"{s.Manager.FirstName} {s.Manager.LastName}".Trim().Length > 0
+                    ? $"{s.Manager.FirstName} {s.Manager.LastName}".Trim()
+                    : s.Manager.Username
+                : null,
+            CreatedAt = s.CreatedAt
+        }));
+    }
+
+    [HttpPut("fishing-spots/{id}")]
+    public async Task<IActionResult> UpdateFishingSpot(int id, [FromBody] UpdateFishingSpotDto dto)
+    {
+        var spot = await _spotRepository.GetByIdAsync(id);
+        if (spot == null) return NotFound();
+
+        if (dto.Name != null) spot.Name = dto.Name;
+        if (dto.Description != null) spot.Description = dto.Description;
+        if (dto.Latitude.HasValue) spot.Latitude = dto.Latitude.Value;
+        if (dto.Longitude.HasValue) spot.Longitude = dto.Longitude.Value;
+        if (dto.ImageUrl != null) spot.ImageUrl = dto.ImageUrl;
+        if (dto.PricePerHour.HasValue) spot.PricePerHour = dto.PricePerHour.Value;
+        if (dto.ManagerId.HasValue) spot.ManagerId = dto.ManagerId.Value;
+
+        spot.UpdatedAt = DateTime.UtcNow;
+        await _spotRepository.UpdateAsync(spot);
+
+        return Ok(new { message = "Fishing spot updated successfully", spotId = id });
+    }
+
+    [HttpDelete("fishing-spots/{id}")]
+    public async Task<IActionResult> DeleteFishingSpot(int id)
+    {
+        var spot = await _spotRepository.GetByIdAsync(id);
+        if (spot == null) return NotFound();
+
+        await _spotRepository.DeleteAsync(id);
+        return NoContent();
+    }
 }
 
 public class UpdateRoleDto

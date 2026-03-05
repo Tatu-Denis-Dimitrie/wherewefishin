@@ -200,6 +200,22 @@
                 <button class="btn-cancel-booking" (click)="cancelBooking(booking.id)">Cancel Booking</button>
               </div>
             }
+            <div class="qr-section">
+              <button class="btn-qr-toggle" (click)="toggleQr(booking.id)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                  <rect x="3" y="14" width="7" height="7"/>
+                  <path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01"/>
+                </svg>
+                {{ isQrExpanded(booking.id) ? 'Hide QR Code' : 'Show QR Code' }}
+              </button>
+              @if (isQrExpanded(booking.id) && qrCodeMap[booking.id]) {
+                <div class="qr-code-container">
+                  <img [src]="qrCodeMap[booking.id]" alt="Booking QR Code" class="qr-code-img" />
+                  <p class="qr-hint">Scanează codul QR la locul de pescuit</p>
+                </div>
+              }
+            </div>
           </div>
         }
       </div>

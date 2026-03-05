@@ -45,7 +45,9 @@ public class AuthService : IAuthService
             Email = user.Email,
             Role = user.Role,
             UserId = user.Id,
-            ExpiresAt = expiresAt
+            ExpiresAt = expiresAt,
+            FirstName = user.FirstName,
+            LastName = user.LastName
         };
     }
 
@@ -79,7 +81,9 @@ public class AuthService : IAuthService
             Email = user.Email,
             Role = user.Role,
             UserId = user.Id,
-            ExpiresAt = expiresAt
+            ExpiresAt = expiresAt,
+            FirstName = user.FirstName,
+            LastName = user.LastName
         };
     }
 
