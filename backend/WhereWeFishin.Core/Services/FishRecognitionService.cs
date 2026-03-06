@@ -175,10 +175,7 @@ public class FishRecognitionService : IFishRecognitionService
         }).ToList();
 
         string? processedVideoUrl = entity.ProcessedVideoUrl;
-        if (!string.IsNullOrEmpty(processedVideoUrl) && !processedVideoUrl.StartsWith("http"))
-        {
-            processedVideoUrl = $"{_pythonServiceUrl}/{processedVideoUrl}";
-        }
+        // Keep as relative path (e.g. "outputs/filename.mp4") — the frontend resolves it.
 
         return new VideoAnalysisDto
         {

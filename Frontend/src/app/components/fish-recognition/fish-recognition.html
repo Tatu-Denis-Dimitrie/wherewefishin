@@ -31,7 +31,7 @@
           </svg>
           <p class="drop-title">Drop your video here</p>
           <p class="drop-hint">or click to browse &mdash; MP4, AVI, MOV, MKV up to 150 MB</p>
-          <input type="file" id="videoFile" (change)="onFileSelected($event)" accept="video/mp4,video/avi,video/quicktime,video/x-matroska" hidden />
+          <input type="file" id="videoFile" (change)="onFileSelected($event)" accept="video/mp4,video/avi,video/x-msvideo,video/quicktime,video/x-matroska,.mp4,.avi,.mov,.mkv" hidden />
           <label for="videoFile" class="btn-outline">Choose file</label>
         </div>
 

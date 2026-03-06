@@ -109,8 +109,9 @@ export class FishRecognition implements OnInit, OnDestroy {
   }
 
   private handleFile(file: File): void {
-    const allowedTypes = ['video/mp4', 'video/avi', 'video/quicktime', 'video/x-matroska'];
-    if (!allowedTypes.includes(file.type)) {
+    const allowedExtensions = ['mp4', 'avi', 'mov', 'mkv'];
+    const fileExtension = file.name.split('.').pop()?.toLowerCase() ?? '';
+    if (!allowedExtensions.includes(fileExtension)) {
       this.error = 'Invalid file type. Please upload MP4, AVI, MOV, or MKV';
       return;
     }
@@ -247,11 +248,18 @@ export class FishRecognition implements OnInit, OnDestroy {
 
   getVideoUrl(url: string | undefined): string {
     if (!url) return '';
-    // If URL already starts with http, use it directly
+    // Already an absolute URL — return as-is
     if (url.startsWith('http')) return url;
-    // Ensure a leading slash for relative paths (e.g. "outputs/x.mp4" → "/outputs/x.mp4")
+
     const path = url.startsWith('/') ? url : '/' + url;
-    // In production (Docker) apiBaseUrl is '' so this becomes a relative URL proxied by nginx
+
+    // Processed video outputs are served directly by the Python service (local)
+    // or via nginx /outputs/ proxy (Docker). Never route through the .NET backend.
+    if (path.startsWith('/outputs/')) {
+      return environment.pythonServiceUrl + path;
+    }
+
+    // Uploaded videos and everything else go through the .NET backend
     return environment.apiBaseUrl + path;
   }
 }

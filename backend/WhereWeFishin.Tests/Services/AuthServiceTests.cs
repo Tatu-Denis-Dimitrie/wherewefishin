@@ -11,11 +11,15 @@ public class AuthServiceTests
 {
     private readonly IRepository<User> _userRepository;
     private readonly IConfiguration _configuration;
+    private readonly IEmailService _emailService;
     private readonly AuthService _authService;
 
     public AuthServiceTests()
     {
         _userRepository = Substitute.For<IRepository<User>>();
+        _emailService = Substitute.For<IEmailService>();
+        _emailService.SendWelcomeEmailAsync(Arg.Any<string>(), Arg.Any<string?>())
+            .Returns(Task.CompletedTask);
 
         var configData = new Dictionary<string, string?>
         {
@@ -28,7 +32,7 @@ public class AuthServiceTests
             .AddInMemoryCollection(configData)
             .Build();
 
-        _authService = new AuthService(_userRepository, _configuration);
+        _authService = new AuthService(_userRepository, _configuration, _emailService);
     }
 
 
@@ -192,6 +196,36 @@ public class AuthServiceTests
         Assert.Equal("newuser", result.Username);
         Assert.Equal("new@test.com", result.Email);
         Assert.Equal("User", result.Role);
+        Assert.NotEmpty(result.Token);
+        await _emailService.Received(1).SendWelcomeEmailAsync("new@test.com", "New");
+    }
+
+    [Fact]
+    public async Task RegisterAsync_WhenWelcomeEmailFails_ReturnsAuthResponse()
+    {
+        // Arrange
+        _userRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(new List<User>());
+        _userRepository.AddAsync(Arg.Any<User>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo => callInfo.Arg<User>());
+        _emailService.SendWelcomeEmailAsync(Arg.Any<string>(), Arg.Any<string?>())
+            .Returns(Task.FromException(new InvalidOperationException("SMTP unavailable")));
+
+        var request = new RegisterRequest
+        {
+            Username = "newuser2",
+            Email = "new2@test.com",
+            Password = "password123",
+            ConfirmPassword = "password123",
+            FirstName = "New",
+            LastName = "User"
+        };
+
+        // Act
+        var result = await _authService.RegisterAsync(request);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("new2@test.com", result.Email);
         Assert.NotEmpty(result.Token);
     }
 

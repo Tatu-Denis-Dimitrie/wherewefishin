@@ -63,6 +63,36 @@ dotnet ef database update --project ../WhereWeFishin.Database
 cd ../..
 ```
 
+## SMTP Welcome Email Setup (Register)
+
+When a new user registers, backend sends a welcome email through SMTP.
+
+Set these values in `backend/WhereWeFishin.API/appsettings.json` (or better via environment variables/User Secrets):
+
+```json
+"Smtp": {
+    "Host": "smtp.gmail.com",
+    "Port": "587",
+    "EnableSsl": "true",
+    "Username": "your-account@gmail.com",
+    "Password": "your-app-password",
+    "FromEmail": "your-account@gmail.com",
+    "FromName": "WhereWeFishin",
+    "UseDefaultCredentials": "false"
+}
+```
+
+For Docker, use environment variables already defined in `docker-compose.yml`:
+
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_ENABLE_SSL`
+- `SMTP_USERNAME`
+- `SMTP_PASSWORD`
+- `SMTP_FROM_EMAIL`
+- `SMTP_FROM_NAME`
+- `SMTP_USE_DEFAULT_CREDENTIALS`
+
 ## Tech Stack
 
 | Layer | Tech |

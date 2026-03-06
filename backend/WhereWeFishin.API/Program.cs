@@ -130,6 +130,7 @@ builder.Services.AddScoped<IRepository<FishingSession>, Repository<FishingSessio
 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddHttpClient<IFishRecognitionService, FishRecognitionService>(client =>
 {
     var fishServiceUrl = builder.Configuration["FishRecognitionService:Url"] 

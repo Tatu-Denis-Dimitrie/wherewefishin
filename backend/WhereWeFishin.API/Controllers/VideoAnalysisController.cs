@@ -193,19 +193,40 @@ public class VideoAnalysisController : ControllerBase
         try
         {
             var videoUrl = $"{_fishRecognitionServiceUrl}/outputs/{filename}";
-            
+
             var httpClient = _httpClientFactory.CreateClient();
-            var response = await httpClient.GetAsync(videoUrl);
-            
-            if (!response.IsSuccessStatusCode)
-            {
+            var requestMessage = new HttpRequestMessage(HttpMethod.Get, videoUrl);
+
+            // Forward Range header so Python can return partial content (needed for video seeking)
+            if (Request.Headers.TryGetValue("Range", out var rangeValues))
+                requestMessage.Headers.TryAddWithoutValidation("Range", rangeValues.ToArray());
+
+            // ResponseHeadersRead = stream body instead of loading entire video into memory
+            var response = await httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 return NotFound();
-            }
-            
-            var stream = await response.Content.ReadAsStreamAsync();
+
+            if (!response.IsSuccessStatusCode && response.StatusCode != System.Net.HttpStatusCode.PartialContent)
+                return StatusCode((int)response.StatusCode);
+
             var contentType = response.Content.Headers.ContentType?.ToString() ?? "video/mp4";
-            
-            return File(stream, contentType, enableRangeProcessing: true);
+
+            // Set status and headers before writing body
+            Response.StatusCode = (int)response.StatusCode;
+            Response.ContentType = contentType;
+            Response.Headers["Accept-Ranges"] = "bytes";
+
+            if (response.Content.Headers.ContentRange != null)
+                Response.Headers["Content-Range"] = response.Content.Headers.ContentRange.ToString();
+
+            if (response.Content.Headers.ContentLength.HasValue)
+                Response.Headers["Content-Length"] = response.Content.Headers.ContentLength.Value.ToString();
+
+            // Stream body directly to response without buffering
+            await using var stream = await response.Content.ReadAsStreamAsync();
+            await stream.CopyToAsync(Response.Body);
+            return new EmptyResult();
         }
         catch (Exception ex)
         {
@@ -285,14 +306,9 @@ public class VideoAnalysisController : ControllerBase
         }
 
         string? processedVideoUrl = entity.ProcessedVideoUrl;
-        if (!string.IsNullOrEmpty(processedVideoUrl) && !processedVideoUrl.StartsWith("http"))
-        {
-            var request = HttpContext.Request;
-            var baseUrl = $"{request.Scheme}://{request.Host}";
-            
-            var filename = processedVideoUrl.Replace("outputs/", "");
-            processedVideoUrl = $"{baseUrl}/api/videoanalysis/processed-video/{filename}";
-        }
+        // Return the relative path as-is (e.g. "outputs/filename.mp4").
+        // The frontend routes it to the Python service directly (local)
+        // or via nginx /outputs/ proxy (Docker). No .NET proxying needed.
 
         return new VideoAnalysisDto
         {

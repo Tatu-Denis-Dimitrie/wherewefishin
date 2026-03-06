@@ -14,11 +14,13 @@ public class AuthService : IAuthService
 {
     private readonly IRepository<User> _userRepository;
     private readonly IConfiguration _configuration;
+    private readonly IEmailService _emailService;
 
-    public AuthService(IRepository<User> userRepository, IConfiguration configuration)
+    public AuthService(IRepository<User> userRepository, IConfiguration configuration, IEmailService emailService)
     {
         _userRepository = userRepository;
         _configuration = configuration;
+        _emailService = emailService;
     }
 
     public async Task<AuthResponse?> LoginAsync(LoginRequest request)
@@ -69,6 +71,15 @@ public class AuthService : IAuthService
         };
 
         await _userRepository.AddAsync(user);
+
+        try
+        {
+            await _emailService.SendWelcomeEmailAsync(user.Email, user.FirstName);
+        }
+        catch
+        {
+            // Do not block account creation if SMTP is unavailable.
+        }
 
         var token = GenerateJwtToken(user.Id, user.Username, user.Email, user.Role);
         var expiresAt = DateTime.UtcNow.AddHours(
