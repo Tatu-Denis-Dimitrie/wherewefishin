@@ -7,6 +7,7 @@ export interface User {
   profilePictureUrl?: string;
   role: string;
   createdAt: Date;
+  isActive: boolean;
 }
 
 export interface UpdateUser {

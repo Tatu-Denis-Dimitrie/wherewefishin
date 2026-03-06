@@ -63,11 +63,16 @@
         </thead>
         <tbody>
           @for (user of users; track user.id) {
-            <tr>
+            <tr [class.row-disabled]="!user.isActive">
               <td class="cell-user">
-                <div class="user-avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
+                <div class="user-avatar" [class.avatar-disabled]="!user.isActive">{{ user.username.charAt(0).toUpperCase() }}</div>
                 <div class="user-info">
-                  <span class="user-name">{{ user.firstName || '' }} {{ user.lastName || '' }}</span>
+                  <span class="user-name">
+                    {{ user.firstName || '' }} {{ user.lastName || '' }}
+                    @if (!user.isActive) {
+                      <span class="badge-disabled">Disabled</span>
+                    }
+                  </span>
                   <span class="user-handle">&#64;{{ user.username }}</span>
                 </div>
               </td>
@@ -76,15 +81,25 @@
                 <span class="role-badge" [ngClass]="getRoleBadgeClass(user.role)">{{ user.role }}</span>
               </td>
               <td class="cell-actions">
-                <select
-                  class="role-select"
-                  [value]="user.role"
-                  (change)="changeRole(user, $any($event.target).value)"
+                @if (user.isActive) {
+                  <select
+                    class="role-select"
+                    [value]="user.role"
+                    (change)="changeRole(user, $any($event.target).value)"
+                  >
+                    <option value="User">User</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Admin">Admin</option>
+                  </select>
+                }
+                <button
+                  class="btn-toggle-sm"
+                  [class.btn-enable]="!user.isActive"
+                  [class.btn-disable]="user.isActive"
+                  (click)="toggleStatus(user)"
                 >
-                  <option value="User">User</option>
-                  <option value="Manager">Manager</option>
-                  <option value="Admin">Admin</option>
-                </select>
+                  {{ user.isActive ? 'Disable' : 'Enable' }}
+                </button>
                 <button class="btn-danger-sm" (click)="deleteUser(user)">Delete</button>
               </td>
             </tr>

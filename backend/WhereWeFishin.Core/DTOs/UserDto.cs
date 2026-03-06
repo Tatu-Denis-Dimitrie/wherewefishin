@@ -10,6 +10,7 @@ public class UserDto
     public string? ProfilePictureUrl { get; set; }
     public string Role { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    public bool IsActive { get; set; }
 }
 
 public class UpdateUserDto

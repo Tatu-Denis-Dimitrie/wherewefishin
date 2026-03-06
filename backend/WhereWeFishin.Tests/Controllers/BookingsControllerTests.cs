@@ -14,13 +14,27 @@ public class BookingsControllerTests
 {
     private readonly IRepository<FishingSession> _sessionRepository;
     private readonly IRepository<FishingSpot> _spotRepository;
+    private readonly IRepository<User> _userRepository;
+    private readonly IEmailService _emailService;
     private readonly BookingsController _controller;
 
     public BookingsControllerTests()
     {
         _sessionRepository = Substitute.For<IRepository<FishingSession>>();
         _spotRepository = Substitute.For<IRepository<FishingSpot>>();
-        _controller = new BookingsController(_sessionRepository, _spotRepository);
+        _userRepository = Substitute.For<IRepository<User>>();
+        _emailService = Substitute.For<IEmailService>();
+        _emailService.SendBookingConfirmationEmailAsync(
+                Arg.Any<string>(),
+                Arg.Any<string?>(),
+                Arg.Any<string>(),
+                Arg.Any<DateTime>(),
+                Arg.Any<int>(),
+                Arg.Any<decimal>(),
+                Arg.Any<int>())
+            .Returns(Task.CompletedTask);
+
+        _controller = new BookingsController(_sessionRepository, _spotRepository, _userRepository, _emailService);
 
         // Default: authenticated as user 1
         SetupUser(userId: 1, role: "User");
@@ -32,6 +46,7 @@ public class BookingsControllerTests
         {
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim(ClaimTypes.Name, $"testuser{userId}"),
+            new Claim(ClaimTypes.Email, $"testuser{userId}@mail.com"),
             new Claim(ClaimTypes.Role, role)
         };
         var identity = new ClaimsIdentity(claims, "Bearer");
@@ -91,6 +106,46 @@ public class BookingsControllerTests
         Assert.Equal(1, booking.FishingSpotId);
         Assert.Equal(240m, booking.TotalPrice); // 10 * 24
         Assert.Equal("Confirmed", booking.Status);
+        await _emailService.Received(1).SendBookingConfirmationEmailAsync(
+            "testuser1@mail.com",
+            Arg.Any<string?>(),
+            "Test Spot",
+            Arg.Any<DateTime>(),
+            24,
+            240m,
+            Arg.Any<int>());
+    }
+
+    [Fact]
+    public async Task CreateBooking_WhenEmailSendingFails_ReturnsCreated()
+    {
+        // Arrange
+        var spot = CreateSpot(1, pricePerHour: 10m);
+        _spotRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(spot);
+        _sessionRepository.AddAsync(Arg.Any<FishingSession>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo => callInfo.Arg<FishingSession>());
+        _emailService.SendBookingConfirmationEmailAsync(
+                Arg.Any<string>(),
+                Arg.Any<string?>(),
+                Arg.Any<string>(),
+                Arg.Any<DateTime>(),
+                Arg.Any<int>(),
+                Arg.Any<decimal>(),
+                Arg.Any<int>())
+            .Returns(Task.FromException(new InvalidOperationException("SMTP unavailable")));
+
+        var dto = new CreateBookingDto
+        {
+            FishingSpotId = 1,
+            StartDate = DateTime.UtcNow.AddDays(1),
+            DurationHours = 24
+        };
+
+        // Act
+        var result = await _controller.CreateBooking(dto);
+
+        // Assert
+        Assert.IsType<CreatedAtActionResult>(result.Result);
     }
 
     [Theory]

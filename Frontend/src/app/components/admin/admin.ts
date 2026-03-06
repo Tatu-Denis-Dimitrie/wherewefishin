@@ -109,6 +109,27 @@ export class Admin implements OnInit {
     });
   }
 
+  toggleStatus(user: User): void {
+    if (user.id === this.authService.getUserId()) {
+      this.error = 'You cannot disable yourself';
+      setTimeout(() => this.error = '', 3000);
+      return;
+    }
+
+    const enable = !user.isActive;
+    this.adminService.toggleUserStatus(user.id, enable).subscribe({
+      next: () => {
+        user.isActive = enable;
+        this.successMessage = `User "${user.username}" ${enable ? 'enabled' : 'disabled'}`;
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: () => {
+        this.error = `Failed to ${enable ? 'enable' : 'disable'} user`;
+        setTimeout(() => this.error = '', 3000);
+      }
+    });
+  }
+
   startEditingPrice(spot: FishingSpot): void {
     this.editingSpotId = spot.id;
     this.editingSpotPrice = spot.pricePerHour;

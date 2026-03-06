@@ -45,6 +45,10 @@ export class AdminService {
     return this.http.put(`${this.apiUrl}/users/${userId}/role`, { role });
   }
 
+  toggleUserStatus(userId: number, enable: boolean): Observable<any> {
+    return this.http.put(`${this.apiUrl}/users/${userId}/status`, { enable });
+  }
+
   deleteUser(userId: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/users/${userId}`);
   }

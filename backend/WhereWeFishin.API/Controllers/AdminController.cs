@@ -14,15 +14,18 @@ public class AdminController : ControllerBase
     private readonly IRepository<User> _userRepository;
     private readonly IRepository<VideoAnalysis> _videoRepository;
     private readonly IRepository<FishingSpot> _spotRepository;
+    private readonly IRepository<FishingSession> _sessionRepository;
 
     public AdminController(
         IRepository<User> userRepository,
         IRepository<VideoAnalysis> videoRepository,
-        IRepository<FishingSpot> spotRepository)
+        IRepository<FishingSpot> spotRepository,
+        IRepository<FishingSession> sessionRepository)
     {
         _userRepository = userRepository;
         _videoRepository = videoRepository;
         _spotRepository = spotRepository;
+        _sessionRepository = sessionRepository;
     }
 
     [HttpGet("stats")]
@@ -50,7 +53,7 @@ public class AdminController : ControllerBase
     [HttpGet("users")]
     public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsers()
     {
-        var users = await _userRepository.GetAllAsync();
+        var users = await _userRepository.GetAllIncludingDeletedAsync();
         return Ok(users.Select(u => new UserDto
         {
             Id = u.Id,
@@ -60,8 +63,23 @@ public class AdminController : ControllerBase
             LastName = u.LastName,
             ProfilePictureUrl = u.ProfilePictureUrl,
             Role = u.Role,
-            CreatedAt = u.CreatedAt
+            CreatedAt = u.CreatedAt,
+            IsActive = !u.IsDeleted
         }));
+    }
+
+    [HttpPut("users/{id}/status")]
+    public async Task<IActionResult> ToggleUserStatus(int id, [FromBody] ToggleStatusDto dto)
+    {
+        var user = await _userRepository.GetByIdIncludingDeletedAsync(id);
+        if (user == null) return NotFound();
+        if (user.Role == "Admin") return BadRequest(new { message = "Cannot disable admin users" });
+
+        user.IsDeleted = !dto.Enable;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _userRepository.UpdateAsync(user);
+
+        return Ok(new { message = dto.Enable ? "User enabled" : "User disabled", userId = id });
     }
 
     [HttpPut("users/{id}/role")]
@@ -88,7 +106,14 @@ public class AdminController : ControllerBase
         if (user == null) return NotFound();
         if (user.Role == "Admin") return BadRequest(new { message = "Cannot delete admin users" });
 
-        await _userRepository.DeleteAsync(id);
+        var sessions = await _sessionRepository.FindAsync(s => s.UserId == id);
+        var videos = await _videoRepository.FindAsync(v => v.UserId == id);
+
+        if (!sessions.Any() && !videos.Any())
+            await _userRepository.HardDeleteAsync(id);
+        else
+            await _userRepository.DeleteAsync(id);
+
         return NoContent();
     }
 
@@ -150,4 +175,9 @@ public class AdminController : ControllerBase
 public class UpdateRoleDto
 {
     public string Role { get; set; } = string.Empty;
+}
+
+public class ToggleStatusDto
+{
+    public bool Enable { get; set; }
 }

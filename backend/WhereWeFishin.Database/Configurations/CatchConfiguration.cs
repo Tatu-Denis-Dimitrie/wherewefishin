@@ -26,7 +26,7 @@ public class CatchConfiguration : IEntityTypeConfiguration<Catch>
         builder.HasOne(c => c.User)
             .WithMany(u => u.Catches)
             .HasForeignKey(c => c.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(c => c.FishingSpot)
             .WithMany(f => f.Catches)

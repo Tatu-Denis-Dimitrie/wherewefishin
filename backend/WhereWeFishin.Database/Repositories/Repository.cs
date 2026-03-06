@@ -22,9 +22,19 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
         return await _dbSet.FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted, cancellationToken);
     }
 
+    public virtual async Task<T?> GetByIdIncludingDeletedAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+    }
+
     public virtual async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await _dbSet.Where(e => !e.IsDeleted).ToListAsync(cancellationToken);
+    }
+
+    public virtual async Task<IEnumerable<T>> GetAllIncludingDeletedAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbSet.ToListAsync(cancellationToken);
     }
 
     public virtual async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
@@ -55,6 +65,16 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
             entity.IsDeleted = true;
             entity.UpdatedAt = DateTime.UtcNow;
             await UpdateAsync(entity, cancellationToken);
+        }
+    }
+
+    public virtual async Task HardDeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await _dbSet.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+        if (entity != null)
+        {
+            _dbSet.Remove(entity);
+            await _context.SaveChangesAsync(cancellationToken);
         }
     }
 

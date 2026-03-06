@@ -139,6 +139,44 @@
 }
 .btn-danger-sm:hover { background: rgba(196,68,45,.12); }
 
+.btn-toggle-sm {
+  padding: .35rem .7rem;
+  border-radius: var(--radius-md);
+  font-size: .78rem; font-weight: 600; font-family: inherit;
+  cursor: pointer;
+  transition: background var(--transition), opacity var(--transition);
+}
+.btn-toggle-sm.btn-disable {
+  border: 1px solid rgba(200,150,30,.4);
+  background: transparent;
+  color: #c8961e;
+}
+.btn-toggle-sm.btn-disable:hover { background: rgba(200,150,30,.12); }
+.btn-toggle-sm.btn-enable {
+  border: 1px solid rgba(125,179,74,.4);
+  background: transparent;
+  color: var(--accent-moss);
+}
+.btn-toggle-sm.btn-enable:hover { background: rgba(125,179,74,.12); }
+
+.row-disabled { opacity: .5; }
+.row-disabled td { color: var(--text-muted); }
+
+.avatar-disabled { opacity: .5; filter: grayscale(1); }
+
+.badge-disabled {
+  display: inline-block;
+  margin-left: .4rem;
+  padding: .1rem .4rem;
+  border-radius: 99px;
+  background: rgba(196,68,45,.15);
+  color: var(--color-error);
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  vertical-align: middle;
+}
+
 /* ── Fishing Spots Specific Styles ── */
 .spot-info { display: flex; flex-direction: column; }
 .spot-name { font-weight: 600; color: var(--text-primary); font-size: .88rem; }

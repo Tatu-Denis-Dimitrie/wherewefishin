@@ -14,13 +14,19 @@ public class BookingsController : ControllerBase
 {
     private readonly IRepository<FishingSession> _sessionRepository;
     private readonly IRepository<FishingSpot> _spotRepository;
+    private readonly IRepository<User> _userRepository;
+    private readonly IEmailService _emailService;
 
     public BookingsController(
         IRepository<FishingSession> sessionRepository,
-        IRepository<FishingSpot> spotRepository)
+        IRepository<FishingSpot> spotRepository,
+        IRepository<User> userRepository,
+        IEmailService emailService)
     {
         _sessionRepository = sessionRepository;
         _spotRepository = spotRepository;
+        _userRepository = userRepository;
+        _emailService = emailService;
     }
 
     // GET api/bookings - returns bookings for the logged-in user
@@ -95,6 +101,36 @@ public class BookingsController : ControllerBase
         };
 
         await _sessionRepository.AddAsync(session);
+
+        try
+        {
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            string? firstName = null;
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                var user = await _userRepository.GetByIdAsync(userId.Value);
+                email = user?.Email;
+                firstName = user?.FirstName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(email))
+            {
+                await _emailService.SendBookingConfirmationEmailAsync(
+                    email,
+                    firstName,
+                    spot.Name,
+                    session.StartDate,
+                    session.DurationHours,
+                    session.TotalPrice,
+                    session.Id);
+            }
+        }
+        catch
+        {
+            // Do not block booking creation if SMTP delivery fails.
+        }
+
         return CreatedAtAction(nameof(GetBooking), new { id = session.Id }, MapToDto(session, spot.Name));
     }
 
