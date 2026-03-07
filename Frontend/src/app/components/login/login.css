@@ -236,6 +236,94 @@
   color: var(--accent-moss-light);
 }
 
+/* ── Forgot password link ── */
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-moss);
+  font-family: inherit;
+  transition: color var(--transition);
+}
+
+.link-btn:hover {
+  color: var(--accent-moss-light);
+}
+
+/* ── Back button ── */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-family: inherit;
+  margin-bottom: 20px;
+  transition: color var(--transition);
+}
+
+.back-btn:hover {
+  color: var(--text-primary);
+}
+
+/* ── Verification code input ── */
+.code-input {
+  text-align: center;
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  letter-spacing: 8px;
+}
+
+/* ── Success state ── */
+.success-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.success-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(125, 179, 74, 0.15);
+  border: 2px solid var(--accent-moss);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-moss);
+  margin-bottom: 8px;
+}
+
+.success-state h1 {
+  margin: 0;
+}
+
+.success-state .auth-subtitle {
+  margin: 0;
+}
+
+.success-state .btn-primary {
+  margin-top: 8px;
+  width: 100%;
+}
+
 @media (max-width: 768px) {
   .auth-side {
     display: none;

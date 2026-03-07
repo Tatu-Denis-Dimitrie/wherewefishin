@@ -16,54 +16,159 @@
 
   <div class="auth-main">
     <div class="auth-card">
-      <h1>Welcome back</h1>
-      <p class="auth-subtitle">Sign in to your account</p>
 
-      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
-        <div class="field">
-          <label for="usernameOrEmail">Username or Email</label>
-          <input
-            type="text"
-            id="usernameOrEmail"
-            formControlName="usernameOrEmail"
-            placeholder="Enter your username or email"
-            [class.has-error]="usernameOrEmail?.invalid && usernameOrEmail?.touched"
-          />
-          <div class="field-error" *ngIf="usernameOrEmail?.invalid && usernameOrEmail?.touched">
-            <span *ngIf="usernameOrEmail?.errors?.['required']">Username or email is required</span>
+      <!-- ── LOGIN ── -->
+      <ng-container *ngIf="view === 'login'">
+        <h1>Welcome back</h1>
+        <p class="auth-subtitle">Sign in to your account</p>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
+          <div class="field">
+            <label for="usernameOrEmail">Username or Email</label>
+            <input
+              type="text"
+              id="usernameOrEmail"
+              formControlName="usernameOrEmail"
+              placeholder="Enter your username or email"
+              [class.has-error]="usernameOrEmail?.invalid && usernameOrEmail?.touched"
+            />
+            <div class="field-error" *ngIf="usernameOrEmail?.invalid && usernameOrEmail?.touched">
+              <span *ngIf="usernameOrEmail?.errors?.['required']">Username or email is required</span>
+            </div>
           </div>
-        </div>
 
-        <div class="field">
-          <label for="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            formControlName="password"
-            placeholder="Enter your password"
-            [class.has-error]="password?.invalid && password?.touched"
-          />
-          <div class="field-error" *ngIf="password?.invalid && password?.touched">
-            <span *ngIf="password?.errors?.['required']">Password is required</span>
-            <span *ngIf="password?.errors?.['minlength']">Must be at least 6 characters</span>
+          <div class="field">
+            <div class="field-label-row">
+              <label for="password">Password</label>
+              <button type="button" class="link-btn" (click)="goToForgot()">Forgot password?</button>
+            </div>
+            <input
+              type="password"
+              id="password"
+              formControlName="password"
+              placeholder="Enter your password"
+              [class.has-error]="password?.invalid && password?.touched"
+            />
+            <div class="field-error" *ngIf="password?.invalid && password?.touched">
+              <span *ngIf="password?.errors?.['required']">Password is required</span>
+              <span *ngIf="password?.errors?.['minlength']">Must be at least 6 characters</span>
+            </div>
           </div>
-        </div>
 
-        <div class="field-error server-error" *ngIf="errorMessage">
-          {{ errorMessage }}
-        </div>
+          <div class="field-error server-error" *ngIf="errorMessage">
+            {{ errorMessage }}
+          </div>
 
-        <button type="submit" class="btn-primary" [disabled]="loginForm.invalid || isLoading">
-          <span *ngIf="!isLoading">Sign In</span>
-          <span *ngIf="isLoading" class="loading-text">
-            <span class="dot-loader"></span> Signing in...
-          </span>
+          <button type="submit" class="btn-primary" [disabled]="loginForm.invalid || isLoading">
+            <span *ngIf="!isLoading">Sign In</span>
+            <span *ngIf="isLoading" class="loading-text">
+              <span class="dot-loader"></span> Signing in...
+            </span>
+          </button>
+
+          <div class="auth-footer">
+            <p>Don't have an account? <a routerLink="/register">Create one</a></p>
+          </div>
+        </form>
+      </ng-container>
+
+      <!-- ── FORGOT PASSWORD — step 1: email ── -->
+      <ng-container *ngIf="view === 'forgot'">
+        <button type="button" class="back-btn" (click)="goToLogin()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+          Back to login
         </button>
+        <h1>Reset password</h1>
+        <p class="auth-subtitle">Enter your email and we'll send you a verification code.</p>
 
-        <div class="auth-footer">
-          <p>Don't have an account? <a routerLink="/register">Create one</a></p>
+        <form [formGroup]="forgotForm" (ngSubmit)="onForgotSubmit()" class="auth-form">
+          <div class="field">
+            <label for="forgotEmail">Email address</label>
+            <input
+              type="email"
+              id="forgotEmail"
+              formControlName="email"
+              placeholder="your@email.com"
+              [class.has-error]="email?.invalid && email?.touched"
+            />
+            <div class="field-error" *ngIf="email?.invalid && email?.touched">
+              <span *ngIf="email?.errors?.['required']">Email is required</span>
+              <span *ngIf="email?.errors?.['email']">Enter a valid email address</span>
+            </div>
+          </div>
+
+          <div class="field-error server-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+          <button type="submit" class="btn-primary" [disabled]="forgotForm.invalid || isLoading">
+            <span *ngIf="!isLoading">Send verification code</span>
+            <span *ngIf="isLoading" class="loading-text"><span class="dot-loader"></span> Sending...</span>
+          </button>
+        </form>
+      </ng-container>
+
+      <!-- ── FORGOT PASSWORD — step 2: code + new password ── -->
+      <ng-container *ngIf="view === 'reset'">
+        <button type="button" class="back-btn" (click)="goToForgot()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+          Back
+        </button>
+        <h1>Enter your code</h1>
+        <p class="auth-subtitle">We sent a 6-digit code to your email. Enter it below along with your new password.</p>
+
+        <form [formGroup]="resetForm" (ngSubmit)="onResetSubmit()" class="auth-form">
+          <div class="field">
+            <label for="code">Verification code</label>
+            <input
+              type="text"
+              id="code"
+              formControlName="code"
+              placeholder="123456"
+              maxlength="6"
+              class="code-input"
+              [class.has-error]="code?.invalid && code?.touched"
+            />
+            <div class="field-error" *ngIf="code?.invalid && code?.touched">
+              <span *ngIf="code?.errors?.['required']">Code is required</span>
+              <span *ngIf="code?.errors?.['minlength'] || code?.errors?.['maxlength']">Code must be exactly 6 digits</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="newPassword">New password</label>
+            <input
+              type="password"
+              id="newPassword"
+              formControlName="newPassword"
+              placeholder="Min. 6 characters"
+              [class.has-error]="newPassword?.invalid && newPassword?.touched"
+            />
+            <div class="field-error" *ngIf="newPassword?.invalid && newPassword?.touched">
+              <span *ngIf="newPassword?.errors?.['required']">Password is required</span>
+              <span *ngIf="newPassword?.errors?.['minlength']">Must be at least 6 characters</span>
+            </div>
+          </div>
+
+          <div class="field-error server-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+          <button type="submit" class="btn-primary" [disabled]="resetForm.invalid || isLoading">
+            <span *ngIf="!isLoading">Reset password</span>
+            <span *ngIf="isLoading" class="loading-text"><span class="dot-loader"></span> Saving...</span>
+          </button>
+        </form>
+      </ng-container>
+
+      <!-- ── SUCCESS ── -->
+      <ng-container *ngIf="view === 'done'">
+        <div class="success-state">
+          <div class="success-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h1>Password updated!</h1>
+          <p class="auth-subtitle">Your password has been reset successfully. You can now sign in with the new password.</p>
+          <button type="button" class="btn-primary" (click)="goToLogin()">Back to login</button>
         </div>
-      </form>
+      </ng-container>
+
     </div>
   </div>
 </div>

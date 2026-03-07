@@ -5,6 +5,9 @@ import { Observable, tap } from 'rxjs';
 import { LoginRequest, RegisterRequest, AuthResponse } from '../models/auth.model';
 import { environment } from '../../environments/environment';
 
+export interface ForgotPasswordRequest { email: string; }
+export interface ResetPasswordRequest { email: string; code: string; newPassword: string; }
+
 @Injectable({
   providedIn: 'root'
 })
@@ -83,5 +86,13 @@ export class AuthService {
 
   isLoggedIn(): boolean {
     return !!this.getToken();
+  }
+
+  forgotPassword(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/forgot-password`, { email });
+  }
+
+  resetPassword(payload: ResetPasswordRequest): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/reset-password`, payload);
   }
 }

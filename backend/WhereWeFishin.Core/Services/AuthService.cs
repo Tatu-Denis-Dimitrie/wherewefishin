@@ -62,7 +62,7 @@ public class AuthService : IAuthService
         {
             Username = request.Username,
             Email = request.Email,
-            PasswordHash = request.Password, // Stocați parola text-clar pentru dev
+            PasswordHash = request.Password, // Storing plain-text password for dev — replace with hashing in production
             FirstName = request.FirstName,
             LastName = request.LastName,
             Role = "User",
@@ -78,7 +78,6 @@ public class AuthService : IAuthService
         }
         catch
         {
-            // Do not block account creation if SMTP is unavailable.
         }
 
         var token = GenerateJwtToken(user.Id, user.Username, user.Email, user.Role);
@@ -104,6 +103,60 @@ public class AuthService : IAuthService
         return users.Any(u => 
             u.Username.Equals(username, StringComparison.OrdinalIgnoreCase) ||
             u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public async Task<bool> ForgotPasswordAsync(ForgotPasswordRequest request)
+    {
+        var users = await _userRepository.GetAllAsync();
+        var user = users.FirstOrDefault(u => u.Email.Equals(request.Email, StringComparison.OrdinalIgnoreCase));
+
+        if (user == null)
+            return true;
+
+        using var rng = RandomNumberGenerator.Create();
+        var codeBytes = new byte[4];
+        rng.GetBytes(codeBytes);
+        var code = (BitConverter.ToUInt32(codeBytes, 0) % 900000 + 100000).ToString();
+
+        user.PasswordResetCode = code;
+        user.PasswordResetCodeExpiry = DateTime.UtcNow.AddMinutes(15);
+        user.UpdatedAt = DateTime.UtcNow;
+        await _userRepository.UpdateAsync(user);
+
+        try
+        {
+            await _emailService.SendPasswordResetEmailAsync(user.Email, user.FirstName, code);
+        }
+        catch
+        {
+        }
+
+        return true;
+    }
+
+    public async Task<bool> ResetPasswordAsync(ResetPasswordRequest request)
+    {
+        var users = await _userRepository.GetAllAsync();
+        var user = users.FirstOrDefault(u => u.Email.Equals(request.Email, StringComparison.OrdinalIgnoreCase));
+
+        if (user == null)
+            return false;
+
+        if (string.IsNullOrWhiteSpace(user.PasswordResetCode) ||
+            user.PasswordResetCodeExpiry == null ||
+            user.PasswordResetCodeExpiry < DateTime.UtcNow)
+            return false;
+
+        if (!string.Equals(user.PasswordResetCode, request.Code, StringComparison.Ordinal))
+            return false;
+
+        user.PasswordHash = request.NewPassword;
+        user.PasswordResetCode = null;
+        user.PasswordResetCodeExpiry = null;
+        user.UpdatedAt = DateTime.UtcNow;
+        await _userRepository.UpdateAsync(user);
+
+        return true;
     }
 
     public string GenerateJwtToken(int userId, string username, string email, string role)

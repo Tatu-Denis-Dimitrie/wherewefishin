@@ -9,6 +9,8 @@ public class User : BaseEntity
     public string? LastName { get; set; }
     public string? ProfilePictureUrl { get; set; }
     public string Role { get; set; } = "User";
+    public string? PasswordResetCode { get; set; }
+    public DateTime? PasswordResetCodeExpiry { get; set; }
 
     public ICollection<FishingSpot> FishingSpots { get; set; } = new List<FishingSpot>();
     public ICollection<Catch> Catches { get; set; } = new List<Catch>();

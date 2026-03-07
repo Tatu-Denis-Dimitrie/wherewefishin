@@ -11,4 +11,6 @@ public interface IEmailService
         int durationHours,
         decimal totalPrice,
         int bookingId);
+
+    Task SendPasswordResetEmailAsync(string toEmail, string? firstName, string resetCode);
 }

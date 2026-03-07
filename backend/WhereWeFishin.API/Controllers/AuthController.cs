@@ -65,4 +65,31 @@ public class AuthController : ControllerBase
             email
         });
     }
+
+    [HttpPost("forgot-password")]
+    [AllowAnonymous]
+    public async Task<ActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        await _authService.ForgotPasswordAsync(request);
+
+        return Ok(new { message = "If this email address is registered, you will receive a verification code." });
+    }
+
+    [HttpPost("reset-password")]
+    [AllowAnonymous]
+    public async Task<ActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var success = await _authService.ResetPasswordAsync(request);
+        if (!success)
+        {
+            _logger.LogWarning("Password reset failed for email: {Email}", request.Email);
+            return BadRequest(new { message = "Invalid or expired code." });
+        }
+
+        return Ok(new { message = "Password has been reset successfully." });
+    }
 }
