@@ -29,6 +29,9 @@ RUN dotnet publish WhereWeFishin.API/WhereWeFishin.API.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
 
+# Install curl for Docker healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
 # Create uploads directory
 RUN mkdir -p /app/uploads
 

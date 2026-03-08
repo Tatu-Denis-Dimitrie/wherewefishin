@@ -12,6 +12,7 @@ import { CartService } from '../../services/cart.service';
 })
 export class Layout implements OnInit {
   isAdmin = false;
+  mobileMenuOpen = false;
 
   constructor(
     private authService: AuthService,
@@ -20,6 +21,14 @@ export class Layout implements OnInit {
 
   ngOnInit(): void {
     this.isAdmin = this.authService.isAdmin();
+  }
+
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+  }
+
+  closeMobileMenu(): void {
+    this.mobileMenuOpen = false;
   }
 
   logout(): void {

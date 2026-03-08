@@ -33,7 +33,25 @@ public class AuthService : IAuthService
         if (user == null)
             return null;
 
-        if (request.Password != user.PasswordHash)
+        bool passwordValid;
+        if (user.PasswordHash.StartsWith("$2"))
+        {
+            // BCrypt hash
+            passwordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
+        }
+        else
+        {
+            // Parolă plain-text (migrare de la versiunea veche): verifică și re-hash
+            passwordValid = request.Password == user.PasswordHash;
+            if (passwordValid)
+            {
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+                user.UpdatedAt = DateTime.UtcNow;
+                await _userRepository.UpdateAsync(user);
+            }
+        }
+
+        if (!passwordValid)
             return null;
 
         var token = GenerateJwtToken(user.Id, user.Username, user.Email, user.Role);
@@ -62,7 +80,7 @@ public class AuthService : IAuthService
         {
             Username = request.Username,
             Email = request.Email,
-            PasswordHash = request.Password, // Storing plain-text password for dev — replace with hashing in production
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             FirstName = request.FirstName,
             LastName = request.LastName,
             Role = "User",
@@ -150,7 +168,7 @@ public class AuthService : IAuthService
         if (!string.Equals(user.PasswordResetCode, request.Code, StringComparison.Ordinal))
             return false;
 
-        user.PasswordHash = request.NewPassword;
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         user.PasswordResetCode = null;
         user.PasswordResetCodeExpiry = null;
         user.UpdatedAt = DateTime.UtcNow;

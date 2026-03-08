@@ -150,12 +150,142 @@
 }
 
 /* ── Responsive ── */
+
+/* Close button in sidebar: hidden on desktop */
+.sidebar-close-btn {
+  display: none;
+}
+
+/* Mobile top bar: hidden on desktop */
+.mobile-topbar {
+  display: none;
+}
+
+/* Backdrop: hidden by default */
+.mobile-backdrop {
+  display: none;
+}
+
 @media (max-width: 768px) {
-  .sidebar {
-    display: none;
+  /* Top bar */
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 0 16px;
+    z-index: 200;
+    gap: 12px;
   }
 
+  .mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-heading);
+    flex: 1;
+    justify-content: center;
+  }
+
+  .mobile-brand .brand-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--accent-moss) 0%, #5a8f30 100%);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .hamburger-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .hamburger-btn:hover {
+    background: var(--accent-moss-dim);
+  }
+
+  .mobile-cart-btn {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    flex-shrink: 0;
+    text-decoration: none;
+  }
+
+  /* Backdrop overlay */
+  .mobile-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 150;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  .mobile-backdrop.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* Sidebar becomes a slide-in drawer */
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 160;
+    width: 280px;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  /* Close button inside sidebar */
+  .sidebar-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+  }
+
+  .sidebar-close-btn:hover {
+    background: var(--accent-moss-dim);
+    color: var(--text-primary);
+  }
+
+  /* Main content: no left margin, but push down for top bar */
   .main-content {
     margin-left: 0;
+    padding-top: 56px;
   }
 }

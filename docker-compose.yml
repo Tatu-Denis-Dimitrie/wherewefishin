@@ -58,6 +58,12 @@ services:
     depends_on:
       sqlserver:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/fishingspots || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     restart: unless-stopped
 
   # ==== Python Fish Recognition Service ====
@@ -96,7 +102,8 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
 
   # ==== Cloudflare Tunnel ====

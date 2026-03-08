@@ -1,3 +1,4 @@
+using BCrypt.Net;
 using WhereWeFishin.Core.Entities;
 
 namespace WhereWeFishin.Database.MockData;
@@ -26,6 +27,10 @@ public static class SeedData
 {
     public static List<User> GetUsers()
     {
+        var adminHash = BCrypt.Net.BCrypt.HashPassword("admin123");
+        var managerHash = BCrypt.Net.BCrypt.HashPassword("manager123");
+        var userHash = BCrypt.Net.BCrypt.HashPassword("password123");
+
         return new List<User>
         {
             // Admin account
@@ -33,7 +38,7 @@ public static class SeedData
             {
                 Username = "admin",
                 Email = "admin@wherewefishin.com",
-                PasswordHash = "admin123",
+                PasswordHash = adminHash,
                 FirstName = "Administrator",
                 LastName = "System",
                 Role = "Admin",
@@ -46,7 +51,7 @@ public static class SeedData
             {
                 Username = "manager1",
                 Email = "manager1@wherewefishin.com",
-                PasswordHash = "manager123",
+                PasswordHash = managerHash,
                 FirstName = "George",
                 LastName = "Marinescu",
                 Role = "Manager",
@@ -57,7 +62,7 @@ public static class SeedData
             {
                 Username = "manager2",
                 Email = "manager2@wherewefishin.com",
-                PasswordHash = "manager123",
+                PasswordHash = managerHash,
                 FirstName = "Elena",
                 LastName = "Vasilescu",
                 Role = "Manager",
@@ -70,7 +75,7 @@ public static class SeedData
             {
                 Username = "ion_pescar",
                 Email = "ion@email.com",
-                PasswordHash = "password123",
+                PasswordHash = userHash,
                 FirstName = "Ion",
                 LastName = "Popescu",
                 Role = "User",
@@ -81,7 +86,7 @@ public static class SeedData
             {
                 Username = "maria_fisher",
                 Email = "maria@email.com",
-                PasswordHash = "password123",
+                PasswordHash = userHash,
                 FirstName = "Maria",
                 LastName = "Ionescu",
                 Role = "User",
@@ -92,7 +97,7 @@ public static class SeedData
             {
                 Username = "andrei_pescuit",
                 Email = "andrei@email.com",
-                PasswordHash = "password123",
+                PasswordHash = userHash,
                 FirstName = "Andrei",
                 LastName = "Popa",
                 Role = "User",
@@ -103,7 +108,7 @@ public static class SeedData
             {
                 Username = "petre_balanescu",
                 Email = "petre@email.com",
-                PasswordHash = "password123",
+                PasswordHash = userHash,
                 FirstName = "Petre",
                 LastName = "Balanescu",
                 Role = "User",
@@ -114,7 +119,7 @@ public static class SeedData
             {
                 Username = "carmen_nistor",
                 Email = "carmen@email.com",
-                PasswordHash = "password123",
+                PasswordHash = userHash,
                 FirstName = "Carmen",
                 LastName = "Nistor",
                 Role = "User",
@@ -125,7 +130,7 @@ public static class SeedData
             {
                 Username = "dan_cretu",
                 Email = "dan@email.com",
-                PasswordHash = "password123",
+                PasswordHash = userHash,
                 FirstName = "Dan",
                 LastName = "Cretu",
                 Role = "User",
@@ -136,7 +141,7 @@ public static class SeedData
             {
                 Username = "adriana_dobre",
                 Email = "adriana@email.com",
-                PasswordHash = "password123",
+                PasswordHash = userHash,
                 FirstName = "Adriana",
                 LastName = "Dobre",
                 Role = "User",
