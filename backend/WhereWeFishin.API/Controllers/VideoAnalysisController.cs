@@ -321,6 +321,7 @@ public class VideoAnalysisController : ControllerBase
             TotalFrames = entity.TotalFrames,
             Fps = entity.Fps,
             TotalDetections = entity.TotalDetections,
+            TotalUniqueFish = entity.TotalDetections,
             DominantFishType = entity.DominantFishType,
             DominantFishCount = entity.DominantFishCount,
             FishCounts = fishCounts,

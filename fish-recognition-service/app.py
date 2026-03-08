@@ -1,6 +1,7 @@
 import os
 import cv2
 import subprocess
+from collections import deque
 from datetime import datetime
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -16,12 +17,25 @@ OUTPUT_FOLDER = 'outputs'
 MODEL_PATH = 'models/best.pt'
 ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv'}
 
+# ── Video encoding ──────────────────────────────────────────
 USE_FFMPEG_REENCODE = True
 USE_AV1_CODEC = False
 
-BATCH_SIZE = 64
+# ── Model & Tracker ─────────────────────────────────────────
 USE_HALF_PRECISION = True
 IMG_SIZE = 640
+TRACKER_CONFIG = 'bytetrack.yaml'   # alternativa: 'botsort.yaml' (mai precis, mai lent)
+TRACK_CONFIDENCE = 0.5               # prag minim de confidence (↑ = mai putine false positives)
+TRACK_PERSIST = True                 # pastreaza ID-urile intre frame-uri
+
+# ── Trail / Tracking Points ─────────────────────────────────
+TRAIL_ENABLED = True                 # deseneaza traseul fiecarui peste
+TRAIL_MAX_POINTS = 30                # cate puncte recente sa pastram per pește (↑ = traseu mai lung)
+TRAIL_DOT_RADIUS = 3                 # raza cercului per punct
+TRAIL_LINE_THICKNESS = 2             # grosimea liniei intre puncte
+TRAIL_FADE = True                    # punctele mai vechi devin transparente
+TRAIL_RECLAIM_MIN_POINTS = 2         # min puncte de traseu in chenar pentru re-asociere (↑ = mai strict)
+TRAIL_FADE_OUT_FRAMES = 20          # dupa cate frame-uri de absenta se sterge traseul (0 = instant)
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
@@ -37,7 +51,7 @@ try:
     model = YOLO(MODEL_PATH)
     model.to(device)
     print(f"Model loaded on {device}. Classes: {model.names}")
-    print(f"Batch size: {BATCH_SIZE}, Image size: {IMG_SIZE}")
+    print(f"Tracker: {TRACKER_CONFIG} | persist={TRACK_PERSIST} | conf={TRACK_CONFIDENCE}")
 except Exception as e:
     print(f"Error loading model: {e}")
     model = None
@@ -60,14 +74,58 @@ def reencode_video(input_path, output_path, use_av1=False):
         print(f"FFmpeg error: {e}")
         return False
 
-def draw_detection(frame, x1, y1, x2, y2, fish_type, confidence):
-    color = (0, 255, 0)
+def get_track_color(track_id):
+    # Deterministic color so each track ID keeps the same color across frames.
+    if track_id is None:
+        return (0, 255, 0)
+
+    seed = int(track_id)
+    blue = 50 + (seed * 73) % 206
+    green = 50 + (seed * 151) % 206
+    red = 50 + (seed * 199) % 206
+    return (blue, green, red)
+
+def draw_trail(frame, points, color):
+    """Draw fading trajectory trail for a tracked fish."""
+    n = len(points)
+    if n < 2:
+        return
+    for i in range(1, n):
+        if TRAIL_FADE:
+            alpha = i / n  # 0→1, older points are dimmer
+        else:
+            alpha = 1.0
+        pt_color = tuple(int(c * alpha) for c in color)
+        cv2.line(frame, points[i - 1], points[i], pt_color, TRAIL_LINE_THICKNESS)
+        cv2.circle(frame, points[i], TRAIL_DOT_RADIUS, pt_color, -1)
+
+def find_trail_owner(x1, y1, x2, y2, track_trails):
+    """Return the track_id whose recent trail has the most points inside this bounding box.
+    Used to re-associate a fish when ByteTrack assigns a new ID after a brief occlusion.
+    """
+    best_id = None
+    best_count = 0
+    for tid, trail in track_trails.items():
+        count = sum(1 for (cx, cy) in trail if x1 <= cx <= x2 and y1 <= cy <= y2)
+        if count > best_count:
+            best_count = count
+            best_id = tid
+    return best_id if best_count >= TRAIL_RECLAIM_MIN_POINTS else None
+
+def draw_detection(frame, x1, y1, x2, y2, fish_type, confidence, track_id=None):
+    color = get_track_color(track_id)
     cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), color, 2)
-    label = f"{fish_type}: {confidence:.2f}"
+
+    if track_id is not None:
+        label = f"{fish_type} #{track_id} ({confidence:.2f})"
+    else:
+        label = f"{fish_type}: {confidence:.2f}"
+
     label_size, _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
-    cv2.rectangle(frame, (int(x1), int(y1) - label_size[1] - 10), 
+    label_top = max(0, int(y1) - label_size[1] - 10)
+    cv2.rectangle(frame, (int(x1), label_top),
                 (int(x1) + label_size[0], int(y1)), color, -1)
-    cv2.putText(frame, label, (int(x1), int(y1) - 5), 
+    cv2.putText(frame, label, (int(x1), max(15, int(y1) - 5)),
               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
 
 def process_video(video_path, output_path, use_ffmpeg_reencode=True, use_av1=False):
@@ -79,60 +137,141 @@ def process_video(video_path, output_path, use_ffmpeg_reencode=True, use_av1=Fal
         raise Exception("Cannot open video")
     
     fps = int(cap.get(cv2.CAP_PROP_FPS))
+    if fps <= 0:
+        fps = 30
+
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    
-    all_frames = []
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        all_frames.append(frame)
+    estimated_total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     cap.release()
-    
-    total_frames = len(all_frames)
-    duration = total_frames / fps if fps > 0 else 0
     
     temp_output = output_path.replace('.mp4', '_temp.mp4') if use_ffmpeg_reencode else output_path
     out = cv2.VideoWriter(temp_output, cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
+    if not out.isOpened():
+        raise Exception("Cannot create output video")
     
     detections = []
-    fish_counts = {}
+    unique_track_ids = set()
+    track_best_species = {}
+    track_trails = {}               # track_id -> deque of (cx, cy) centers
+    track_last_seen = {}            # track_id -> last frame_number in which fish was visible
+    id_remap = {}                   # bytetrack raw_id -> canonical track_id (re-asociere dupa traseu)
+    total_frame_detections = 0
+    processed_frames = 0
     
-    print(f"Processing: {total_frames} frames (batch: {BATCH_SIZE})")
-    
-    for batch_start in range(0, total_frames, BATCH_SIZE):
-        batch_end = min(batch_start + BATCH_SIZE, total_frames)
-        batch_frames = all_frames[batch_start:batch_end]
-        
-        results = model(batch_frames, stream=False, verbose=False, imgsz=IMG_SIZE, 
-                       half=(device == 'cuda' and USE_HALF_PRECISION), conf=0.6)
-        
-        for i, result in enumerate(results):
-            frame_number = batch_start + i + 1
-            timestamp = round(frame_number / fps, 2) if fps > 0 else 0
-            frame = batch_frames[i]
-            
-            for box in result.boxes:
+    print(f"Tracking with {TRACKER_CONFIG}: ~{estimated_total_frames} frames")
+
+    track_results = model.track(
+        source=video_path,
+        stream=True,
+        verbose=False,
+        imgsz=IMG_SIZE,
+        half=(device == 'cuda' and USE_HALF_PRECISION),
+        conf=TRACK_CONFIDENCE,
+        tracker=TRACKER_CONFIG,
+        persist=TRACK_PERSIST
+    )
+
+    for result in track_results:
+        processed_frames += 1
+        frame_number = processed_frames
+        timestamp = round(frame_number / fps, 2)
+        frame = result.orig_img.copy()
+        in_frame_count = 0
+
+        boxes = result.boxes
+        track_ids = boxes.id.tolist() if boxes is not None and boxes.id is not None else []
+
+        if boxes is not None:
+            for idx, box in enumerate(boxes):
                 x1, y1, x2, y2 = map(int, box.xyxy[0].cpu().numpy())
                 confidence = float(box.conf[0])
-                fish_type = model.names.get(int(box.cls[0]), f"Class_{int(box.cls[0])}")
-                
+                class_id = int(box.cls[0])
+                fish_type = model.names.get(class_id, f"Class_{class_id}")
+
+                track_id = None
+                if idx < len(track_ids):
+                    raw_id = int(track_ids[idx])
+
+                    if raw_id in id_remap:
+                        # Already remapped from a previous frame
+                        track_id = id_remap[raw_id]
+                    elif raw_id in track_trails:
+                        # ByteTrack is tracking this fish correctly, no remap needed
+                        track_id = raw_id
+                    else:
+                        # New ID assigned by ByteTrack — check if trail recognizes this fish
+                        owner = find_trail_owner(x1, y1, x2, y2, track_trails)
+                        if owner is not None:
+                            id_remap[raw_id] = owner
+                            track_id = owner
+                        else:
+                            track_id = raw_id
+
+                    unique_track_ids.add(track_id)
+
+                    previous = track_best_species.get(track_id)
+                    if previous is None or confidence > previous['confidence']:
+                        track_best_species[track_id] = {
+                            'fishType': fish_type,
+                            'confidence': confidence
+                        }
+
+                    # Store center point for trail
+                    if TRAIL_ENABLED:
+                        cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
+                        if track_id not in track_trails:
+                            track_trails[track_id] = deque(maxlen=TRAIL_MAX_POINTS)
+                        track_trails[track_id].append((cx, cy))
+                        track_last_seen[track_id] = frame_number
+
                 detections.append({
                     "fishType": fish_type,
                     "confidence": round(confidence, 3),
                     "timestamp": timestamp,
                     "frameNumber": frame_number,
+                    "trackId": track_id,
                     "bBox": {"x": x1, "y": y1, "width": x2 - x1, "height": y2 - y1}
                 })
-                
-                fish_counts[fish_type] = fish_counts.get(fish_type, 0) + 1
-                draw_detection(frame, x1, y1, x2, y2, fish_type, confidence)
-            
-            out.write(frame)
-        
-        if batch_end % (BATCH_SIZE * 2) == 0 or batch_end == total_frames:
-            print(f"{batch_end}/{total_frames} ({batch_end/total_frames*100:.1f}%)")
+
+                total_frame_detections += 1
+                in_frame_count += 1
+                draw_detection(frame, x1, y1, x2, y2, fish_type, confidence, track_id)
+
+        # Fade-out and purge stale trails (fish no longer in frame)
+        if TRAIL_ENABLED:
+            stale_ids = []
+            for tid, trail in track_trails.items():
+                frames_absent = frame_number - track_last_seen.get(tid, frame_number)
+                if TRAIL_FADE_OUT_FRAMES == 0 and frames_absent > 0:
+                    stale_ids.append(tid)
+                elif frames_absent > TRAIL_FADE_OUT_FRAMES:
+                    stale_ids.append(tid)
+                elif frames_absent > 0 and len(trail) >= 2:
+                    # Still in fade-out window: draw with reduced opacity
+                    fade_factor = 1.0 - frames_absent / max(TRAIL_FADE_OUT_FRAMES, 1)
+                    base_color = get_track_color(tid)
+                    faded_color = tuple(int(c * fade_factor) for c in base_color)
+                    draw_trail(frame, list(trail), faded_color)
+                elif len(trail) >= 2:
+                    draw_trail(frame, list(trail), get_track_color(tid))
+            for tid in stale_ids:
+                track_trails.pop(tid, None)
+                track_last_seen.pop(tid, None)
+
+        cv2.putText(frame, f"In frame: {in_frame_count}", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        cv2.putText(frame, f"Total unique fish: {len(unique_track_ids)}", (10, 60),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+
+        out.write(frame)
+
+        if processed_frames % 120 == 0:
+            if estimated_total_frames > 0:
+                pct = processed_frames / estimated_total_frames * 100
+                print(f"{processed_frames}/{estimated_total_frames} ({pct:.1f}%)")
+            else:
+                print(f"Processed {processed_frames} frames")
     
     out.release()
     
@@ -143,21 +282,33 @@ def process_video(video_path, output_path, use_ffmpeg_reencode=True, use_av1=Fal
             pass
     elif temp_output != output_path:
         os.rename(temp_output, output_path)
+
+    fish_counts = {}
+    for tracked_fish in track_best_species.values():
+        fish_type = tracked_fish['fishType']
+        fish_counts[fish_type] = fish_counts.get(fish_type, 0) + 1
+
+    total_unique_fish = len(unique_track_ids)
+    duration = processed_frames / fps if fps > 0 else 0
     
     dominant_fish = max(fish_counts.items(), key=lambda x: x[1]) if fish_counts else None
     if dominant_fish:
         dominant_fish = {"type": dominant_fish[0], "count": dominant_fish[1]}
     
-    print(f"Complete: {len(detections)} detections")
+    print(f"Complete: {total_unique_fish} unique fish, {total_frame_detections} frame detections")
     
     return {
-        "totalFrames": total_frames,
+        "totalFrames": processed_frames,
         "duration": round(duration, 2),
         "fps": fps,
         "detections": detections,
         "fishCounts": fish_counts,
         "dominantFish": dominant_fish,
-        "totalDetections": len(detections)
+        "totalUniqueFish": total_unique_fish,
+        "totalDetections": total_unique_fish,
+        "totalFrameDetections": total_frame_detections,
+        "tracker": TRACKER_CONFIG,
+        "trackingEnabled": True
     }
 
 @app.route('/health', methods=['GET'])

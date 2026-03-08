@@ -68,7 +68,7 @@ public class FishRecognitionService : IFishRecognitionService
                 analysis.Duration = pythonResult.Results.Duration;
                 analysis.TotalFrames = pythonResult.Results.TotalFrames;
                 analysis.Fps = pythonResult.Results.Fps;
-                analysis.TotalDetections = pythonResult.Results.TotalDetections;
+                analysis.TotalDetections = pythonResult.Results.TotalUniqueFish ?? pythonResult.Results.TotalDetections;
                 
                 if (!string.IsNullOrEmpty(pythonResult.Results.ProcessedVideoUrl))
                 {
@@ -165,6 +165,7 @@ public class FishRecognitionService : IFishRecognitionService
             Confidence = d.Confidence,
             Timestamp = d.Timestamp,
             FrameNumber = d.FrameNumber,
+            TrackId = d.TrackId,
             BBox = new BoundingBoxDto
             {
                 X = d.BBox?.X ?? 0,
@@ -188,6 +189,7 @@ public class FishRecognitionService : IFishRecognitionService
             TotalFrames = entity.TotalFrames,
             Fps = entity.Fps,
             TotalDetections = entity.TotalDetections,
+            TotalUniqueFish = results.TotalUniqueFish ?? entity.TotalDetections,
             DominantFishType = entity.DominantFishType,
             DominantFishCount = entity.DominantFishCount,
             FishCounts = results.FishCounts,
@@ -215,6 +217,8 @@ public class FishRecognitionService : IFishRecognitionService
         public Dictionary<string, int>? FishCounts { get; set; }
         public PythonDominantFish? DominantFish { get; set; }
         public int TotalDetections { get; set; }
+        public int? TotalUniqueFish { get; set; }
+        public int? TotalFrameDetections { get; set; }
         
         [JsonPropertyName("processed_video_url")]
         public string? ProcessedVideoUrl { get; set; }
@@ -226,6 +230,7 @@ public class FishRecognitionService : IFishRecognitionService
         public double Confidence { get; set; }
         public double Timestamp { get; set; }
         public int FrameNumber { get; set; }
+        public int? TrackId { get; set; }
         public PythonBBox? BBox { get; set; }
     }
 

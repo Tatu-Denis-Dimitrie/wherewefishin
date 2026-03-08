@@ -8,6 +8,7 @@ export interface VideoAnalysis {
   totalFrames: number;
   fps: number;
   totalDetections: number;
+  totalUniqueFish?: number;
   dominantFishType?: string;
   dominantFishCount: number;
   fishCounts?: { [key: string]: number };
@@ -23,6 +24,7 @@ export interface FishDetection {
   confidence: number;
   timestamp: number;
   frameNumber: number;
+  trackId?: number;
   bbox: BoundingBox;
 }
 

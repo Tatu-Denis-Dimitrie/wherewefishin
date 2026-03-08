@@ -5,6 +5,7 @@ Serviciu Python Flask pentru detectarea și recunoașterea peștilor în videocl
 ## Funcționalități
 
 - 🐟 Detectarea peștilor în timp real din videoclipuri
+- 🧭 Tracking ByteTrack cu ID persistent pentru fiecare pește
 - 📊 Statistici complete: număr detecții, tipuri, specia dominantă
 - 🎥 Generare video procesat cu bounding boxes și etichete
 - 🌐 Codificare optimizată pentru web (H.264/AV1)
@@ -15,6 +16,8 @@ Serviciu Python Flask pentru detectarea și recunoașterea peștilor în videocl
 ```bash
 pip install -r requirements.txt
 ```
+
+`lapx` este dependența suplimentară necesară pentru algoritmul de asociere (Linear Assignment Problem) folosit de ByteTrack. Restul este deja inclus în `ultralytics`.
 
 ### FFmpeg (NECESAR pentru compatibilitate web!)
 
@@ -87,6 +90,42 @@ USE_AV1_CODEC = False       # True = AV1, False = H.264
   - Suport limitat în browsere vechi
   - Bun pentru arhivare, nu pentru procesare live
 
+## ByteTrack Tracking
+
+Am ales ByteTrack deoarece:
+
+- Este deja integrat în `ultralytics` (fără dependențe complexe suplimentare)
+- Este mai rapid și mai lightweight decât DeepSORT
+- Funcționează excelent pentru obiecte similare vizual (cum sunt peștii)
+- Folosește `model.track()` în loc de `model()`
+
+În `app.py` tracking-ul rulează cu:
+
+- `tracker="bytetrack.yaml"`
+- `persist=True`
+- `conf=0.4`
+
+### Ce s-a schimbat față de versiunea veche
+
+| Înainte (detecție) | Acum (tracking ByteTrack) |
+|---|---|
+| `model(frame)` detecta pești fără identitate | `model.track(frame, tracker="bytetrack.yaml", persist=True)` dă ID unic fiecărui pește |
+| Număra doar peștii din frame-ul curent | Numără pești unici pe tot videoclipul |
+| Box-uri identice | Fiecare pește are culoare diferită în funcție de ID |
+| Label de tip `Fish: 0.85` | Label de tip `Fish #3 (0.85)` |
+
+### Ce vezi pe ecran
+
+- `In frame: X` - câți pești sunt în cadrul curent
+- `Total unique fish: Y` - câți pești unici au fost detectați de la începutul videoclipului
+- ID persistent pentru fiecare pește (`Fish #1`, `Fish #2`) păstrat frame-to-frame
+
+### Parametri ajustabili
+
+- `conf=0.4` - mărește dacă ai false positives, micșorează dacă pierzi pești
+- `persist=True` - esențial pentru menținerea tracking-ului între frame-uri
+- `tracker="botsort.yaml"` - alternativă mai precisă, dar mai lentă
+
 ## Pornire serviciu
 
 ```bash
@@ -97,6 +136,8 @@ source venv/bin/activate      # Linux/macOS
 # Pornește serviciul
 python app.py
 ```
+
+Scriptul folosește ByteTrack implicit.
 
 Serviciul va rula pe: **http://localhost:5001**
 

@@ -112,7 +112,9 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
                   "http://localhost:4200",  // local Angular dev server
                   "http://localhost",        // Docker: nginx on port 80
-                  "http://localhost:80"      // Docker: explicit port
+                  "http://localhost:80",     // Docker: explicit port
+                  "https://wherewefishin.uk", // Production domain
+                  "http://wherewefishin.uk"   // Production domain (http)
               )
               .AllowAnyMethod()
               .AllowAnyHeader()

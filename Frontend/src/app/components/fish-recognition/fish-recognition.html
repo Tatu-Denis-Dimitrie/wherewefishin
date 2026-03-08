@@ -95,8 +95,8 @@
             </div>
             <div class="card-info-grid" *ngIf="a.status === 'Completed'">
               <div class="info-item">
-                <span class="info-label">Total Fish</span>
-                <span class="info-value">{{ a.totalDetections }}</span>
+                <span class="info-label">Unique Fish</span>
+                <span class="info-value">{{ a.totalUniqueFish ?? a.totalDetections }}</span>
               </div>
               <div class="info-item">
                 <span class="info-label">Duration</span>

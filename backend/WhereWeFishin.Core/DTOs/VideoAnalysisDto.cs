@@ -11,6 +11,7 @@ public class VideoAnalysisDto
     public int TotalFrames { get; set; }
     public int Fps { get; set; }
     public int TotalDetections { get; set; }
+    public int? TotalUniqueFish { get; set; }
     public string? DominantFishType { get; set; }
     public int DominantFishCount { get; set; }
     public Dictionary<string, int>? FishCounts { get; set; }
@@ -27,6 +28,7 @@ public class FishDetectionDto
     public double Confidence { get; set; }
     public double Timestamp { get; set; }
     public int FrameNumber { get; set; }
+    public int? TrackId { get; set; }
     public BoundingBoxDto BBox { get; set; } = new();
 }
 

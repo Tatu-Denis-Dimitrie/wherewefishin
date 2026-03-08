@@ -1,6 +1,6 @@
 # WhereWeFishin
 
-Fishing platform with interactive map, catch management, and AI-powered fish detection (YOLO).
+Fishing platform with interactive map, catch management, and AI-powered fish detection/tracking (YOLO + ByteTrack).
 
 ## Architecture
 
@@ -122,9 +122,15 @@ WhereWeFishin/
 ## Features
 
 - **Interactive Map** — satellite imagery, draw fishing zones, save spots
-- **Fish Recognition** — upload video, YOLO detects species with bounding boxes
+- **Fish Recognition** — upload video, YOLO + ByteTrack tracks fish IDs across frames and counts unique fish
 - **User Profiles** — JWT auth, avatar, activity history
 - **Catch Tracking** — log species, weight, location, photos
+
+## Fish Tracking Notes
+
+- Python service uses `model.track(..., tracker="bytetrack.yaml", persist=True)`.
+- Install dependencies via `pip install -r fish-recognition-service/requirements.txt` (`lapx` included).
+- `totalDetections` now reflects total unique fish tracked in a video.
 
 ## Troubleshooting
 

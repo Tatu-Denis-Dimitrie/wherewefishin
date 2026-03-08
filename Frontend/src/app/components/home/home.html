@@ -178,7 +178,7 @@
                   <div class="analysis-meta">
                     <span class="badge-mini" [ngClass]="getStatusClass(analysis.status)">{{ analysis.status }}</span>
                     @if (analysis.status === 'Completed' && analysis.totalDetections) {
-                      <span class="analysis-count">{{ analysis.totalDetections }} detections</span>
+                      <span class="analysis-count">{{ analysis.totalUniqueFish ?? analysis.totalDetections }} unique fish</span>
                     }
                   </div>
                 </div>
