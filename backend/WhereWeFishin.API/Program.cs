@@ -3,9 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
 using Microsoft.OpenApi.Models;
-using WhereWeFishin.API.Security;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Interfaces;
 using WhereWeFishin.Core.Services;
@@ -79,9 +77,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 errorNumbersToAdd: null);
         }));
 
-    builder.Services.AddMemoryCache();
-    builder.Services.AddSingleton<ITokenRevocationService, InMemoryTokenRevocationService>();
-
 // Configure JWT Authentication
 var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key not configured");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("JWT Issuer not configured");
@@ -104,58 +99,6 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtAudience,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ClockSkew = TimeSpan.Zero
-    };
-
-    options.Events = new JwtBearerEvents
-    {
-        OnMessageReceived = context =>
-        {
-            if (string.IsNullOrWhiteSpace(context.Token) &&
-                context.Request.Cookies.TryGetValue(AuthCookieManager.CookieName, out var cookieToken) &&
-                !string.IsNullOrWhiteSpace(cookieToken))
-            {
-                context.Token = cookieToken;
-            }
-
-            return Task.CompletedTask;
-        },
-        OnTokenValidated = context =>
-        {
-            var revocationService = context.HttpContext.RequestServices.GetRequiredService<ITokenRevocationService>();
-            var jti = context.Principal?.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti)?.Value;
-
-            if (!string.IsNullOrWhiteSpace(jti) && revocationService.IsTokenRevoked(jti))
-            {
-                context.Fail("Token has been revoked.");
-                AuthCookieManager.ExpireAuthCookie(context.Response);
-            }
-
-            return Task.CompletedTask;
-        },
-        OnAuthenticationFailed = context =>
-        {
-            context.NoResult();
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            AuthCookieManager.ExpireAuthCookie(context.Response);
-            return Task.CompletedTask;
-        },
-        OnChallenge = async context =>
-        {
-            context.HandleResponse();
-
-            if (!context.Response.HasStarted)
-            {
-                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                context.Response.ContentType = "application/json";
-                AuthCookieManager.ExpireAuthCookie(context.Response);
-
-                var message = context.AuthenticateFailure is SecurityTokenExpiredException
-                    ? "Token expired."
-                    : "Unauthorized";
-
-                await context.Response.WriteAsJsonAsync(new { message });
-            }
-        }
     };
 });
 

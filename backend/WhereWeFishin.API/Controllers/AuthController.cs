@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.IdentityModel.Tokens.Jwt;
-using WhereWeFishin.API.Security;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Interfaces;
 
@@ -13,16 +11,11 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly ILogger<AuthController> _logger;
-    private readonly ITokenRevocationService _tokenRevocationService;
 
-    public AuthController(
-        IAuthService authService,
-        ILogger<AuthController> logger,
-        ITokenRevocationService tokenRevocationService)
+    public AuthController(IAuthService authService, ILogger<AuthController> logger)
     {
         _authService = authService;
         _logger = logger;
-        _tokenRevocationService = tokenRevocationService;
     }
 
     [HttpPost("login")]
@@ -34,12 +27,9 @@ public class AuthController : ControllerBase
         var response = await _authService.LoginAsync(request);
         if (response == null)
         {
-            ExpireAuthCookie();
             _logger.LogWarning("Login failed for: {UsernameOrEmail}", request.UsernameOrEmail);
             return Unauthorized(new { message = "Invalid username or password" });
         }
-
-        SetAuthCookie(response);
 
         return Ok(response);
     }
@@ -54,14 +44,9 @@ public class AuthController : ControllerBase
             return Conflict(new { message = "Username or email already exists" });
 
         var response = await _authService.RegisterAsync(request);
-        if (response == null)
-        {
-            return StatusCode(500, new { message = "Registration failed" });
-        }
-
-        SetAuthCookie(response);
-
-        return CreatedAtAction(nameof(Register), new { id = response.UserId }, response);
+        return response == null 
+            ? StatusCode(500, new { message = "Registration failed" })
+            : CreatedAtAction(nameof(Register), new { id = response.UserId }, response);
     }
 
     [HttpGet("verify")]
@@ -79,24 +64,6 @@ public class AuthController : ControllerBase
             username,
             email
         });
-    }
-
-    [HttpPost("logout")]
-    [Authorize]
-    public ActionResult Logout()
-    {
-        try
-        {
-            var token = AuthCookieManager.ReadTokenFromRequest(Request);
-            RevokeTokenIfPossible(token);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Logout revocation failed, continuing with cookie cleanup");
-        }
-
-        ExpireAuthCookie();
-        return Ok(new { message = "Logged out successfully" });
     }
 
     [HttpPost("forgot-password")]
@@ -124,46 +91,5 @@ public class AuthController : ControllerBase
         }
 
         return Ok(new { message = "Password has been reset successfully." });
-    }
-
-    private void SetAuthCookie(AuthResponse response)
-    {
-        AuthCookieManager.SetAuthCookie(
-            Response,
-            response.Token,
-            response.ExpiresAt,
-            Request.IsHttps);
-    }
-
-    private void ExpireAuthCookie()
-    {
-        AuthCookieManager.ExpireAuthCookie(Response);
-    }
-
-    private void RevokeTokenIfPossible(string? token)
-    {
-        if (string.IsNullOrWhiteSpace(token))
-        {
-            return;
-        }
-
-        var handler = new JwtSecurityTokenHandler();
-        if (!handler.CanReadToken(token))
-        {
-            return;
-        }
-
-        var jwtToken = handler.ReadJwtToken(token);
-        var jti = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti)?.Value;
-        if (string.IsNullOrWhiteSpace(jti))
-        {
-            return;
-        }
-
-        var expiresAtUtc = jwtToken.ValidTo == DateTime.MinValue
-            ? DateTime.UtcNow.AddHours(24)
-            : jwtToken.ValidTo;
-
-        _tokenRevocationService.RevokeToken(jti, expiresAtUtc);
     }
 }

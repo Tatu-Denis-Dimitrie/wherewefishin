@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using WhereWeFishin.API.Controllers;
-using WhereWeFishin.API.Security;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
@@ -15,19 +13,13 @@ public class AuthControllerTests
 {
     private readonly IAuthService _authService;
     private readonly ILogger<AuthController> _logger;
-    private readonly ITokenRevocationService _tokenRevocationService;
     private readonly AuthController _controller;
 
     public AuthControllerTests()
     {
         _authService = Substitute.For<IAuthService>();
         _logger = Substitute.For<ILogger<AuthController>>();
-        _tokenRevocationService = Substitute.For<ITokenRevocationService>();
-        _controller = new AuthController(_authService, _logger, _tokenRevocationService);
-        _controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext()
-        };
+        _controller = new AuthController(_authService, _logger);
     }
 
 
@@ -172,36 +164,5 @@ public class AuthControllerTests
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.NotNull(okResult.Value);
-    }
-
-    [Fact]
-    public void Logout_WithBearerToken_RevokesTokenAndClearsCookie()
-    {
-        // Arrange
-        var jwt = new JwtSecurityToken(
-            claims: new[] { new Claim(JwtRegisteredClaimNames.Jti, "logout-jti") },
-            expires: DateTime.UtcNow.AddMinutes(30));
-        var token = new JwtSecurityTokenHandler().WriteToken(jwt);
-        _controller.HttpContext.Request.Headers.Authorization = $"Bearer {token}";
-
-        // Act
-        var result = _controller.Logout();
-
-        // Assert
-        Assert.IsType<OkObjectResult>(result);
-        _tokenRevocationService.Received(1).RevokeToken("logout-jti", Arg.Any<DateTime>());
-        Assert.Contains("auth=; Max-Age=0; Path=/", _controller.HttpContext.Response.Headers.SetCookie.ToString());
-    }
-
-    [Fact]
-    public void Logout_WithoutToken_ReturnsOkWithoutRevocation()
-    {
-        // Act
-        var result = _controller.Logout();
-
-        // Assert
-        Assert.IsType<OkObjectResult>(result);
-        _tokenRevocationService.DidNotReceive().RevokeToken(Arg.Any<string>(), Arg.Any<DateTime>());
-        Assert.Contains("auth=; Max-Age=0; Path=/", _controller.HttpContext.Response.Headers.SetCookie.ToString());
     }
 }
