@@ -60,10 +60,10 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/api/fishingspots || exit 1"]
-      interval: 10s
-      timeout: 5s
+      interval: 15s
+      timeout: 10s
       retries: 10
-      start_period: 30s
+      start_period: 90s
     restart: unless-stopped
 
   # ==== Python Fish Recognition Service ====
@@ -110,9 +110,11 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: wherewefishin-tunnel
-    command: tunnel run
+    command: tunnel --config /etc/cloudflared/config.yml run
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    volumes:
+      - ./cloudflared:/etc/cloudflared
     depends_on:
       - frontend
     restart: unless-stopped

@@ -1,0 +1,6 @@
+ingress:
+  - hostname: wherewefishin.uk
+    service: http://frontend:80
+  - hostname: www.wherewefishin.uk
+    service: http://frontend:80
+  - service: http_status:404
