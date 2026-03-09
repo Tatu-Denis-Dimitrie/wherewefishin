@@ -24,7 +24,7 @@ export class AuthService {
   ) {}
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, credentials)
+    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, credentials, { withCredentials: true })
       .pipe(
         tap(response => {
           localStorage.setItem(this.tokenKey, response.token);
@@ -36,7 +36,7 @@ export class AuthService {
   }
 
   register(userData: RegisterRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/register`, userData)
+    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/register`, userData, { withCredentials: true })
       .pipe(
         tap(response => {
           localStorage.setItem(this.tokenKey, response.token);
@@ -48,11 +48,21 @@ export class AuthService {
   }
 
   logout(): void {
+    this.http.post<{ message: string }>(`${this.apiUrl}/auth/logout`, {}, { withCredentials: true })
+      .subscribe({
+        next: () => {},
+        error: () => {}
+      });
+
+    this.clearLocalAuthState();
+    this.router.navigate(['/login']);
+  }
+
+  private clearLocalAuthState(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userIdKey);
     localStorage.removeItem(this.roleKey);
     localStorage.removeItem(this.usernameKey);
-    this.router.navigate(['/login']);
   }
 
   getToken(): string | null {
