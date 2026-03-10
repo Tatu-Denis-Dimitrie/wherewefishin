@@ -1,3 +1,13 @@
+# Origin request settings to prevent stale connections and 502 errors
+originRequest:
+  keepAliveTimeout: 90s
+  keepAliveConnections: 20
+  noTLSVerify: true
+  connectTimeout: 30s
+  tcpKeepAlive: 30s
+  noHappyEyeballs: false
+  http2Origin: false
+
 ingress:
   - hostname: wherewefishin.uk
     service: http://frontend:80
