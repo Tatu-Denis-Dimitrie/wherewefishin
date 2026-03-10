@@ -1,16 +1,14 @@
-# Origin request settings to prevent stale connections and 502 errors
-originRequest:
-  keepAliveTimeout: 90s
-  keepAliveConnections: 20
-  noTLSVerify: true
-  connectTimeout: 30s
-  tcpKeepAlive: 30s
-  noHappyEyeballs: false
-  http2Origin: false
-
-ingress:
-  - hostname: wherewefishin.uk
-    service: http://frontend:80
-  - hostname: www.wherewefishin.uk
-    service: http://frontend:80
-  - service: http_status:404
+# ────────────────────────────────────────────────────
+# ACEST FIȘIER ESTE IGNORAT
+# ────────────────────────────────────────────────────
+# Tunnelul folosește TUNNEL_TOKEN (remote-managed).
+# Configurația ingress vine din Cloudflare Dashboard.
+#
+# Dashboard settings necesare:
+#   Public hostname: wherewefishin.uk
+#   Service:         http://frontend:80
+#   Origin Settings:
+#     - Connect Timeout: 30s
+#     - HTTP Host Header: (lăsat gol)
+#     - No TLS Verify: OFF (folosim HTTP nu HTTPS)
+# ────────────────────────────────────────────────────

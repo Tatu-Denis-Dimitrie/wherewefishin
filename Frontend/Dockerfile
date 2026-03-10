@@ -21,6 +21,9 @@ RUN npx ng build --configuration production
 # Stage 2: Serve with nginx
 FROM nginx:alpine AS runtime
 
+# Install curl for Docker healthcheck
+RUN apk add --no-cache curl
+
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 

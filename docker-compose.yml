@@ -1,25 +1,20 @@
-# =============================================
-# WhereWeFishin - Docker Compose
-# =============================================
-# Usage:
-#   docker-compose up -d          (start all services)
-#   docker-compose down           (stop all services)
-#   docker-compose up --build     (rebuild and start)
-
 services:
 
-  # ==== SQL Server Database ====
+  # ── SQL Server ────────────────────────────────────────────
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: wherewefishin-db
     environment:
-      - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=${SQL_SA_PASSWORD:-YourStr0ngP@ssw0rd!}
-      - MSSQL_PID=Express
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${SQL_SA_PASSWORD:-YourStr0ngP@ssw0rd!}
+      MSSQL_PID: Express
     ports:
       - "1433:1433"
     volumes:
       - sqlserver-data:/var/opt/mssql
+    networks:
+      app:
+        ipv4_address: 172.30.0.10
     healthcheck:
       test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -Q "SELECT 1" -C || exit 1
       interval: 10s
@@ -28,33 +23,40 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  # ==== .NET Backend API ====
+  # ── .NET Backend API ──────────────────────────────────────
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: wherewefishin-backend
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=WhereWeFishinDb;User Id=sa;Password=${SQL_SA_PASSWORD:-YourStr0ngP@ssw0rd!};TrustServerCertificate=true;MultipleActiveResultSets=true;Connect Timeout=60
-      - Jwt__Key=${JWT_KEY:-YourSuperSecretKeyThatShouldBeAtLeast32CharactersLongForHS256Algorithm}
-      - Jwt__Issuer=WhereWeFishinAPI
-      - Jwt__Audience=WhereWeFishinClient
-      - Jwt__ExpirationHours=24
-      - FishRecognitionService__Url=http://fish-recognition:5001
-      - Smtp__Host=smtp.gmail.com
-      - Smtp__Port=587
-      - Smtp__EnableSsl=true
-      - Smtp__Username=wherewefishing@gmail.com
-      - Smtp__Password=eiyr qrvg ssom sqfp
-      - Smtp__FromEmail=wherewefishing@gmail.com
-      - Smtp__FromName=WhereWeFishin
-      - Smtp__UseDefaultCredentials=false
-      - Smtp__FrontendUrl=${FRONTEND_URL:-https://wherewefishin.uk}
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: >-
+        Server=sqlserver;Database=WhereWeFishinDb;User Id=sa;
+        Password=${SQL_SA_PASSWORD:-YourStr0ngP@ssw0rd!};
+        TrustServerCertificate=true;MultipleActiveResultSets=true;
+        Connect Timeout=60
+      Jwt__Key: ${JWT_KEY:-YourSuperSecretKeyThatShouldBeAtLeast32CharactersLongForHS256Algorithm}
+      Jwt__Issuer: WhereWeFishinAPI
+      Jwt__Audience: WhereWeFishinClient
+      Jwt__ExpirationHours: "24"
+      FishRecognitionService__Url: http://fish-recognition:5001
+      Smtp__Host: smtp.gmail.com
+      Smtp__Port: "587"
+      Smtp__EnableSsl: "true"
+      Smtp__Username: wherewefishing@gmail.com
+      Smtp__Password: eiyr qrvg ssom sqfp
+      Smtp__FromEmail: wherewefishing@gmail.com
+      Smtp__FromName: WhereWeFishin
+      Smtp__UseDefaultCredentials: "false"
+      Smtp__FrontendUrl: ${FRONTEND_URL:-https://wherewefishin.uk}
     ports:
       - "8080:8080"
     volumes:
       - backend-uploads:/app/uploads
+    networks:
+      app:
+        ipv4_address: 172.30.0.20
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -66,24 +68,26 @@ services:
       start_period: 90s
     restart: unless-stopped
 
-  # ==== Python Fish Recognition Service ====
-  # Requires NVIDIA Container Toolkit on the host:
-  #   https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
+  # ── Fish Recognition (GPU) ───────────────────────────────
   fish-recognition:
     build:
       context: ./fish-recognition-service
       dockerfile: Dockerfile
     container_name: wherewefishin-fish-recognition
     environment:
-      - FLASK_ENV=production
-      - PYTHONUNBUFFERED=1
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      FLASK_ENV: production
+      FLASK_DEBUG: "0"
+      PYTHONUNBUFFERED: "1"
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
     ports:
       - "5001:5001"
     volumes:
       - fish-uploads:/app/uploads
       - fish-outputs:/app/outputs
+    networks:
+      app:
+        ipv4_address: 172.30.0.30
     deploy:
       resources:
         reservations:
@@ -93,7 +97,7 @@ services:
               capabilities: [gpu]
     restart: unless-stopped
 
-  # ==== Angular Frontend (nginx) ====
+  # ── Frontend (nginx reverse-proxy + Angular SPA) ─────────
   frontend:
     build:
       context: ./Frontend
@@ -101,23 +105,72 @@ services:
     container_name: wherewefishin-frontend
     ports:
       - "80:80"
+    networks:
+      app:
+        ipv4_address: 172.30.0.40
     depends_on:
       backend:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     restart: unless-stopped
 
-  # ==== Cloudflare Tunnel ====
-  cloudflared:
+  # ── Cloudflare Tunnel (2 replici HA) ──────────────────────
+  # Două instanțe separate pe același tunel.
+  # Cloudflare rutează trafic la ambele; dacă una moare, cealaltă preia.
+  # Docker restart: always le repornește automat fără intervenție.
+  # NU folosim watchdog - creează cicluri infinite de restarturi.
+  cloudflared-1:
     image: cloudflare/cloudflared:latest
-    container_name: wherewefishin-tunnel
-    command: tunnel --config /etc/cloudflared/config.yml run
+    container_name: wherewefishin-tunnel-1
+    command: tunnel --no-autoupdate --protocol http2 run
     environment:
-      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
-    volumes:
-      - ./cloudflared:/etc/cloudflared
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    extra_hosts:
+      - "frontend:172.30.0.40"
+    networks:
+      app:
+        ipv4_address: 172.30.0.50
     depends_on:
-      - frontend
-    restart: unless-stopped
+      frontend:
+        condition: service_healthy
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  cloudflared-2:
+    image: cloudflare/cloudflared:latest
+    container_name: wherewefishin-tunnel-2
+    command: tunnel --no-autoupdate --protocol http2 run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    extra_hosts:
+      - "frontend:172.30.0.40"
+    networks:
+      app:
+        ipv4_address: 172.30.0.51
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+networks:
+  app:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+          gateway: 172.30.0.1
 
 volumes:
   sqlserver-data:
