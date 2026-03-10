@@ -25,10 +25,9 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse?> LoginAsync(LoginRequest request)
     {
-        var users = await _userRepository.GetAllAsync();
-        var user = users.FirstOrDefault(u => 
-            u.Username.Equals(request.UsernameOrEmail, StringComparison.OrdinalIgnoreCase) ||
-            u.Email.Equals(request.UsernameOrEmail, StringComparison.OrdinalIgnoreCase));
+        var users = await _userRepository.FindAsync(u =>
+            u.Username == request.UsernameOrEmail || u.Email == request.UsernameOrEmail);
+        var user = users.FirstOrDefault();
 
         if (user == null)
             return null;
@@ -117,16 +116,15 @@ public class AuthService : IAuthService
 
     public async Task<bool> UserExistsAsync(string username, string email)
     {
-        var users = await _userRepository.GetAllAsync();
-        return users.Any(u => 
-            u.Username.Equals(username, StringComparison.OrdinalIgnoreCase) ||
-            u.Email.Equals(email, StringComparison.OrdinalIgnoreCase));
+        var users = await _userRepository.FindAsync(u =>
+            u.Username == username || u.Email == email);
+        return users.Any();
     }
 
     public async Task<bool> ForgotPasswordAsync(ForgotPasswordRequest request)
     {
-        var users = await _userRepository.GetAllAsync();
-        var user = users.FirstOrDefault(u => u.Email.Equals(request.Email, StringComparison.OrdinalIgnoreCase));
+        var users = await _userRepository.FindAsync(u => u.Email == request.Email);
+        var user = users.FirstOrDefault();
 
         if (user == null)
             return true;
@@ -154,8 +152,8 @@ public class AuthService : IAuthService
 
     public async Task<bool> ResetPasswordAsync(ResetPasswordRequest request)
     {
-        var users = await _userRepository.GetAllAsync();
-        var user = users.FirstOrDefault(u => u.Email.Equals(request.Email, StringComparison.OrdinalIgnoreCase));
+        var users = await _userRepository.FindAsync(u => u.Email == request.Email);
+        var user = users.FirstOrDefault();
 
         if (user == null)
             return false;

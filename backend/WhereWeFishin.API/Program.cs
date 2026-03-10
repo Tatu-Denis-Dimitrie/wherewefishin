@@ -212,6 +212,22 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+// Pre-warm SQL connection pool to avoid cold-start 502s
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        await context.Database.ExecuteSqlRawAsync("SELECT 1");
+        logger.LogInformation("SQL Server connection pre-warmed successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogWarning(ex, "SQL Server pre-warm failed (non-fatal).");
+    }
+}
+
 // Configure the HTTP request pipeline
 // Swagger is always enabled (accessible at /swagger in Docker too)
 app.UseSwagger();
@@ -268,6 +284,9 @@ app.UseStaticFiles(new StaticFileOptions
 // Authentication/Authorization middleware - after static files
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Health endpoint without DB dependency - prevents false 502s
+app.MapGet("/health", () => Results.Ok("OK"));
 
 app.MapControllers();
 

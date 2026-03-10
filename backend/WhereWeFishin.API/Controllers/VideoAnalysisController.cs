@@ -106,13 +106,12 @@ public class VideoAnalysisController : ControllerBase
     [HttpGet("user/{userId}")]
     public async Task<ActionResult<IEnumerable<VideoAnalysisDto>>> GetUserAnalyses(int userId)
     {
-        var analyses = await _videoRepository.GetAllAsync();
-        var userAnalyses = analyses
-            .Where(a => a.UserId == userId)
+        var userAnalyses = await _videoRepository.FindAsync(a => a.UserId == userId);
+        var sorted = userAnalyses
             .OrderByDescending(a => a.CreatedAt)
             .Select(MapToDto);
 
-        return Ok(userAnalyses);
+        return Ok(sorted);
     }
 
     [HttpGet("{id}")]

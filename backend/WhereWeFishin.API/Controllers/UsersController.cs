@@ -26,8 +26,8 @@ public class UsersController : ControllerBase
     [HttpGet("managers")]
     public async Task<ActionResult<IEnumerable<UserDto>>> GetManagers()
     {
-        var users = await _userRepository.GetAllAsync();
-        return Ok(users.Where(u => u.Role == "Manager").Select(MapToDto));
+        var managers = await _userRepository.FindAsync(u => u.Role == "Manager");
+        return Ok(managers.Select(MapToDto));
     }
 
     [HttpGet("{id}")]

@@ -32,5 +32,9 @@ public class FishingSessionConfiguration : IEntityTypeConfiguration<FishingSessi
             .WithMany(f => f.Sessions)
             .HasForeignKey(s => s.FishingSpotId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(s => s.UserId);
+        builder.HasIndex(s => s.FishingSpotId);
+        builder.HasIndex(s => s.Status);
     }
 }

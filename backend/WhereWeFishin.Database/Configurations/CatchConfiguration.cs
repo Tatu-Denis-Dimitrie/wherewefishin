@@ -32,5 +32,8 @@ public class CatchConfiguration : IEntityTypeConfiguration<Catch>
             .WithMany(f => f.Catches)
             .HasForeignKey(c => c.FishingSpotId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasIndex(c => c.UserId);
+        builder.HasIndex(c => c.FishingSpotId);
     }
 }

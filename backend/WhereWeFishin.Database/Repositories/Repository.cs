@@ -82,4 +82,12 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
     {
         return await _dbSet.AnyAsync(e => e.Id == id && !e.IsDeleted, cancellationToken);
     }
+
+    public virtual async Task<int> CountAsync(Expression<Func<T, bool>>? predicate = null, CancellationToken cancellationToken = default)
+    {
+        IQueryable<T> query = _dbSet.Where(e => !e.IsDeleted);
+        if (predicate != null)
+            query = query.Where(predicate);
+        return await query.CountAsync(cancellationToken);
+    }
 }

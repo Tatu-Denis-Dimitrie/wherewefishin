@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Microsoft.Extensions.Configuration;
 using NSubstitute;
 using WhereWeFishin.Core.DTOs;
@@ -48,7 +49,7 @@ public class AuthServiceTests
             PasswordHash = "correctpassword",
             Role = "User"
         };
-        _userRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(new List<User> { user });
+        _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User> { user });
 
         var request = new LoginRequest
         {
@@ -80,7 +81,7 @@ public class AuthServiceTests
             PasswordHash = "mypassword",
             Role = "User"
         };
-        _userRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(new List<User> { user });
+        _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User> { user });
 
         var request = new LoginRequest
         {
@@ -108,7 +109,7 @@ public class AuthServiceTests
             PasswordHash = "correctpassword",
             Role = "User"
         };
-        _userRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(new List<User> { user });
+        _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User> { user });
 
         var request = new LoginRequest
         {
@@ -127,7 +128,7 @@ public class AuthServiceTests
     public async Task LoginAsync_WithNonExistentUser_ReturnsNull()
     {
         // Arrange
-        _userRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(new List<User>());
+        _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User>());
 
         var request = new LoginRequest
         {
@@ -154,7 +155,7 @@ public class AuthServiceTests
             PasswordHash = "pass",
             Role = "User"
         };
-        _userRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(new List<User> { user });
+        _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User> { user });
 
         var request = new LoginRequest
         {
@@ -174,7 +175,7 @@ public class AuthServiceTests
     public async Task RegisterAsync_WithNewUser_ReturnsAuthResponse()
     {
         // Arrange
-        _userRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(new List<User>());
+        _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User>());
         _userRepository.AddAsync(Arg.Any<User>(), Arg.Any<CancellationToken>())
             .Returns(callInfo => callInfo.Arg<User>());
 
@@ -204,7 +205,7 @@ public class AuthServiceTests
     public async Task RegisterAsync_WhenWelcomeEmailFails_ReturnsAuthResponse()
     {
         // Arrange
-        _userRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(new List<User>());
+        _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User>());
         _userRepository.AddAsync(Arg.Any<User>(), Arg.Any<CancellationToken>())
             .Returns(callInfo => callInfo.Arg<User>());
         _emailService.SendWelcomeEmailAsync(Arg.Any<string>(), Arg.Any<string?>())
@@ -239,7 +240,7 @@ public class AuthServiceTests
             Email = "existing@test.com",
             PasswordHash = "hash"
         };
-        _userRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(new List<User> { existingUser });
+        _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User> { existingUser });
 
         var request = new RegisterRequest
         {
@@ -266,7 +267,7 @@ public class AuthServiceTests
             Email = "taken@test.com",
             PasswordHash = "hash"
         };
-        _userRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(new List<User> { existingUser });
+        _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User> { existingUser });
 
         var request = new RegisterRequest
         {
@@ -289,7 +290,7 @@ public class AuthServiceTests
     {
         // Arrange
         var user = new User { Username = "testuser", Email = "test@test.com", PasswordHash = "hash" };
-        _userRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(new List<User> { user });
+        _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User> { user });
 
         // Act
         var result = await _authService.UserExistsAsync("testuser", "other@test.com");
@@ -302,7 +303,7 @@ public class AuthServiceTests
     public async Task UserExistsAsync_WhenNoMatch_ReturnsFalse()
     {
         // Arrange
-        _userRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(new List<User>());
+        _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User>());
 
         // Act
         var result = await _authService.UserExistsAsync("ghost", "ghost@test.com");

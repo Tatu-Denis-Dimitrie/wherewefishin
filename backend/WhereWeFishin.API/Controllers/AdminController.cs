@@ -31,22 +31,23 @@ public class AdminController : ControllerBase
     [HttpGet("stats")]
     public async Task<ActionResult> GetStats()
     {
-        var users = await _userRepository.GetAllAsync();
-        var videos = await _videoRepository.GetAllAsync();
-        var spots = await _spotRepository.GetAllAsync();
-
-        var userList = users.ToList();
-        var videoList = videos.ToList();
+        var totalUsers = await _userRepository.CountAsync();
+        var totalManagers = await _userRepository.CountAsync(u => u.Role == "Manager");
+        var totalAdmins = await _userRepository.CountAsync(u => u.Role == "Admin");
+        var totalAnalyses = await _videoRepository.CountAsync();
+        var completedAnalyses = await _videoRepository.CountAsync(v => v.Status == "Completed");
+        var failedAnalyses = await _videoRepository.CountAsync(v => v.Status == "Failed");
+        var totalSpots = await _spotRepository.CountAsync();
 
         return Ok(new
         {
-            totalUsers = userList.Count,
-            totalManagers = userList.Count(u => u.Role == "Manager"),
-            totalAdmins = userList.Count(u => u.Role == "Admin"),
-            totalAnalyses = videoList.Count,
-            completedAnalyses = videoList.Count(v => v.Status == "Completed"),
-            failedAnalyses = videoList.Count(v => v.Status == "Failed"),
-            totalSpots = spots.Count()
+            totalUsers,
+            totalManagers,
+            totalAdmins,
+            totalAnalyses,
+            completedAnalyses,
+            failedAnalyses,
+            totalSpots
         });
     }
 
