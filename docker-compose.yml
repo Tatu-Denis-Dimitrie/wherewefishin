@@ -18,7 +18,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1.5G
+          memory: 4G
     healthcheck:
       test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -Q "SELECT 1" -C || exit 1
       interval: 10s
@@ -115,7 +115,7 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    healthcheck:
+    healthcheck: 
       test: ["CMD", "curl", "-sf", "http://localhost/health"]
       interval: 10s
       timeout: 5s

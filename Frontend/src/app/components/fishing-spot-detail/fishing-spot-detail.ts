@@ -1,14 +1,17 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FishingSpotService, FishingSpot } from '../../services/fishing-spot.service';
 import { CartService } from '../../services/cart.service';
+import { ReviewService, Review, ReviewStats } from '../../services/review.service';
+import { PontoonService, Pontoon } from '../../services/pontoon.service';
+import { AuthService } from '../../services/auth.service';
 import * as L from 'leaflet';
 
 @Component({
   selector: 'app-fishing-spot-detail',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './fishing-spot-detail.html',
   styleUrl: './fishing-spot-detail.css'
 })
@@ -25,13 +28,31 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
   showMessage = '';
   messageType: 'success' | 'error' = 'success';
 
+  // Reviews
+  reviews: Review[] = [];
+  reviewStats: ReviewStats | null = null;
+  loadingReviews = false;
+  newReviewRating = 5;
+  newReviewComment = '';
+  submittingReview = false;
+  userHasReviewed = false;
+  editingReviewId: number | null = null;
+
+  // Pontoons
+  pontoons: Pontoon[] = [];
+  selectedPontoonId: number | null = null;
+
   private map: L.Map | null = null;
+  private pontoonLayers: L.Rectangle[] = [];
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private fishingSpotService: FishingSpotService,
-    public cartService: CartService
+    public cartService: CartService,
+    private reviewService: ReviewService,
+    private pontoonService: PontoonService,
+    public authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -45,12 +66,71 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
       next: (spot) => {
         this.spot = spot;
         this.loading = false;
+        this.loadReviews(id);
+        this.loadPontoons(id);
         setTimeout(() => this.initMap(), 100);
       },
       error: () => {
         this.loading = false;
         this.notFound = true;
       }
+    });
+  }
+
+  private loadReviews(spotId: number): void {
+    this.loadingReviews = true;
+    this.reviewService.getSpotReviews(spotId).subscribe({
+      next: (reviews) => {
+        this.reviews = reviews;
+        this.loadingReviews = false;
+        const userId = this.authService.getUserId();
+        this.userHasReviewed = reviews.some(r => r.userId === userId);
+      },
+      error: () => {
+        this.loadingReviews = false;
+      }
+    });
+
+    this.reviewService.getAverageRating(spotId).subscribe({
+      next: (stats) => {
+        this.reviewStats = stats;
+      }
+    });
+  }
+
+  private loadPontoons(spotId: number): void {
+    this.pontoonService.getSpotPontoons(spotId).subscribe({
+      next: (pontoons) => {
+        this.pontoons = pontoons;
+        // Auto-select first pontoon if available
+        if (pontoons.length > 0) {
+          this.selectedPontoonId = pontoons[0].id;
+        }
+        this.renderPontoonsOnMap();
+      }
+    });
+  }
+
+  private renderPontoonsOnMap(): void {
+    if (!this.map) return;
+    
+    // Remove existing pontoon layers
+    this.pontoonLayers.forEach(layer => layer.remove());
+    this.pontoonLayers = [];
+
+    // Add pontoons as rectangles
+    this.pontoons.forEach(pontoon => {
+      const bounds: L.LatLngBoundsExpression = [
+        [pontoon.southWestLat, pontoon.southWestLng],
+        [pontoon.northEastLat, pontoon.northEastLng]
+      ];
+      const rect = L.rectangle(bounds, {
+        color: pontoon.color || '#3388ff',
+        weight: 2,
+        fillOpacity: 0.3
+      }).addTo(this.map!);
+      rect.bindTooltip(pontoon.name, { permanent: false, direction: 'center' });
+      this.pontoonLayers.push(rect);
     });
   }
 
@@ -96,6 +176,98 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
     });
 
     L.marker([this.spot.latitude, this.spot.longitude], { icon }).addTo(this.map!);
+    
+    // Render pontoons after map is ready
+    setTimeout(() => this.renderPontoonsOnMap(), 100);
+  }
+
+  // Review methods
+  submitReview(): void {
+    if (!this.spot || !this.authService.isLoggedIn()) return;
+    
+    this.submittingReview = true;
+    this.reviewService.createReview({
+      fishingSpotId: this.spot.id,
+      rating: this.newReviewRating,
+      comment: this.newReviewComment.trim() || undefined
+    }).subscribe({
+      next: () => {
+        this.showToast('Recenzie adăugată cu succes!', 'success');
+        this.newReviewComment = '';
+        this.newReviewRating = 5;
+        this.submittingReview = false;
+        this.loadReviews(this.spot!.id);
+      },
+      error: (err) => {
+        const msg = err.error?.message || err.error || 'Eroare la adăugarea recenziei';
+        this.showToast(msg, 'error');
+        this.submittingReview = false;
+      }
+    });
+  }
+
+  startEditReview(review: Review): void {
+    this.editingReviewId = review.id;
+    this.newReviewRating = review.rating;
+    this.newReviewComment = review.comment || '';
+  }
+
+  cancelEditReview(): void {
+    this.editingReviewId = null;
+    this.newReviewRating = 5;
+    this.newReviewComment = '';
+  }
+
+  updateReview(): void {
+    if (!this.editingReviewId) return;
+    
+    this.submittingReview = true;
+    this.reviewService.updateReview(this.editingReviewId, {
+      rating: this.newReviewRating,
+      comment: this.newReviewComment.trim() || undefined
+    }).subscribe({
+      next: () => {
+        this.showToast('Recenzie actualizată!', 'success');
+        this.editingReviewId = null;
+        this.newReviewComment = '';
+        this.newReviewRating = 5;
+        this.submittingReview = false;
+        this.loadReviews(this.spot!.id);
+      },
+      error: () => {
+        this.showToast('Eroare la actualizarea recenziei', 'error');
+        this.submittingReview = false;
+      }
+    });
+  }
+
+  deleteReview(reviewId: number): void {
+    if (!confirm('Sigur dorești să ștergi această recenzie?')) return;
+    
+    this.reviewService.deleteReview(reviewId).subscribe({
+      next: () => {
+        this.showToast('Recenzie ștearsă!', 'success');
+        this.loadReviews(this.spot!.id);
+      },
+      error: () => {
+        this.showToast('Eroare la ștergerea recenziei', 'error');
+      }
+    });
+  }
+
+  canEditReview(review: Review): boolean {
+    const userId = this.authService.getUserId();
+    return review.userId === userId || this.authService.isAdmin();
+  }
+
+  canManageSpot(): boolean {
+    if (!this.spot) return false;
+    const userId = this.authService.getUserId();
+    return this.authService.isAdmin() || this.spot.managerId === userId || this.spot.userId === userId;
+  }
+
+  setRating(rating: number): void {
+    this.newReviewRating = rating;
   }
 
   get totalPrice(): number {
@@ -103,8 +275,18 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
     return this.spot.pricePerHour * this.durationHours;
   }
 
+  get selectedPontoon(): Pontoon | null {
+    return this.pontoons.find(p => p.id === this.selectedPontoonId) || null;
+  }
+
   get inCart(): boolean {
-    return this.spot ? this.cartService.isInCart(this.spot.id) : false;
+    if (!this.spot) return false;
+    // If spot has pontoons, check if selected pontoon is in cart
+    if (this.pontoons.length > 0 && this.selectedPontoonId) {
+      return this.cartService.isInCart(this.spot.id, this.selectedPontoonId);
+    }
+    // Otherwise check if spot itself is in cart (no pontoons)
+    return this.cartService.isInCart(this.spot.id);
   }
 
   addToCart(): void {
@@ -113,16 +295,28 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
       this.router.navigate(['/cart']);
       return;
     }
+
+    // If spot has pontoons, require a selected pontoon
+    if (this.pontoons.length > 0 && !this.selectedPontoonId) {
+      this.showToast('Selectează un ponton pentru rezervare', 'error');
+      return;
+    }
+
+    const pontoon = this.selectedPontoon;
     this.cartService.addItem({
       spotId: this.spot.id,
       spotName: this.spot.name,
+      pontoonId: pontoon?.id,
+      pontoonName: pontoon?.name,
       latitude: this.spot.latitude,
       longitude: this.spot.longitude,
       pricePerHour: this.spot.pricePerHour,
       durationHours: this.durationHours,
       startDate: this.startDate
     });
-    this.showToast(`"${this.spot.name}" adăugat în coș!`, 'success');
+    
+    const itemName = pontoon ? `${this.spot.name} - ${pontoon.name}` : this.spot.name;
+    this.showToast(`"${itemName}" adăugat în coș!`, 'success');
   }
 
   goBack(): void {

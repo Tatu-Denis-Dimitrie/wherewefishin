@@ -131,6 +131,10 @@ builder.Services.AddScoped<IRepository<FishingSpot>, FishingSpotRepository>();
 builder.Services.AddScoped<IRepository<Catch>, Repository<Catch>>();
 builder.Services.AddScoped<IRepository<VideoAnalysis>, Repository<VideoAnalysis>>();
 builder.Services.AddScoped<IRepository<FishingSession>, Repository<FishingSession>>();
+builder.Services.AddScoped<IRepository<Review>, Repository<Review>>();
+builder.Services.AddScoped<IRepository<Pontoon>, Repository<Pontoon>>();
+builder.Services.AddScoped<ReviewRepository>();
+builder.Services.AddScoped<PontoonRepository>();
 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();

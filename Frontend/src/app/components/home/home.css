@@ -663,19 +663,32 @@
 
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
+  :host {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
   .home-page {
     padding: 16px;
+    max-width: 100%;
+    overflow-x: hidden;
   }
 
   .top-bar {
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
+    width: 100%;
+  }
+
+  .top-bar-left h2 {
+    font-size: 20px;
   }
 
   .dashboard-grid {
     grid-template-columns: 1fr;
     gap: 20px;
+    width: 100%;
   }
 
   .stats-section {
@@ -688,14 +701,24 @@
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
 
   .stat-card {
     flex-direction: column;
     text-align: center;
+    padding: 12px;
   }
 
   .stat-value {
     font-size: 20px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .map-card {
+    padding: 12px;
   }
 }

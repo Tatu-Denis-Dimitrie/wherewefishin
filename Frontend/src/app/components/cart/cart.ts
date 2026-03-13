@@ -85,17 +85,17 @@ export class Cart implements OnInit {
     return this.expandedQr.has(id);
   }
 
-  updateDuration(spotId: number, durationStr: string): void {
+  updateDuration(spotId: number, durationStr: string, pontoonId?: number): void {
     const duration = parseInt(durationStr, 10);
-    this.cartService.updateItem(spotId, { durationHours: duration });
+    this.cartService.updateItem(spotId, { durationHours: duration }, pontoonId);
   }
 
-  updateStartDate(spotId: number, dateStr: string): void {
-    this.cartService.updateItem(spotId, { startDate: dateStr });
+  updateStartDate(spotId: number, dateStr: string, pontoonId?: number): void {
+    this.cartService.updateItem(spotId, { startDate: dateStr }, pontoonId);
   }
 
-  removeFromCart(spotId: number): void {
-    this.cartService.removeItem(spotId);
+  removeFromCart(spotId: number, pontoonId?: number): void {
+    this.cartService.removeItem(spotId, pontoonId);
   }
 
   itemTotal(item: CartItem): number {
@@ -110,11 +110,12 @@ export class Cart implements OnInit {
     const now = new Date();
     for (const item of items) {
       if (!item.startDate) {
-        this.showToast('Please set a start date for all spots', 'error');
+        this.showToast('Setează data de start pentru toate rezervările', 'error');
         return;
       }
       if (new Date(item.startDate) < new Date(now.getTime() - 5 * 60 * 1000)) {
-        this.showToast(`Start date for "${item.spotName}" cannot be in the past`, 'error');
+        const itemName = item.pontoonName ? `${item.spotName} - ${item.pontoonName}` : item.spotName;
+        this.showToast(`Data de start pentru "${itemName}" nu poate fi în trecut`, 'error');
         return;
       }
     }
@@ -126,34 +127,35 @@ export class Cart implements OnInit {
     for (const item of items) {
       this.bookingService.createBooking({
         fishingSpotId: item.spotId,
+        pontoonId: item.pontoonId,
         startDate: new Date(item.startDate).toISOString(),
         durationHours: item.durationHours
       }).subscribe({
         next: () => {
           completed++;
-          this.cartService.removeItem(item.spotId);
+          this.cartService.removeItem(item.spotId, item.pontoonId);
           if (completed + errors === items.length) {
             this.checkingOut = false;
             if (errors === 0) {
-              this.showToast('All bookings confirmed!', 'success');
+              this.showToast('Toate rezervările au fost confirmate!', 'success');
               this.activeTab = 'bookings';
               this.loadBookings();
             } else {
-              this.showToast(`${completed} booking(s) confirmed, ${errors} failed`, 'error');
+              this.showToast(`${completed} rezervare(i) confirmate, ${errors} eșuate`, 'error');
               this.loadBookings();
             }
           }
         },
         error: (err: HttpErrorResponse) => {
           errors++;
-          const msg = err.error ?? err.message ?? 'Unknown error';
+          const msg = err.error ?? err.message ?? 'Eroare necunoscută';
           const errorText = typeof msg === 'string' ? msg : JSON.stringify(msg);
           if (completed + errors === items.length) {
             this.checkingOut = false;
             this.showToast(
               errors === items.length
                 ? errorText
-                : `${completed} booking(s) confirmed, ${errors} failed: ${errorText}`,
+                : `${completed} rezervare(i) confirmate, ${errors} eșuate: ${errorText}`,
               'error'
             );
             this.loadBookings();

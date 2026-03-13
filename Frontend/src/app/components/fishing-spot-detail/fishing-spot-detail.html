@@ -85,8 +85,122 @@
           <h3 class="card-title">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
             Location
+            @if (canManageSpot()) {
+              <a [routerLink]="['/spots', spot.id, 'manage']" class="manage-link">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                Gestionează Pontoane
+              </a>
+            }
           </h3>
           <div id="spot-mini-map" class="mini-map"></div>
+          @if (pontoons.length > 0) {
+            <div class="pontoons-legend">
+              <span class="legend-title">Pontoane:</span>
+              @for (pontoon of pontoons; track pontoon.id) {
+                <span class="pontoon-tag">
+                  <span class="tag-color" [style.backgroundColor]="pontoon.color"></span>
+                  {{ pontoon.name }}
+                </span>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="card reviews-card">
+          <h3 class="card-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Recenzii
+            @if (reviewStats && reviewStats.totalReviews > 0) {
+              <span class="review-stats">
+                {{ reviewStats.averageRating?.toFixed(1) }} ★ ({{ reviewStats.totalReviews }} recenzii)
+              </span>
+            }
+          </h3>
+
+          <!-- Add/Edit Review Form -->
+          @if (authService.isLoggedIn() && (!userHasReviewed || editingReviewId)) {
+            <div class="review-form">
+              <div class="rating-input">
+                <span class="rating-label">{{ editingReviewId ? 'Editează' : 'Acordă' }} rating:</span>
+                <div class="stars-input">
+                  @for (star of [1,2,3,4,5]; track star) {
+                    <button 
+                      type="button"
+                      class="star-btn" 
+                      [class.active]="star <= newReviewRating"
+                      (click)="setRating(star)">★</button>
+                  }
+                </div>
+              </div>
+              <textarea 
+                [(ngModel)]="newReviewComment" 
+                placeholder="Scrie o recenzie (opțional)..."
+                rows="3"
+                class="review-textarea"></textarea>
+              <div class="review-form-actions">
+                @if (editingReviewId) {
+                  <button class="btn-cancel" (click)="cancelEditReview()">Anulează</button>
+                  <button class="btn-submit" (click)="updateReview()" [disabled]="submittingReview">
+                    {{ submittingReview ? 'Se salvează...' : 'Salvează' }}
+                  </button>
+                } @else {
+                  <button class="btn-submit" (click)="submitReview()" [disabled]="submittingReview">
+                    {{ submittingReview ? 'Se trimite...' : 'Trimite recenzia' }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (!authService.isLoggedIn()) {
+            <p class="login-prompt">
+              <a routerLink="/login">Autentifică-te</a> pentru a lăsa o recenzie.
+            </p>
+          }
+
+          <!-- Reviews List -->
+          @if (loadingReviews) {
+            <div class="loading-reviews">
+              <div class="spinner-small"></div>
+            </div>
+          } @else if (reviews.length === 0) {
+            <p class="no-reviews">Nu există recenzii încă. Fii primul care lasă o recenzie!</p>
+          } @else {
+            <div class="reviews-list">
+              @for (review of reviews; track review.id) {
+                <div class="review-item">
+                  <div class="review-header">
+                    <div class="reviewer-info">
+                      @if (review.userProfilePictureUrl) {
+                        <img [src]="review.userProfilePictureUrl" class="reviewer-avatar" alt="">
+                      } @else {
+                        <div class="reviewer-avatar-placeholder">{{ review.username.charAt(0).toUpperCase() }}</div>
+                      }
+                      <span class="reviewer-name">{{ review.username }}</span>
+                    </div>
+                    <div class="review-meta">
+                      <span class="review-stars">
+                        @for (star of [1,2,3,4,5]; track star) {
+                          <span [class.filled]="star <= review.rating">★</span>
+                        }
+                      </span>
+                      <span class="review-date">{{ review.createdAt | date:'dd MMM yyyy' }}</span>
+                    </div>
+                  </div>
+                  @if (review.comment) {
+                    <p class="review-comment">{{ review.comment }}</p>
+                  }
+                  @if (canEditReview(review)) {
+                    <div class="review-actions">
+                      <button class="btn-edit-review" (click)="startEditReview(review)">Editează</button>
+                      <button class="btn-delete-review" (click)="deleteReview(review.id)">Șterge</button>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
         </div>
 
       </div>
@@ -96,21 +210,42 @@
         <div class="card booking-card">
           <h3 class="card-title">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            Book a Session
+            Rezervă o Sesiune
           </h3>
 
           @if (spot.pricePerHour === 0) {
-            <p class="free-note">This spot is free to access.</p>
+            <p class="free-note">Accesul la această baltă este gratuit.</p>
           }
 
           <div class="booking-form">
+            <!-- Pontoon Selection -->
+            @if (pontoons.length > 0) {
+              <div class="form-group">
+                <label>Selectează Ponton</label>
+                <div class="pontoon-pills">
+                  @for (pontoon of pontoons; track pontoon.id) {
+                    <button
+                      class="pontoon-pill"
+                      [class.active]="selectedPontoonId === pontoon.id"
+                      [style.borderColor]="selectedPontoonId === pontoon.id ? pontoon.color : null"
+                      (click)="selectedPontoonId = pontoon.id">
+                      <span class="pontoon-color-dot" [style.backgroundColor]="pontoon.color"></span>
+                      {{ pontoon.name }}
+                    </button>
+                  }
+                </div>
+              </div>
+            } @else {
+              <p class="no-pontoons-note">Această baltă nu are pontoane definite - rezervarea este pentru întreaga locație.</p>
+            }
+
             <div class="form-group">
-              <label>Start Date & Time</label>
+              <label>Data și Ora de Start</label>
               <input type="datetime-local" [(ngModel)]="startDate" class="form-input">
             </div>
 
             <div class="form-group">
-              <label>Duration</label>
+              <label>Durată</label>
               <div class="duration-pills">
                 @for (d of DURATIONS; track d) {
                   <button
@@ -135,10 +270,10 @@
             <button class="btn-cart" [class.in-cart]="inCart" (click)="addToCart()">
               @if (inCart) {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                In Cart — Go to Cart
+                În Coș — Vezi Coșul
               } @else {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-                Add to Cart
+                Adaugă în Coș
               }
             </button>
 

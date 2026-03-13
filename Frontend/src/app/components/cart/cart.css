@@ -190,7 +190,10 @@
 }
 
 .spot-name { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+.pontoon-name { font-size: 13px; font-weight: 500; color: var(--accent-moss); margin-top: 2px; }
 .spot-coords { font-size: 12px; color: var(--text-muted, #94a3b8); margin-top: 2px; }
+
+.booking-pontoon { color: var(--accent-moss); font-weight: 500; }
 
 .btn-remove {
   background: transparent;

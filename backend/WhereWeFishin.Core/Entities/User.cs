@@ -14,4 +14,5 @@ public class User : BaseEntity
 
     public ICollection<FishingSpot> FishingSpots { get; set; } = new List<FishingSpot>();
     public ICollection<Catch> Catches { get; set; } = new List<Catch>();
+    public ICollection<Review> Reviews { get; set; } = new List<Review>();
 }

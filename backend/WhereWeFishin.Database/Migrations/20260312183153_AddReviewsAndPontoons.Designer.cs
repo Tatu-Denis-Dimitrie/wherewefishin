@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WhereWeFishin.Database.Context;
 
@@ -11,9 +12,11 @@ using WhereWeFishin.Database.Context;
 namespace WhereWeFishin.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260312183153_AddReviewsAndPontoons")]
+    partial class AddReviewsAndPontoons
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -97,9 +100,6 @@ namespace WhereWeFishin.Database.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("PontoonId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
@@ -121,8 +121,6 @@ namespace WhereWeFishin.Database.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("FishingSpotId");
-
-                    b.HasIndex("PontoonId");
 
                     b.HasIndex("Status");
 
@@ -460,10 +458,6 @@ namespace WhereWeFishin.Database.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("WhereWeFishin.Core.Entities.Pontoon", "Pontoon")
-                        .WithMany()
-                        .HasForeignKey("PontoonId");
-
                     b.HasOne("WhereWeFishin.Core.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -471,8 +465,6 @@ namespace WhereWeFishin.Database.Migrations
                         .IsRequired();
 
                     b.Navigation("FishingSpot");
-
-                    b.Navigation("Pontoon");
 
                     b.Navigation("User");
                 });

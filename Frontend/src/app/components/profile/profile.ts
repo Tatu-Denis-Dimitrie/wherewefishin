@@ -5,7 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { VideoAnalysisService } from '../../services/video-analysis.service';
-import { FishingSpotService } from '../../services/fishing-spot.service';
+import { FishingSpotService, FishingSpot } from '../../services/fishing-spot.service';
 import { AdminService, AdminStats } from '../../services/admin.service';
 import { User, UpdateUser } from '../../models/user.model';
 import { VideoAnalysis } from '../../models/video-analysis.model';
@@ -34,6 +34,7 @@ export class Profile implements OnInit {
   userCompletedCount = 0;
   recentAnalyses: VideoAnalysis[] = [];
   userSpotsCount = 0;
+  userSpots: FishingSpot[] = [];
   adminStats: AdminStats | null = null;
   loadingStats = false;
 
@@ -79,7 +80,9 @@ export class Profile implements OnInit {
     if (this.authService.isManagerOrAdmin()) {
       this.fishingSpotService.getAll().subscribe({
         next: (spots) => {
-          this.userSpotsCount = spots.filter(s => s.userId === userId).length;
+          // Filter spots where user is manager or owner
+          this.userSpots = spots.filter(s => s.managerId === userId || s.userId === userId);
+          this.userSpotsCount = this.userSpots.length;
         },
         error: () => {}
       });

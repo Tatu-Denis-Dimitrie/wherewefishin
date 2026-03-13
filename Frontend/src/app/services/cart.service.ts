@@ -15,12 +15,17 @@ export class CartService {
     this._items().reduce((sum, i) => sum + i.pricePerHour * i.durationHours, 0)
   );
 
+  private getItemKey(item: CartItem): string {
+    return item.pontoonId ? `pontoon-${item.pontoonId}` : `spot-${item.spotId}`;
+  }
+
   addItem(item: CartItem): void {
-    const existing = this._items().find(i => i.spotId === item.spotId);
+    const key = this.getItemKey(item);
+    const existing = this._items().find(i => this.getItemKey(i) === key);
     if (existing) {
       // Update duration/startDate if already in cart
       this._items.update(items =>
-        items.map(i => i.spotId === item.spotId ? { ...item } : i)
+        items.map(i => this.getItemKey(i) === key ? { ...item } : i)
       );
     } else {
       this._items.update(items => [...items, item]);
@@ -28,14 +33,16 @@ export class CartService {
     this.saveToStorage();
   }
 
-  removeItem(spotId: number): void {
-    this._items.update(items => items.filter(i => i.spotId !== spotId));
+  removeItem(spotId: number, pontoonId?: number): void {
+    const key = pontoonId ? `pontoon-${pontoonId}` : `spot-${spotId}`;
+    this._items.update(items => items.filter(i => this.getItemKey(i) !== key));
     this.saveToStorage();
   }
 
-  updateItem(spotId: number, patch: Partial<CartItem>): void {
+  updateItem(spotId: number, patch: Partial<CartItem>, pontoonId?: number): void {
+    const key = pontoonId ? `pontoon-${pontoonId}` : `spot-${spotId}`;
     this._items.update(items =>
-      items.map(i => i.spotId === spotId ? { ...i, ...patch } : i)
+      items.map(i => this.getItemKey(i) === key ? { ...i, ...patch } : i)
     );
     this.saveToStorage();
   }
@@ -45,8 +52,9 @@ export class CartService {
     this.saveToStorage();
   }
 
-  isInCart(spotId: number): boolean {
-    return this._items().some(i => i.spotId === spotId);
+  isInCart(spotId: number, pontoonId?: number): boolean {
+    const key = pontoonId ? `pontoon-${pontoonId}` : `spot-${spotId}`;
+    return this._items().some(i => this.getItemKey(i) === key);
   }
 
   private saveToStorage(): void {

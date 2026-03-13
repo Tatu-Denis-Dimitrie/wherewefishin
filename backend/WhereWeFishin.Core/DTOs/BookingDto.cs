@@ -6,6 +6,8 @@ public class BookingDto
     public int UserId { get; set; }
     public int FishingSpotId { get; set; }
     public string FishingSpotName { get; set; } = string.Empty;
+    public int? PontoonId { get; set; }
+    public string? PontoonName { get; set; }
     public DateTime StartDate { get; set; }
     public int DurationHours { get; set; }
     public decimal TotalPrice { get; set; }
@@ -16,6 +18,7 @@ public class BookingDto
 public class CreateBookingDto
 {
     public int FishingSpotId { get; set; }
+    public int? PontoonId { get; set; }
     public DateTime StartDate { get; set; }
     public int DurationHours { get; set; }
 }

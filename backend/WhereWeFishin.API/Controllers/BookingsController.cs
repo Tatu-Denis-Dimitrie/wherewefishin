@@ -14,17 +14,20 @@ public class BookingsController : ControllerBase
 {
     private readonly IRepository<FishingSession> _sessionRepository;
     private readonly IRepository<FishingSpot> _spotRepository;
+    private readonly IRepository<Pontoon> _pontoonRepository;
     private readonly IRepository<User> _userRepository;
     private readonly IEmailService _emailService;
 
     public BookingsController(
         IRepository<FishingSession> sessionRepository,
         IRepository<FishingSpot> spotRepository,
+        IRepository<Pontoon> pontoonRepository,
         IRepository<User> userRepository,
         IEmailService emailService)
     {
         _sessionRepository = sessionRepository;
         _spotRepository = spotRepository;
+        _pontoonRepository = pontoonRepository;
         _userRepository = userRepository;
         _emailService = emailService;
     }
@@ -38,11 +41,14 @@ public class BookingsController : ControllerBase
 
         var sessions = await _sessionRepository.FindAsync(s => s.UserId == userId.Value);
         var spots = await _spotRepository.GetAllAsync();
+        var pontoons = await _pontoonRepository.GetAllAsync();
         var spotMap = spots.ToDictionary(s => s.Id, s => s.Name);
+        var pontoonMap = pontoons.ToDictionary(p => p.Id, p => p.Name);
 
         return Ok(sessions
             .OrderByDescending(s => s.CreatedAt)
-            .Select(s => MapToDto(s, spotMap.GetValueOrDefault(s.FishingSpotId, "Unknown"))));
+            .Select(s => MapToDto(s, spotMap.GetValueOrDefault(s.FishingSpotId, "Unknown"), 
+                                     s.PontoonId.HasValue ? pontoonMap.GetValueOrDefault(s.PontoonId.Value) : null)));
     }
 
     // GET api/bookings/all - Admin: returns all bookings
@@ -52,11 +58,14 @@ public class BookingsController : ControllerBase
     {
         var sessions = await _sessionRepository.GetAllAsync();
         var spots = await _spotRepository.GetAllAsync();
+        var pontoons = await _pontoonRepository.GetAllAsync();
         var spotMap = spots.ToDictionary(s => s.Id, s => s.Name);
+        var pontoonMap = pontoons.ToDictionary(p => p.Id, p => p.Name);
 
         return Ok(sessions
             .OrderByDescending(s => s.CreatedAt)
-            .Select(s => MapToDto(s, spotMap.GetValueOrDefault(s.FishingSpotId, "Unknown"))));
+            .Select(s => MapToDto(s, spotMap.GetValueOrDefault(s.FishingSpotId, "Unknown"),
+                                     s.PontoonId.HasValue ? pontoonMap.GetValueOrDefault(s.PontoonId.Value) : null)));
     }
 
     // POST api/bookings - create a booking
@@ -69,6 +78,15 @@ public class BookingsController : ControllerBase
         var spot = await _spotRepository.GetByIdAsync(dto.FishingSpotId);
         if (spot == null) return NotFound("Fishing spot not found.");
 
+        Pontoon? pontoon = null;
+        if (dto.PontoonId.HasValue)
+        {
+            pontoon = await _pontoonRepository.GetByIdAsync(dto.PontoonId.Value);
+            if (pontoon == null) return NotFound("Pontoon not found.");
+            if (pontoon.FishingSpotId != dto.FishingSpotId) 
+                return BadRequest("Pontoon does not belong to this fishing spot.");
+        }
+
         var allowedDurations = new[] { 12, 24, 48, 72 };
         if (!allowedDurations.Contains(dto.DurationHours))
             return BadRequest("Duration must be 12, 24, 48 or 72 hours.");
@@ -76,17 +94,32 @@ public class BookingsController : ControllerBase
         if (dto.StartDate < DateTime.UtcNow.AddMinutes(-5))
             return BadRequest("Start date cannot be in the past.");
 
-        // Overlap check: prevent duplicate bookings at the same spot in the same time interval
+        // Overlap check: if pontoon is specified, check pontoon overlap; otherwise check spot overlap
         var newStart = dto.StartDate.ToUniversalTime();
         var newEnd = newStart.AddHours(dto.DurationHours);
-        var existingSessions = await _sessionRepository.FindAsync(s =>
-            s.FishingSpotId == dto.FishingSpotId &&
-            s.Status != SessionStatus.Cancelled);
+        
+        IEnumerable<FishingSession> existingSessions;
+        if (dto.PontoonId.HasValue)
+        {
+            existingSessions = await _sessionRepository.FindAsync(s =>
+                s.PontoonId == dto.PontoonId.Value &&
+                s.Status != SessionStatus.Cancelled);
+        }
+        else
+        {
+            existingSessions = await _sessionRepository.FindAsync(s =>
+                s.FishingSpotId == dto.FishingSpotId &&
+                s.PontoonId == null &&
+                s.Status != SessionStatus.Cancelled);
+        }
+        
         var hasOverlap = existingSessions.Any(s =>
             newStart < s.StartDate.AddHours(s.DurationHours) &&
             newEnd > s.StartDate);
         if (hasOverlap)
-            return Conflict("This fishing spot is already booked during the selected time interval.");
+            return Conflict(dto.PontoonId.HasValue 
+                ? "This pontoon is already booked during the selected time interval."
+                : "This fishing spot is already booked during the selected time interval.");
 
         var totalPrice = spot.PricePerHour * dto.DurationHours;
 
@@ -94,6 +127,7 @@ public class BookingsController : ControllerBase
         {
             UserId = userId.Value,
             FishingSpotId = dto.FishingSpotId,
+            PontoonId = dto.PontoonId,
             StartDate = dto.StartDate.ToUniversalTime(),
             DurationHours = dto.DurationHours,
             TotalPrice = totalPrice,
@@ -116,10 +150,11 @@ public class BookingsController : ControllerBase
 
             if (!string.IsNullOrWhiteSpace(email))
             {
+                var bookingName = pontoon != null ? $"{spot.Name} - {pontoon.Name}" : spot.Name;
                 await _emailService.SendBookingConfirmationEmailAsync(
                     email,
                     firstName,
-                    spot.Name,
+                    bookingName,
                     session.StartDate,
                     session.DurationHours,
                     session.TotalPrice,
@@ -131,7 +166,7 @@ public class BookingsController : ControllerBase
             // Do not block booking creation if SMTP delivery fails.
         }
 
-        return CreatedAtAction(nameof(GetBooking), new { id = session.Id }, MapToDto(session, spot.Name));
+        return CreatedAtAction(nameof(GetBooking), new { id = session.Id }, MapToDto(session, spot.Name, pontoon?.Name));
     }
 
     // GET api/bookings/{id}
@@ -149,7 +184,12 @@ public class BookingsController : ControllerBase
             return Forbid();
 
         var spot = await _spotRepository.GetByIdAsync(session.FishingSpotId);
-        return Ok(MapToDto(session, spot?.Name ?? "Unknown"));
+        Pontoon? pontoon = null;
+        if (session.PontoonId.HasValue)
+        {
+            pontoon = await _pontoonRepository.GetByIdAsync(session.PontoonId.Value);
+        }
+        return Ok(MapToDto(session, spot?.Name ?? "Unknown", pontoon?.Name));
     }
 
     // DELETE api/bookings/{id} - cancel a booking
@@ -180,12 +220,14 @@ public class BookingsController : ControllerBase
         return claim != null && int.TryParse(claim.Value, out var id) ? id : null;
     }
 
-    private static BookingDto MapToDto(FishingSession session, string spotName) => new()
+    private static BookingDto MapToDto(FishingSession session, string spotName, string? pontoonName = null) => new()
     {
         Id = session.Id,
         UserId = session.UserId,
         FishingSpotId = session.FishingSpotId,
         FishingSpotName = spotName,
+        PontoonId = session.PontoonId,
+        PontoonName = pontoonName,
         StartDate = session.StartDate,
         DurationHours = session.DurationHours,
         TotalPrice = session.TotalPrice,

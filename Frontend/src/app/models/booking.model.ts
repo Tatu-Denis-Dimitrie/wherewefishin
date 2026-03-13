@@ -1,6 +1,8 @@
 export interface CartItem {
   spotId: number;
   spotName: string;
+  pontoonId?: number;
+  pontoonName?: string;
   latitude: number;
   longitude: number;
   pricePerHour: number;
@@ -13,6 +15,8 @@ export interface Booking {
   userId: number;
   fishingSpotId: number;
   fishingSpotName: string;
+  pontoonId?: number;
+  pontoonName?: string;
   startDate: string;
   durationHours: number;
   totalPrice: number;
@@ -22,6 +26,7 @@ export interface Booking {
 
 export interface CreateBookingRequest {
   fishingSpotId: number;
+  pontoonId?: number;
   startDate: string;
   durationHours: number;
 }
