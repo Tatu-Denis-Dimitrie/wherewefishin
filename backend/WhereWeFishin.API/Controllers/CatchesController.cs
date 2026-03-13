@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Interfaces;
@@ -31,8 +33,18 @@ public class CatchesController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<CatchDto>> CreateCatch(CreateCatchDto createCatchDto)
+    [Authorize]
+    public async Task<ActionResult<CatchDto>> CreateCatch([FromBody] CreateCatchDto createCatchDto)
     {
+        var userId = User.GetUserId();
+        if (userId == null) return Unauthorized();
+
+        if (string.IsNullOrWhiteSpace(createCatchDto.FishSpecies))
+            return BadRequest("Fish species is required.");
+
+        if (createCatchDto.FishingSpotId <= 0)
+            return BadRequest("Fishing spot is required.");
+
         var catchEntity = new Catch
         {
             FishSpecies = createCatchDto.FishSpecies,
@@ -41,7 +53,7 @@ public class CatchesController : ControllerBase
             CaughtAt = createCatchDto.CaughtAt,
             ImageUrl = createCatchDto.ImageUrl,
             Notes = createCatchDto.Notes,
-            UserId = 1, 
+            UserId = userId.Value,
             FishingSpotId = createCatchDto.FishingSpotId
         };
 
@@ -50,10 +62,17 @@ public class CatchesController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCatch(int id, UpdateCatchDto updateCatchDto)
+    [Authorize]
+    public async Task<IActionResult> UpdateCatch(int id, [FromBody] UpdateCatchDto updateCatchDto)
     {
+        var userId = User.GetUserId();
+        if (userId == null) return Unauthorized();
+
         var catchEntity = await _catchRepository.GetByIdAsync(id);
         if (catchEntity == null) return NotFound();
+
+        if (catchEntity.UserId != userId.Value && !User.IsInRole("Admin"))
+            return Forbid();
 
         catchEntity.FishSpecies = updateCatchDto.FishSpecies ?? catchEntity.FishSpecies;
         catchEntity.Weight = updateCatchDto.Weight ?? catchEntity.Weight;
@@ -67,9 +86,17 @@ public class CatchesController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> DeleteCatch(int id)
     {
-        if (!await _catchRepository.ExistsAsync(id)) return NotFound();
+        var userId = User.GetUserId();
+        if (userId == null) return Unauthorized();
+
+        var catchEntity = await _catchRepository.GetByIdAsync(id);
+        if (catchEntity == null) return NotFound();
+
+        if (catchEntity.UserId != userId.Value && !User.IsInRole("Admin"))
+            return Forbid();
         
         await _catchRepository.DeleteAsync(id);
         return NoContent();

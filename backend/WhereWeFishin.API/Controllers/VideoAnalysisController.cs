@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using System.Security.Claims;
+using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Interfaces;
@@ -38,8 +38,8 @@ public class VideoAnalysisController : ControllerBase
     [RequestFormLimits(MultipartBodyLengthLimit = 150 * 1024 * 1024)]
     public async Task<ActionResult<AnalysisResultDto>> UploadVideo([FromForm] IFormFile video)
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!int.TryParse(userIdClaim, out var userId))
+        var userId = User.GetUserId();
+        if (userId == null)
             return Unauthorized(new { error = "Invalid token" });
 
         if (video == null || video.Length == 0)
@@ -77,7 +77,7 @@ public class VideoAnalysisController : ControllerBase
             }
 
             using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-            var result = await _fishRecognitionService.AnalyzeVideoAsync(stream, uniqueFileName, userId);
+            var result = await _fishRecognitionService.AnalyzeVideoAsync(stream, uniqueFileName, userId.Value);
 
             try
             {
@@ -104,8 +104,16 @@ public class VideoAnalysisController : ControllerBase
     }
 
     [HttpGet("user/{userId}")]
+    [Authorize]
     public async Task<ActionResult<IEnumerable<VideoAnalysisDto>>> GetUserAnalyses(int userId)
     {
+        var currentUserId = User.GetUserId();
+        if (currentUserId == null)
+            return Unauthorized();
+
+        if (currentUserId.Value != userId && !User.IsInRole("Admin"))
+            return Forbid();
+
         var userAnalyses = await _videoRepository.FindAsync(a => a.UserId == userId);
         var sorted = userAnalyses
             .OrderByDescending(a => a.CreatedAt)
@@ -115,23 +123,39 @@ public class VideoAnalysisController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize]
     public async Task<ActionResult<VideoAnalysisDto>> GetAnalysis(int id)
     {
+        var currentUserId = User.GetUserId();
+        if (currentUserId == null)
+            return Unauthorized();
+
         var analysis = await _videoRepository.GetByIdAsync(id);
         if (analysis == null)
         {
             return NotFound();
         }
 
+        if (analysis.UserId != currentUserId.Value && !User.IsInRole("Admin"))
+            return Forbid();
+
         return Ok(MapToDto(analysis));
     }
 
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> DeleteAnalysis(int id)
     {
+        var currentUserId = User.GetUserId();
+        if (currentUserId == null)
+            return Unauthorized();
+
         var analysis = await _videoRepository.GetByIdAsync(id);
         if (analysis == null)
             return NotFound();
+
+        if (analysis.UserId != currentUserId.Value && !User.IsInRole("Admin"))
+            return Forbid();
 
         if (!string.IsNullOrEmpty(analysis.ProcessedVideoUrl))
         {
@@ -284,7 +308,10 @@ public class VideoAnalysisController : ControllerBase
             {
                 fishCounts = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(entity.FishCountsJson);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not deserialize FishCountsJson for analysis {AnalysisId}", entity.Id);
+            }
         }
 
         if (!string.IsNullOrEmpty(entity.DetectionsJson))
@@ -293,7 +320,10 @@ public class VideoAnalysisController : ControllerBase
             {
                 detections = System.Text.Json.JsonSerializer.Deserialize<List<FishDetectionDto>>(entity.DetectionsJson);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not deserialize DetectionsJson for analysis {AnalysisId}", entity.Id);
+            }
         }
 
         string videoUrl = entity.VideoUrl;

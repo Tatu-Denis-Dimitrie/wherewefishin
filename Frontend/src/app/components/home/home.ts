@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -25,6 +25,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   private userLocationCircle: L.Circle | null = null;
   private userLatLng: L.LatLng | null = null;
   private routeLayer: L.GeoJSON | null = null;
+  private readonly userLocationStorageKey = 'wherewefishin.user-location.v1';
+  private readonly userLocationMaxAgeMs = 1000 * 60 * 60 * 24 * 7;
   locatingUser = false;
   routeInfo: { distance: string; duration: string; spotName: string } | null = null;
 
@@ -82,8 +84,12 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     this.initMap();
     this.loadSpots();
-    // Auto-locate user on page load
-    setTimeout(() => this.locateUser(), 500);
+    const restoredFromCache = this.restoreCachedUserLocation();
+    if (!restoredFromCache) {
+      // Ask for geolocation only when we don't have a cached location.
+      setTimeout(() => this.locateUser(), 500);
+    }
+    setTimeout(() => this.map.invalidateSize(), 250);
   }
 
   private loadDashboardData(): void {
@@ -199,7 +205,11 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.spots.forEach(spot => {
       const marker = L.marker([spot.latitude, spot.longitude], {
         icon: this.createSpotIcon()
-      }).bindPopup(this.buildPopupContent(spot), { maxWidth: 220 });
+      }).bindPopup(this.buildPopupContent(spot), {
+        maxWidth: 220,
+        autoPanPaddingTopLeft: [16, 96],
+        autoPanPaddingBottomRight: [16, 16]
+      });
 
       marker.on('click', () => {
         if (this.isDeleteMode && this.canEdit) {
@@ -300,8 +310,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           this.locatingUser = false;
-          this.userLatLng = L.latLng(pos.coords.latitude, pos.coords.longitude);
-          drawRoute(this.userLatLng);
+          const userLatLng = L.latLng(pos.coords.latitude, pos.coords.longitude);
+          this.setUserLocation(userLatLng, pos.coords.accuracy, false);
+          this.persistUserLocation(userLatLng, pos.coords.accuracy);
+          drawRoute(userLatLng);
         },
         () => {
           this.locatingUser = false;
@@ -333,33 +345,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         this.locatingUser = false;
         const { latitude, longitude, accuracy } = position.coords;
         const latlng = L.latLng(latitude, longitude);
-        this.userLatLng = latlng;
-        // Remove previous location layers
-        if (this.userLocationMarker) this.map.removeLayer(this.userLocationMarker);
-        if (this.userLocationCircle) this.map.removeLayer(this.userLocationCircle);
-
-        // Accuracy circle
-        this.userLocationCircle = L.circle(latlng, {
-          radius: accuracy,
-          color: '#3b82f6',
-          fillColor: '#3b82f6',
-          fillOpacity: 0.1,
-          weight: 1
-        }).addTo(this.map);
-
-        // Pulsing dot icon
-        const icon = L.divIcon({
-          className: '',
-          html: `<div class="user-location-dot"><div class="user-location-pulse"></div></div>`,
-          iconSize: [20, 20],
-          iconAnchor: [10, 10]
-        });
-
-        this.userLocationMarker = L.marker(latlng, { icon })
-          .bindPopup(`<b>Locația ta</b><br>Precizie: ~${Math.round(accuracy)} m`)
-          .addTo(this.map);
-
-        this.map.flyTo(latlng, 14, { duration: 1.5 });
+        this.setUserLocation(latlng, accuracy, true);
+        this.persistUserLocation(latlng, accuracy);
         this.showToast('Locație găsită!', 'success');
       },
       (err) => {
@@ -477,6 +464,79 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     }, 350);
   }
 
+  @HostListener('window:resize')
+  onViewportResize(): void {
+    if (!this.map) return;
+    requestAnimationFrame(() => this.map.invalidateSize());
+  }
+
+  getAnalysisDisplayName(analysis: VideoAnalysis): string {
+    const rawName = (analysis.fileName || '').trim();
+    const fallbackName = `Upload ${this.getAnalysisDateLabel(analysis)}`;
+
+    if (!rawName) {
+      return fallbackName;
+    }
+
+    const nameWithoutExt = rawName.replace(/\.[A-Za-z0-9]{2,5}$/i, '');
+    const cleanedName = nameWithoutExt
+      .replace(/[_-]+/g, ' ')
+      .replace(/\b\d{4,}\b/g, ' ')
+      .replace(/\b(mp4|mov|avi|mkv|webm|video|recording|upload|clip|file|capture)\b/gi, ' ')
+      .replace(/[^A-Za-z0-9ĂÂÎȘȚăâîșț\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (!cleanedName || cleanedName.length < 3 || !/[A-Za-zĂÂÎȘȚăâîșț]/.test(cleanedName)) {
+      return fallbackName;
+    }
+
+    const prettified = cleanedName
+      .split(' ')
+      .slice(0, 6)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+
+    return prettified || fallbackName;
+  }
+
+  getAnalysisSummary(analysis: VideoAnalysis): string {
+    const status = analysis.status?.toLowerCase() || '';
+    if (status === 'completed') {
+      const uniqueCount = analysis.totalUniqueFish ?? analysis.totalDetections;
+      if (uniqueCount > 0) {
+        return `${uniqueCount} capturi unice`;
+      }
+      return 'Analiză finalizată';
+    }
+
+    if (status === 'processing') {
+      return 'Analiză în procesare';
+    }
+
+    if (status === 'failed') {
+      return 'Procesare eșuată';
+    }
+
+    return 'Analiză nouă';
+  }
+
+  private getAnalysisDateLabel(analysis: VideoAnalysis): string {
+    const sourceDate = analysis.createdAt || analysis.analyzedAt;
+    const parsedDate = sourceDate ? new Date(sourceDate) : new Date();
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return `#${analysis.id}`;
+    }
+
+    return new Intl.DateTimeFormat('ro-RO', {
+      day: '2-digit',
+      month: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(parsedDate);
+  }
+
   getStatusClass(status: string): string {
     switch (status.toLowerCase()) {
       case 'completed': return 'status-completed';
@@ -496,5 +556,77 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
   isUser(): boolean {
     return this.currentRole === 'User';
+  }
+
+  private setUserLocation(latlng: L.LatLng, accuracy: number, animate: boolean): void {
+    this.userLatLng = latlng;
+
+    if (this.userLocationMarker) this.map.removeLayer(this.userLocationMarker);
+    if (this.userLocationCircle) this.map.removeLayer(this.userLocationCircle);
+
+    this.userLocationCircle = L.circle(latlng, {
+      radius: accuracy,
+      color: '#3b82f6',
+      fillColor: '#3b82f6',
+      fillOpacity: 0.1,
+      weight: 1
+    }).addTo(this.map);
+
+    const icon = L.divIcon({
+      className: '',
+      html: `<div class="user-location-dot"><div class="user-location-pulse"></div></div>`,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
+    });
+
+    this.userLocationMarker = L.marker(latlng, { icon })
+      .bindPopup(`<b>Locația ta</b><br>Precizie: ~${Math.round(accuracy)} m`)
+      .addTo(this.map);
+
+    if (animate) {
+      this.map.flyTo(latlng, 14, { duration: 1.2 });
+    }
+  }
+
+  private persistUserLocation(latlng: L.LatLng, accuracy: number): void {
+    try {
+      localStorage.setItem(this.userLocationStorageKey, JSON.stringify({
+        latitude: latlng.lat,
+        longitude: latlng.lng,
+        accuracy,
+        savedAt: Date.now()
+      }));
+    } catch {
+      // Ignore storage errors (private browsing / storage disabled).
+    }
+  }
+
+  private restoreCachedUserLocation(): boolean {
+    try {
+      const raw = localStorage.getItem(this.userLocationStorageKey);
+      if (!raw) return false;
+
+      const cached = JSON.parse(raw) as {
+        latitude: number;
+        longitude: number;
+        accuracy?: number;
+        savedAt?: number;
+      };
+
+      const isValid = Number.isFinite(cached.latitude) && Number.isFinite(cached.longitude);
+      if (!isValid) return false;
+
+      const savedAt = cached.savedAt ?? 0;
+      if (Date.now() - savedAt > this.userLocationMaxAgeMs) {
+        return false;
+      }
+
+      const cachedLatLng = L.latLng(cached.latitude, cached.longitude);
+      this.setUserLocation(cachedLatLng, cached.accuracy ?? 35, false);
+      this.map.setView(cachedLatLng, 13);
+      return true;
+    } catch {
+      return false;
+    }
   }
 }

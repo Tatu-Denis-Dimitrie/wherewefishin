@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
@@ -13,12 +14,14 @@ public class AuthServiceTests
     private readonly IRepository<User> _userRepository;
     private readonly IConfiguration _configuration;
     private readonly IEmailService _emailService;
+    private readonly ILogger<AuthService> _logger;
     private readonly AuthService _authService;
 
     public AuthServiceTests()
     {
         _userRepository = Substitute.For<IRepository<User>>();
         _emailService = Substitute.For<IEmailService>();
+        _logger = Substitute.For<ILogger<AuthService>>();
         _emailService.SendWelcomeEmailAsync(Arg.Any<string>(), Arg.Any<string?>())
             .Returns(Task.CompletedTask);
 
@@ -33,7 +36,7 @@ public class AuthServiceTests
             .AddInMemoryCollection(configData)
             .Build();
 
-        _authService = new AuthService(_userRepository, _configuration, _emailService);
+        _authService = new AuthService(_userRepository, _configuration, _emailService, _logger);
     }
 
 

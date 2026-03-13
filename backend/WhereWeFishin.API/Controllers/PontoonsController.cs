@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Interfaces;
 using WhereWeFishin.Database.Repositories;
-using System.Security.Claims;
 
 namespace WhereWeFishin.API.Controllers;
 
@@ -42,7 +42,7 @@ public class PontoonsController : ControllerBase
     [Authorize(Roles = "Admin,Manager")]
     public async Task<ActionResult<PontoonDto>> CreatePontoon(CreatePontoonDto createPontoonDto)
     {
-        var userId = GetCurrentUserId();
+        var userId = User.GetUserId();
         if (userId == null) return Unauthorized();
 
         var spot = await _spotRepository.GetByIdAsync(createPontoonDto.FishingSpotId);
@@ -71,7 +71,7 @@ public class PontoonsController : ControllerBase
     [Authorize(Roles = "Admin,Manager")]
     public async Task<IActionResult> UpdatePontoon(int id, UpdatePontoonDto updatePontoonDto)
     {
-        var userId = GetCurrentUserId();
+        var userId = User.GetUserId();
         if (userId == null) return Unauthorized();
 
         var pontoon = await _pontoonRepository.GetByIdAsync(id);
@@ -105,7 +105,7 @@ public class PontoonsController : ControllerBase
     [Authorize(Roles = "Admin,Manager")]
     public async Task<IActionResult> DeletePontoon(int id)
     {
-        var userId = GetCurrentUserId();
+        var userId = User.GetUserId();
         if (userId == null) return Unauthorized();
 
         var pontoon = await _pontoonRepository.GetByIdAsync(id);
@@ -120,13 +120,6 @@ public class PontoonsController : ControllerBase
 
         await _pontoonRepository.DeleteAsync(id);
         return NoContent();
-    }
-
-    private int? GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                       ?? User.FindFirst("sub")?.Value;
-        return int.TryParse(userIdClaim, out var id) ? id : null;
     }
 
     private static PontoonDto MapToDto(Pontoon pontoon) => new()

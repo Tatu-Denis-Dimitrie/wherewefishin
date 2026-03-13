@@ -143,8 +143,4 @@ body {
     max-width: 100% !important;
     overflow: hidden !important;
   }
-  .leaflet-pane,
-  .leaflet-control-container {
-    z-index: auto;
-  }
 }

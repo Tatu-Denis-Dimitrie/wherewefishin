@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using System.Linq.Expressions;
 using System.Security.Claims;
@@ -17,6 +18,7 @@ public class BookingsControllerTests
     private readonly IRepository<Pontoon> _pontoonRepository;
     private readonly IRepository<User> _userRepository;
     private readonly IEmailService _emailService;
+    private readonly ILogger<BookingsController> _logger;
     private readonly BookingsController _controller;
 
     public BookingsControllerTests()
@@ -26,6 +28,7 @@ public class BookingsControllerTests
         _pontoonRepository = Substitute.For<IRepository<Pontoon>>();
         _userRepository = Substitute.For<IRepository<User>>();
         _emailService = Substitute.For<IEmailService>();
+        _logger = Substitute.For<ILogger<BookingsController>>();
         _emailService.SendBookingConfirmationEmailAsync(
                 Arg.Any<string>(),
                 Arg.Any<string?>(),
@@ -36,7 +39,13 @@ public class BookingsControllerTests
                 Arg.Any<int>())
             .Returns(Task.CompletedTask);
 
-        _controller = new BookingsController(_sessionRepository, _spotRepository, _pontoonRepository, _userRepository, _emailService);
+        _controller = new BookingsController(
+            _sessionRepository,
+            _spotRepository,
+            _pontoonRepository,
+            _userRepository,
+            _emailService,
+            _logger);
 
         // Default: authenticated as user 1
         SetupUser(userId: 1, role: "User");

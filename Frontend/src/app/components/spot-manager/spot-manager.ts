@@ -18,6 +18,7 @@ export class SpotManager implements OnInit, OnDestroy {
   pontoons: Pontoon[] = [];
   loading = true;
   notFound = false;
+  isTouchDevice = false;
   
   showMessage = '';
   messageType: 'success' | 'error' = 'success';
@@ -36,6 +37,11 @@ export class SpotManager implements OnInit, OnDestroy {
   private _isDragging = false;
   private repositionDragStart: L.LatLng | null = null;
   private repositionOrigBounds: L.LatLngBounds | null = null;
+  private dragTouchId: number | null = null;
+
+  private readonly containerTouchStartHandler = (event: TouchEvent) => this.onContainerTouchStart(event);
+  private readonly containerTouchMoveHandler = (event: TouchEvent) => this.onContainerTouchMove(event);
+  private readonly containerTouchEndHandler = (event: TouchEvent) => this.onContainerTouchEnd(event);
 
   private map: L.Map | null = null;
   private pontoonLayers: Map<number, L.Rectangle> = new Map();
@@ -56,6 +62,8 @@ export class SpotManager implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.isTouchDevice = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+
     if (!this.authService.isManagerOrAdmin()) {
       this.router.navigate(['/home']);
       return;
@@ -88,6 +96,14 @@ export class SpotManager implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.map) {
+      if (this.isTouchDevice) {
+        const container = this.map.getContainer();
+        container.removeEventListener('touchstart', this.containerTouchStartHandler);
+        container.removeEventListener('touchmove', this.containerTouchMoveHandler);
+        container.removeEventListener('touchend', this.containerTouchEndHandler);
+        container.removeEventListener('touchcancel', this.containerTouchEndHandler);
+      }
+
       this.map.remove();
       this.map = null;
     }
@@ -111,7 +127,7 @@ export class SpotManager implements OnInit, OnDestroy {
     this.map = L.map('manager-map', {
       zoomControl: true,
       scrollWheelZoom: true,
-      dragging: true,
+      dragging: !this.isTouchDevice,
       touchZoom: true,
       doubleClickZoom: false,
       attributionControl: false
@@ -139,6 +155,16 @@ export class SpotManager implements OnInit, OnDestroy {
     this.map.on('mousedown', (e: L.LeafletMouseEvent) => this.onMapMouseDown(e));
     this.map.on('mousemove', (e: L.LeafletMouseEvent) => this.onMapMouseMove(e));
     this.map.on('mouseup', () => this.onMapMouseUp());
+
+    if (this.isTouchDevice) {
+      this.map.on('click', (e: L.LeafletMouseEvent) => this.onMapTapToDraw(e));
+
+      const container = this.map.getContainer();
+      container.addEventListener('touchstart', this.containerTouchStartHandler, { passive: false });
+      container.addEventListener('touchmove', this.containerTouchMoveHandler, { passive: false });
+      container.addEventListener('touchend', this.containerTouchEndHandler, { passive: false });
+      container.addEventListener('touchcancel', this.containerTouchEndHandler, { passive: false });
+    }
   }
 
   private renderPontoons(): void {
@@ -166,6 +192,7 @@ export class SpotManager implements OnInit, OnDestroy {
 
       // Repositioning drag events
       rect.on('mousedown', (e: L.LeafletMouseEvent) => this.onPontoonDragStart(e, pontoon.id));
+      rect.on('touchstart', (e: L.LeafletEvent) => this.onPontoonTouchStart(e, pontoon.id));
 
       this.pontoonLayers.set(pontoon.id, rect);
     });
@@ -176,20 +203,26 @@ export class SpotManager implements OnInit, OnDestroy {
     this.editingPontoonId = null;
     this._isDragging = false;
     this.repositionDragStart = null;
+    this.repositionOrigBounds = null;
+    this.dragTouchId = null;
 
     if (this.map) {
       if (this.isDrawingMode) {
         this.map.dragging.disable();
         (this.map.getContainer() as HTMLElement).style.cursor = 'crosshair';
       } else {
-        this.map.dragging.enable();
+        if (this.isTouchDevice) {
+          this.map.dragging.disable();
+        } else {
+          this.map.dragging.enable();
+        }
         (this.map.getContainer() as HTMLElement).style.cursor = '';
       }
     }
   }
 
   private onMapMouseDown(e: L.LeafletMouseEvent): void {
-    if (!this.isDrawingMode || !this.map) return;
+    if (this.isTouchDevice || !this.isDrawingMode || !this.map) return;
 
     this.startLatLng = e.latlng;
     const bounds = L.latLngBounds(e.latlng, e.latlng);
@@ -203,18 +236,8 @@ export class SpotManager implements OnInit, OnDestroy {
 
   private onMapMouseMove(e: L.LeafletMouseEvent): void {
     // Handle repositioning drag
-    if (this._isDragging && this.repositionDragStart && this.editingPontoonId) {
-      const layer = this.pontoonLayers.get(this.editingPontoonId);
-      if (!layer || !this.repositionOrigBounds) return;
-
-      const dlat = e.latlng.lat - this.repositionDragStart.lat;
-      const dlng = e.latlng.lng - this.repositionDragStart.lng;
-
-      const newBounds = L.latLngBounds(
-        [this.repositionOrigBounds.getSouthWest().lat + dlat, this.repositionOrigBounds.getSouthWest().lng + dlng],
-        [this.repositionOrigBounds.getNorthEast().lat + dlat, this.repositionOrigBounds.getNorthEast().lng + dlng]
-      );
-      layer.setBounds(newBounds);
+    if (this._isDragging) {
+      this.applyRepositionFromLatLng(e.latlng);
       return;
     }
 
@@ -225,37 +248,43 @@ export class SpotManager implements OnInit, OnDestroy {
 
   private onMapMouseUp(): void {
     // Handle repositioning end
-    if (this._isDragging && this.repositionDragStart && this.editingPontoonId) {
-      const layer = this.pontoonLayers.get(this.editingPontoonId);
-      if (layer) {
-        const newBounds = layer.getBounds();
-        const sw = newBounds.getSouthWest();
-        const ne = newBounds.getNorthEast();
-
-        this.pontoonService.updatePontoon(this.editingPontoonId, {
-          southWestLat: sw.lat,
-          southWestLng: sw.lng,
-          northEastLat: ne.lat,
-          northEastLng: ne.lng
-        }).subscribe({
-          next: () => {
-            this.showToast('Poziție actualizată!', 'success');
-            this.loadPontoons();
-          },
-          error: () => {
-            this.showToast('Eroare la actualizarea poziției', 'error');
-            this.loadPontoons(); // Reload to revert visual
-          }
-        });
-      }
-      this._isDragging = false;
-      this.repositionDragStart = null;
-      this.repositionOrigBounds = null;
-      if (this.map) this.map.dragging.enable();
+    if (this._isDragging) {
+      this.finishRepositionDrag();
       return;
     }
 
-    // Handle drawing end
+    // Handle drawing end with mouse (desktop)
+    if (this.isTouchDevice) return;
+    this.finalizeDrawingRect();
+  }
+
+  private onMapTapToDraw(e: L.LeafletMouseEvent): void {
+    if (!this.isTouchDevice || !this.isDrawingMode || !this.map) return;
+
+    if (!this.startLatLng) {
+      this.startLatLng = e.latlng;
+      if (this.drawingRect) {
+        this.drawingRect.remove();
+      }
+
+      this.drawingRect = L.rectangle(L.latLngBounds(e.latlng, e.latlng), {
+        color: this.newPontoonColor,
+        weight: 2,
+        fillOpacity: 0.35,
+        dashArray: '5, 5'
+      }).addTo(this.map);
+
+      this.showToast('Atinge al doilea colț pentru a finaliza pontonul', 'success');
+      return;
+    }
+
+    if (this.drawingRect) {
+      this.drawingRect.setBounds(L.latLngBounds(this.startLatLng, e.latlng));
+    }
+    this.finalizeDrawingRect();
+  }
+
+  private finalizeDrawingRect(): void {
     if (!this.isDrawingMode || !this.drawingRect || !this.startLatLng || !this.spot) return;
 
     const bounds = this.drawingRect.getBounds();
@@ -267,10 +296,10 @@ export class SpotManager implements OnInit, OnDestroy {
       this.drawingRect.remove();
       this.drawingRect = null;
       this.startLatLng = null;
+      this.showToast('Selectează o zonă mai mare pentru ponton', 'error');
       return;
     }
 
-    // Save the pontoon
     const pontoonData: CreatePontoon = {
       fishingSpotId: this.spot.id,
       name: this.newPontoonName || `Ponton ${this.pontoons.length + 1}`,
@@ -301,20 +330,173 @@ export class SpotManager implements OnInit, OnDestroy {
   // ---------- Repositioning ----------
 
   private onPontoonDragStart(e: L.LeafletMouseEvent, pontoonId: number): void {
-    if (this.editingPontoonId !== pontoonId || this.isDrawingMode) return;
+    if (this.isTouchDevice || this.editingPontoonId !== pontoonId || this.isDrawingMode) return;
 
     L.DomEvent.stopPropagation(e);
+    this.beginReposition(pontoonId, e.latlng);
+  }
+
+  private onPontoonTouchStart(e: L.LeafletEvent, pontoonId: number): void {
+    if (!this.isTouchDevice || this.editingPontoonId !== pontoonId || this.isDrawingMode) return;
+
+    const originalEvent = (e as L.LeafletEvent & { originalEvent?: TouchEvent }).originalEvent;
+    if (!originalEvent || originalEvent.touches.length === 0) return;
+
+    L.DomEvent.stopPropagation(e);
+    originalEvent.preventDefault();
+
+    this.dragTouchId = originalEvent.touches[0].identifier;
+    const startLatLng = this.touchToLatLng(originalEvent.touches[0]);
+    this.beginReposition(pontoonId, startLatLng);
+  }
+
+  private beginReposition(pontoonId: number, startLatLng: L.LatLng): void {
     const layer = this.pontoonLayers.get(pontoonId);
     if (!layer) return;
 
     this._isDragging = true;
-    if (this.map) this.map.dragging.disable();
-
-    this.repositionDragStart = e.latlng;
+    this.repositionDragStart = startLatLng;
     this.repositionOrigBounds = L.latLngBounds(
       layer.getBounds().getSouthWest(),
       layer.getBounds().getNorthEast()
     );
+
+    if (this.map) {
+      this.map.dragging.disable();
+    }
+  }
+
+  private applyRepositionFromLatLng(currentLatLng: L.LatLng): void {
+    if (!this._isDragging || !this.repositionDragStart || !this.repositionOrigBounds || !this.editingPontoonId) return;
+
+    const layer = this.pontoonLayers.get(this.editingPontoonId);
+    if (!layer) return;
+
+    const dlat = currentLatLng.lat - this.repositionDragStart.lat;
+    const dlng = currentLatLng.lng - this.repositionDragStart.lng;
+
+    const newBounds = L.latLngBounds(
+      [this.repositionOrigBounds.getSouthWest().lat + dlat, this.repositionOrigBounds.getSouthWest().lng + dlng],
+      [this.repositionOrigBounds.getNorthEast().lat + dlat, this.repositionOrigBounds.getNorthEast().lng + dlng]
+    );
+
+    layer.setBounds(newBounds);
+  }
+
+  private finishRepositionDrag(): void {
+    if (!this._isDragging || !this.editingPontoonId) return;
+
+    const layer = this.pontoonLayers.get(this.editingPontoonId);
+    if (layer) {
+      const newBounds = layer.getBounds();
+      const sw = newBounds.getSouthWest();
+      const ne = newBounds.getNorthEast();
+
+      this.pontoonService.updatePontoon(this.editingPontoonId, {
+        southWestLat: sw.lat,
+        southWestLng: sw.lng,
+        northEastLat: ne.lat,
+        northEastLng: ne.lng
+      }).subscribe({
+        next: () => {
+          this.showToast('Poziție actualizată!', 'success');
+          this.loadPontoons();
+        },
+        error: () => {
+          this.showToast('Eroare la actualizarea poziției', 'error');
+          this.loadPontoons();
+        }
+      });
+    }
+
+    this._isDragging = false;
+    this.repositionDragStart = null;
+    this.repositionOrigBounds = null;
+    this.dragTouchId = null;
+
+    if (this.map) {
+      if (this.isTouchDevice) {
+        this.map.dragging.disable();
+      } else {
+        this.map.dragging.enable();
+      }
+    }
+  }
+
+  private onContainerTouchStart(event: TouchEvent): void {
+    if (!this.map || this.isDrawingMode || this._isDragging) return;
+
+    if (event.touches.length >= 2) {
+      this.map.dragging.enable();
+    } else {
+      this.map.dragging.disable();
+    }
+  }
+
+  private onContainerTouchMove(event: TouchEvent): void {
+    if (!this.map) return;
+
+    if (this._isDragging) {
+      const touch = this.getTrackedTouch(event);
+      if (!touch) return;
+
+      event.preventDefault();
+      const latLng = this.touchToLatLng(touch);
+      this.applyRepositionFromLatLng(latLng);
+      return;
+    }
+
+    if (this.isDrawingMode) return;
+
+    if (event.touches.length >= 2) {
+      this.map.dragging.enable();
+    } else {
+      this.map.dragging.disable();
+    }
+  }
+
+  private onContainerTouchEnd(event: TouchEvent): void {
+    if (!this.map) return;
+
+    if (this._isDragging) {
+      const trackedTouchStillActive = this.dragTouchId !== null
+        ? Array.from(event.touches).some(touch => touch.identifier === this.dragTouchId)
+        : event.touches.length > 0;
+
+      if (!trackedTouchStillActive) {
+        event.preventDefault();
+        this.finishRepositionDrag();
+      }
+      return;
+    }
+
+    if (this.isDrawingMode) return;
+
+    if (event.touches.length >= 2) {
+      this.map.dragging.enable();
+    } else {
+      this.map.dragging.disable();
+    }
+  }
+
+  private getTrackedTouch(event: TouchEvent): Touch | null {
+    if (this.dragTouchId === null) {
+      return event.touches[0] ?? event.changedTouches[0] ?? null;
+    }
+
+    return Array.from(event.touches).find(touch => touch.identifier === this.dragTouchId)
+      ?? Array.from(event.changedTouches).find(touch => touch.identifier === this.dragTouchId)
+      ?? null;
+  }
+
+  private touchToLatLng(touch: Touch): L.LatLng {
+    const containerRect = this.map!.getContainer().getBoundingClientRect();
+    const containerPoint = L.point(
+      touch.clientX - containerRect.left,
+      touch.clientY - containerRect.top
+    );
+
+    return this.map!.containerPointToLatLng(containerPoint);
   }
 
   selectPontoon(pontoon: Pontoon): void {
@@ -324,8 +506,13 @@ export class SpotManager implements OnInit, OnDestroy {
     this.isDrawingMode = false;
 
     if (this.map) {
-      this.map.dragging.enable();
-      (this.map.getContainer() as HTMLElement).style.cursor = 'move';
+      if (this.isTouchDevice) {
+        this.map.dragging.disable();
+        (this.map.getContainer() as HTMLElement).style.cursor = '';
+      } else {
+        this.map.dragging.enable();
+        (this.map.getContainer() as HTMLElement).style.cursor = 'move';
+      }
     }
 
     // Highlight selected pontoon
@@ -378,9 +565,15 @@ export class SpotManager implements OnInit, OnDestroy {
     this.editPontoonColor = '';
     this._isDragging = false;
     this.repositionDragStart = null;
+    this.repositionOrigBounds = null;
+    this.dragTouchId = null;
 
     if (this.map) {
-      this.map.dragging.enable();
+      if (this.isTouchDevice) {
+        this.map.dragging.disable();
+      } else {
+        this.map.dragging.enable();
+      }
       (this.map.getContainer() as HTMLElement).style.cursor = '';
     }
 

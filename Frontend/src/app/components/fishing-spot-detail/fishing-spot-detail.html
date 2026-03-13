@@ -228,7 +228,7 @@
                       class="pontoon-pill"
                       [class.active]="selectedPontoonId === pontoon.id"
                       [style.borderColor]="selectedPontoonId === pontoon.id ? pontoon.color : null"
-                      (click)="selectedPontoonId = pontoon.id">
+                      (click)="selectPontoon(pontoon.id)">
                       <span class="pontoon-color-dot" [style.backgroundColor]="pontoon.color"></span>
                       {{ pontoon.name }}
                     </button>

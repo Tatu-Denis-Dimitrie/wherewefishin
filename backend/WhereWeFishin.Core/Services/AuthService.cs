@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -15,12 +16,18 @@ public class AuthService : IAuthService
     private readonly IRepository<User> _userRepository;
     private readonly IConfiguration _configuration;
     private readonly IEmailService _emailService;
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(IRepository<User> userRepository, IConfiguration configuration, IEmailService emailService)
+    public AuthService(
+        IRepository<User> userRepository,
+        IConfiguration configuration,
+        IEmailService emailService,
+        ILogger<AuthService> logger)
     {
         _userRepository = userRepository;
         _configuration = configuration;
         _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task<AuthResponse?> LoginAsync(LoginRequest request)
@@ -93,8 +100,9 @@ public class AuthService : IAuthService
         {
             await _emailService.SendWelcomeEmailAsync(user.Email, user.FirstName);
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "Failed to send welcome email to {Email}", user.Email);
         }
 
         var token = GenerateJwtToken(user.Id, user.Username, user.Email, user.Role);
@@ -143,8 +151,9 @@ public class AuthService : IAuthService
         {
             await _emailService.SendPasswordResetEmailAsync(user.Email, user.FirstName, code);
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "Failed to send password reset email to {Email}", user.Email);
         }
 
         return true;

@@ -84,7 +84,14 @@
 .users-table tbody tr:last-child td { border-bottom: none; }
 .users-table tbody tr:hover { background: rgba(125,179,74,.04); }
 
-.cell-user { display: flex; align-items: center; gap: .75rem; }
+.cell-user { vertical-align: middle; }
+
+.cell-user-wrap {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-height: 34px;
+}
 .user-avatar {
   width: 34px; height: 34px;
   border-radius: 50%;
@@ -113,7 +120,18 @@
 .badge-user    { background: rgba(125,179,74,.12); color: var(--accent-moss); }
 
 /* Actions */
-.cell-actions { display: flex; align-items: center; gap: .5rem; }
+.cell-actions {
+  vertical-align: middle !important;
+  white-space: nowrap;
+}
+
+.action-row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+  min-height: 34px;
+}
 
 .role-select {
   padding: .35rem .5rem;

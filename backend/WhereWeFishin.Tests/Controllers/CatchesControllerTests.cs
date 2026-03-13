@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using System.Security.Claims;
 using WhereWeFishin.API.Controllers;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
@@ -16,6 +18,25 @@ public class CatchesControllerTests
     {
         _catchRepository = Substitute.For<IRepository<Catch>>();
         _controller = new CatchesController(_catchRepository);
+
+        SetupUser(1);
+    }
+
+    private void SetupUser(int userId, string role = "User")
+    {
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+            new Claim(ClaimTypes.Role, role)
+        };
+
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(claims, "Bearer"))
+            }
+        };
     }
 
     [Fact]
@@ -149,7 +170,14 @@ public class CatchesControllerTests
     public async Task DeleteCatch_WithValidId_ReturnsNoContent()
     {
         // Arrange
-        _catchRepository.ExistsAsync(1, Arg.Any<CancellationToken>()).Returns(true);
+        _catchRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(new Catch
+        {
+            Id = 1,
+            FishSpecies = "Bass",
+            UserId = 1,
+            FishingSpotId = 1,
+            CaughtAt = DateTime.UtcNow
+        });
 
         // Act
         var result = await _controller.DeleteCatch(1);

@@ -100,43 +100,82 @@
 }
 
 @media (max-width: 900px) {
+  .manager-page {
+    padding: 18px 14px;
+    height: auto;
+    min-height: calc(100vh - 80px);
+  }
+
   .manager-layout {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
+    grid-template-rows: auto minmax(380px, 1fr);
+    gap: 14px;
   }
-  .manager-page { padding: 20px 16px; }
 
-  /* Mobile sidebar becomes a horizontal scrollable section */
+  /* Mobile sidebar stays full width so controls are easy to tap */
   .sidebar {
-    flex-direction: row;
-    overflow-x: auto;
-    overflow-y: hidden;
-    gap: 12px;
-    padding-bottom: 12px;
-    -webkit-overflow-scrolling: touch;
+    flex-direction: column;
+    overflow: visible;
+    gap: 14px;
+    padding-bottom: 0;
   }
+
   .control-card {
-    min-width: 280px;
-    flex-shrink: 0;
+    min-width: 0;
+    width: 100%;
+    padding: 18px;
+  }
+
+  .card-title {
+    font-size: 13px;
+  }
+
+  .field input {
+    padding: 12px 14px;
+    font-size: 15px;
+  }
+
+  .color-btn {
+    width: 34px;
+    height: 34px;
   }
 
   /* Mobile map */
   .map-container {
-    min-height: 350px;
+    min-height: 420px;
   }
   .manager-map {
-    min-height: 350px;
+    min-height: 420px;
   }
 
   /* Mobile buttons */
   .drawing-actions,
   .edit-actions {
     flex-direction: column;
+    gap: 10px;
   }
   .btn-save,
   .btn-cancel,
   .btn-delete {
     width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .manager-page {
+    padding: 14px 10px;
+  }
+
+  .control-card {
+    padding: 16px;
+  }
+
+  .map-container {
+    min-height: 360px;
+  }
+
+  .manager-map {
+    min-height: 360px;
   }
 }
 
@@ -234,9 +273,9 @@
 /* ---- Color Picker ---- */
 .color-picker {
   display: flex;
-  gap: 6px;
+  gap: 10px;
   flex-wrap: wrap;
-  padding: 6px 0;
+  padding: 8px 2px;
 }
 .color-btn {
   width: 28px;
@@ -255,7 +294,8 @@
 /* ---- Drawing Actions ---- */
 .drawing-actions, .edit-actions {
   display: flex;
-  gap: 8px;
+  gap: 12px;
+  margin-top: 4px;
 }
 
 .btn-reposition {

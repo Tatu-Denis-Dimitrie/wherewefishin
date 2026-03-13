@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Interfaces;
@@ -17,26 +18,29 @@ public class BookingsController : ControllerBase
     private readonly IRepository<Pontoon> _pontoonRepository;
     private readonly IRepository<User> _userRepository;
     private readonly IEmailService _emailService;
+    private readonly ILogger<BookingsController> _logger;
 
     public BookingsController(
         IRepository<FishingSession> sessionRepository,
         IRepository<FishingSpot> spotRepository,
         IRepository<Pontoon> pontoonRepository,
         IRepository<User> userRepository,
-        IEmailService emailService)
+        IEmailService emailService,
+        ILogger<BookingsController> logger)
     {
         _sessionRepository = sessionRepository;
         _spotRepository = spotRepository;
         _pontoonRepository = pontoonRepository;
         _userRepository = userRepository;
         _emailService = emailService;
+        _logger = logger;
     }
 
     // GET api/bookings - returns bookings for the logged-in user
     [HttpGet]
     public async Task<ActionResult<IEnumerable<BookingDto>>> GetMyBookings()
     {
-        var userId = GetCurrentUserId();
+        var userId = User.GetUserId();
         if (userId == null) return Unauthorized();
 
         var sessions = await _sessionRepository.FindAsync(s => s.UserId == userId.Value);
@@ -70,9 +74,9 @@ public class BookingsController : ControllerBase
 
     // POST api/bookings - create a booking
     [HttpPost]
-    public async Task<ActionResult<BookingDto>> CreateBooking(CreateBookingDto dto)
+    public async Task<ActionResult<BookingDto>> CreateBooking([FromBody] CreateBookingDto dto)
     {
-        var userId = GetCurrentUserId();
+        var userId = User.GetUserId();
         if (userId == null) return Unauthorized();
 
         var spot = await _spotRepository.GetByIdAsync(dto.FishingSpotId);
@@ -161,9 +165,10 @@ public class BookingsController : ControllerBase
                     session.Id);
             }
         }
-        catch
+        catch (Exception ex)
         {
             // Do not block booking creation if SMTP delivery fails.
+            _logger.LogWarning(ex, "Booking confirmation email failed for booking {BookingId}", session.Id);
         }
 
         return CreatedAtAction(nameof(GetBooking), new { id = session.Id }, MapToDto(session, spot.Name, pontoon?.Name));
@@ -173,7 +178,7 @@ public class BookingsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<BookingDto>> GetBooking(int id)
     {
-        var userId = GetCurrentUserId();
+        var userId = User.GetUserId();
         if (userId == null) return Unauthorized();
 
         var session = await _sessionRepository.GetByIdAsync(id);
@@ -196,7 +201,7 @@ public class BookingsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> CancelBooking(int id)
     {
-        var userId = GetCurrentUserId();
+        var userId = User.GetUserId();
         if (userId == null) return Unauthorized();
 
         var session = await _sessionRepository.GetByIdAsync(id);
@@ -212,12 +217,6 @@ public class BookingsController : ControllerBase
         session.Status = SessionStatus.Cancelled;
         await _sessionRepository.UpdateAsync(session);
         return NoContent();
-    }
-
-    private int? GetCurrentUserId()
-    {
-        var claim = User.FindFirst(ClaimTypes.NameIdentifier);
-        return claim != null && int.TryParse(claim.Value, out var id) ? id : null;
     }
 
     private static BookingDto MapToDto(FishingSession session, string spotName, string? pontoonName = null) => new()

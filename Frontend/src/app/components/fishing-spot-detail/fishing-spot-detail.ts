@@ -43,7 +43,7 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
   selectedPontoonId: number | null = null;
 
   private map: L.Map | null = null;
-  private pontoonLayers: L.Rectangle[] = [];
+  private pontoonLayers: Map<number, L.Rectangle> = new Map();
 
   constructor(
     private route: ActivatedRoute,
@@ -116,7 +116,7 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
     
     // Remove existing pontoon layers
     this.pontoonLayers.forEach(layer => layer.remove());
-    this.pontoonLayers = [];
+    this.pontoonLayers.clear();
 
     // Add pontoons as rectangles
     this.pontoons.forEach(pontoon => {
@@ -124,13 +124,42 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
         [pontoon.southWestLat, pontoon.southWestLng],
         [pontoon.northEastLat, pontoon.northEastLng]
       ];
-      const rect = L.rectangle(bounds, {
-        color: pontoon.color || '#3388ff',
-        weight: 2,
-        fillOpacity: 0.3
-      }).addTo(this.map!);
+      const rect = L.rectangle(bounds, this.getPontoonLayerStyle(pontoon.id, pontoon.color)).addTo(this.map!);
       rect.bindTooltip(pontoon.name, { permanent: false, direction: 'center' });
-      this.pontoonLayers.push(rect);
+      rect.on('click', () => this.selectPontoon(pontoon.id));
+      this.pontoonLayers.set(pontoon.id, rect);
+    });
+
+    this.updatePontoonLayerStyles();
+  }
+
+  selectPontoon(pontoonId: number): void {
+    this.selectedPontoonId = pontoonId;
+    this.updatePontoonLayerStyles();
+  }
+
+  private getPontoonLayerStyle(pontoonId: number, color?: string): L.PathOptions {
+    const baseColor = color || '#3388ff';
+    const isSelected = this.selectedPontoonId === pontoonId;
+
+    return {
+      color: baseColor,
+      fillColor: baseColor,
+      weight: isSelected ? 3 : 2,
+      opacity: isSelected ? 1 : 0.85,
+      fillOpacity: isSelected ? 0.45 : 0.28
+    };
+  }
+
+  private updatePontoonLayerStyles(): void {
+    this.pontoons.forEach(pontoon => {
+      const layer = this.pontoonLayers.get(pontoon.id);
+      if (!layer) return;
+
+      layer.setStyle(this.getPontoonLayerStyle(pontoon.id, pontoon.color));
+      if (this.selectedPontoonId === pontoon.id) {
+        layer.bringToFront();
+      }
     });
   }
 

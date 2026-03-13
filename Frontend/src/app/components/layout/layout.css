@@ -196,8 +196,8 @@
   }
 
   .mobile-brand .brand-icon {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     background: linear-gradient(135deg, var(--accent-moss) 0%, #5a8f30 100%);
     border-radius: var(--radius-sm);
     display: flex;
@@ -205,6 +205,11 @@
     justify-content: center;
     color: white;
     flex-shrink: 0;
+  }
+
+  .mobile-brand .brand-icon svg {
+    width: 20px;
+    height: 20px;
   }
 
   .hamburger-btn {
@@ -258,6 +263,14 @@
     z-index: 160;
     width: 280px;
     top: 56px;
+  }
+
+  .sidebar-brand {
+    display: none;
+  }
+
+  .sidebar-nav {
+    padding-top: 14px;
   }
 
   .sidebar.mobile-open {

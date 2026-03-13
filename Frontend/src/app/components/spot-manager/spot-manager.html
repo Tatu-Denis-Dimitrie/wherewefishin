@@ -53,7 +53,13 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               Desenează ponton nou
             </button>
-            <p class="help-text">Click pentru a activa modul de desenare, apoi desenează un dreptunghi pe hartă.</p>
+            <p class="help-text">
+              @if (isTouchDevice) {
+                Atinge pentru a activa desenarea, apoi atinge două colțuri pe hartă pentru noul ponton. Pentru mutarea hărții folosește două degete.
+              } @else {
+                Click pentru a activa modul de desenare, apoi desenează un dreptunghi pe hartă.
+              }
+            </p>
           } @else {
             <div class="drawing-form">
               <div class="field">
@@ -82,7 +88,11 @@
               
               <div class="drawing-instructions">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                Click și trage pe hartă pentru a desena dreptunghiul pontonului
+                @if (isTouchDevice) {
+                  Atinge două puncte pe hartă pentru a defini dreptunghiul pontonului
+                } @else {
+                  Click și trage pe hartă pentru a desena dreptunghiul pontonului
+                }
               </div>
             </div>
           }
@@ -124,7 +134,11 @@
 
             <div class="reposition-instructions">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 9l-3 3 3 3"/><path d="M9 5l3-3 3 3"/><path d="M15 19l-3 3-3-3"/><path d="M19 9l3 3-3 3"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
-              Trage pontonul pe hartă pentru a-i schimba poziția
+              @if (isTouchDevice) {
+                Trage pontonul cu un singur deget. Harta se mută cu două degete.
+              } @else {
+                Trage pontonul pe hartă pentru a-i schimba poziția
+              }
             </div>
           </div>
         }

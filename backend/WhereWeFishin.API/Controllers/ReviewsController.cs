@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Interfaces;
 using WhereWeFishin.Database.Repositories;
-using System.Security.Claims;
 
 namespace WhereWeFishin.API.Controllers;
 
@@ -54,7 +54,7 @@ public class ReviewsController : ControllerBase
     [Authorize]
     public async Task<ActionResult<ReviewDto>> CreateReview(CreateReviewDto createReviewDto)
     {
-        var userId = GetCurrentUserId();
+        var userId = User.GetUserId();
         if (userId == null) return Unauthorized();
 
         var spot = await _spotRepository.GetByIdAsync(createReviewDto.FishingSpotId);
@@ -88,7 +88,7 @@ public class ReviewsController : ControllerBase
     [Authorize]
     public async Task<IActionResult> UpdateReview(int id, UpdateReviewDto updateReviewDto)
     {
-        var userId = GetCurrentUserId();
+        var userId = User.GetUserId();
         if (userId == null) return Unauthorized();
 
         var review = await _reviewRepository.GetByIdAsync(id);
@@ -116,7 +116,7 @@ public class ReviewsController : ControllerBase
     [Authorize]
     public async Task<IActionResult> DeleteReview(int id)
     {
-        var userId = GetCurrentUserId();
+        var userId = User.GetUserId();
         if (userId == null) return Unauthorized();
 
         var review = await _reviewRepository.GetByIdAsync(id);
@@ -128,13 +128,6 @@ public class ReviewsController : ControllerBase
 
         await _reviewRepository.DeleteAsync(id);
         return NoContent();
-    }
-
-    private int? GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                       ?? User.FindFirst("sub")?.Value;
-        return int.TryParse(userIdClaim, out var id) ? id : null;
     }
 
     private static ReviewDto MapToDto(Review review) => new()
