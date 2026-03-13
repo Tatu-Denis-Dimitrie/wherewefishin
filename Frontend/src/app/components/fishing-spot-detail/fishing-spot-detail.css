@@ -431,6 +431,23 @@
   line-height: 1.5;
 }
 
+.required-star {
+  color: var(--color-error);
+}
+
+.pontoon-required-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--accent-amber);
+  padding: 8px 12px;
+  background: var(--accent-amber-dim);
+  border: 1px solid rgba(212, 168, 75, 0.25);
+  border-radius: var(--radius-sm);
+  line-height: 1.4;
+}
+
 .price-summary {
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
@@ -468,6 +485,11 @@
   letter-spacing: 0.3px;
 }
 .btn-cart:hover { filter: brightness(1.1); }
+.btn-cart:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: none;
+}
 .btn-cart.in-cart {
   background: #14532d;
   color: #4ade80;

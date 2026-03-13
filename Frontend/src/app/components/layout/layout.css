@@ -257,6 +257,7 @@
     transition: transform 0.25s ease;
     z-index: 160;
     width: 280px;
+    top: 56px;
   }
 
   .sidebar.mobile-open {
@@ -287,5 +288,13 @@
   .main-content {
     margin-left: 0;
     padding-top: 56px;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  .app-shell {
+    overflow-x: hidden;
+    width: 100vw;
   }
 }

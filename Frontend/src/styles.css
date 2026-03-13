@@ -60,6 +60,7 @@
 
 html, body {
   height: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -139,6 +140,8 @@ body {
 @media (max-width: 800px) {
   .leaflet-container {
     z-index: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
   }
   .leaflet-pane,
   .leaflet-control-container {

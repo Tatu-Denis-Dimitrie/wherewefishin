@@ -7,7 +7,6 @@ import { FishingSpotService, FishingSpot, CreateFishingSpot } from '../../servic
 import { AdminService, AdminStats } from '../../services/admin.service';
 import { VideoAnalysisService } from '../../services/video-analysis.service';
 import { VideoAnalysis } from '../../models/video-analysis.model';
-import { CartService } from '../../services/cart.service';
 import { UserService } from '../../services/user.service';
 import { User } from '../../models/user.model';
 import * as L from 'leaflet';
@@ -67,7 +66,6 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     private adminService: AdminService,
     private videoAnalysisService: VideoAnalysisService,
     private router: Router,
-    public cartService: CartService,
     private userService: UserService
   ) {}
 
@@ -140,9 +138,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     if (this.map) this.map.remove();
   }
 
-  private createSpotIcon(inCart: boolean): L.DivIcon {
-    const fillColor = inCart ? '#166534' : '#4a7c30';
-    const ringColor = inCart ? '#4ade80' : '#c8e6c0';
+  private createSpotIcon(): L.DivIcon {
+    const fillColor = '#4a7c30';
     return L.divIcon({
       className: '',
       html: `
@@ -201,7 +198,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
     this.spots.forEach(spot => {
       const marker = L.marker([spot.latitude, spot.longitude], {
-        icon: this.createSpotIcon(this.cartService.isInCart(spot.id))
+        icon: this.createSpotIcon()
       }).bindPopup(this.buildPopupContent(spot), { maxWidth: 220 });
 
       marker.on('click', () => {
@@ -212,13 +209,9 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
       marker.on('popupopen', (e: any) => {
         const container: HTMLElement | undefined = e.popup.getElement();
-        const btn = container?.querySelector<HTMLButtonElement>('.popup-cart-btn');
-        if (btn) {
-          btn.onclick = () => this.addToCart(spot);
-        }
-        const viewBtn = container?.querySelector<HTMLButtonElement>('.popup-view-btn');
-        if (viewBtn) {
-          viewBtn.onclick = () => this.router.navigate(['/spots', spot.id]);
+        const bookBtn = container?.querySelector<HTMLButtonElement>('.popup-book-btn');
+        if (bookBtn) {
+          bookBtn.onclick = () => this.router.navigate(['/spots', spot.id]);
         }
         const routeBtn = container?.querySelector<HTMLButtonElement>('.popup-route-btn');
         if (routeBtn) {
@@ -232,22 +225,14 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private buildPopupContent(spot: FishingSpot): string {
-    const inCart = this.cartService.isInCart(spot.id);
-
-    const cartIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;margin-bottom:1px"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>`;
-    const checkIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;margin-bottom:1px"><polyline points="20 6 9 17 4 12"/></svg>`;
-
-    const btnIcon = inCart ? checkIconSvg : cartIconSvg;
-    const btnLabel = inCart ? 'In Cart — Go to Cart' : 'Add to Cart';
-    const btnStyle = inCart
-      ? 'background:#14532d;color:#4ade80;border:1px solid #166534;'
-      : 'background:#4a7c30;color:#fff;border:none;';
-
     const priceHtml = spot.pricePerHour > 0
       ? `<div style="display:flex;align-items:center;gap:6px;margin:6px 0 2px">
            <span style="background:#4a7c3022;color:#4a7c30;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #4a7c3044">${spot.pricePerHour} RON / h</span>
          </div>`
       : '';
+
+    const pontoonSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;margin-bottom:1px"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M7 7V5a2 2 0 0 1 4 0v2M13 7V5a2 2 0 0 1 4 0v2"/><line x1="12" y1="12" x2="12" y2="12.01"/></svg>`;
+    const navSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;margin-bottom:1px"><polyline points="3 11 22 2 13 21 11 13 3 11"/></svg>`;
 
     let html = `<div style="min-width:195px;font-family:inherit">`;
     html += `<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:3px">${spot.name}</div>`;
@@ -256,10 +241,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     }
     html += priceHtml;
     html += `<div style="color:#94a3b8;font-size:10px;margin-bottom:10px">${spot.latitude.toFixed(5)}, ${spot.longitude.toFixed(5)}</div>`;
-    html += `<button class="popup-cart-btn" style="display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;transition:filter .15s;${btnStyle}">${btnIcon}${btnLabel}</button>`;
-    const eyeSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;margin-bottom:1px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
-    html += `<button class="popup-view-btn" style="display:flex;align-items:center;justify-content:center;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;margin-top:6px;background:transparent;color:#94a3b8;border:1px solid #334155;transition:all .15s">${eyeSvg}View Spot</button>`;
-    const navSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;margin-bottom:1px"><polyline points="3 11 22 2 13 21 11 13 3 11"/></svg>`;
+    html += `<button class="popup-book-btn" style="display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;background:#4a7c30;color:#fff;border:none;transition:filter .15s;">${pontoonSvg}Rezervă Ponton</button>`;
     html += `<button class="popup-route-btn" style="display:flex;align-items:center;justify-content:center;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;margin-top:6px;background:#1e3a5f;color:#60a5fa;border:1px solid #2563eb55;transition:all .15s">${navSvg}Traseu pe hartă</button>`;
     html += `</div>`;
     return html;
@@ -338,28 +320,6 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       this.routeLayer = null;
     }
     this.routeInfo = null;
-  }
-
-  addToCart(spot: FishingSpot): void {
-    if (this.cartService.isInCart(spot.id)) {
-      this.router.navigate(['/cart']);
-      return;
-    }
-    const defaultStart = new Date();
-    defaultStart.setHours(defaultStart.getHours() + 1, 0, 0, 0);
-    defaultStart.setMinutes(defaultStart.getMinutes() - defaultStart.getTimezoneOffset());
-    this.cartService.addItem({
-      spotId: spot.id,
-      spotName: spot.name,
-      latitude: spot.latitude,
-      longitude: spot.longitude,
-      pricePerHour: spot.pricePerHour,
-      durationHours: 24,
-      startDate: defaultStart.toISOString().slice(0, 16)
-    });
-    this.showToast(`"${spot.name}" added to cart`, 'success');
-    // Re-render markers so button state updates
-    this.renderMarkers();
   }
 
   locateUser(): void {

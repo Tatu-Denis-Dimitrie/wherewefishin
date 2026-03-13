@@ -221,7 +221,7 @@
             <!-- Pontoon Selection -->
             @if (pontoons.length > 0) {
               <div class="form-group">
-                <label>Selectează Ponton</label>
+                <label>Selectează Ponton <span class="required-star">*</span></label>
                 <div class="pontoon-pills">
                   @for (pontoon of pontoons; track pontoon.id) {
                     <button
@@ -236,7 +236,7 @@
                 </div>
               </div>
             } @else {
-              <p class="no-pontoons-note">Această baltă nu are pontoane definite - rezervarea este pentru întreaga locație.</p>
+              <p class="no-pontoons-note">Această baltă nu are pontoane definite — rezervarea este pentru întreaga locație.</p>
             }
 
             <div class="form-group">
@@ -267,7 +267,14 @@
               </div>
             }
 
-            <button class="btn-cart" [class.in-cart]="inCart" (click)="addToCart()">
+            @if (pontoons.length > 0 && !selectedPontoonId) {
+              <p class="pontoon-required-note">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                Selectează un ponton pentru a putea rezerva.
+              </p>
+            }
+
+            <button class="btn-cart" [class.in-cart]="inCart" [disabled]="pontoons.length > 0 && !selectedPontoonId" (click)="addToCart()">
               @if (inCart) {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                 În Coș — Vezi Coșul

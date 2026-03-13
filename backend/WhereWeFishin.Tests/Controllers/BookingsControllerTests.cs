@@ -14,6 +14,7 @@ public class BookingsControllerTests
 {
     private readonly IRepository<FishingSession> _sessionRepository;
     private readonly IRepository<FishingSpot> _spotRepository;
+    private readonly IRepository<Pontoon> _pontoonRepository;
     private readonly IRepository<User> _userRepository;
     private readonly IEmailService _emailService;
     private readonly BookingsController _controller;
@@ -22,6 +23,7 @@ public class BookingsControllerTests
     {
         _sessionRepository = Substitute.For<IRepository<FishingSession>>();
         _spotRepository = Substitute.For<IRepository<FishingSpot>>();
+        _pontoonRepository = Substitute.For<IRepository<Pontoon>>();
         _userRepository = Substitute.For<IRepository<User>>();
         _emailService = Substitute.For<IEmailService>();
         _emailService.SendBookingConfirmationEmailAsync(
@@ -34,7 +36,7 @@ public class BookingsControllerTests
                 Arg.Any<int>())
             .Returns(Task.CompletedTask);
 
-        _controller = new BookingsController(_sessionRepository, _spotRepository, _userRepository, _emailService);
+        _controller = new BookingsController(_sessionRepository, _spotRepository, _pontoonRepository, _userRepository, _emailService);
 
         // Default: authenticated as user 1
         SetupUser(userId: 1, role: "User");
@@ -409,5 +411,135 @@ public class BookingsControllerTests
 
         // Assert
         Assert.IsType<NotFoundResult>(result);
+    }
+
+    private static Pontoon CreatePontoon(int id = 1, int spotId = 1) => new()
+    {
+        Id = id,
+        FishingSpotId = spotId,
+        Name = $"Ponton {id}",
+        SouthWestLat = 44.9,
+        SouthWestLng = 24.9,
+        NorthEastLat = 45.1,
+        NorthEastLng = 25.1
+    };
+
+
+    [Fact]
+    public async Task CreateBooking_WithValidPontoon_ReturnsCreated()
+    {
+        // Arrange
+        var spot = CreateSpot(1, pricePerHour: 10m);
+        var pontoon = CreatePontoon(id: 1, spotId: 1);
+        _spotRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(spot);
+        _pontoonRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(pontoon);
+        _sessionRepository.FindAsync(Arg.Any<Expression<Func<FishingSession, bool>>>(), Arg.Any<CancellationToken>())
+            .Returns(new List<FishingSession>());
+        _sessionRepository.AddAsync(Arg.Any<FishingSession>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo => callInfo.Arg<FishingSession>());
+
+        var dto = new CreateBookingDto
+        {
+            FishingSpotId = 1,
+            PontoonId = 1,
+            StartDate = DateTime.UtcNow.AddDays(1),
+            DurationHours = 24
+        };
+
+        // Act
+        var result = await _controller.CreateBooking(dto);
+
+        // Assert
+        var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
+        var booking = Assert.IsType<BookingDto>(createdResult.Value);
+        Assert.Equal(1, booking.PontoonId);
+        Assert.Equal("Ponton 1", booking.PontoonName);
+        Assert.Equal(240m, booking.TotalPrice);
+    }
+
+    [Fact]
+    public async Task CreateBooking_WithPontoonNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var spot = CreateSpot(1);
+        _spotRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(spot);
+        _pontoonRepository.GetByIdAsync(99, Arg.Any<CancellationToken>()).Returns((Pontoon?)null);
+
+        var dto = new CreateBookingDto
+        {
+            FishingSpotId = 1,
+            PontoonId = 99,
+            StartDate = DateTime.UtcNow.AddDays(1),
+            DurationHours = 24
+        };
+
+        // Act
+        var result = await _controller.CreateBooking(dto);
+
+        // Assert
+        Assert.IsType<NotFoundObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task CreateBooking_WithPontoonFromWrongSpot_ReturnsBadRequest()
+    {
+        // Arrange – pontoon belongs to spot 2, but booking is for spot 1
+        var spot = CreateSpot(1);
+        var pontoon = CreatePontoon(id: 1, spotId: 2);
+        _spotRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(spot);
+        _pontoonRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(pontoon);
+
+        var dto = new CreateBookingDto
+        {
+            FishingSpotId = 1,
+            PontoonId = 1,
+            StartDate = DateTime.UtcNow.AddDays(1),
+            DurationHours = 24
+        };
+
+        // Act
+        var result = await _controller.CreateBooking(dto);
+
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task CreateBooking_WithPontoonAlreadyBooked_ReturnsConflict()
+    {
+        // Arrange
+        var spot = CreateSpot(1, pricePerHour: 10m);
+        var pontoon = CreatePontoon(id: 1, spotId: 1);
+        var start = DateTime.UtcNow.AddDays(1);
+        var existingSession = new FishingSession
+        {
+            Id = 10,
+            UserId = 2,
+            FishingSpotId = 1,
+            PontoonId = 1,
+            StartDate = start,
+            DurationHours = 24,
+            TotalPrice = 240m,
+            Status = SessionStatus.Confirmed
+        };
+
+        _spotRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(spot);
+        _pontoonRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(pontoon);
+        _sessionRepository.FindAsync(Arg.Any<Expression<Func<FishingSession, bool>>>(), Arg.Any<CancellationToken>())
+            .Returns(new List<FishingSession> { existingSession });
+
+        var dto = new CreateBookingDto
+        {
+            FishingSpotId = 1,
+            PontoonId = 1,
+            StartDate = start,
+            DurationHours = 24
+        };
+
+        // Act
+        var result = await _controller.CreateBooking(dto);
+
+        // Assert
+        Assert.IsType<ConflictObjectResult>(result.Result);
     }
 }

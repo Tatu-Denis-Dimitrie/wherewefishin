@@ -32,8 +32,8 @@ export class SpotManager implements OnInit, OnDestroy {
   editPontoonName = '';
   editPontoonColor = '';
 
-  // Repositioning state
-  isRepositioning = false;
+  // Drag state (auto-active when pontoon is selected)
+  private _isDragging = false;
   private repositionDragStart: L.LatLng | null = null;
   private repositionOrigBounds: L.LatLngBounds | null = null;
 
@@ -174,7 +174,9 @@ export class SpotManager implements OnInit, OnDestroy {
   toggleDrawingMode(): void {
     this.isDrawingMode = !this.isDrawingMode;
     this.editingPontoonId = null;
-    
+    this._isDragging = false;
+    this.repositionDragStart = null;
+
     if (this.map) {
       if (this.isDrawingMode) {
         this.map.dragging.disable();
@@ -201,7 +203,7 @@ export class SpotManager implements OnInit, OnDestroy {
 
   private onMapMouseMove(e: L.LeafletMouseEvent): void {
     // Handle repositioning drag
-    if (this.isRepositioning && this.repositionDragStart && this.editingPontoonId) {
+    if (this._isDragging && this.repositionDragStart && this.editingPontoonId) {
       const layer = this.pontoonLayers.get(this.editingPontoonId);
       if (!layer || !this.repositionOrigBounds) return;
 
@@ -223,7 +225,7 @@ export class SpotManager implements OnInit, OnDestroy {
 
   private onMapMouseUp(): void {
     // Handle repositioning end
-    if (this.isRepositioning && this.repositionDragStart && this.editingPontoonId) {
+    if (this._isDragging && this.repositionDragStart && this.editingPontoonId) {
       const layer = this.pontoonLayers.get(this.editingPontoonId);
       if (layer) {
         const newBounds = layer.getBounds();
@@ -246,8 +248,10 @@ export class SpotManager implements OnInit, OnDestroy {
           }
         });
       }
+      this._isDragging = false;
       this.repositionDragStart = null;
       this.repositionOrigBounds = null;
+      if (this.map) this.map.dragging.enable();
       return;
     }
 
@@ -296,25 +300,15 @@ export class SpotManager implements OnInit, OnDestroy {
 
   // ---------- Repositioning ----------
 
-  toggleRepositioning(): void {
-    this.isRepositioning = !this.isRepositioning;
-    if (this.map) {
-      if (this.isRepositioning) {
-        this.map.dragging.disable();
-        (this.map.getContainer() as HTMLElement).style.cursor = 'move';
-      } else {
-        this.map.dragging.enable();
-        (this.map.getContainer() as HTMLElement).style.cursor = '';
-      }
-    }
-  }
-
   private onPontoonDragStart(e: L.LeafletMouseEvent, pontoonId: number): void {
-    if (!this.isRepositioning || this.editingPontoonId !== pontoonId) return;
+    if (this.editingPontoonId !== pontoonId || this.isDrawingMode) return;
 
     L.DomEvent.stopPropagation(e);
     const layer = this.pontoonLayers.get(pontoonId);
     if (!layer) return;
+
+    this._isDragging = true;
+    if (this.map) this.map.dragging.disable();
 
     this.repositionDragStart = e.latlng;
     this.repositionOrigBounds = L.latLngBounds(
@@ -328,11 +322,10 @@ export class SpotManager implements OnInit, OnDestroy {
     this.editPontoonName = pontoon.name;
     this.editPontoonColor = pontoon.color || '#3388ff';
     this.isDrawingMode = false;
-    this.isRepositioning = false;
 
     if (this.map) {
       this.map.dragging.enable();
-      (this.map.getContainer() as HTMLElement).style.cursor = '';
+      (this.map.getContainer() as HTMLElement).style.cursor = 'move';
     }
 
     // Highlight selected pontoon
@@ -383,7 +376,8 @@ export class SpotManager implements OnInit, OnDestroy {
     this.editingPontoonId = null;
     this.editPontoonName = '';
     this.editPontoonColor = '';
-    this.isRepositioning = false;
+    this._isDragging = false;
+    this.repositionDragStart = null;
 
     if (this.map) {
       this.map.dragging.enable();
