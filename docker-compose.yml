@@ -39,7 +39,7 @@ services:
         Server=sqlserver;Database=WhereWeFishinDb;User Id=sa;
         Password=${SQL_SA_PASSWORD:-YourStr0ngP@ssw0rd!};
         TrustServerCertificate=true;MultipleActiveResultSets=true;
-        Connect Timeout=120
+        Connect Timeout=120;Max Pool Size=200;Min Pool Size=5;Pooling=true
       Jwt__Key: ${JWT_KEY:-YourSuperSecretKeyThatShouldBeAtLeast32CharactersLongForHS256Algorithm}
       Jwt__Issuer: WhereWeFishinAPI
       Jwt__Audience: WhereWeFishinClient

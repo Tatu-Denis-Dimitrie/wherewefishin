@@ -44,5 +44,6 @@ EXPOSE 8080
 # Set environment variables
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
+ENV DOTNET_EnableDiagnostics=0
 
 ENTRYPOINT ["dotnet", "WhereWeFishin.API.dll"]

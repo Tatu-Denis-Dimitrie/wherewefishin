@@ -1,5 +1,7 @@
+using System.IO.Compression;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
@@ -22,7 +24,7 @@ if (!string.IsNullOrWhiteSpace(stripeSecretKey))
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
     serverOptions.Limits.MaxRequestBodySize = 150 * 1024 * 1024; // 150MB
-    serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
+    serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(5); // Align with nginx keepalive_timeout
     serverOptions.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(30);
 });
 
@@ -111,6 +113,20 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
+
+// Response compression (gzip + brotli) for API responses
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+        ["application/json", "text/plain", "application/xml"]);
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+    options.Level = CompressionLevel.Fastest);
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+    options.Level = CompressionLevel.SmallestSize);
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -246,6 +262,9 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "WhereWeFishin API v1");
     c.RoutePrefix = "swagger";
 });
+
+// Response compression - before routing, after Swagger
+app.UseResponseCompression();
 
 // HTTPS redirect only in local dev - in Docker, nginx handles TLS termination
 if (app.Environment.IsDevelopment())
