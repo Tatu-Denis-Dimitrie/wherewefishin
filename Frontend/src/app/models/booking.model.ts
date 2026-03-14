@@ -29,4 +29,19 @@ export interface CreateBookingRequest {
   pontoonId?: number;
   startDate: string;
   durationHours: number;
+  paymentIntentId?: string;
+}
+
+export interface CreatePaymentIntentRequest {
+  fishingSpotId: number;
+  pontoonId?: number;
+  startDate: string;
+  durationHours: number;
+}
+
+export interface PaymentIntentResponse {
+  paymentIntentId: string;
+  clientSecret: string;
+  amount: number;
+  currency: string;
 }

@@ -93,6 +93,18 @@ For Docker, use environment variables already defined in `docker-compose.yml`:
 - `SMTP_FROM_NAME`
 - `SMTP_USE_DEFAULT_CREDENTIALS`
 
+## Stripe Setup (Checkout)
+
+For Docker deployment, set Stripe keys in `.env` (see `.env.example`):
+
+- `STRIPE_SECRET_KEY` (used by backend payment-intent endpoint)
+- `STRIPE_PUBLISHABLE_KEY` (injected into Angular production build)
+
+`docker-compose.yml` already maps:
+
+- `Stripe__SecretKey` for backend container runtime
+- `STRIPE_PUBLISHABLE_KEY` as build arg for frontend Docker image
+
 ## Tech Stack
 
 | Layer | Tech |

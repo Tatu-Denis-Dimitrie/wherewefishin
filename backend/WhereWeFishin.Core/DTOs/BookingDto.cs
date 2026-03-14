@@ -21,9 +21,26 @@ public class CreateBookingDto
     public int? PontoonId { get; set; }
     public DateTime StartDate { get; set; }
     public int DurationHours { get; set; }
+    public string? PaymentIntentId { get; set; }
 }
 
 public class UpdateBookingStatusDto
 {
     public string Status { get; set; } = string.Empty;
+}
+
+public class CreatePaymentIntentDto
+{
+    public int FishingSpotId { get; set; }
+    public int? PontoonId { get; set; }
+    public DateTime StartDate { get; set; }
+    public int DurationHours { get; set; }
+}
+
+public class PaymentIntentDto
+{
+    public string PaymentIntentId { get; set; } = string.Empty;
+    public string ClientSecret { get; set; } = string.Empty;
+    public long Amount { get; set; }
+    public string Currency { get; set; } = "ron";
 }

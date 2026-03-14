@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using System.Linq.Expressions;
@@ -19,6 +20,7 @@ public class BookingsControllerTests
     private readonly IRepository<User> _userRepository;
     private readonly IEmailService _emailService;
     private readonly ILogger<BookingsController> _logger;
+    private readonly IConfiguration _configuration;
     private readonly BookingsController _controller;
 
     public BookingsControllerTests()
@@ -38,6 +40,9 @@ public class BookingsControllerTests
                 Arg.Any<decimal>(),
                 Arg.Any<int>())
             .Returns(Task.CompletedTask);
+        _configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>())
+            .Build();
 
         _controller = new BookingsController(
             _sessionRepository,
@@ -45,7 +50,8 @@ public class BookingsControllerTests
             _pontoonRepository,
             _userRepository,
             _emailService,
-            _logger);
+            _logger,
+            _configuration);
 
         // Default: authenticated as user 1
         SetupUser(userId: 1, role: "User");
@@ -276,6 +282,48 @@ public class BookingsControllerTests
         var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
         var booking = Assert.IsType<BookingDto>(createdResult.Value);
         Assert.Equal(360m, booking.TotalPrice); // 7.5 * 48
+    }
+
+    [Fact]
+    public async Task CreateBooking_WhenStripeEnabledAndPaymentIntentMissing_ReturnsBadRequest()
+    {
+        // Arrange
+        var stripeConfig = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Stripe:SecretKey"] = "sk_test_dummy"
+            })
+            .Build();
+
+        var stripeController = new BookingsController(
+            _sessionRepository,
+            _spotRepository,
+            _pontoonRepository,
+            _userRepository,
+            _emailService,
+            _logger,
+            stripeConfig);
+
+        stripeController.ControllerContext = _controller.ControllerContext;
+
+        var spot = CreateSpot(1, pricePerHour: 10m);
+        _spotRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(spot);
+        _sessionRepository.FindAsync(Arg.Any<Expression<Func<FishingSession, bool>>>(), Arg.Any<CancellationToken>())
+            .Returns(new List<FishingSession>());
+
+        var dto = new CreateBookingDto
+        {
+            FishingSpotId = 1,
+            StartDate = DateTime.UtcNow.AddDays(1),
+            DurationHours = 24,
+            PaymentIntentId = null
+        };
+
+        // Act
+        var result = await stripeController.CreateBooking(dto);
+
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result.Result);
     }
 
 

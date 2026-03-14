@@ -1,7 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Booking, CreateBookingRequest } from '../models/booking.model';
+import {
+  Booking,
+  CreateBookingRequest,
+  CreatePaymentIntentRequest,
+  PaymentIntentResponse
+} from '../models/booking.model';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -18,6 +23,10 @@ export class BookingService {
 
   createBooking(request: CreateBookingRequest): Observable<Booking> {
     return this.http.post<Booking>(this.apiUrl, request);
+  }
+
+  createPaymentIntent(request: CreatePaymentIntentRequest): Observable<PaymentIntentResponse> {
+    return this.http.post<PaymentIntentResponse>(`${this.apiUrl}/payment-intent`, request);
   }
 
   cancelBooking(id: number): Observable<void> {

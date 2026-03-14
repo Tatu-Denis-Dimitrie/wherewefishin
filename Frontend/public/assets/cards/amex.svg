@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="86" height="54" viewBox="0 0 86 54" role="img" aria-labelledby="amexTitle amexDesc">
+  <title id="amexTitle">American Express accepted</title>
+  <desc id="amexDesc">American Express payment card badge</desc>
+  <defs>
+    <linearGradient id="amexBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2E77BC"/>
+      <stop offset="100%" stop-color="#0F4C81"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="84" height="52" rx="10" fill="url(#amexBg)" stroke="#BEE5FF"/>
+  <rect x="13" y="17" width="60" height="20" rx="4" fill="#C8EEFF" fill-opacity="0.88"/>
+  <text x="43" y="30" fill="#0C4776" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700" text-anchor="middle" letter-spacing="0.6">AMERICAN EXPRESS</text>
+</svg>

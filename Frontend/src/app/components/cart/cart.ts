@@ -1,12 +1,21 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import {
+  loadStripe,
+  Stripe,
+  StripeCardElement,
+  StripeCardElementChangeEvent,
+  StripeElements
+} from '@stripe/stripe-js';
 import { CartService } from '../../services/cart.service';
 import { BookingService } from '../../services/booking.service';
 import { AuthService } from '../../services/auth.service';
 import { CartItem, Booking } from '../../models/booking.model';
+import { environment } from '../../../environments/environment';
 import QRCode from 'qrcode';
 
 @Component({
@@ -15,7 +24,20 @@ import QRCode from 'qrcode';
   templateUrl: './cart.html',
   styleUrl: './cart.css'
 })
-export class Cart implements OnInit {
+export class Cart implements OnInit, OnDestroy {
+  @ViewChild('cardElementHost')
+  set cardElementHost(element: ElementRef<HTMLDivElement> | undefined) {
+    this.cardMountElement = element;
+
+    if (!element) {
+      this.cardElement?.unmount();
+      this.stripeReady = false;
+      return;
+    }
+
+    void this.mountCardElement();
+  }
+
   readonly DURATIONS = [12, 24, 48, 72];
 
   showMessage = '';
@@ -28,8 +50,17 @@ export class Cart implements OnInit {
 
   checkingOut = false;
 
+  stripeReady = false;
+  stripeError = '';
+  cardValidationError = '';
+
   qrCodeMap: Record<number, string> = {};
   expandedQr = new Set<number>();
+
+  private stripe: Stripe | null = null;
+  private stripeElements: StripeElements | null = null;
+  private cardElement: StripeCardElement | null = null;
+  private cardMountElement?: ElementRef<HTMLDivElement>;
 
   constructor(
     public cartService: CartService,
@@ -40,6 +71,58 @@ export class Cart implements OnInit {
 
   ngOnInit(): void {
     this.loadBookings();
+  }
+
+  ngOnDestroy(): void {
+    this.cardElement?.destroy();
+  }
+
+  private async mountCardElement(): Promise<void> {
+    if (!this.cardMountElement) {
+      this.stripeReady = false;
+      return;
+    }
+
+    if (!environment.stripePublishableKey) {
+      this.stripeReady = false;
+      this.stripeError = 'Cheia Stripe publishable nu este configurată.';
+      return;
+    }
+
+    this.stripeError = '';
+
+    try {
+      if (!this.stripe) {
+        this.stripe = await loadStripe(environment.stripePublishableKey);
+      }
+
+      if (!this.stripe) {
+        this.stripeReady = false;
+        this.stripeError = 'Nu s-a putut inițializa Stripe.';
+        return;
+      }
+
+      if (!this.stripeElements) {
+        this.stripeElements = this.stripe.elements();
+      }
+
+      if (!this.cardElement) {
+        this.cardElement = this.stripeElements.create('card', {
+          hidePostalCode: true
+        });
+
+        this.cardElement.on('change', (event: StripeCardElementChangeEvent) => {
+          this.cardValidationError = event.error?.message ?? '';
+        });
+      }
+
+      this.cardElement.unmount();
+      this.cardElement.mount(this.cardMountElement.nativeElement);
+      this.stripeReady = true;
+    } catch {
+      this.stripeReady = false;
+      this.stripeError = 'Nu s-a putut încărca formularul de plată Stripe.';
+    }
   }
 
   loadBookings(): void {
@@ -98,12 +181,19 @@ export class Cart implements OnInit {
     this.cartService.removeItem(spotId, pontoonId);
   }
 
+  activateCartTab(): void {
+    this.activeTab = 'cart';
+    setTimeout(() => {
+      void this.mountCardElement();
+    });
+  }
+
   itemTotal(item: CartItem): number {
     return item.pricePerHour * item.durationHours;
   }
 
-  checkout(): void {
-    const items = this.cartService.items();
+  async checkout(): Promise<void> {
+    const items = [...this.cartService.items()];
     if (items.length === 0) return;
 
     // Validate start dates
@@ -113,6 +203,13 @@ export class Cart implements OnInit {
         this.showToast('Setează data de start pentru toate rezervările', 'error');
         return;
       }
+
+      if (this.itemTotal(item) <= 0) {
+        const itemName = item.pontoonName ? `${item.spotName} - ${item.pontoonName}` : item.spotName;
+        this.showToast(`Rezervarea "${itemName}" are preț invalid (0 RON). Actualizează prețul pe locație înainte de checkout.`, 'error');
+        return;
+      }
+
       if (new Date(item.startDate) < new Date(now.getTime() - 5 * 60 * 1000)) {
         const itemName = item.pontoonName ? `${item.spotName} - ${item.pontoonName}` : item.spotName;
         this.showToast(`Data de start pentru "${itemName}" nu poate fi în trecut`, 'error');
@@ -120,49 +217,90 @@ export class Cart implements OnInit {
       }
     }
 
+    if (this.cardValidationError) {
+      this.showToast('Datele cardului nu sunt valide.', 'error');
+      return;
+    }
+
+    if (!this.stripeReady || !this.stripe || !this.cardElement) {
+      await this.mountCardElement();
+    }
+
+    if (!this.stripeReady || !this.stripe || !this.cardElement) {
+      this.showToast(this.stripeError || 'Formularul de plată nu este disponibil.', 'error');
+      return;
+    }
+
     this.checkingOut = true;
     let completed = 0;
     let errors = 0;
+    let firstError = '';
 
     for (const item of items) {
-      this.bookingService.createBooking({
-        fishingSpotId: item.spotId,
-        pontoonId: item.pontoonId,
-        startDate: new Date(item.startDate).toISOString(),
-        durationHours: item.durationHours
-      }).subscribe({
-        next: () => {
-          completed++;
-          this.cartService.removeItem(item.spotId, item.pontoonId);
-          if (completed + errors === items.length) {
-            this.checkingOut = false;
-            if (errors === 0) {
-              this.showToast('Toate rezervările au fost confirmate!', 'success');
-              this.activeTab = 'bookings';
-              this.loadBookings();
-            } else {
-              this.showToast(`${completed} rezervare(i) confirmate, ${errors} eșuate`, 'error');
-              this.loadBookings();
+      try {
+        const paymentIntentResponse = await firstValueFrom(this.bookingService.createPaymentIntent({
+          fishingSpotId: item.spotId,
+          pontoonId: item.pontoonId,
+          startDate: new Date(item.startDate).toISOString(),
+          durationHours: item.durationHours
+        }));
+
+        const paymentResult = await this.stripe.confirmCardPayment(paymentIntentResponse.clientSecret, {
+          payment_method: {
+            card: this.cardElement,
+            billing_details: {
+              name: this.authService.getUsername() || undefined
             }
           }
-        },
-        error: (err: HttpErrorResponse) => {
-          errors++;
-          const msg = err.error ?? err.message ?? 'Eroare necunoscută';
-          const errorText = typeof msg === 'string' ? msg : JSON.stringify(msg);
-          if (completed + errors === items.length) {
-            this.checkingOut = false;
-            this.showToast(
-              errors === items.length
-                ? errorText
-                : `${completed} rezervare(i) confirmate, ${errors} eșuate: ${errorText}`,
-              'error'
-            );
-            this.loadBookings();
-          }
+        });
+
+        if (paymentResult.error) {
+          throw new Error(paymentResult.error.message ?? 'Plata a eșuat.');
         }
-      });
+
+        const paymentIntent = paymentResult.paymentIntent;
+        if (!paymentIntent?.id || paymentIntent.status !== 'succeeded') {
+          throw new Error('Plata nu a fost confirmată de Stripe.');
+        }
+
+        await firstValueFrom(this.bookingService.createBooking({
+          fishingSpotId: item.spotId,
+          pontoonId: item.pontoonId,
+          startDate: new Date(item.startDate).toISOString(),
+          durationHours: item.durationHours,
+          paymentIntentId: paymentIntent.id
+        }));
+
+        completed++;
+        this.cartService.removeItem(item.spotId, item.pontoonId);
+      } catch (error: unknown) {
+        errors++;
+        if (!firstError) {
+          firstError = this.getErrorMessage(error);
+        }
+      }
     }
+
+    this.checkingOut = false;
+
+    if (errors === 0) {
+      this.showToast('Toate rezervările au fost confirmate și plătite!', 'success');
+      this.activeTab = 'bookings';
+      this.loadBookings();
+      return;
+    }
+
+    if (completed === 0) {
+      this.showToast(firstError || 'Checkout-ul a eșuat.', 'error');
+      return;
+    }
+
+    this.showToast(
+      `${completed} rezervare(i) confirmate, ${errors} eșuate${firstError ? `: ${firstError}` : ''}`,
+      'error'
+    );
+    this.activeTab = 'bookings';
+    this.loadBookings();
   }
 
   cancelBooking(id: number): void {
@@ -190,6 +328,19 @@ export class Cart implements OnInit {
       case 'cancelled': return 'status-cancelled';
       default: return 'status-pending';
     }
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      const payload = error.error ?? error.message ?? 'Eroare necunoscută';
+      return typeof payload === 'string' ? payload : JSON.stringify(payload);
+    }
+
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return 'Eroare necunoscută';
   }
 
   private showToast(message: string, type: 'success' | 'error'): void {

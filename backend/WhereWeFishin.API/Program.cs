@@ -12,6 +12,12 @@ using WhereWeFishin.Database.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
+if (!string.IsNullOrWhiteSpace(stripeSecretKey))
+{
+    Stripe.StripeConfiguration.ApiKey = stripeSecretKey;
+}
+
 // Configure Kestrel to accept larger files (up to 150MB)
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {

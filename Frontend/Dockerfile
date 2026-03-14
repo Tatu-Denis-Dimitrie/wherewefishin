@@ -6,6 +6,8 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 
+ARG STRIPE_PUBLISHABLE_KEY=pk_test_51T3tmZLbUF11stB2s4FUN6xMWGAhgT9P9daOS7hFjpB5X4VZldHe5pScprP7D1hJPjL1sM7JVOzsUBhX6rVyqEVt00Ucyq4JYv
+
 # Copy package files for layer caching
 COPY package.json package-lock.json* ./
 
@@ -14,6 +16,9 @@ RUN npm ci
 
 # Copy source code
 COPY . .
+
+# Inject Stripe publishable key for production Docker build
+RUN sed -i "s|stripePublishableKey: '.*'|stripePublishableKey: '${STRIPE_PUBLISHABLE_KEY}'|g" src/environments/environment.production.ts
 
 # Build for production
 RUN npx ng build --configuration production

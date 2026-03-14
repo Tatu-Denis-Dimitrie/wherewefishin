@@ -39,8 +39,8 @@ public static class SeedData
                 Username = "admin",
                 Email = "admin@wherewefishin.com",
                 PasswordHash = adminHash,
-                FirstName = "Administrator",
-                LastName = "System",
+                FirstName = "Gimi",
+                LastName = "Sefu",
                 Role = "Admin",
                 CreatedAt = DateTime.UtcNow.AddYears(-1),
                 UpdatedAt = DateTime.UtcNow
@@ -162,7 +162,9 @@ public static class SeedData
                 Latitude = 44.7044,
                 Longitude = 26.1496,
                 UserId = userIds[0],
-                CreatedAt = DateTime.UtcNow.AddMonths(-5)
+                CreatedAt = DateTime.UtcNow.AddMonths(-5),
+                PricePerHour = 1.0m
+
             },
             new FishingSpot
             {
@@ -171,7 +173,8 @@ public static class SeedData
                 Latitude = 45.1667,
                 Longitude = 29.6000,
                 UserId = userIds[1],
-                CreatedAt = DateTime.UtcNow.AddMonths(-2)
+                CreatedAt = DateTime.UtcNow.AddMonths(-2),
+                PricePerHour = 2.5m
             },
             new FishingSpot
             {
@@ -179,7 +182,8 @@ public static class SeedData
                 Latitude = 45.3500,
                 Longitude = 24.6333,
                 UserId = userIds[0],
-                CreatedAt = DateTime.UtcNow.AddDays(-30)
+                CreatedAt = DateTime.UtcNow.AddDays(-30),
+                PricePerHour = 1.5m
             },
             new FishingSpot
             {
@@ -188,7 +192,8 @@ public static class SeedData
                 Latitude = 46.9167,
                 Longitude = 25.8500,
                 UserId = userIds[2],
-                CreatedAt = DateTime.UtcNow.AddDays(-15)
+                CreatedAt = DateTime.UtcNow.AddDays(-15),
+                PricePerHour = 2.0m
             }
         };
     }

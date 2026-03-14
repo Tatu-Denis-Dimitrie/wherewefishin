@@ -297,6 +297,68 @@
   margin-bottom: 20px;
 }
 
+.payment-box {
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+  background: var(--bg-deep, #0f172a);
+}
+
+.payment-box h4 {
+  margin: 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.payment-note {
+  margin: 8px 0 10px;
+  font-size: 12px;
+  color: var(--text-muted, #94a3b8);
+}
+
+.accepted-cards {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.accepted-card {
+  width: 64px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: #0b1220;
+  object-fit: cover;
+}
+
+.cards-caption {
+  margin: 0 0 10px;
+  font-size: 11px;
+  color: var(--text-muted, #94a3b8);
+}
+
+.stripe-card-element {
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 11px 12px;
+}
+
+.stripe-card-element.disabled {
+  opacity: 0.65;
+}
+
+.payment-error {
+  margin: 8px 0 0;
+  color: #f87171;
+  font-size: 12px;
+}
+
 .btn-checkout {
   width: 100%;
   padding: 12px;
