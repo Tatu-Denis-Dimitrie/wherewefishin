@@ -18,10 +18,13 @@
 
 /* ── Profile card ── */
 .profile-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  background: linear-gradient(150deg, rgba(236, 233, 220, 0.1) 0%, rgba(42, 63, 34, 0.32) 44%, rgba(21, 33, 17, 0.38) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.26);
   border-radius: var(--radius-lg);
   padding: 2rem;
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px) saturate(125%);
+  -webkit-backdrop-filter: blur(14px) saturate(125%);
 }
 
 /* Header: avatar + identity */
@@ -77,9 +80,12 @@
   margin-bottom: 1.5rem;
 }
 .detail-item {
-  background: var(--bg-card);
+  background: linear-gradient(145deg, rgba(236, 233, 220, 0.08) 0%, rgba(39, 58, 33, 0.28) 50%, rgba(20, 31, 16, 0.34) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.18);
   border-radius: var(--radius-md);
   padding: .85rem 1rem;
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
 }
 .detail-label {
   display: block;
@@ -106,8 +112,8 @@
   width: 100%;
   padding: .7rem .85rem;
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-deep);
+  border: 1px solid rgba(232, 224, 208, 0.2);
+  background: rgba(23, 34, 18, 0.42);
   color: var(--text-primary);
   font-size: .95rem; font-family: inherit;
   transition: border-color var(--transition), box-shadow var(--transition);
@@ -152,11 +158,14 @@
 
 /* ── Statistics Section ── */
 .stats-section {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  background: linear-gradient(150deg, rgba(236, 233, 220, 0.1) 0%, rgba(42, 63, 34, 0.32) 44%, rgba(21, 33, 17, 0.38) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.24);
   border-radius: var(--radius-lg);
   padding: 1.75rem 2rem;
   margin-top: 1.5rem;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(13px) saturate(122%);
+  -webkit-backdrop-filter: blur(13px) saturate(122%);
 }
 
 .section-heading {
@@ -180,16 +189,18 @@
   align-items: center;
   gap: 0.85rem;
   padding: 1rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: linear-gradient(145deg, rgba(236, 233, 220, 0.08) 0%, rgba(39, 58, 33, 0.28) 50%, rgba(20, 31, 16, 0.34) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.2);
   border-radius: var(--radius-md);
   transition: all var(--transition);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
 }
 
 .activity-card:hover {
-  background: var(--bg-card-hover);
+  background: linear-gradient(145deg, rgba(236, 233, 220, 0.12) 0%, rgba(42, 62, 35, 0.34) 50%, rgba(22, 33, 17, 0.4) 100%);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
 }
 
 .activity-icon {
@@ -265,14 +276,16 @@
   align-items: center;
   gap: 0.85rem;
   padding: 0.75rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: linear-gradient(145deg, rgba(236, 233, 220, 0.08) 0%, rgba(39, 58, 33, 0.28) 50%, rgba(20, 31, 16, 0.34) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.18);
   border-radius: var(--radius-sm);
   transition: all var(--transition);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
 }
 
 .recent-item:hover {
-  background: var(--bg-card-hover);
+  background: linear-gradient(145deg, rgba(236, 233, 220, 0.1) 0%, rgba(42, 62, 35, 0.32) 50%, rgba(22, 33, 17, 0.38) 100%);
 }
 
 .recent-icon {
@@ -344,11 +357,14 @@
 
 /* ── Admin Section ── */
 .admin-section {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  background: linear-gradient(150deg, rgba(236, 233, 220, 0.1) 0%, rgba(42, 63, 34, 0.32) 44%, rgba(21, 33, 17, 0.38) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.24);
   border-radius: var(--radius-lg);
   padding: 1.75rem 2rem;
   margin-top: 1.5rem;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(13px) saturate(122%);
+  -webkit-backdrop-filter: blur(13px) saturate(122%);
 }
 
 .admin-grid {
@@ -363,16 +379,18 @@
   align-items: center;
   gap: 0.85rem;
   padding: 1rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: linear-gradient(145deg, rgba(236, 233, 220, 0.08) 0%, rgba(39, 58, 33, 0.28) 50%, rgba(20, 31, 16, 0.34) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.2);
   border-radius: var(--radius-md);
   transition: all var(--transition);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
 }
 
 .admin-card:hover {
-  background: var(--bg-card-hover);
+  background: linear-gradient(145deg, rgba(236, 233, 220, 0.12) 0%, rgba(42, 62, 35, 0.34) 50%, rgba(22, 33, 17, 0.4) 100%);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
 }
 
 .admin-icon {
@@ -508,15 +526,17 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem 1.25rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: linear-gradient(145deg, rgba(236, 233, 220, 0.08) 0%, rgba(39, 58, 33, 0.28) 50%, rgba(20, 31, 16, 0.34) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.2);
   border-radius: var(--radius-md);
   transition: all var(--transition);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
 }
 
 .spot-item:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--border-default);
+  background: linear-gradient(145deg, rgba(236, 233, 220, 0.12) 0%, rgba(42, 62, 35, 0.34) 50%, rgba(22, 33, 17, 0.4) 100%);
+  border-color: rgba(232, 224, 208, 0.28);
 }
 
 .spot-info {

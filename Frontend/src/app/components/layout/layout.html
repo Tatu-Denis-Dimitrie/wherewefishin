@@ -93,6 +93,15 @@
     </nav>
 
     <div class="sidebar-bottom">
+      <a class="nav-item" routerLink="/faq" routerLinkActive="active" (click)="closeMobileMenu()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <span>FAQ</span>
+      </a>
+
       <button (click)="logout()" class="logout-btn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -106,6 +115,20 @@
 
   <!-- Page content -->
   <main class="main-content">
-    <router-outlet />
+    <div class="main-fireflies" aria-hidden="true">
+      <span class="main-firefly mf-1"></span>
+      <span class="main-firefly mf-2"></span>
+      <span class="main-firefly mf-3"></span>
+      <span class="main-firefly mf-4"></span>
+      <span class="main-firefly mf-5"></span>
+      <span class="main-firefly mf-6"></span>
+      <span class="main-firefly mf-7"></span>
+      <span class="main-firefly mf-8"></span>
+    </div>
+
+    <section class="page-content">
+      <router-outlet />
+    </section>
+    <app-site-footer></app-site-footer>
   </main>
 </div>

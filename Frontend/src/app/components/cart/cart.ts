@@ -29,13 +29,18 @@ export class Cart implements OnInit, OnDestroy {
   set cardElementHost(element: ElementRef<HTMLDivElement> | undefined) {
     this.cardMountElement = element;
 
+    if (this.mountCardTimer) {
+      clearTimeout(this.mountCardTimer);
+      this.mountCardTimer = undefined;
+    }
+
     if (!element) {
       this.cardElement?.unmount();
       this.stripeReady = false;
       return;
     }
 
-    void this.mountCardElement();
+    this.scheduleCardMount();
   }
 
   readonly DURATIONS = [12, 24, 48, 72];
@@ -61,6 +66,7 @@ export class Cart implements OnInit, OnDestroy {
   private stripeElements: StripeElements | null = null;
   private cardElement: StripeCardElement | null = null;
   private cardMountElement?: ElementRef<HTMLDivElement>;
+  private mountCardTimer?: ReturnType<typeof setTimeout>;
 
   constructor(
     public cartService: CartService,
@@ -74,7 +80,19 @@ export class Cart implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.mountCardTimer) {
+      clearTimeout(this.mountCardTimer);
+      this.mountCardTimer = undefined;
+    }
+
     this.cardElement?.destroy();
+  }
+
+  private scheduleCardMount(): void {
+    this.mountCardTimer = setTimeout(() => {
+      this.mountCardTimer = undefined;
+      void this.mountCardElement();
+    });
   }
 
   private async mountCardElement(): Promise<void> {
@@ -183,9 +201,7 @@ export class Cart implements OnInit, OnDestroy {
 
   activateCartTab(): void {
     this.activeTab = 'cart';
-    setTimeout(() => {
-      void this.mountCardElement();
-    });
+    this.scheduleCardMount();
   }
 
   itemTotal(item: CartItem): number {

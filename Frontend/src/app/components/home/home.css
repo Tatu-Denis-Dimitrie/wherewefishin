@@ -169,17 +169,21 @@
   align-items: center;
   gap: 14px;
   padding: 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-default);
+  background: linear-gradient(150deg, rgba(236, 233, 220, 0.08) 0%, rgba(40, 60, 33, 0.3) 44%, rgba(21, 33, 17, 0.36) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.24);
   border-radius: var(--radius-md);
   transition: all var(--transition);
   min-width: 0;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px) saturate(125%);
+  -webkit-backdrop-filter: blur(12px) saturate(125%);
 }
 
 .stat-card:hover {
-  background: var(--bg-card-hover);
+  border-color: rgba(232, 224, 208, 0.34);
+  background: linear-gradient(150deg, rgba(236, 233, 220, 0.12) 0%, rgba(44, 66, 36, 0.36) 44%, rgba(22, 34, 18, 0.4) 100%);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .stat-icon {
@@ -236,10 +240,13 @@
 
 /* ---- Recent Analyses ---- */
 .recent-analyses {
-  background: var(--bg-card);
-  border: 1px solid var(--border-default);
+  background: linear-gradient(155deg, rgba(236, 233, 220, 0.08) 0%, rgba(38, 57, 32, 0.3) 46%, rgba(20, 32, 16, 0.36) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.24);
   border-radius: var(--radius-lg);
   padding: 20px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.11);
+  backdrop-filter: blur(12px) saturate(125%);
+  -webkit-backdrop-filter: blur(12px) saturate(125%);
 }
 
 .subsection-title {
@@ -262,15 +269,17 @@
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
+  background: linear-gradient(150deg, rgba(236, 233, 220, 0.07) 0%, rgba(40, 59, 33, 0.26) 50%, rgba(21, 33, 17, 0.32) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.18);
   border-radius: var(--radius-sm);
   transition: all var(--transition);
   min-width: 0;
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
 }
 
 .analysis-item:hover {
-  background: var(--bg-card-hover);
+  background: linear-gradient(150deg, rgba(236, 233, 220, 0.1) 0%, rgba(42, 62, 35, 0.32) 50%, rgba(22, 35, 18, 0.38) 100%);
 }
 
 .analysis-icon {
@@ -379,8 +388,8 @@
 .map-card {
   position: relative;
   isolation: isolate;
-  background: var(--bg-card);
-  border: 1px solid var(--border-default);
+  background: linear-gradient(150deg, rgba(236, 233, 220, 0.08) 0%, rgba(38, 58, 32, 0.3) 44%, rgba(20, 31, 16, 0.38) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.24);
   border-radius: var(--radius-lg);
   overflow: hidden;
   display: flex;
@@ -390,6 +399,9 @@
   min-width: 0;
   z-index: 0;
   transition: height 0.35s ease;
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.11);
+  backdrop-filter: blur(12px) saturate(125%);
+  -webkit-backdrop-filter: blur(12px) saturate(125%);
 }
 
 .map-editor-controls {
@@ -430,7 +442,7 @@
   right: 12px;
   width: 40px;
   height: 40px;
-  background: var(--bg-surface);
+  background: var(--bg-card);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
@@ -444,9 +456,9 @@
 }
 
 .map-expand-btn:hover {
-  background: var(--accent-moss-dim);
-  border-color: var(--accent-moss);
-  color: var(--accent-moss);
+  background: var(--bg-card-hover);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
 }
 
 /* ---- Locate Me button ---- */
@@ -456,10 +468,10 @@
   right: 12px;
   width: 40px;
   height: 40px;
-  background: var(--bg-surface);
+  background: var(--bg-card);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
-  color: #3b82f6;
+  color: var(--text-primary);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -469,8 +481,9 @@
   box-shadow: var(--shadow-sm);
 }
 .map-locate-btn:hover:not(:disabled) {
-  background: #1d3a6e22;
-  border-color: #3b82f6;
+  background: var(--bg-card-hover);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
 }
 .map-locate-btn:disabled {
   opacity: 0.6;
@@ -504,13 +517,15 @@
 }
 
 .spot-form {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
+  background: linear-gradient(155deg, rgba(236, 233, 220, 0.14) 0%, rgba(41, 61, 34, 0.34) 42%, rgba(20, 31, 16, 0.42) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.3);
   border-radius: var(--radius-lg);
   padding: 32px;
   width: 100%;
   max-width: 420px;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 24px 40px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
   animation: formSlideUp 0.3s ease;
 }
 
@@ -631,12 +646,14 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--bg-surface);
-  border: 1px solid #2563eb55;
+  background: linear-gradient(145deg, rgba(236, 233, 220, 0.14) 0%, rgba(37, 59, 36, 0.36) 55%, rgba(19, 30, 16, 0.42) 100%);
+  border: 1px solid rgba(96, 165, 250, 0.42);
   border-radius: 12px;
   padding: 10px 16px;
   z-index: 1100;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(14px) saturate(130%);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
   min-width: 220px;
   max-width: 90%;
   animation: slideUp 0.25s ease;

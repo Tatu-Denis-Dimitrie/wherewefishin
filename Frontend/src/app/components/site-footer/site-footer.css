@@ -1,0 +1,40 @@
+:host {
+  display: block;
+}
+
+.site-footer {
+  position: relative;
+  border-top: 1px solid rgba(125, 179, 74, 0.05);
+  background: linear-gradient(180deg, rgba(20, 30, 15, 0.01) 0%, rgba(20, 30, 15, 0.1) 100%);
+  padding: 4px 12px;
+}
+
+.site-footer::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -4px;
+  height: 4px;
+  background: linear-gradient(180deg, transparent 0%, rgba(20, 30, 15, 0.12) 100%);
+  pointer-events: none;
+}
+
+.footer-copy {
+  margin: 0;
+  text-align: center;
+  color: rgba(160, 152, 130, 0.72);
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+  .site-footer {
+    padding: 3px 10px;
+  }
+
+  .footer-copy {
+    font-size: 8px;
+  }
+}

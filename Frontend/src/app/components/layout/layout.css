@@ -4,12 +4,20 @@
 :host {
   display: block;
   min-height: 100vh;
+  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   background: var(--bg-deep);
+  overflow: hidden;
 }
 
 .app-shell {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 /* ── Sidebar ── */
@@ -71,6 +79,8 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
+  position: relative;
+  overflow: hidden;
   transition: all var(--transition);
   text-decoration: none;
   border: 1px solid transparent;
@@ -82,15 +92,34 @@
 }
 
 .nav-item.active {
-  background: var(--accent-moss-dim);
-  color: var(--accent-moss);
-  border-color: var(--border-default);
+  background: linear-gradient(135deg, rgba(232, 224, 208, 0.2) 0%, rgba(125, 179, 74, 0.23) 100%);
+  color: var(--text-heading);
+  border-color: rgba(232, 224, 208, 0.28);
+  box-shadow:
+    0 10px 20px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -6px 12px rgba(26, 39, 21, 0.26);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transform: translateY(-1px);
   font-weight: 600;
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 0%, rgba(255, 255, 255, 0.22) 45%, transparent 70%);
+  pointer-events: none;
+  animation: activeGlassSweep 5.2s ease-in-out infinite;
 }
 
 .sidebar-bottom {
   padding: 16px 12px;
   border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .logout-btn {
@@ -120,7 +149,292 @@
 .main-content {
   flex: 1;
   margin-left: 220px;
-  min-height: 100vh;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at 78% 16%, rgba(125, 179, 74, 0.14) 0%, transparent 30%),
+    radial-gradient(circle at 60% 80%, rgba(74, 144, 164, 0.12) 0%, transparent 34%),
+    linear-gradient(180deg, rgba(20, 30, 15, 0.94) 0%, rgba(14, 22, 11, 0.98) 100%);
+}
+
+.main-content::before {
+  content: '';
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(125, 179, 74, 0.16) 0%, transparent 70%);
+  top: -110px;
+  right: -90px;
+  pointer-events: none;
+  animation: layoutOrbOne 14s ease-in-out infinite alternate;
+  z-index: 0;
+}
+
+.main-content::after {
+  content: '';
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 168, 75, 0.11) 0%, transparent 70%);
+  bottom: -80px;
+  left: 22%;
+  pointer-events: none;
+  animation: layoutOrbTwo 18s ease-in-out infinite;
+  z-index: 0;
+}
+
+.page-content {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  z-index: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+.main-content app-site-footer {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+@keyframes activeGlassSweep {
+  0% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.65;
+  }
+  55% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+.main-fireflies {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.main-firefly {
+  position: absolute;
+  left: -14%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(244, 227, 152, 0.5);
+  box-shadow: 0 0 6px rgba(244, 227, 152, 0.36), 0 0 14px rgba(244, 227, 152, 0.2);
+  filter: blur(0.7px);
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+
+.main-firefly::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(244, 227, 152, 0.3) 0%, transparent 72%);
+}
+
+.mf-1 {
+  top: 18%;
+  left: -12%;
+  animation: mainFireflyDriftA 18s linear infinite;
+}
+
+.mf-2 {
+  top: 34%;
+  left: auto;
+  right: -12%;
+  width: 6px;
+  height: 6px;
+  animation: mainFireflyDriftB 20s linear infinite 0.9s;
+}
+
+.mf-3 {
+  top: 52%;
+  left: -16%;
+  width: 7px;
+  height: 7px;
+  animation: mainFireflyDriftC 19s linear infinite 2s;
+}
+
+.mf-4 {
+  top: 69%;
+  left: auto;
+  right: -10%;
+  width: 5px;
+  height: 5px;
+  animation: mainFireflyDriftD 21s linear infinite 1.2s;
+}
+
+.mf-5 {
+  top: 27%;
+  left: -18%;
+  width: 4px;
+  height: 4px;
+  animation: mainFireflyDriftA 24s linear infinite 4.8s;
+}
+
+.mf-6 {
+  top: 45%;
+  left: auto;
+  right: -15%;
+  width: 7px;
+  height: 7px;
+  animation: mainFireflyDriftB 23s linear infinite 3.5s;
+}
+
+.mf-7 {
+  top: 63%;
+  left: -20%;
+  width: 6px;
+  height: 6px;
+  animation: mainFireflyDriftC 22s linear infinite 5.1s;
+}
+
+.mf-8 {
+  top: 81%;
+  left: auto;
+  right: -14%;
+  width: 4px;
+  height: 4px;
+  animation: mainFireflyDriftD 25s linear infinite 4s;
+}
+
+@keyframes layoutOrbOne {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(-24px, 22px) scale(1.08);
+  }
+}
+
+@keyframes layoutOrbTwo {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.86;
+  }
+  50% {
+    transform: translate(18px, -16px) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-14px, 10px) scale(0.95);
+    opacity: 0.82;
+  }
+}
+
+@keyframes mainFireflyDriftA {
+  0% {
+    transform: translate(0, 0) scale(0.74);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.56;
+  }
+  32% {
+    transform: translate(28vw, -16px) scale(1);
+  }
+  56% {
+    transform: translate(54vw, 14px) scale(0.86);
+  }
+  78% {
+    transform: translate(82vw, -18px) scale(1.02);
+    opacity: 0.48;
+  }
+  100% {
+    transform: translate(118vw, 8px) scale(0.7);
+    opacity: 0;
+  }
+}
+
+@keyframes mainFireflyDriftB {
+  0% {
+    transform: translate(0, 0) scale(0.76);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.5;
+  }
+  34% {
+    transform: translate(-34vw, 14px) scale(0.98);
+  }
+  62% {
+    transform: translate(-68vw, -12px) scale(0.84);
+  }
+  86% {
+    transform: translate(-96vw, 10px) scale(1.03);
+    opacity: 0.46;
+  }
+  100% {
+    transform: translate(-126vw, -6px) scale(0.7);
+    opacity: 0;
+  }
+}
+
+@keyframes mainFireflyDriftC {
+  0% {
+    transform: translate(0, 4px) scale(0.72);
+    opacity: 0;
+  }
+  14% {
+    opacity: 0.52;
+  }
+  30% {
+    transform: translate(26vw, -14px) scale(0.95);
+  }
+  48% {
+    transform: translate(44vw, 22px) scale(0.82);
+  }
+  72% {
+    transform: translate(70vw, -8px) scale(1.01);
+  }
+  100% {
+    transform: translate(116vw, 16px) scale(0.68);
+    opacity: 0;
+  }
+}
+
+@keyframes mainFireflyDriftD {
+  0% {
+    transform: translate(0, -3px) scale(0.7);
+    opacity: 0;
+  }
+  16% {
+    opacity: 0.48;
+  }
+  26% {
+    transform: translate(-20vw, 12px) scale(0.94);
+  }
+  45% {
+    transform: translate(-42vw, -14px) scale(0.82);
+  }
+  70% {
+    transform: translate(-74vw, 6px) scale(1.02);
+  }
+  100% {
+    transform: translate(-120vw, -10px) scale(0.66);
+    opacity: 0;
+  }
 }
 
 /* ── Cart icon with badge ── */
@@ -303,11 +617,20 @@
     padding-top: 56px;
     width: 100%;
     max-width: 100vw;
-    overflow-x: hidden;
+    overflow: hidden;
+  }
+
+  .mf-3,
+  .mf-4,
+  .mf-5,
+  .mf-6,
+  .mf-7,
+  .mf-8 {
+    display: none;
   }
 
   .app-shell {
-    overflow-x: hidden;
+    overflow: hidden;
     width: 100vw;
   }
 }

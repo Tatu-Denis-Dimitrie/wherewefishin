@@ -63,8 +63,8 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-default);
+  background: linear-gradient(145deg, rgba(236, 233, 220, 0.14) 0%, rgba(41, 61, 34, 0.34) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.24);
   border-radius: var(--radius-sm);
   color: var(--text-secondary);
   font-size: 13px;
@@ -72,6 +72,8 @@
   cursor: pointer;
   transition: all var(--transition);
   white-space: nowrap;
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
 }
 .btn-back:hover {
   background: var(--bg-card-hover);
@@ -188,10 +190,13 @@
 }
 
 .control-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-default);
+  background: linear-gradient(150deg, rgba(236, 233, 220, 0.1) 0%, rgba(42, 63, 34, 0.32) 44%, rgba(21, 33, 17, 0.38) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.24);
   border-radius: var(--radius-lg);
   padding: 18px 20px;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px) saturate(122%);
+  -webkit-backdrop-filter: blur(12px) saturate(122%);
 }
 
 .card-title {
@@ -255,8 +260,8 @@
 .field input {
   width: 100%;
   padding: 10px 12px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-default);
+  background: rgba(23, 34, 18, 0.42);
+  border: 1px solid rgba(232, 224, 208, 0.22);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-size: 14px;
@@ -329,7 +334,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  background: rgba(74, 144, 164, 0.1);
+  background: linear-gradient(145deg, rgba(236, 233, 220, 0.1) 0%, rgba(33, 55, 37, 0.34) 100%);
   border: 1px solid rgba(74, 144, 164, 0.2);
   border-radius: var(--radius-sm);
   font-size: 12px;
@@ -385,7 +390,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  background: var(--accent-water-dim);
+  background: linear-gradient(145deg, rgba(236, 233, 220, 0.1) 0%, rgba(33, 55, 37, 0.34) 100%);
   border: 1px solid rgba(74, 144, 164, 0.2);
   border-radius: var(--radius-sm);
   font-size: 12px;
@@ -395,8 +400,8 @@
 
 /* ---- Edit Card ---- */
 .edit-card {
-  border-color: var(--accent-moss);
-  background: var(--accent-moss-dim);
+  border-color: rgba(125, 179, 74, 0.6);
+  background: linear-gradient(145deg, rgba(236, 233, 220, 0.14) 0%, rgba(47, 71, 37, 0.4) 100%);
 }
 
 /* ---- Pontoons List ---- */
@@ -418,15 +423,17 @@
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
+  background: linear-gradient(145deg, rgba(236, 233, 220, 0.08) 0%, rgba(39, 58, 33, 0.28) 50%, rgba(20, 31, 16, 0.34) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.2);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all var(--transition);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
 }
 .pontoon-item:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--border-default);
+  background: linear-gradient(145deg, rgba(236, 233, 220, 0.12) 0%, rgba(42, 62, 35, 0.34) 50%, rgba(22, 33, 17, 0.4) 100%);
+  border-color: rgba(232, 224, 208, 0.28);
 }
 .pontoon-item.selected {
   background: var(--accent-moss-dim);
@@ -450,7 +457,11 @@
 .map-container {
   border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid var(--border-default);
+  border: 1px solid rgba(232, 224, 208, 0.24);
+  background: linear-gradient(150deg, rgba(236, 233, 220, 0.1) 0%, rgba(42, 63, 34, 0.32) 44%, rgba(21, 33, 17, 0.38) 100%);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px) saturate(122%);
+  -webkit-backdrop-filter: blur(12px) saturate(122%);
   min-height: 400px;
 }
 
