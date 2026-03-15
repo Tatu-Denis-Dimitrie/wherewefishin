@@ -183,8 +183,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
                              | ForwardedHeaders.XForwardedProto
                              | ForwardedHeaders.XForwardedHost;
     // Trust Docker network and Cloudflare
-    options.KnownNetworks.Add(new IPNetwork(IPAddress.Parse("172.30.0.0"), 24));
-    options.KnownNetworks.Add(new IPNetwork(IPAddress.Parse("10.0.0.0"), 8));
+    options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(IPAddress.Parse("172.30.0.0"), 24));
+    options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(IPAddress.Parse("10.0.0.0"), 8));
     // Clear default limits to accept forwarded headers from any proxy depth
     options.ForwardLimit = null;
 });
