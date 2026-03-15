@@ -16,12 +16,6 @@ using WhereWeFishin.Database.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Graceful shutdown: allow 30s for in-flight requests to complete
-builder.Services.Configure<HostOptions>(options =>
-{
-    options.ShutdownTimeout = TimeSpan.FromSeconds(30);
-});
-
 var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
 if (!string.IsNullOrWhiteSpace(stripeSecretKey))
 {
@@ -122,20 +116,6 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// Response compression (gzip + brotli) for API responses
-builder.Services.AddResponseCompression(options =>
-{
-    options.EnableForHttps = true;
-    options.Providers.Add<BrotliCompressionProvider>();
-    options.Providers.Add<GzipCompressionProvider>();
-    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
-        ["application/json", "text/plain", "application/xml"]);
-});
-builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
-    options.Level = CompressionLevel.Fastest);
-builder.Services.Configure<GzipCompressionProviderOptions>(options =>
-    options.Level = CompressionLevel.Fastest);
-
 // Response caching (honors Cache-Control headers)
 builder.Services.AddResponseCaching();
 
@@ -193,23 +173,8 @@ builder.Services.AddHttpClient<IFishRecognitionService, FishRecognitionService>(
 // Register HttpClientFactory for general use
 builder.Services.AddHttpClient();
 
-// Configure forwarded headers (Cloudflare Tunnel → nginx → Kestrel)
-builder.Services.Configure<ForwardedHeadersOptions>(options =>
-{
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
-                             | ForwardedHeaders.XForwardedProto
-                             | ForwardedHeaders.XForwardedHost;
-    // Trust Docker network and Cloudflare
-    options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(IPAddress.Parse("172.30.0.0"), 24));
-    options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(IPAddress.Parse("10.0.0.0"), 8));
-    // Clear default limits to accept forwarded headers from any proxy depth
-    options.ForwardLimit = null;
-});
-
 var app = builder.Build();
 
-// ForwardedHeaders MUST be first middleware – before CORS, auth, compression
-app.UseForwardedHeaders();
 
 // Apply EF Core migrations automatically on startup (creates DB if it doesn't exist)
 using (var scope = app.Services.CreateScope())
