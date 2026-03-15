@@ -22,6 +22,8 @@ services:
       timeout: 5s
       retries: 10
       start_period: 45s
+    networks:
+      - app
     restart: unless-stopped
 
   # ── .NET Backend API ──────────────────────────────────────
@@ -66,6 +68,8 @@ services:
       timeout: 10s
       retries: 10
       start_period: 90s
+    networks:
+      - app
     restart: unless-stopped
 
   # ── Fish Recognition (GPU) ───────────────────────────────
@@ -92,6 +96,8 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+    networks:
+      - app
     restart: unless-stopped
 
   # ── Frontend (nginx reverse-proxy + Angular SPA) ─────────
@@ -107,23 +113,25 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    healthcheck: 
-      test: ["CMD", "curl", "-sf", "http://localhost/health"]
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:80/health"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 15s
+    networks:
+      - app
     restart: unless-stopped
 
-  # ── Cloudflare Tunnel (2 replici HA) ──────────────────────
-  # Două instanțe separate pe același tunel.
-  # Cloudflare rutează trafic la ambele; dacă una moare, cealaltă preia.
+  # ── Cloudflare Tunnel (3 replici HA) ──────────────────────
+  # Trei instanțe separate pe același tunel.
+  # Cloudflare rutează trafic la toate; dacă una moare, celelalte preiau.
   # Docker restart: always le repornește automat fără intervenție.
   # NU folosim watchdog - creează cicluri infinite de restarturi.
   cloudflared-1:
     image: cloudflare/cloudflared:latest
     container_name: wherewefishin-tunnel-1
-    command: tunnel --no-autoupdate --protocol http2 run app-tunnel
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
@@ -133,12 +141,14 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 512M
+    networks:
+      - app
 
   cloudflared-2:
     image: cloudflare/cloudflared:latest
     container_name: wherewefishin-tunnel-2
-    command: tunnel --no-autoupdate --protocol http2 run app-tunnel
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
@@ -148,7 +158,26 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 512M
+    networks:
+      - app
+
+  cloudflared-3:
+    image: cloudflare/cloudflared:latest
+    container_name: wherewefishin-tunnel-3
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app
 
 networks:
   app:

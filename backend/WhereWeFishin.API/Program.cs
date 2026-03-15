@@ -119,6 +119,24 @@ builder.Services.AddAuthorization();
 // Response caching (honors Cache-Control headers)
 builder.Services.AddResponseCaching();
 
+// Response compression (gzip + br)
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+});
+
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
+
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
+
 // Output caching (in-memory cache for GET responses — near-zero TTFB on cache hit)
 builder.Services.AddOutputCache(options =>
 {
