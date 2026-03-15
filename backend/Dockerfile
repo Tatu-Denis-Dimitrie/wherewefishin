@@ -46,4 +46,9 @@ ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV DOTNET_EnableDiagnostics=0
 
+# JIT optimizations for faster TTFB
+ENV DOTNET_TieredPGO=1
+ENV DOTNET_ReadyToRun=1
+ENV DOTNET_TC_QuickJitForLoops=1
+
 ENTRYPOINT ["dotnet", "WhereWeFishin.API.dll"]

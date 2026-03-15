@@ -51,7 +51,8 @@
                   "maximumError": "16kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "subresourceIntegrity": true
             },
             "development": {
               "optimization": false,

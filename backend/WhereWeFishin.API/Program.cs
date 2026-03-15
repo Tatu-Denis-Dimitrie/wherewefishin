@@ -16,6 +16,12 @@ using WhereWeFishin.Database.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Graceful shutdown: allow 30s for in-flight requests to complete
+builder.Services.Configure<HostOptions>(options =>
+{
+    options.ShutdownTimeout = TimeSpan.FromSeconds(30);
+});
+
 var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
 if (!string.IsNullOrWhiteSpace(stripeSecretKey))
 {
@@ -128,7 +134,18 @@ builder.Services.AddResponseCompression(options =>
 builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
     options.Level = CompressionLevel.Fastest);
 builder.Services.Configure<GzipCompressionProviderOptions>(options =>
-    options.Level = CompressionLevel.SmallestSize);
+    options.Level = CompressionLevel.Fastest);
+
+// Response caching (honors Cache-Control headers)
+builder.Services.AddResponseCaching();
+
+// Output caching (in-memory cache for GET responses — near-zero TTFB on cache hit)
+builder.Services.AddOutputCache(options =>
+{
+    options.AddBasePolicy(builder => builder.Expire(TimeSpan.FromSeconds(30)));
+    options.AddPolicy("ShortCache", builder => builder.Expire(TimeSpan.FromMinutes(1)));
+    options.AddPolicy("MediumCache", builder => builder.Expire(TimeSpan.FromMinutes(5)));
+});
 
 // Configure CORS
 builder.Services.AddCors(options =>
@@ -294,6 +311,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("AllowAngularApp");
 
+// Response caching middleware — must be after CORS, before endpoints
+app.UseResponseCaching();
+app.UseOutputCache();
+
 // Ensure uploads directory exists
 var uploadsPath = Path.Combine(app.Environment.ContentRootPath, "uploads");
 if (!Directory.Exists(uploadsPath))
@@ -336,6 +357,31 @@ app.UseAuthorization();
 
 // Health endpoint without DB dependency - prevents false 502s
 app.MapGet("/health", () => Results.Ok("OK"));
+
+// Deep health check – verifies DB connectivity
+app.MapGet("/health/ready", async (ApplicationDbContext db) =>
+{
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync("SELECT 1");
+        return Results.Ok(new { status = "healthy", database = "connected" });
+    }
+    catch (Exception ex)
+    {
+        return Results.Json(
+            new { status = "unhealthy", database = "disconnected", error = ex.Message },
+            statusCode: 503);
+    }
+});
+
+// Request timeout middleware – aborts requests that take longer than 120s
+app.Use(async (context, next) =>
+{
+    using var cts = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted);
+    cts.CancelAfter(TimeSpan.FromSeconds(120));
+    context.RequestAborted = cts.Token;
+    await next();
+});
 
 app.MapControllers();
 

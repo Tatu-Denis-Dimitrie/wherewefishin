@@ -39,6 +39,13 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Project name in angular.json is "Frontend" (capital F) → output is dist/Frontend/browser
 COPY --from=build /app/dist/Frontend/browser /usr/share/nginx/html
 
+# Pre-compress static assets for gzip_static (eliminates runtime compression latency)
+RUN find /usr/share/nginx/html -type f \( \
+    -name "*.html" -o -name "*.css" -o -name "*.js" \
+    -o -name "*.json" -o -name "*.svg" -o -name "*.xml" \
+    -o -name "*.txt" \) \
+    -exec gzip -9 -k {} \;
+
 # Expose port
 EXPOSE 80
 
