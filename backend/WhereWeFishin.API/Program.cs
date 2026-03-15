@@ -1,6 +1,8 @@
 using System.IO.Compression;
+using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -134,11 +136,13 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAngularApp", policy =>
     {
         policy.WithOrigins(
-                  "http://localhost:4200",  // local Angular dev server
-                  "http://localhost",        // Docker: nginx on port 80
-                  "http://localhost:80",     // Docker: explicit port
-                  "https://wherewefishin.uk", // Production domain
-                  "http://wherewefishin.uk"   // Production domain (http)
+                  "http://localhost:4200",      // local Angular dev server
+                  "http://localhost",            // Docker: nginx on port 80
+                  "http://localhost:80",         // Docker: explicit port
+                  "https://wherewefishin.uk",    // Production domain
+                  "http://wherewefishin.uk",     // Production domain (http)
+                  "https://www.wherewefishin.uk", // Production www subdomain
+                  "http://www.wherewefishin.uk"   // Production www subdomain (http)
               )
               .AllowAnyMethod()
               .AllowAnyHeader()
@@ -172,7 +176,23 @@ builder.Services.AddHttpClient<IFishRecognitionService, FishRecognitionService>(
 // Register HttpClientFactory for general use
 builder.Services.AddHttpClient();
 
+// Configure forwarded headers (Cloudflare Tunnel → nginx → Kestrel)
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+                             | ForwardedHeaders.XForwardedProto
+                             | ForwardedHeaders.XForwardedHost;
+    // Trust Docker network and Cloudflare
+    options.KnownNetworks.Add(new IPNetwork(IPAddress.Parse("172.30.0.0"), 24));
+    options.KnownNetworks.Add(new IPNetwork(IPAddress.Parse("10.0.0.0"), 8));
+    // Clear default limits to accept forwarded headers from any proxy depth
+    options.ForwardLimit = null;
+});
+
 var app = builder.Build();
+
+// ForwardedHeaders MUST be first middleware – before CORS, auth, compression
+app.UseForwardedHeaders();
 
 // Apply EF Core migrations automatically on startup (creates DB if it doesn't exist)
 using (var scope = app.Services.CreateScope())

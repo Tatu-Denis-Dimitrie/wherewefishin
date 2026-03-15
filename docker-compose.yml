@@ -62,6 +62,10 @@ services:
     networks:
       app:
         ipv4_address: 172.30.0.20
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -95,11 +99,14 @@ services:
         ipv4_address: 172.30.0.30
     deploy:
       resources:
+        limits:
+          memory: 2G
         reservations:
           devices:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+
     restart: unless-stopped
 
   # ── Frontend (nginx reverse-proxy + Angular SPA) ─────────
@@ -118,6 +125,10 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     healthcheck: 
       test: ["CMD", "curl", "-sf", "http://localhost/health"]
       interval: 10s
@@ -134,7 +145,7 @@ services:
   cloudflared-1:
     image: cloudflare/cloudflared:latest
     container_name: wherewefishin-tunnel-1
-    command: tunnel --no-autoupdate --protocol http2 run app-tunnel
+    command: tunnel --no-autoupdate --protocol auto run app-tunnel
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
     networks:
@@ -152,7 +163,7 @@ services:
   cloudflared-2:
     image: cloudflare/cloudflared:latest
     container_name: wherewefishin-tunnel-2
-    command: tunnel --no-autoupdate --protocol http2 run app-tunnel
+    command: tunnel --no-autoupdate --protocol auto run app-tunnel
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
     networks:

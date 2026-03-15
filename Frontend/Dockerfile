@@ -29,7 +29,10 @@ FROM nginx:alpine AS runtime
 # Install curl for Docker healthcheck
 RUN apk add --no-cache curl
 
-# Copy custom nginx configuration
+# Copy custom global nginx config (worker_connections, epoll, etc.)
+COPY nginx-global.conf /etc/nginx/nginx.conf
+
+# Copy custom nginx server configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built Angular app from build stage
