@@ -490,12 +490,13 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 56px;
+    height: calc(var(--mobile-topbar-height) + var(--safe-area-top));
     background: var(--bg-surface);
     border-bottom: 1px solid var(--border-subtle);
-    padding: 0 16px;
+    padding: var(--safe-area-top) calc(16px + var(--safe-area-right)) 0 calc(16px + var(--safe-area-left));
     z-index: 200;
     gap: 12px;
+    box-sizing: border-box;
   }
 
   .mobile-brand {
@@ -576,7 +577,7 @@
     transition: transform 0.25s ease;
     z-index: 160;
     width: 280px;
-    top: 56px;
+    top: calc(var(--mobile-topbar-height) + var(--safe-area-top));
   }
 
   .sidebar-brand {
@@ -614,7 +615,7 @@
   /* Main content: no left margin, but push down for top bar */
   .main-content {
     margin-left: 0;
-    padding-top: 56px;
+    padding-top: calc(var(--mobile-topbar-height) + var(--safe-area-top));
     width: 100%;
     max-width: 100vw;
     overflow: hidden;

@@ -6,6 +6,12 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
 
 :root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --mobile-topbar-height: 56px;
+
   /* Forest depths */
   --bg-deep: #141e0f;
   --bg-surface: #1c2a16;
@@ -50,6 +56,15 @@
   --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.45);
   --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@supports (top: constant(safe-area-inset-top)) {
+  :root {
+    --safe-area-top: constant(safe-area-inset-top);
+    --safe-area-right: constant(safe-area-inset-right);
+    --safe-area-bottom: constant(safe-area-inset-bottom);
+    --safe-area-left: constant(safe-area-inset-left);
+  }
 }
 
 * {
