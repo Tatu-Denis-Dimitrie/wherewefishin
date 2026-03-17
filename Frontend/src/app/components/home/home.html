@@ -131,29 +131,115 @@
         </div>
       }
       
-      <!-- Recent Analyses -->
-      @if (recentAnalyses.length > 0) {
-        <div class="recent-analyses">
-          <h4 class="subsection-title">Analize Recente</h4>
-          <div class="analyses-list">
-            @for (analysis of recentAnalyses; track analysis.id) {
-              <div class="analysis-item">
-                <div class="analysis-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="23 7 16 12 23 17 23 7"/>
-                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-                  </svg>
-                </div>
-                <div class="analysis-info">
-                  <div class="analysis-name">{{ getAnalysisDisplayName(analysis) }}</div>
-                  <div class="analysis-meta">
-                    <span class="badge-mini" [ngClass]="getStatusClass(analysis.status)">{{ analysis.status }}</span>
-                    <span class="analysis-count">{{ getAnalysisSummary(analysis) }}</span>
-                  </div>
+      @if (isUser()) {
+        <div class="latest-session">
+          <div class="latest-session-header">
+            <h4 class="subsection-title">Latest Purchased Session</h4>
+            <div class="session-slide-toggle" [class.past-active]="selectedSessionView === 'past'">
+              <span class="session-slide-pill"></span>
+              <button
+                type="button"
+                class="session-slide-btn"
+                [class.active]="selectedSessionView === 'future'"
+                (click)="setSessionView('future')">
+                Future
+              </button>
+              <button
+                type="button"
+                class="session-slide-btn"
+                [class.active]="selectedSessionView === 'past'"
+                (click)="setSessionView('past')">
+                Past
+              </button>
+            </div>
+          </div>
+
+          @if (loadingLatestSession) {
+            <div class="latest-session-loading">Loading...</div>
+          } @else if (!latestPurchasedSession) {
+            <div class="latest-session-empty">
+              {{ getSessionEmptyMessage() }}
+            </div>
+          } @else {
+            <div class="latest-session-card">
+              <div class="latest-session-main">
+                <div class="latest-session-spot">{{ latestPurchasedSession.fishingSpotName }}</div>
+                @if (latestPurchasedSession.pontoonName) {
+                  <div class="latest-session-pontoon">Pontoon: {{ latestPurchasedSession.pontoonName }}</div>
+                }
+                <div class="latest-session-meta-row">
+                  <span>{{ formatBookingDate(latestPurchasedSession.startDate) }}</span>
+                  <span>{{ latestPurchasedSession.durationHours }}h</span>
+                  <span>{{ latestPurchasedSession.totalPrice | number:'1.2-2' }} RON</span>
                 </div>
               </div>
+              <div class="latest-session-actions">
+                <span class="latest-session-status" [ngClass]="getBookingStatusClass(latestPurchasedSession.status)">
+                  {{ latestPurchasedSession.status }}
+                </span>
+                <button class="latest-session-btn secondary" (click)="toggleSessionQrCode()">
+                  {{ isSessionQrVisible ? 'Hide QR Code' : 'View QR Code' }}
+                </button>
+              </div>
+            </div>
+
+            @if (isSessionQrLoading) {
+              <div class="latest-session-qr loading">Generating QR code...</div>
+            } @else if (isSessionQrVisible && sessionQrCode) {
+              <div class="latest-session-qr">
+                <img [src]="sessionQrCode" alt="Booking QR Code" class="latest-session-qr-image" />
+                <p class="latest-session-qr-hint">Scan this code at the fishing location.</p>
+              </div>
+            }
+          }
+        </div>
+
+        <div class="nearby-locations">
+          <div class="nearby-header">
+            <h4 class="subsection-title">Closest Locations</h4>
+            @if (hasUserLocation && closestSpots.length > 0) {
+              <span class="nearby-count">{{ closestSpots.length }}</span>
             }
           </div>
+
+          @if (!hasUserLocation) {
+            <div class="nearby-empty">
+              <p>Enable location to discover the nearest fishing spots.</p>
+              <button class="nearby-locate-btn" (click)="locateUser()" [disabled]="locatingUser">
+                @if (locatingUser) {
+                  <span class="locate-spinner"></span>
+                  Locating...
+                } @else {
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8"/></svg>
+                  Use my location
+                }
+              </button>
+            </div>
+          } @else if (closestSpots.length === 0) {
+            <div class="nearby-empty">
+              <p>No fishing spots are available yet.</p>
+            </div>
+          } @else {
+            <div class="nearby-list">
+              @for (item of closestSpots; track item.spot.id) {
+                <div class="nearby-item">
+                  <div class="nearby-main">
+                    <div class="nearby-name">{{ item.spot.name }}</div>
+                    <div class="nearby-meta">
+                      <span class="nearby-distance">{{ item.distanceLabel }} away</span>
+                      @if (item.spot.pricePerHour > 0) {
+                        <span class="nearby-price">{{ item.spot.pricePerHour }} RON/h</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="nearby-actions">
+                    <button class="nearby-action-btn" (click)="showRouteOnMap(item.spot)">Route</button>
+                    <button class="nearby-action-btn secondary" (click)="openSpotDetails(item.spot.id)">Open</button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
         </div>
       }
     </div>
@@ -168,12 +254,34 @@
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
               <circle cx="12" cy="10" r="3"/>
             </svg>
-            {{ spots.length }}
+            @if (selectedFishSpecies === 'all') {
+              {{ visibleSpots.length }}
+            } @else {
+              {{ visibleSpots.length }} / {{ spots.length }}
+            }
           </div>
         </div>
       </div>
       <div class="map-card" [class.expanded]="mapExpanded">
         <div id="map" class="map-container"></div>
+
+        <div class="map-fish-filter" aria-label="Fish species filter">
+          <svg class="map-fish-filter-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2 12s3-5 10-5 10 5 10 5-3 5-10 5S2 12 2 12z"/>
+            <circle cx="12" cy="12" r="1.2"/>
+          </svg>
+          <select
+            id="fishSpeciesFilter"
+            class="map-fish-filter-select"
+            [ngModel]="selectedFishSpecies"
+            (ngModelChange)="onFishSpeciesFilterChange($event)"
+            aria-label="Select fish species">
+            <option value="all">All species</option>
+            @for (species of fishSpeciesOptions; track species) {
+              <option [value]="species">{{ species }}</option>
+            }
+          </select>
+        </div>
 
         @if (canEdit) {
           <div class="map-editor-controls">
@@ -181,8 +289,8 @@
               (click)="toggleAddMode()"
               class="btn-action map-admin-btn btn-add"
               [class.active]="isAddMode"
-              [title]="isAddMode ? 'Anulează adăugarea' : 'Adaugă baltă'"
-              aria-label="Adaugă baltă">
+              [title]="isAddMode ? 'Cancel add mode' : 'Add fishing spot'"
+              aria-label="Add fishing spot">
               @if (isAddMode) {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               } @else {
@@ -194,8 +302,8 @@
               (click)="toggleDeleteMode()"
               class="btn-action map-admin-btn btn-delete"
               [class.active]="isDeleteMode"
-              [title]="isDeleteMode ? 'Anulează ștergerea' : 'Șterge baltă'"
-              aria-label="Șterge baltă">
+              [title]="isDeleteMode ? 'Cancel delete mode' : 'Delete fishing spot'"
+              aria-label="Delete fishing spot">
               @if (isDeleteMode) {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               } @else {
@@ -223,12 +331,12 @@
                 </span>
               </div>
             </div>
-            <button class="route-close-btn" (click)="clearRoute()" title="Închide ruta">
+            <button class="route-close-btn" (click)="clearRoute()" title="Close route">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
         }
-        <button (click)="locateUser()" class="map-locate-btn" title="Localizează-mă" [disabled]="locatingUser">
+        <button (click)="locateUser()" class="map-locate-btn" title="Locate me" [disabled]="locatingUser">
           @if (locatingUser) {
             <span class="locate-spinner"></span>
           } @else {

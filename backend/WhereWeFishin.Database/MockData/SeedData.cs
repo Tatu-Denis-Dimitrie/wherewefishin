@@ -4,24 +4,24 @@ using WhereWeFishin.Core.Entities;
 namespace WhereWeFishin.Database.MockData;
 
 /// <summary>
-/// Date de test pentru popularea bazei de date
+/// Test data for seeding the database
 /// 
-/// CONTURI DE TEST:
-/// ================
+/// TEST ACCOUNTS:
+/// ==============
 /// Admin:
 ///   - Username: admin | Password: admin123 | Email: admin@wherewefishin.com
-///   - Acces complet: gestionare utilizatori, statistici, toate functiile
+///   - Full access: user management, statistics, all features
 /// 
-/// Manageri:
+/// Managers:
 ///   - Username: manager1 | Password: manager123 | Email: manager1@wherewefishin.com
 ///   - Username: manager2 | Password: manager123 | Email: manager2@wherewefishin.com
-///   - Acces: adaugare/stergere locuri de pescuit
+///   - Access: add/remove fishing spots
 /// 
-/// Utilizatori:
-///   - Username: ion_pescar, maria_fisher, andrei_pescuit, petre_balanescu, 
+/// Users:
+///   - Username: ion_fisher, maria_fisher, andrei_fishing, petre_balanescu, 
 ///              carmen_nistor, dan_cretu, adriana_dobre
-///   - Password: password123 (pentru toti)
-///   - Acces: vizualizare locuri, analiza video
+///   - Password: password123 (for all)
+///   - Access: view spots, video analysis
 /// </summary>
 public static class SeedData
 {
@@ -73,7 +73,7 @@ public static class SeedData
             // Regular user accounts
             new User
             {
-                Username = "ion_pescar",
+                Username = "ion_fisher",
                 Email = "ion@email.com",
                 PasswordHash = userHash,
                 FirstName = "Ion",
@@ -95,7 +95,7 @@ public static class SeedData
             },
             new User
             {
-                Username = "andrei_pescuit",
+                Username = "andrei_fishing",
                 Email = "andrei@email.com",
                 PasswordHash = userHash,
                 FirstName = "Andrei",
@@ -157,8 +157,8 @@ public static class SeedData
         {
             new FishingSpot
             {
-                Name = "Lacul Snagov",
-                Description = "Loc excelent pentru pescuit, cu vegetatie bogata",
+                Name = "Snagov Lake",
+                Description = "Great fishing spot with rich vegetation",
                 Latitude = 44.7044,
                 Longitude = 26.1496,
                 UserId = userIds[0],
@@ -168,8 +168,8 @@ public static class SeedData
             },
             new FishingSpot
             {
-                Name = "Delta Dunarii",
-                Description = "Paradis pentru pescari, biodiversitate mare",
+                Name = "Danube Delta",
+                Description = "Angler's paradise with high biodiversity",
                 Latitude = 45.1667,
                 Longitude = 29.6000,
                 UserId = userIds[1],
@@ -178,7 +178,7 @@ public static class SeedData
             },
             new FishingSpot
             {
-                Name = "Barajul Vidraru",
+                Name = "Vidraru Dam",
                 Latitude = 45.3500,
                 Longitude = 24.6333,
                 UserId = userIds[0],
@@ -187,8 +187,8 @@ public static class SeedData
             },
             new FishingSpot
             {
-                Name = "Lacul Bicaz",
-                Description = "Pastrav si clean auriu, apa foarte curata",
+                Name = "Bicaz Lake",
+                Description = "Trout and golden chub, very clean water",
                 Latitude = 46.9167,
                 Longitude = 25.8500,
                 UserId = userIds[2],
@@ -204,29 +204,29 @@ public static class SeedData
         {
             new Catch
             {
-                FishSpecies = "Crap",
+                FishSpecies = "Carp",
                 Weight = 3.5,
                 Length = 45.0,
                 CaughtAt = DateTime.UtcNow.AddDays(-10),
-                Notes = "Prins dimineata devreme",
+                Notes = "Caught early in the morning",
                 UserId = userIds[0],
                 FishingSpotId = spotIds[0],
                 CreatedAt = DateTime.UtcNow.AddDays(-10)
             },
             new Catch
             {
-                FishSpecies = "Stiuca",
+                FishSpecies = "Pike",
                 Weight = 5.2,
                 Length = 68.0,
                 CaughtAt = DateTime.UtcNow.AddDays(-5),
-                Notes = "Foarte agresiva",
+                Notes = "Very aggressive",
                 UserId = userIds[1],
                 FishingSpotId = spotIds[1],
                 CreatedAt = DateTime.UtcNow.AddDays(-5)
             },
             new Catch
             {
-                FishSpecies = "Pastrav",
+                FishSpecies = "Trout",
                 Weight = 1.8,
                 Length = 35.0,
                 CaughtAt = DateTime.UtcNow.AddDays(-3),
@@ -236,18 +236,18 @@ public static class SeedData
             },
             new Catch
             {
-                FishSpecies = "Somn",
+                FishSpecies = "Catfish",
                 Weight = 12.5,
                 Length = 95.0,
                 CaughtAt = DateTime.UtcNow.AddDays(-1),
-                Notes = "Record personal!",
+                Notes = "Personal record!",
                 UserId = userIds[2],
                 FishingSpotId = spotIds[3],
                 CreatedAt = DateTime.UtcNow.AddDays(-1)
             },
             new Catch
             {
-                FishSpecies = "Clean",
+                FishSpecies = "Chub",
                 Weight = 2.1,
                 Length = 38.0,
                 CaughtAt = DateTime.UtcNow.AddHours(-12),

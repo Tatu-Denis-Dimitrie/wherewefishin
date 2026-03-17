@@ -474,7 +474,7 @@ public class BookingsControllerTests
     {
         Id = id,
         FishingSpotId = spotId,
-        Name = $"Ponton {id}",
+        Name = $"Pontoon {id}",
         SouthWestLat = 44.9,
         SouthWestLng = 24.9,
         NorthEastLat = 45.1,
@@ -510,7 +510,7 @@ public class BookingsControllerTests
         var createdResult = Assert.IsType<CreatedAtActionResult>(result.Result);
         var booking = Assert.IsType<BookingDto>(createdResult.Value);
         Assert.Equal(1, booking.PontoonId);
-        Assert.Equal("Ponton 1", booking.PontoonName);
+        Assert.Equal("Pontoon 1", booking.PontoonName);
         Assert.Equal(240m, booking.TotalPrice);
     }
 

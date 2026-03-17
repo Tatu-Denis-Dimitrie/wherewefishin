@@ -221,14 +221,14 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
       comment: this.newReviewComment.trim() || undefined
     }).subscribe({
       next: () => {
-        this.showToast('Recenzie adăugată cu succes!', 'success');
+        this.showToast('Review added successfully!', 'success');
         this.newReviewComment = '';
         this.newReviewRating = 5;
         this.submittingReview = false;
         this.loadReviews(this.spot!.id);
       },
       error: (err) => {
-        const msg = err.error?.message || err.error || 'Eroare la adăugarea recenziei';
+        const msg = err.error?.message || err.error || 'Error adding review';
         this.showToast(msg, 'error');
         this.submittingReview = false;
       }
@@ -256,7 +256,7 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
       comment: this.newReviewComment.trim() || undefined
     }).subscribe({
       next: () => {
-        this.showToast('Recenzie actualizată!', 'success');
+        this.showToast('Review updated!', 'success');
         this.editingReviewId = null;
         this.newReviewComment = '';
         this.newReviewRating = 5;
@@ -264,22 +264,22 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
         this.loadReviews(this.spot!.id);
       },
       error: () => {
-        this.showToast('Eroare la actualizarea recenziei', 'error');
+        this.showToast('Error updating review', 'error');
         this.submittingReview = false;
       }
     });
   }
 
   deleteReview(reviewId: number): void {
-    if (!confirm('Sigur dorești să ștergi această recenzie?')) return;
+    if (!confirm('Are you sure you want to delete this review?')) return;
     
     this.reviewService.deleteReview(reviewId).subscribe({
       next: () => {
-        this.showToast('Recenzie ștearsă!', 'success');
+        this.showToast('Review deleted!', 'success');
         this.loadReviews(this.spot!.id);
       },
       error: () => {
-        this.showToast('Eroare la ștergerea recenziei', 'error');
+        this.showToast('Error deleting review', 'error');
       }
     });
   }
@@ -327,7 +327,7 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
 
     // If spot has pontoons, require a selected pontoon
     if (this.pontoons.length > 0 && !this.selectedPontoonId) {
-      this.showToast('Selectează un ponton pentru rezervare', 'error');
+      this.showToast('Select a pontoon to book', 'error');
       return;
     }
 
@@ -345,7 +345,7 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
     });
     
     const itemName = pontoon ? `${this.spot.name} - ${pontoon.name}` : this.spot.name;
-    this.showToast(`"${itemName}" adăugat în coș!`, 'success');
+    this.showToast(`"${itemName}" added to cart!`, 'success');
   }
 
   goBack(): void {

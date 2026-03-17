@@ -1,50 +1,50 @@
 # Fish Recognition Service
 
-Serviciu Python Flask pentru detectarea și recunoașterea peștilor în videoclipuri folosind YOLOv8.
+Python Flask service for real-time fish detection and recognition in videos using YOLOv8.
 
-## Funcționalități
+## Features
 
-- 🐟 Detectarea peștilor în timp real din videoclipuri
-- 🧭 Tracking ByteTrack cu ID persistent pentru fiecare pește
-- 📊 Statistici complete: număr detecții, tipuri, specia dominantă
-- 🎥 Generare video procesat cu bounding boxes și etichete
-- 🌐 Codificare optimizată pentru web (H.264/AV1)
+- Real-time fish detection from videos
+- ByteTrack tracking with a persistent ID for each fish
+- Full statistics: detection count, fish types, dominant species
+- Processed video generation with bounding boxes and labels
+- Web-optimized encoding (H.264/AV1)
 
-## Cerințe
+## Requirements
 
 ### Python Packages
 ```bash
 pip install -r requirements.txt
 ```
 
-`lapx` este dependența suplimentară necesară pentru algoritmul de asociere (Linear Assignment Problem) folosit de ByteTrack. Restul este deja inclus în `ultralytics`.
+`lapx` is the extra dependency required for the assignment algorithm (Linear Assignment Problem) used by ByteTrack. Everything else is already included in `ultralytics`.
 
-### FFmpeg (NECESAR pentru compatibilitate web!)
+### FFmpeg (REQUIRED for web compatibility)
 
-Videoclipurile procesate trebuie re-encodate cu FFmpeg pentru a funcționa în browsere și VSCode.
+Processed videos should be re-encoded with FFmpeg to work reliably in browsers and VS Code.
 
 #### **Windows:**
 
-**Opțiunea 1: Chocolatey (Recomandat)**
+**Option 1: Chocolatey (Recommended)**
 ```powershell
-# Instalează Chocolatey dacă nu îl ai
-# Apoi instalează FFmpeg:
+# Install Chocolatey if needed
+# Then install FFmpeg:
 choco install ffmpeg
 ```
 
-**Opțiunea 2: Manual**
-1. Descarcă FFmpeg de la: https://www.gyan.dev/ffmpeg/builds/
-2. Descarcă `ffmpeg-release-essentials.zip`
-3. Extrage în `C:\ffmpeg`
-4. Adaugă `C:\ffmpeg\bin` în PATH:
-   - Start → "Variabile de mediu" → Path → Edit
-   - Adaugă: `C:\ffmpeg\bin`
-5. Restartează terminalul și testează:
+**Option 2: Manual**
+1. Download FFmpeg from: https://www.gyan.dev/ffmpeg/builds/
+2. Download `ffmpeg-release-essentials.zip`
+3. Extract to `C:\ffmpeg`
+4. Add `C:\ffmpeg\bin` to PATH:
+  - Start -> "Environment Variables" -> Path -> Edit
+   - Add: `C:\ffmpeg\bin`
+5. Restart terminal and test:
    ```powershell
    ffmpeg -version
    ```
 
-**Opțiunea 3: Winget**
+**Option 3: Winget**
 ```powershell
 winget install Gyan.FFmpeg
 ```
@@ -67,125 +67,125 @@ sudo pacman -S ffmpeg
 brew install ffmpeg
 ```
 
-## Configurare Video Encoding
+## Video Encoding Configuration
 
-În `app.py`, poți configura:
+In `app.py`, you can configure:
 
 ```python
-USE_FFMPEG_REENCODE = True  # Activează/dezactivează FFmpeg
+USE_FFMPEG_REENCODE = True  # Enable/disable FFmpeg
 USE_AV1_CODEC = False       # True = AV1, False = H.264
 ```
 
-### Codec-uri disponibile:
+### Available codecs
 
-- **H.264 (libx264)** - **RECOMANDAT** ✅
-  - Compatibilitate maximă cu toate browserele
-  - Viteza de encodare rapidă
-  - Suport excelent pentru streaming
-  - Dimensiune fișier rezonabilă
+- **H.264 (libx264)** - **RECOMMENDED**
+  - Maximum compatibility with all browsers
+  - Fast encoding speed
+  - Excellent streaming support
+  - Reasonable file size
 
-- **AV1 (libaom-av1)** ⚠️
-  - Compresie superioară (fișiere mai mici)
-  - Encodare MULT mai lentă (3-10x)
-  - Suport limitat în browsere vechi
-  - Bun pentru arhivare, nu pentru procesare live
+- **AV1 (libaom-av1)**
+  - Better compression (smaller files)
+  - MUCH slower encoding (3-10x)
+  - Limited support in older browsers
+  - Better for archiving, not live processing
 
 ## ByteTrack Tracking
 
-Am ales ByteTrack deoarece:
+ByteTrack was chosen because:
 
-- Este deja integrat în `ultralytics` (fără dependențe complexe suplimentare)
-- Este mai rapid și mai lightweight decât DeepSORT
-- Funcționează excelent pentru obiecte similare vizual (cum sunt peștii)
-- Folosește `model.track()` în loc de `model()`
+- It is already integrated in `ultralytics` (without complex extra dependencies)
+- It is faster and lighter than DeepSORT
+- It works very well for visually similar objects (such as fish)
+- It uses `model.track()` instead of `model()`
 
-În `app.py` tracking-ul rulează cu:
+In `app.py`, tracking runs with:
 
 - `tracker="bytetrack.yaml"`
 - `persist=True`
 - `conf=0.4`
 
-### Ce s-a schimbat față de versiunea veche
+### What changed compared to the previous version
 
-| Înainte (detecție) | Acum (tracking ByteTrack) |
+| Before (detection) | Now (ByteTrack tracking) |
 |---|---|
-| `model(frame)` detecta pești fără identitate | `model.track(frame, tracker="bytetrack.yaml", persist=True)` dă ID unic fiecărui pește |
-| Număra doar peștii din frame-ul curent | Numără pești unici pe tot videoclipul |
-| Box-uri identice | Fiecare pește are culoare diferită în funcție de ID |
-| Label de tip `Fish: 0.85` | Label de tip `Fish #3 (0.85)` |
+| `model(frame)` detected fish without identity | `model.track(frame, tracker="bytetrack.yaml", persist=True)` gives each fish a unique ID |
+| Counted only fish from the current frame | Counts unique fish across the entire video |
+| Identical boxes | Each fish gets a different color based on ID |
+| `Fish: 0.85` labels | `Fish #3 (0.85)` labels |
 
-### Ce vezi pe ecran
+### What you see on screen
 
-- `In frame: X` - câți pești sunt în cadrul curent
-- `Total unique fish: Y` - câți pești unici au fost detectați de la începutul videoclipului
-- ID persistent pentru fiecare pește (`Fish #1`, `Fish #2`) păstrat frame-to-frame
+- `In frame: X` - how many fish are currently in frame
+- `Total unique fish: Y` - how many unique fish have been detected since video start
+- Persistent ID for each fish (`Fish #1`, `Fish #2`) maintained frame-to-frame
 
-### Parametri ajustabili
+### Tunable parameters
 
-- `conf=0.4` - mărește dacă ai false positives, micșorează dacă pierzi pești
-- `persist=True` - esențial pentru menținerea tracking-ului între frame-uri
-- `tracker="botsort.yaml"` - alternativă mai precisă, dar mai lentă
+- `conf=0.4` - increase if you get false positives, decrease if you miss fish
+- `persist=True` - essential to keep tracking IDs between frames
+- `tracker="botsort.yaml"` - more precise alternative, but slower
 
-## Pornire serviciu
+## Start the service
 
 ```bash
-# Activează environment-ul virtual
-.\venv\Scripts\Activate.ps1  # Windows
-source venv/bin/activate      # Linux/macOS
+# Activate virtual environment
+.\venv\Scripts\Activate.ps1   # Windows
+source venv/bin/activate       # Linux/macOS
 
-# Pornește serviciul
+# Start service
 python app.py
 ```
 
-Scriptul folosește ByteTrack implicit.
+The script uses ByteTrack by default.
 
-Serviciul va rula pe: **http://localhost:5001**
+Service URL: **http://localhost:5001**
 
 ## Endpoints
 
-- `GET /` - Informații serviciu și status FFmpeg
+- `GET /` - Service info and FFmpeg status
 - `GET /health` - Health check
-- `GET /api/supported-fish` - Listă tipuri de pești suportați
-- `POST /api/analyze-video` - Analizează video (upload)
+- `GET /api/supported-fish` - List of supported fish types
+- `POST /api/analyze-video` - Analyze video (upload)
   - Form-data:
-    - `video`: fișier video
-    - `use_ffmpeg`: "true"/"false" (opțional, default: true)
-    - `use_av1`: "true"/"false" (opțional, default: false)
-- `GET /outputs/{filename}` - Descarcă video procesat
-- `GET /uploads/{filename}` - Descarcă video original
+    - `video`: video file
+    - `use_ffmpeg`: "true"/"false" (optional, default: true)
+    - `use_av1`: "true"/"false" (optional, default: false)
+- `GET /outputs/{filename}` - Download processed video
+- `GET /uploads/{filename}` - Download original video
 
-## Verificare FFmpeg
+## FFmpeg verification
 
 ```bash
-# Testează dacă FFmpeg este instalat
+# Test whether FFmpeg is installed
 ffmpeg -version
 
-# Sau accesează:
+# Or access:
 http://localhost:5001/
 ```
 
-Dacă FFmpeg NU este instalat, vei vedea warning-uri în consolă și videoclipurile pot să **nu funcționeze în browsere**.
+If FFmpeg is NOT installed, you will see console warnings and videos may **not work in browsers**.
 
 ## Troubleshooting
 
-### Videoclipurile nu se văd în browser
-- ✅ Verifică dacă FFmpeg este instalat: `ffmpeg -version`
-- ✅ Verifică configurația în `app.py`: `USE_FFMPEG_REENCODE = True`
-- ✅ Verifică console-ul pentru warning-uri FFmpeg
+### Videos do not play in browser
+- Verify FFmpeg is installed: `ffmpeg -version`
+- Verify config in `app.py`: `USE_FFMPEG_REENCODE = True`
+- Check console for FFmpeg warnings
 
-### Encodarea este prea lentă
-- Schimbă de la AV1 la H.264: `USE_AV1_CODEC = False`
-- Sau ajustează preset-ul în funcția `reencode_video_with_ffmpeg()`
+### Encoding is too slow
+- Switch from AV1 to H.264: `USE_AV1_CODEC = False`
+- Or adjust the preset in `reencode_video()`
 
-### FFmpeg nu este găsit
-- Verifică că este în PATH: `echo $env:Path` (Windows) sau `echo $PATH` (Linux/macOS)
-- Restartează terminalul după instalare
-- Pe Windows, poate fi necesar restart sistem
+### FFmpeg not found
+- Verify it is in PATH: `echo $env:Path` (Windows) or `echo $PATH` (Linux/macOS)
+- Restart terminal after installation
+- On Windows, a system restart might be required
 
-## Performanță
+## Performance
 
-- **OpenCV encoding**: Rapid, dar videoclipuri incompatibile web
-- **H.264 encoding**: Adaugă ~10-30% timp procesare, compatibilitate 100%
-- **AV1 encoding**: Adaugă 200-500% timp procesare, compresie optimă
+- **OpenCV encoding**: Fast, but web-incompatible videos
+- **H.264 encoding**: Adds ~10-30% processing time, 100% compatibility
+- **AV1 encoding**: Adds 200-500% processing time, optimal compression
 
-**Pentru producție: folosește H.264!** 🎯
+**For production, use H.264!**

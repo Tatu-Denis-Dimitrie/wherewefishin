@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import {
@@ -72,10 +72,16 @@ export class Cart implements OnInit, OnDestroy {
     public cartService: CartService,
     private bookingService: BookingService,
     private authService: AuthService,
+    private route: ActivatedRoute,
     private router: Router
   ) {}
 
   ngOnInit(): void {
+    const requestedTab = this.route.snapshot.queryParamMap.get('tab');
+    if (requestedTab === 'bookings') {
+      this.activeTab = 'bookings';
+    }
+
     this.loadBookings();
   }
 
@@ -103,7 +109,7 @@ export class Cart implements OnInit, OnDestroy {
 
     if (!environment.stripePublishableKey) {
       this.stripeReady = false;
-      this.stripeError = 'Cheia Stripe publishable nu este configurată.';
+      this.stripeError = 'Stripe publishable key is not configured.';
       return;
     }
 
@@ -116,7 +122,7 @@ export class Cart implements OnInit, OnDestroy {
 
       if (!this.stripe) {
         this.stripeReady = false;
-        this.stripeError = 'Nu s-a putut inițializa Stripe.';
+        this.stripeError = 'Could not initialize Stripe.';
         return;
       }
 
@@ -139,7 +145,7 @@ export class Cart implements OnInit, OnDestroy {
       this.stripeReady = true;
     } catch {
       this.stripeReady = false;
-      this.stripeError = 'Nu s-a putut încărca formularul de plată Stripe.';
+      this.stripeError = 'Could not load Stripe payment form.';
     }
   }
 
@@ -165,7 +171,7 @@ export class Cart implements OnInit, OnDestroy {
         `Username: ${this.authService.getUsername()}`,
         `Booking ID: #${booking.id}`,
         `Spot: ${booking.fishingSpotName}`,
-        `Start: ${new Date(booking.startDate).toLocaleString('ro-RO')}`,
+        `Start: ${new Date(booking.startDate).toLocaleString('en-US')}`,
         `Duration: ${booking.durationHours}h`,
         `Total: ${booking.totalPrice.toFixed(2)} RON`,
         `Status: ${booking.status}`
@@ -216,25 +222,25 @@ export class Cart implements OnInit, OnDestroy {
     const now = new Date();
     for (const item of items) {
       if (!item.startDate) {
-        this.showToast('Setează data de start pentru toate rezervările', 'error');
+        this.showToast('Set the start date for all bookings', 'error');
         return;
       }
 
       if (this.itemTotal(item) <= 0) {
         const itemName = item.pontoonName ? `${item.spotName} - ${item.pontoonName}` : item.spotName;
-        this.showToast(`Rezervarea "${itemName}" are preț invalid (0 RON). Actualizează prețul pe locație înainte de checkout.`, 'error');
+        this.showToast(`Booking "${itemName}" has invalid price (0 RON). Update the spot price before checkout.`, 'error');
         return;
       }
 
       if (new Date(item.startDate) < new Date(now.getTime() - 5 * 60 * 1000)) {
         const itemName = item.pontoonName ? `${item.spotName} - ${item.pontoonName}` : item.spotName;
-        this.showToast(`Data de start pentru "${itemName}" nu poate fi în trecut`, 'error');
+        this.showToast(`Start date for "${itemName}" cannot be in the past`, 'error');
         return;
       }
     }
 
     if (this.cardValidationError) {
-      this.showToast('Datele cardului nu sunt valide.', 'error');
+      this.showToast('Card details are not valid.', 'error');
       return;
     }
 
@@ -243,7 +249,7 @@ export class Cart implements OnInit, OnDestroy {
     }
 
     if (!this.stripeReady || !this.stripe || !this.cardElement) {
-      this.showToast(this.stripeError || 'Formularul de plată nu este disponibil.', 'error');
+      this.showToast(this.stripeError || 'Payment form is not available.', 'error');
       return;
     }
 
@@ -271,12 +277,12 @@ export class Cart implements OnInit, OnDestroy {
         });
 
         if (paymentResult.error) {
-          throw new Error(paymentResult.error.message ?? 'Plata a eșuat.');
+          throw new Error(paymentResult.error.message ?? 'Payment failed.');
         }
 
         const paymentIntent = paymentResult.paymentIntent;
         if (!paymentIntent?.id || paymentIntent.status !== 'succeeded') {
-          throw new Error('Plata nu a fost confirmată de Stripe.');
+          throw new Error('Payment was not confirmed by Stripe.');
         }
 
         await firstValueFrom(this.bookingService.createBooking({
@@ -300,19 +306,19 @@ export class Cart implements OnInit, OnDestroy {
     this.checkingOut = false;
 
     if (errors === 0) {
-      this.showToast('Toate rezervările au fost confirmate și plătite!', 'success');
+      this.showToast('All bookings have been confirmed and paid!', 'success');
       this.activeTab = 'bookings';
       this.loadBookings();
       return;
     }
 
     if (completed === 0) {
-      this.showToast(firstError || 'Checkout-ul a eșuat.', 'error');
+      this.showToast(firstError || 'Checkout failed.', 'error');
       return;
     }
 
     this.showToast(
-      `${completed} rezervare(i) confirmate, ${errors} eșuate${firstError ? `: ${firstError}` : ''}`,
+      `${completed} booking(s) confirmed, ${errors} failed${firstError ? `: ${firstError}` : ''}`,
       'error'
     );
     this.activeTab = 'bookings';
@@ -348,7 +354,7 @@ export class Cart implements OnInit, OnDestroy {
 
   private getErrorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
-      const payload = error.error ?? error.message ?? 'Eroare necunoscută';
+      const payload = error.error ?? error.message ?? 'Unknown error';
       return typeof payload === 'string' ? payload : JSON.stringify(payload);
     }
 
@@ -356,7 +362,7 @@ export class Cart implements OnInit, OnDestroy {
       return error.message;
     }
 
-    return 'Eroare necunoscută';
+    return 'Unknown error';
   }
 
   private showToast(message: string, type: 'success' | 'error'): void {

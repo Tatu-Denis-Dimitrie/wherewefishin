@@ -36,7 +36,7 @@ export class Register {
       const confirmPassword = this.registerForm.value.confirmPassword;
       
       if (password !== confirmPassword) {
-        this.errorMessage = 'Parolele nu coincid';
+        this.errorMessage = 'Passwords do not match';
         return;
       }
 

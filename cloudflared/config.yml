@@ -1,14 +1,14 @@
 # ────────────────────────────────────────────────────
-# ACEST FIȘIER ESTE IGNORAT
+# THIS FILE IS IGNORED
 # ────────────────────────────────────────────────────
-# Tunnelul folosește TUNNEL_TOKEN (remote-managed).
-# Configurația ingress vine din Cloudflare Dashboard.
+# The tunnel uses TUNNEL_TOKEN (remote-managed).
+# Ingress configuration comes from the Cloudflare Dashboard.
 #
-# Dashboard settings necesare:
+# Required dashboard settings:
 #   Public hostname: wherewefishin.uk
 #   Service:         http://frontend:80
 #   Origin Settings:
 #     - Connect Timeout: 30s
-#     - HTTP Host Header: (lăsat gol)
-#     - No TLS Verify: OFF (folosim HTTP nu HTTPS)
+#     - HTTP Host Header: (leave empty)
+#     - No TLS Verify: OFF (we use HTTP, not HTTPS)
 # ────────────────────────────────────────────────────

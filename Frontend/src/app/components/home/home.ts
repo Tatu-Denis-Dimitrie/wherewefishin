@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, HostListener, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -6,10 +6,22 @@ import { AuthService } from '../../services/auth.service';
 import { FishingSpotService, FishingSpot, CreateFishingSpot } from '../../services/fishing-spot.service';
 import { AdminService, AdminStats } from '../../services/admin.service';
 import { VideoAnalysisService } from '../../services/video-analysis.service';
-import { VideoAnalysis } from '../../models/video-analysis.model';
+import { BookingService } from '../../services/booking.service';
+import { Booking } from '../../models/booking.model';
 import { UserService } from '../../services/user.service';
 import { User } from '../../models/user.model';
 import * as L from 'leaflet';
+import QRCode from 'qrcode';
+
+interface NearbySpot {
+  spot: HomeSpot;
+  distanceMeters: number;
+  distanceLabel: string;
+}
+
+interface HomeSpot extends FishingSpot {
+  fishSpecies: string[];
+}
 
 @Component({
   selector: 'app-home',
@@ -20,7 +32,23 @@ import * as L from 'leaflet';
 export class Home implements OnInit, AfterViewInit, OnDestroy {
   private map!: L.Map;
   private markersLayer!: L.LayerGroup;
-  private markerSpotMap = new Map<L.Marker, FishingSpot>();
+  private markerSpotMap = new Map<L.Marker, HomeSpot>();
+  private readonly spotSpeciesByName: Record<string, string[]> = {
+    'snagov lake': ['Carp', 'Pike', 'Perch'],
+    'lacul snagov': ['Carp', 'Pike', 'Perch'],
+    'danube delta': ['Pike', 'Catfish', 'Perch'],
+    'delta dunarii': ['Pike', 'Catfish', 'Perch'],
+    'vidraru dam': ['Trout', 'Perch', 'Carp'],
+    'barajul vidraru': ['Trout', 'Perch', 'Carp'],
+    'bicaz lake': ['Trout', 'Chub', 'Perch'],
+    'lacul bicaz': ['Trout', 'Chub', 'Perch']
+  };
+  private readonly fallbackSpeciesSets: string[][] = [
+    ['Carp', 'Perch'],
+    ['Pike', 'Catfish'],
+    ['Trout', 'Chub'],
+    ['Carp', 'Pike', 'Perch']
+  ];
   private userLocationMarker: L.Marker | null = null;
   private userLocationCircle: L.Circle | null = null;
   private userLatLng: L.LatLng | null = null;
@@ -30,7 +58,13 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   locatingUser = false;
   routeInfo: { distance: string; duration: string; spotName: string } | null = null;
 
-  spots: FishingSpot[] = [];
+  spots: HomeSpot[] = [];
+  visibleSpots: HomeSpot[] = [];
+  closestSpots: NearbySpot[] = [];
+  fishSpeciesOptions: string[] = [];
+  selectedFishSpecies = 'all';
+  hasUserLocation = false;
+  readonly closestSpotsLimit = 3;
   isAddMode = false;
   isDeleteMode = false;
   showMessage = '';
@@ -45,8 +79,16 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   userAnalysesCount = 0;
   userCompletedCount = 0;
   userSpotsCount = 0;
-  recentAnalyses: VideoAnalysis[] = [];
   loadingStats = true;
+  loadingLatestSession = true;
+  selectedSessionView: 'future' | 'past' = 'future';
+  latestPurchasedSession: Booking | null = null;
+  latestFutureSession: Booking | null = null;
+  latestPastSession: Booking | null = null;
+  sessionQrCode = '';
+  isSessionQrVisible = false;
+  isSessionQrLoading = false;
+  private sessionQrBookingId: number | null = null;
   
   // Role helpers
   currentRole: string = '';
@@ -67,8 +109,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     private fishingSpotService: FishingSpotService,
     private adminService: AdminService,
     private videoAnalysisService: VideoAnalysisService,
+    private bookingService: BookingService,
     private router: Router,
-    private userService: UserService
+    private userService: UserService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -90,6 +134,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       setTimeout(() => this.locateUser(), 500);
     }
     setTimeout(() => this.map.invalidateSize(), 250);
+    this.cdr.detectChanges();
   }
 
   private loadDashboardData(): void {
@@ -98,7 +143,14 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     
     if (!userId) {
       this.loadingStats = false;
+      this.loadingLatestSession = false;
       return;
+    }
+
+    if (this.isUser()) {
+      this.loadLatestPurchasedSession();
+    } else {
+      this.loadingLatestSession = false;
     }
 
     // Load user's analyses (for all roles)
@@ -106,7 +158,6 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       next: (analyses) => {
         this.userAnalysesCount = analyses.length;
         this.userCompletedCount = analyses.filter(a => a.status === 'Completed').length;
-        this.recentAnalyses = analyses.slice(0, 3);
         this.loadingStats = false;
       },
       error: () => {
@@ -138,6 +189,36 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         error: () => {}
       });
     }
+  }
+
+  private loadLatestPurchasedSession(): void {
+    this.loadingLatestSession = true;
+
+    this.bookingService.getMyBookings().subscribe({
+      next: (bookings) => {
+        const now = Date.now();
+        const purchased = bookings.filter(b => b.status?.toLowerCase() !== 'cancelled');
+
+        const futureSessions = purchased
+          .filter(b => new Date(b.startDate).getTime() >= now)
+          .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+
+        const pastSessions = purchased
+          .filter(b => new Date(b.startDate).getTime() < now)
+          .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+
+        this.latestFutureSession = futureSessions[0] ?? null;
+        this.latestPastSession = pastSessions[0] ?? null;
+        this.updateSelectedSession();
+        this.loadingLatestSession = false;
+      },
+      error: () => {
+        this.latestPurchasedSession = null;
+        this.latestFutureSession = null;
+        this.latestPastSession = null;
+        this.loadingLatestSession = false;
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -175,10 +256,11 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.map = L.map('map', {
       center: [45.9432, 24.9668],
       zoom: 8,
+      zoomControl: false,
       maxZoom: 20
     });
 
-    L.tileLayer('https://mt1.google.com/vt/lyrs=y&hl=ro&x={x}&y={y}&z={z}', {
+    L.tileLayer('https://mt1.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
       attribution: '&copy; <a href="https://maps.google.com">Google Maps</a>',
       maxZoom: 20,
       subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
@@ -191,8 +273,12 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   private loadSpots(): void {
     this.fishingSpotService.getAll().subscribe({
       next: (spots) => {
-        this.spots = spots;
-        this.renderMarkers();
+        this.spots = spots.map(s => this.enrichSpotWithSpecies(s));
+        this.fishSpeciesOptions = Array.from(new Set(this.spots.flatMap(s => s.fishSpecies))).sort((a, b) => a.localeCompare(b));
+        if (this.selectedFishSpecies !== 'all' && !this.fishSpeciesOptions.includes(this.selectedFishSpecies)) {
+          this.selectedFishSpecies = 'all';
+        }
+        this.applyFishFilter();
       },
       error: () => this.showToast('Failed to load fishing spots', 'error')
     });
@@ -202,7 +288,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.markersLayer.clearLayers();
     this.markerSpotMap.clear();
 
-    this.spots.forEach(spot => {
+    this.visibleSpots.forEach(spot => {
       const marker = L.marker([spot.latitude, spot.longitude], {
         icon: this.createSpotIcon()
       }).bindPopup(this.buildPopupContent(spot), {
@@ -234,11 +320,14 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  private buildPopupContent(spot: FishingSpot): string {
+  private buildPopupContent(spot: HomeSpot): string {
     const priceHtml = spot.pricePerHour > 0
       ? `<div style="display:flex;align-items:center;gap:6px;margin:6px 0 2px">
            <span style="background:#4a7c3022;color:#4a7c30;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #4a7c3044">${spot.pricePerHour} RON / h</span>
          </div>`
+      : '';
+    const fishHtml = spot.fishSpecies.length > 0
+      ? `<div style="color:#93c5fd;font-size:11px;margin-bottom:6px;line-height:1.35">Fish: ${spot.fishSpecies.join(', ')}</div>`
       : '';
 
     const pontoonSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;margin-bottom:1px"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M7 7V5a2 2 0 0 1 4 0v2M13 7V5a2 2 0 0 1 4 0v2"/><line x1="12" y1="12" x2="12" y2="12.01"/></svg>`;
@@ -250,9 +339,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       html += `<div style="color:#64748b;font-size:12px;margin-bottom:4px;line-height:1.4">${spot.description}</div>`;
     }
     html += priceHtml;
+    html += fishHtml;
     html += `<div style="color:#94a3b8;font-size:10px;margin-bottom:10px">${spot.latitude.toFixed(5)}, ${spot.longitude.toFixed(5)}</div>`;
-    html += `<button class="popup-book-btn" style="display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;background:#4a7c30;color:#fff;border:none;transition:filter .15s;">${pontoonSvg}Rezervă Ponton</button>`;
-    html += `<button class="popup-route-btn" style="display:flex;align-items:center;justify-content:center;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;margin-top:6px;background:#1e3a5f;color:#60a5fa;border:1px solid #2563eb55;transition:all .15s">${navSvg}Traseu pe hartă</button>`;
+    html += `<button class="popup-book-btn" style="display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;background:#4a7c30;color:#fff;border:none;transition:filter .15s;">${pontoonSvg}Book Pontoon</button>`;
+    html += `<button class="popup-route-btn" style="display:flex;align-items:center;justify-content:center;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;margin-top:6px;background:#1e3a5f;color:#60a5fa;border:1px solid #2563eb55;transition:all .15s">${navSvg}Route on map</button>`;
     html += `</div>`;
     return html;
   }
@@ -268,7 +358,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         .then(r => r.json())
         .then(data => {
           if (data.code !== 'Ok' || !data.routes?.length) {
-            this.showToast('Nu s-a putut calcula ruta', 'error');
+            this.showToast('Could not calculate route', 'error');
             return;
           }
           const route = data.routes[0];
@@ -299,14 +389,14 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
           this.map.fitBounds(this.routeLayer.getBounds(), { padding: [50, 50] });
         })
-        .catch(() => this.showToast('Eroare la calcularea rutei', 'error'));
+        .catch(() => this.showToast('Error calculating route', 'error'));
     };
 
     if (this.userLatLng) {
       drawRoute(this.userLatLng);
     } else if (navigator.geolocation) {
       this.locatingUser = true;
-      this.showToast('Se obține locația...', 'success');
+      this.showToast('Getting location...', 'success');
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           this.locatingUser = false;
@@ -317,12 +407,12 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         },
         () => {
           this.locatingUser = false;
-          this.showToast('Activează locația pentru a vedea ruta pe hartă', 'error');
+          this.showToast('Enable location to view the route on the map', 'error');
         },
         { enableHighAccuracy: true, timeout: 8000 }
       );
     } else {
-      this.showToast('Geolocation nu este suportat de browser', 'error');
+      this.showToast('Geolocation is not supported by the browser', 'error');
     }
   }
 
@@ -347,16 +437,16 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         const latlng = L.latLng(latitude, longitude);
         this.setUserLocation(latlng, accuracy, true);
         this.persistUserLocation(latlng, accuracy);
-        this.showToast('Locație găsită!', 'success');
+        this.showToast('Location found!', 'success');
       },
       (err) => {
         this.locatingUser = false;
         const messages: Record<number, string> = {
-          1: 'Accesul la locație a fost refuzat',
-          2: 'Locația nu poate fi determinată',
-          3: 'Cererea de locație a expirat'
+          1: 'Location access was denied',
+          2: 'Location cannot be determined',
+          3: 'Location request timed out'
         };
-        this.showToast(messages[err.code] ?? 'Eroare la obținerea locației', 'error');
+        this.showToast(messages[err.code] ?? 'Error getting location', 'error');
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -464,86 +554,88 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     }, 350);
   }
 
+  onFishSpeciesFilterChange(species: string): void {
+    this.selectedFishSpecies = species;
+    this.applyFishFilter();
+  }
+
   @HostListener('window:resize')
   onViewportResize(): void {
     if (!this.map) return;
     requestAnimationFrame(() => this.map.invalidateSize());
   }
 
-  getAnalysisDisplayName(analysis: VideoAnalysis): string {
-    const rawName = (analysis.fileName || '').trim();
-    const fallbackName = `Upload ${this.getAnalysisDateLabel(analysis)}`;
+  setSessionView(view: 'future' | 'past'): void {
+    if (this.selectedSessionView === view) return;
 
-    if (!rawName) {
-      return fallbackName;
-    }
-
-    const nameWithoutExt = rawName.replace(/\.[A-Za-z0-9]{2,5}$/i, '');
-    const cleanedName = nameWithoutExt
-      .replace(/[_-]+/g, ' ')
-      .replace(/\b\d{4,}\b/g, ' ')
-      .replace(/\b(mp4|mov|avi|mkv|webm|video|recording|upload|clip|file|capture)\b/gi, ' ')
-      .replace(/[^A-Za-z0-9ĂÂÎȘȚăâîșț\s]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-
-    if (!cleanedName || cleanedName.length < 3 || !/[A-Za-zĂÂÎȘȚăâîșț]/.test(cleanedName)) {
-      return fallbackName;
-    }
-
-    const prettified = cleanedName
-      .split(' ')
-      .slice(0, 6)
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-
-    return prettified || fallbackName;
+    this.selectedSessionView = view;
+    this.updateSelectedSession();
   }
 
-  getAnalysisSummary(analysis: VideoAnalysis): string {
-    const status = analysis.status?.toLowerCase() || '';
-    if (status === 'completed') {
-      const uniqueCount = analysis.totalUniqueFish ?? analysis.totalDetections;
-      if (uniqueCount > 0) {
-        return `${uniqueCount} capturi unice`;
-      }
-      return 'Analiză finalizată';
-    }
-
-    if (status === 'processing') {
-      return 'Analiză în procesare';
-    }
-
-    if (status === 'failed') {
-      return 'Procesare eșuată';
-    }
-
-    return 'Analiză nouă';
+  getSessionEmptyMessage(): string {
+    return this.selectedSessionView === 'future'
+      ? 'No future purchased sessions found.'
+      : 'No past purchased sessions found.';
   }
 
-  private getAnalysisDateLabel(analysis: VideoAnalysis): string {
-    const sourceDate = analysis.createdAt || analysis.analyzedAt;
-    const parsedDate = sourceDate ? new Date(sourceDate) : new Date();
+  async toggleSessionQrCode(): Promise<void> {
+    const booking = this.latestPurchasedSession;
+    if (!booking) return;
 
-    if (Number.isNaN(parsedDate.getTime())) {
-      return `#${analysis.id}`;
+    if (this.isSessionQrVisible) {
+      this.isSessionQrVisible = false;
+      return;
     }
 
-    return new Intl.DateTimeFormat('ro-RO', {
+    if (this.sessionQrCode && this.sessionQrBookingId === booking.id) {
+      this.isSessionQrVisible = true;
+      return;
+    }
+
+    this.isSessionQrLoading = true;
+    try {
+      const content = [
+        `WhereWeFishin - Booking #${booking.id}`,
+        `Username: ${this.authService.getUsername()}`,
+        `Booking ID: #${booking.id}`,
+        `Spot: ${booking.fishingSpotName}`,
+        `Start: ${new Date(booking.startDate).toLocaleString('en-US')}`,
+        `Duration: ${booking.durationHours}h`,
+        `Total: ${booking.totalPrice.toFixed(2)} RON`,
+        `Status: ${booking.status}`
+      ].join('\n');
+
+      this.sessionQrCode = await QRCode.toDataURL(content, { width: 180, margin: 1 });
+      this.sessionQrBookingId = booking.id;
+      this.isSessionQrVisible = true;
+    } catch {
+      this.showToast('Failed to generate QR code', 'error');
+    } finally {
+      this.isSessionQrLoading = false;
+    }
+  }
+
+  formatBookingDate(dateValue: string): string {
+    const parsed = new Date(dateValue);
+    if (Number.isNaN(parsed.getTime())) {
+      return '-';
+    }
+
+    return new Intl.DateTimeFormat('en-US', {
       day: '2-digit',
       month: '2-digit',
+      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
-    }).format(parsedDate);
+    }).format(parsed);
   }
 
-  getStatusClass(status: string): string {
-    switch (status.toLowerCase()) {
-      case 'completed': return 'status-completed';
-      case 'processing': return 'status-processing';
-      case 'failed': return 'status-failed';
-      default: return 'status-pending';
-    }
+  getBookingStatusClass(status: string): string {
+    const normalized = status.toLowerCase();
+    if (normalized === 'cancelled') return 'booking-status-cancelled';
+    if (normalized === 'confirmed') return 'booking-status-confirmed';
+    if (normalized === 'completed') return 'booking-status-completed';
+    return 'booking-status-pending';
   }
 
   isAdmin(): boolean {
@@ -558,8 +650,44 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     return this.currentRole === 'User';
   }
 
+  openSpotDetails(spotId: number): void {
+    this.router.navigate(['/spots', spotId]);
+  }
+
+  private updateSelectedSession(): void {
+    this.latestPurchasedSession = this.selectedSessionView === 'future'
+      ? this.latestFutureSession
+      : this.latestPastSession;
+
+    this.isSessionQrVisible = false;
+    this.isSessionQrLoading = false;
+    this.sessionQrCode = '';
+    this.sessionQrBookingId = null;
+  }
+
+  private enrichSpotWithSpecies(spot: FishingSpot): HomeSpot {
+    const normalizedName = spot.name.trim().toLowerCase();
+    const mappedSpecies = this.spotSpeciesByName[normalizedName];
+    const fallbackSpecies = this.fallbackSpeciesSets[spot.id % this.fallbackSpeciesSets.length];
+
+    return {
+      ...spot,
+      fishSpecies: [...(mappedSpecies ?? fallbackSpecies)]
+    };
+  }
+
+  private applyFishFilter(): void {
+    this.visibleSpots = this.selectedFishSpecies === 'all'
+      ? [...this.spots]
+      : this.spots.filter(spot => spot.fishSpecies.includes(this.selectedFishSpecies));
+
+    this.rebuildClosestSpots();
+    this.renderMarkers();
+  }
+
   private setUserLocation(latlng: L.LatLng, accuracy: number, animate: boolean): void {
     this.userLatLng = latlng;
+    this.hasUserLocation = true;
 
     if (this.userLocationMarker) this.map.removeLayer(this.userLocationMarker);
     if (this.userLocationCircle) this.map.removeLayer(this.userLocationCircle);
@@ -580,12 +708,48 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     });
 
     this.userLocationMarker = L.marker(latlng, { icon })
-      .bindPopup(`<b>Locația ta</b><br>Precizie: ~${Math.round(accuracy)} m`)
+      .bindPopup(`<b>Your location</b><br>Accuracy: ~${Math.round(accuracy)} m`)
       .addTo(this.map);
+
+    this.rebuildClosestSpots();
 
     if (animate) {
       this.map.flyTo(latlng, 14, { duration: 1.2 });
     }
+  }
+
+  private rebuildClosestSpots(): void {
+    const origin = this.userLatLng;
+    if (!origin || this.visibleSpots.length === 0) {
+      this.closestSpots = [];
+      return;
+    }
+
+    this.closestSpots = this.visibleSpots
+      .filter(spot => Number.isFinite(spot.latitude) && Number.isFinite(spot.longitude))
+      .map(spot => {
+        const distanceMeters = origin.distanceTo(L.latLng(spot.latitude, spot.longitude));
+        return {
+          spot,
+          distanceMeters,
+          distanceLabel: this.formatDistance(distanceMeters)
+        };
+      })
+      .sort((a, b) => a.distanceMeters - b.distanceMeters)
+      .slice(0, this.closestSpotsLimit);
+  }
+
+  private formatDistance(distanceMeters: number): string {
+    if (distanceMeters < 1000) {
+      return `${Math.round(distanceMeters)} m`;
+    }
+
+    const distanceKm = distanceMeters / 1000;
+    if (distanceKm < 10) {
+      return `${distanceKm.toFixed(1)} km`;
+    }
+
+    return `${Math.round(distanceKm)} km`;
   }
 
   private persistUserLocation(latlng: L.LatLng, accuracy: number): void {

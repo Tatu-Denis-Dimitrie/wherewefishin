@@ -47,7 +47,7 @@ public class AuthService : IAuthService
         }
         else
         {
-            // Parolă plain-text (migrare de la versiunea veche): verifică și re-hash
+            // Plain-text password (migration from legacy version): verify and re-hash
             passwordValid = request.Password == user.PasswordHash;
             if (passwordValid)
             {

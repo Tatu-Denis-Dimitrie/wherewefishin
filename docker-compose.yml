@@ -123,11 +123,11 @@ services:
       - app
     restart: unless-stopped
 
-  # ── Cloudflare Tunnel (3 replici HA) ──────────────────────
-  # Trei instanțe separate pe același tunel.
-  # Cloudflare rutează trafic la toate; dacă una moare, celelalte preiau.
-  # Docker restart: always le repornește automat fără intervenție.
-  # NU folosim watchdog - creează cicluri infinite de restarturi.
+  # ── Cloudflare Tunnel (HA replicas) ───────────────────────
+  # Separate instances run on the same tunnel.
+  # Cloudflare load-balances traffic to all; if one fails, the others take over.
+  # Docker restart: always restarts them automatically without manual intervention.
+  # We do NOT use a watchdog - it creates infinite restart loops.
   cloudflared-1:
     image: cloudflare/cloudflared:latest
     container_name: wherewefishin-tunnel-1

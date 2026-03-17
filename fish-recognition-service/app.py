@@ -24,18 +24,18 @@ USE_AV1_CODEC = False
 # ── Model & Tracker ─────────────────────────────────────────
 USE_HALF_PRECISION = True
 IMG_SIZE = 640
-TRACKER_CONFIG = 'bytetrack.yaml'   # alternativa: 'botsort.yaml' (mai precis, mai lent)
-TRACK_CONFIDENCE = 0.5               # prag minim de confidence (↑ = mai putine false positives)
-TRACK_PERSIST = True                 # pastreaza ID-urile intre frame-uri
+TRACKER_CONFIG = 'bytetrack.yaml'   # alternative: 'botsort.yaml' (more precise, slower)
+TRACK_CONFIDENCE = 0.5               # minimum confidence threshold (higher = fewer false positives)
+TRACK_PERSIST = True                 # keep track IDs between frames
 
 # ── Trail / Tracking Points ─────────────────────────────────
-TRAIL_ENABLED = True                 # deseneaza traseul fiecarui peste
-TRAIL_MAX_POINTS = 30                # cate puncte recente sa pastram per pește (↑ = traseu mai lung)
-TRAIL_DOT_RADIUS = 3                 # raza cercului per punct
-TRAIL_LINE_THICKNESS = 2             # grosimea liniei intre puncte
-TRAIL_FADE = True                    # punctele mai vechi devin transparente
-TRAIL_RECLAIM_MIN_POINTS = 2         # min puncte de traseu in chenar pentru re-asociere (↑ = mai strict)
-TRAIL_FADE_OUT_FRAMES = 20          # dupa cate frame-uri de absenta se sterge traseul (0 = instant)
+TRAIL_ENABLED = True                 # draw the trail for each fish
+TRAIL_MAX_POINTS = 30                # how many recent points to keep per fish (higher = longer trail)
+TRAIL_DOT_RADIUS = 3                 # circle radius per trail point
+TRAIL_LINE_THICKNESS = 2             # line thickness between points
+TRAIL_FADE = True                    # older points become more transparent
+TRAIL_RECLAIM_MIN_POINTS = 2         # min trail points inside bbox for re-association (higher = stricter)
+TRAIL_FADE_OUT_FRAMES = 20          # remove trail after this many missing frames (0 = instant)
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)

@@ -48,7 +48,7 @@ builder.Services.AddSwaggerGen(c =>
     { 
         Title = "WhereWeFishin API", 
         Version = "v1",
-        Description = "API pentru aplicația WhereWeFishin - gestionarea locațiilor de pescuit și capturilor"
+        Description = "API for the WhereWeFishin application - managing fishing locations and catches"
     });
 
     // Add JWT Authentication to Swagger
@@ -248,7 +248,7 @@ using (var scope = app.Services.CreateScope())
             logger.LogInformation("Seeding completed! TEST ACCOUNTS:");
             logger.LogInformation("  Admin: admin / admin123");
             logger.LogInformation("  Manager: manager1, manager2 / manager123");
-            logger.LogInformation("  Users: ion_pescar, maria_fisher, etc. / password123");
+            logger.LogInformation("  Users: ion_fisher, maria_fisher, etc. / password123");
         }
     }
     catch (Exception ex)

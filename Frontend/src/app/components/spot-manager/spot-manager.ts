@@ -274,7 +274,7 @@ export class SpotManager implements OnInit, OnDestroy {
         dashArray: '5, 5'
       }).addTo(this.map);
 
-      this.showToast('Atinge al doilea colț pentru a finaliza pontonul', 'success');
+      this.showToast('Tap the second corner to finish the pontoon', 'success');
       return;
     }
 
@@ -296,13 +296,13 @@ export class SpotManager implements OnInit, OnDestroy {
       this.drawingRect.remove();
       this.drawingRect = null;
       this.startLatLng = null;
-      this.showToast('Selectează o zonă mai mare pentru ponton', 'error');
+      this.showToast('Select a larger area for the pontoon', 'error');
       return;
     }
 
     const pontoonData: CreatePontoon = {
       fishingSpotId: this.spot.id,
-      name: this.newPontoonName || `Ponton ${this.pontoons.length + 1}`,
+      name: this.newPontoonName || `Pontoon ${this.pontoons.length + 1}`,
       southWestLat: sw.lat,
       southWestLng: sw.lng,
       northEastLat: ne.lat,
@@ -312,13 +312,13 @@ export class SpotManager implements OnInit, OnDestroy {
 
     this.pontoonService.createPontoon(pontoonData).subscribe({
       next: () => {
-        this.showToast('Ponton adăugat cu succes!', 'success');
+        this.showToast('Pontoon added successfully!', 'success');
         this.loadPontoons();
         this.newPontoonName = '';
         this.toggleDrawingMode();
       },
       error: () => {
-        this.showToast('Eroare la adăugarea pontonului', 'error');
+        this.showToast('Error adding pontoon', 'error');
       }
     });
 
@@ -399,11 +399,11 @@ export class SpotManager implements OnInit, OnDestroy {
         northEastLng: ne.lng
       }).subscribe({
         next: () => {
-          this.showToast('Poziție actualizată!', 'success');
+          this.showToast('Position updated!', 'success');
           this.loadPontoons();
         },
         error: () => {
-          this.showToast('Eroare la actualizarea poziției', 'error');
+          this.showToast('Error updating position', 'error');
           this.loadPontoons();
         }
       });
@@ -533,28 +533,28 @@ export class SpotManager implements OnInit, OnDestroy {
       color: this.editPontoonColor
     }).subscribe({
       next: () => {
-        this.showToast('Ponton actualizat!', 'success');
+        this.showToast('Pontoon updated!', 'success');
         this.loadPontoons();
         this.cancelEdit();
       },
       error: () => {
-        this.showToast('Eroare la actualizarea pontonului', 'error');
+        this.showToast('Error updating pontoon', 'error');
       }
     });
   }
 
   deletePontoon(): void {
     if (!this.editingPontoonId) return;
-    if (!confirm('Sigur dorești să ștergi acest ponton?')) return;
+    if (!confirm('Are you sure you want to delete this pontoon?')) return;
 
     this.pontoonService.deletePontoon(this.editingPontoonId).subscribe({
       next: () => {
-        this.showToast('Ponton șters!', 'success');
+        this.showToast('Pontoon deleted!', 'success');
         this.loadPontoons();
         this.cancelEdit();
       },
       error: () => {
-        this.showToast('Eroare la ștergerea pontonului', 'error');
+        this.showToast('Error deleting pontoon', 'error');
       }
     });
   }

@@ -64,7 +64,7 @@
                   <div>
                     <div class="spot-name">{{ item.spotName }}</div>
                     @if (item.pontoonName) {
-                      <div class="pontoon-name">Ponton: {{ item.pontoonName }}</div>
+                      <div class="pontoon-name">Pontoon: {{ item.pontoonName }}</div>
                     }
                     <div class="spot-coords">{{ item.latitude.toFixed(4) }}, {{ item.longitude.toFixed(4) }}</div>
                   </div>
@@ -80,7 +80,7 @@
               <div class="card-body">
                 <!-- Duration selection -->
                 <div class="field-group">
-                  <label>Durată Sesiune</label>
+                  <label>Session Duration</label>
                   <div class="duration-chips">
                     @for (d of DURATIONS; track d) {
                       <button
@@ -95,7 +95,7 @@
 
                 <!-- Start date/time -->
                 <div class="field-group">
-                  <label>Data și Ora de Start</label>
+                  <label>Start Date and Time</label>
                   <input
                     type="datetime-local"
                     [min]="getMinDate()"
@@ -120,7 +120,7 @@
 
         <!-- Order Summary -->
         <div class="order-summary">
-          <h3>Sumar Comandă</h3>
+          <h3>Order Summary</h3>
           <div class="summary-lines">
             @for (item of cartService.items(); track item.pontoonId || item.spotId) {
               <div class="summary-line">
@@ -134,8 +134,8 @@
             <span>{{ cartService.total() | currency:'RON':'symbol':'1.2-2' }}</span>
           </div>
           <div class="payment-box">
-            <h4>Plată cu Cardul (Stripe)</h4>
-            <p class="payment-note">Card de test: 4242 4242 4242 4242, orice dată viitoare, orice CVC.</p>
+            <h4>Card Payment (Stripe)</h4>
+            <p class="payment-note">Test card: 4242 4242 4242 4242, any future date, any CVC.</p>
             <div class="accepted-cards" aria-label="Carduri acceptate">
               <img src="assets/cards/visa.svg" alt="Visa" class="accepted-card" />
               <img src="assets/cards/mastercard.svg" alt="Mastercard" class="accepted-card" />
@@ -152,13 +152,13 @@
           </div>
           <button class="btn-checkout" (click)="checkout()" [disabled]="checkingOut || !stripeReady">
             @if (checkingOut) {
-              <span class="spinner"></span> Se procesează...
+              <span class="spinner"></span> Processing...
             } @else {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                 <polyline points="22 4 12 14.01 9 11.01"/>
               </svg>
-              Plătește și Confirmă Rezervările
+              Pay and Confirm Bookings
             }
           </button>
         </div>
@@ -169,7 +169,7 @@
   <!-- ===== BOOKINGS TAB ===== -->
   @if (activeTab === 'bookings') {
     @if (loadingBookings) {
-      <div class="loading-state">Se încarcă rezervările...</div>
+      <div class="loading-state">Loading bookings...</div>
     } @else if (myBookings.length === 0) {
       <div class="empty-state">
         <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -177,8 +177,8 @@
           <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
           <line x1="3" y1="10" x2="21" y2="10"/>
         </svg>
-        <p>Nu ai rezervări încă.</p>
-        <button class="btn-primary" (click)="activeTab = 'cart'; goToMap()">Rezervă un Ponton</button>
+        <p>You have no bookings yet.</p>
+        <button class="btn-primary" (click)="activeTab = 'cart'; goToMap()">Book a Pontoon</button>
       </div>
     } @else {
       <div class="bookings-list">
@@ -202,7 +202,7 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                 </svg>
-                {{ booking.startDate | date:'dd MMM yyyy, HH:mm' }} &bull; sesiune {{ booking.durationHours }}h
+                {{ booking.startDate | date:'dd MMM yyyy, HH:mm' }} &bull; session {{ booking.durationHours }}h
               </div>
               <div class="detail-item price-detail">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -214,7 +214,7 @@
             </div>
             @if (booking.status !== 'Cancelled') {
               <div class="booking-actions">
-                <button class="btn-cancel-booking" (click)="cancelBooking(booking.id)">Anulează Rezervarea</button>
+                <button class="btn-cancel-booking" (click)="cancelBooking(booking.id)">Cancel Booking</button>
               </div>
             }
             <div class="qr-section">
@@ -224,12 +224,12 @@
                   <rect x="3" y="14" width="7" height="7"/>
                   <path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01"/>
                 </svg>
-                {{ isQrExpanded(booking.id) ? 'Ascunde Cod QR' : 'Arată Cod QR' }}
+                {{ isQrExpanded(booking.id) ? 'Hide QR Code' : 'Show QR Code' }}
               </button>
               @if (isQrExpanded(booking.id) && qrCodeMap[booking.id]) {
                 <div class="qr-code-container">
                   <img [src]="qrCodeMap[booking.id]" alt="Booking QR Code" class="qr-code-img" />
-                  <p class="qr-hint">Scanează codul QR la locul de pescuit</p>
+                  <p class="qr-hint">Scan the QR code at the fishing location</p>
                 </div>
               }
             </div>
