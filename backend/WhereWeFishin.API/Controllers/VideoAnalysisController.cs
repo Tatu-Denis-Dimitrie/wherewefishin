@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.Configuration;
 using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
@@ -117,7 +118,7 @@ public class VideoAnalysisController : ControllerBase
         var userAnalyses = await _videoRepository.FindAsync(a => a.UserId == userId);
         var sorted = userAnalyses
             .OrderByDescending(a => a.CreatedAt)
-            .Select(MapToDto);
+            .Select(a => MapToDto(a, includeDetections: false));
 
         return Ok(sorted);
     }
@@ -204,6 +205,7 @@ public class VideoAnalysisController : ControllerBase
     }
 
     [HttpGet("supported-fish")]
+    [OutputCache(PolicyName = "LongCache")]
     public async Task<ActionResult<List<string>>> GetSupportedFish()
     {
         var fishTypes = await _fishRecognitionService.GetSupportedFishTypesAsync();
@@ -297,7 +299,7 @@ public class VideoAnalysisController : ControllerBase
         }
     }
 
-    private VideoAnalysisDto MapToDto(VideoAnalysis entity)
+    private VideoAnalysisDto MapToDto(VideoAnalysis entity, bool includeDetections = true)
     {
         Dictionary<string, int>? fishCounts = null;
         List<FishDetectionDto>? detections = null;
@@ -314,7 +316,7 @@ public class VideoAnalysisController : ControllerBase
             }
         }
 
-        if (!string.IsNullOrEmpty(entity.DetectionsJson))
+        if (includeDetections && !string.IsNullOrEmpty(entity.DetectionsJson))
         {
             try
             {

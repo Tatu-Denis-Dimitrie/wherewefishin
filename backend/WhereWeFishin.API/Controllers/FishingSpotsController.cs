@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Interfaces;
@@ -12,13 +13,16 @@ namespace WhereWeFishin.API.Controllers;
 public class FishingSpotsController : ControllerBase
 {
     private readonly IRepository<FishingSpot> _spotRepository;
+    private readonly IOutputCacheStore _cacheStore;
 
-    public FishingSpotsController(IRepository<FishingSpot> spotRepository)
+    public FishingSpotsController(IRepository<FishingSpot> spotRepository, IOutputCacheStore cacheStore)
     {
         _spotRepository = spotRepository;
+        _cacheStore = cacheStore;
     }
 
     [HttpGet]
+    [OutputCache(PolicyName = "MediumCache", Tags = ["fishingspots"])]
     public async Task<ActionResult<IEnumerable<FishingSpotDto>>> GetFishingSpots()
     {
         var spots = await _spotRepository.GetAllAsync();
@@ -26,6 +30,7 @@ public class FishingSpotsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [OutputCache(PolicyName = "MediumCache", Tags = ["fishingspots"])]
     public async Task<ActionResult<FishingSpotDto>> GetFishingSpot(int id)
     {
         var spot = await _spotRepository.GetByIdAsync(id);
@@ -49,6 +54,7 @@ public class FishingSpotsController : ControllerBase
         };
 
         await _spotRepository.AddAsync(spot);
+        await _cacheStore.EvictByTagAsync("fishingspots", default);
         return CreatedAtAction(nameof(GetFishingSpot), new { id = spot.Id }, MapToDto(spot));
     }
 
@@ -69,6 +75,7 @@ public class FishingSpotsController : ControllerBase
         else if (updateSpotDto.ManagerId == null && updateSpotDto.Name != null) spot.ManagerId = null; // explicit clear
 
         await _spotRepository.UpdateAsync(spot);
+        await _cacheStore.EvictByTagAsync("fishingspots", default);
         return NoContent();
     }
 
@@ -79,6 +86,7 @@ public class FishingSpotsController : ControllerBase
         if (!await _spotRepository.ExistsAsync(id)) return NotFound();
         
         await _spotRepository.DeleteAsync(id);
+        await _cacheStore.EvictByTagAsync("fishingspots", default);
         return NoContent();
     }
 

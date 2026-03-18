@@ -50,8 +50,12 @@ public class BookingsController : ControllerBase
         if (userId == null) return Unauthorized();
 
         var sessions = await _sessionRepository.FindAsync(s => s.UserId == userId.Value);
-        var spots = await _spotRepository.GetAllAsync();
-        var pontoons = await _pontoonRepository.GetAllAsync();
+        var spotIds = sessions.Select(s => s.FishingSpotId).Distinct().ToHashSet();
+        var pontoonIds = sessions.Where(s => s.PontoonId.HasValue).Select(s => s.PontoonId!.Value).Distinct().ToHashSet();
+        var spots = await _spotRepository.FindAsync(s => spotIds.Contains(s.Id));
+        var pontoons = pontoonIds.Count > 0
+            ? await _pontoonRepository.FindAsync(p => pontoonIds.Contains(p.Id))
+            : [];
         var spotMap = spots.ToDictionary(s => s.Id, s => s.Name);
         var pontoonMap = pontoons.ToDictionary(p => p.Id, p => p.Name);
 

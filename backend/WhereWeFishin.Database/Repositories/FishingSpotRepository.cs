@@ -18,6 +18,7 @@ public class FishingSpotRepository : Repository<FishingSpot>
     public override async Task<IEnumerable<FishingSpot>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await _dbSet
+            .AsNoTracking()
             .Include(f => f.Manager)
             .Where(f => !f.IsDeleted)
             .ToListAsync(cancellationToken);

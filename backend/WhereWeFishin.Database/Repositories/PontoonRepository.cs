@@ -20,6 +20,7 @@ public class PontoonRepository : Repository<Pontoon>
     public async Task<IEnumerable<Pontoon>> GetByFishingSpotIdAsync(int fishingSpotId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
+            .AsNoTracking()
             .Where(p => p.FishingSpotId == fishingSpotId && !p.IsDeleted)
             .OrderBy(p => p.Name)
             .ToListAsync(cancellationToken);

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { shareReplay } from 'rxjs/operators';
 import { User } from '../models/user.model';
 import { FishingSpot } from './fishing-spot.service';
 import { environment } from '../../environments/environment';
@@ -30,11 +31,21 @@ export interface UpdateFishingSpot {
 })
 export class AdminService {
   private apiUrl = `${environment.apiBaseUrl}/api/admin`;
+  private statsCache$: Observable<AdminStats> | null = null;
 
   constructor(private http: HttpClient) {}
 
   getStats(): Observable<AdminStats> {
-    return this.http.get<AdminStats>(`${this.apiUrl}/stats`);
+    if (!this.statsCache$) {
+      this.statsCache$ = this.http.get<AdminStats>(`${this.apiUrl}/stats`).pipe(
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
+    }
+    return this.statsCache$;
+  }
+
+  clearStatsCache(): void {
+    this.statsCache$ = null;
   }
 
   getUsers(): Observable<User[]> {

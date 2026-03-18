@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -11,7 +11,8 @@ import * as L from 'leaflet';
   selector: 'app-spot-manager',
   imports: [CommonModule, FormsModule],
   templateUrl: './spot-manager.html',
-  styleUrl: './spot-manager.css'
+  styleUrl: './spot-manager.css',
+  encapsulation: ViewEncapsulation.None
 })
 export class SpotManager implements OnInit, OnDestroy {
   spot: FishingSpot | null = null;

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
@@ -14,14 +15,17 @@ public class ReviewsController : ControllerBase
 {
     private readonly ReviewRepository _reviewRepository;
     private readonly IRepository<FishingSpot> _spotRepository;
+    private readonly IOutputCacheStore _cacheStore;
 
-    public ReviewsController(ReviewRepository reviewRepository, IRepository<FishingSpot> spotRepository)
+    public ReviewsController(ReviewRepository reviewRepository, IRepository<FishingSpot> spotRepository, IOutputCacheStore cacheStore)
     {
         _reviewRepository = reviewRepository;
         _spotRepository = spotRepository;
+        _cacheStore = cacheStore;
     }
 
     [HttpGet("spot/{fishingSpotId}")]
+    [OutputCache(PolicyName = "ShortCache", Tags = ["reviews"])]
     public async Task<ActionResult<IEnumerable<ReviewDto>>> GetSpotReviews(int fishingSpotId)
     {
         var spot = await _spotRepository.GetByIdAsync(fishingSpotId);
@@ -32,6 +36,7 @@ public class ReviewsController : ControllerBase
     }
 
     [HttpGet("spot/{fishingSpotId}/average")]
+    [OutputCache(PolicyName = "ShortCache", Tags = ["reviews"])]
     public async Task<ActionResult<object>> GetAverageRating(int fishingSpotId)
     {
         var spot = await _spotRepository.GetByIdAsync(fishingSpotId);
@@ -79,6 +84,8 @@ public class ReviewsController : ControllerBase
 
         await _reviewRepository.AddAsync(review);
 
+        await _cacheStore.EvictByTagAsync("reviews", default);
+
         // Reload with User included
         var createdReview = await _reviewRepository.GetByIdAsync(review.Id);
         return CreatedAtAction(nameof(GetReview), new { id = review.Id }, MapToDto(createdReview!));
@@ -109,6 +116,7 @@ public class ReviewsController : ControllerBase
             review.Comment = updateReviewDto.Comment;
 
         await _reviewRepository.UpdateAsync(review);
+        await _cacheStore.EvictByTagAsync("reviews", default);
         return NoContent();
     }
 
@@ -127,6 +135,7 @@ public class ReviewsController : ControllerBase
             return Forbid();
 
         await _reviewRepository.DeleteAsync(id);
+        await _cacheStore.EvictByTagAsync("reviews", default);
         return NoContent();
     }
 

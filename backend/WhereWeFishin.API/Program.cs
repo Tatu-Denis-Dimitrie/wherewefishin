@@ -31,7 +31,8 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
     serverOptions.Limits.MaxConcurrentUpgradedConnections = 10000;
     serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromSeconds(100); // Better aligned with Cloudflare timeouts
     serverOptions.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(30);
-    serverOptions.ListenAnyIP(8080); 
+    if (!builder.Environment.IsDevelopment())
+        serverOptions.ListenAnyIP(8080);
 });
 
 // Add services to the container
@@ -164,6 +165,7 @@ builder.Services.AddOutputCache(options =>
     options.AddBasePolicy(builder => builder.Expire(TimeSpan.FromSeconds(30)));
     options.AddPolicy("ShortCache", builder => builder.Expire(TimeSpan.FromMinutes(1)));
     options.AddPolicy("MediumCache", builder => builder.Expire(TimeSpan.FromMinutes(5)));
+    options.AddPolicy("LongCache", builder => builder.Expire(TimeSpan.FromMinutes(30)));
 });
 
 // Configure CORS

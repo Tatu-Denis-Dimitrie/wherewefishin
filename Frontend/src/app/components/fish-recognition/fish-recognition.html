@@ -70,12 +70,16 @@
     </div>
 
     <!-- Supported fish tags -->
-    <div class="fish-tags" *ngIf="supportedFish.length">
-      <span class="tags-label">Detectable species</span>
-      <div class="tags-list">
-        <span class="tag" *ngFor="let fish of supportedFish">{{ fish }}</span>
+    @if (supportedFish.length) {
+      <div class="fish-tags">
+        <span class="tags-label">Detectable species</span>
+        <div class="tags-list">
+          @for (fish of supportedFish; track fish) {
+            <span class="tag">{{ fish }}</span>
+          }
+        </div>
       </div>
-    </div>
+    }
   </section>
 
   <!-- Analyses section -->

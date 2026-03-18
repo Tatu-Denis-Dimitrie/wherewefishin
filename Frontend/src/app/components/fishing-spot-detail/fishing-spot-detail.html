@@ -173,7 +173,7 @@
                   <div class="review-header">
                     <div class="reviewer-info">
                       @if (review.userProfilePictureUrl) {
-                        <img [src]="review.userProfilePictureUrl" class="reviewer-avatar" alt="">
+                        <img [src]="review.userProfilePictureUrl" class="reviewer-avatar" alt="" loading="lazy">
                       } @else {
                         <div class="reviewer-avatar-placeholder">{{ review.username.charAt(0).toUpperCase() }}</div>
                       }

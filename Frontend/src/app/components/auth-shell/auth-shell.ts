@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { SiteFooter } from '../site-footer/site-footer';
 
@@ -6,6 +6,7 @@ import { SiteFooter } from '../site-footer/site-footer';
   selector: 'app-auth-shell',
   imports: [RouterModule, SiteFooter],
   templateUrl: './auth-shell.html',
-  styleUrl: './auth-shell.css'
+  styleUrl: './auth-shell.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AuthShell {}

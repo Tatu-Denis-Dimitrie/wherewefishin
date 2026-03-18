@@ -1,41 +1,29 @@
 import { Routes } from '@angular/router';
-import { Login } from './components/login/login';
-import { Register } from './components/register/register';
-import { AuthShell } from './components/auth-shell/auth-shell';
-import { Layout } from './components/layout/layout';
-import { Home } from './components/home/home';
-import { Profile } from './components/profile/profile';
-import { FishRecognition } from './components/fish-recognition/fish-recognition';
-import { Admin } from './components/admin/admin';
-import { Cart } from './components/cart/cart';
-import { FishingSpotDetail } from './components/fishing-spot-detail/fishing-spot-detail';
-import { SpotManager } from './components/spot-manager/spot-manager';
-import { Faq } from './components/faq/faq';
 import { authGuard, adminGuard, managerGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   {
     path: '',
-    component: AuthShell,
+    loadComponent: () => import('./components/auth-shell/auth-shell').then(m => m.AuthShell),
     children: [
-      { path: 'login', component: Login },
-      { path: 'register', component: Register }
+      { path: 'login', loadComponent: () => import('./components/login/login').then(m => m.Login) },
+      { path: 'register', loadComponent: () => import('./components/register/register').then(m => m.Register) }
     ]
   },
   {
     path: '',
-    component: Layout,
+    loadComponent: () => import('./components/layout/layout').then(m => m.Layout),
     canActivate: [authGuard],
     children: [
-      { path: 'home', component: Home },
-      { path: 'profile', component: Profile },
-      { path: 'fish-recognition', component: FishRecognition },
-      { path: 'admin', component: Admin, canActivate: [adminGuard] },
-      { path: 'cart', component: Cart },
-      { path: 'faq', component: Faq },
-      { path: 'spots/:id', component: FishingSpotDetail },
-      { path: 'spots/:id/manage', component: SpotManager, canActivate: [managerGuard] }
+      { path: 'home', loadComponent: () => import('./components/home/home').then(m => m.Home) },
+      { path: 'profile', loadComponent: () => import('./components/profile/profile').then(m => m.Profile) },
+      { path: 'fish-recognition', loadComponent: () => import('./components/fish-recognition/fish-recognition').then(m => m.FishRecognition) },
+      { path: 'admin', loadComponent: () => import('./components/admin/admin').then(m => m.Admin), canActivate: [adminGuard] },
+      { path: 'cart', loadComponent: () => import('./components/cart/cart').then(m => m.Cart) },
+      { path: 'faq', loadComponent: () => import('./components/faq/faq').then(m => m.Faq) },
+      { path: 'spots/:id', loadComponent: () => import('./components/fishing-spot-detail/fishing-spot-detail').then(m => m.FishingSpotDetail) },
+      { path: 'spots/:id/manage', loadComponent: () => import('./components/spot-manager/spot-manager').then(m => m.SpotManager), canActivate: [managerGuard] }
     ]
   }
 ];

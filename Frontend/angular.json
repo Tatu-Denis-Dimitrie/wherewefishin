@@ -25,9 +25,6 @@
               }
             ],
             "styles": [
-              "node_modules/leaflet/dist/leaflet.css",
-              "node_modules/leaflet-draw/dist/leaflet.draw.css",
-              "src/leaflet-path-transform-custom.css",
               "src/styles.css"
             ]
           },
@@ -47,8 +44,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "16kB",
-                  "maximumError": "24kB"
+                  "maximumWarning": "40kB",
+                  "maximumError": "64kB"
                 }
               ],
               "outputHashing": "all",

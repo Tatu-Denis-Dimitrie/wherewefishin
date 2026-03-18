@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Interfaces;
+using WhereWeFishin.Database.Context;
 
 namespace WhereWeFishin.API.Controllers;
 
@@ -15,28 +17,47 @@ public class AdminController : ControllerBase
     private readonly IRepository<VideoAnalysis> _videoRepository;
     private readonly IRepository<FishingSpot> _spotRepository;
     private readonly IRepository<FishingSession> _sessionRepository;
+    private readonly ApplicationDbContext _context;
 
     public AdminController(
         IRepository<User> userRepository,
         IRepository<VideoAnalysis> videoRepository,
         IRepository<FishingSpot> spotRepository,
-        IRepository<FishingSession> sessionRepository)
+        IRepository<FishingSession> sessionRepository,
+        ApplicationDbContext context)
     {
         _userRepository = userRepository;
         _videoRepository = videoRepository;
         _spotRepository = spotRepository;
         _sessionRepository = sessionRepository;
+        _context = context;
     }
 
     [HttpGet("stats")]
     public async Task<ActionResult> GetStats()
     {
-        var totalUsers = await _userRepository.CountAsync();
-        var totalManagers = await _userRepository.CountAsync(u => u.Role == "Manager");
-        var totalAdmins = await _userRepository.CountAsync(u => u.Role == "Admin");
-        var totalAnalyses = await _videoRepository.CountAsync();
-        var completedAnalyses = await _videoRepository.CountAsync(v => v.Status == "Completed");
-        var failedAnalyses = await _videoRepository.CountAsync(v => v.Status == "Failed");
+        // Single GROUP BY query for user counts by role
+        var userCounts = await _context.Set<User>()
+            .Where(u => !u.IsDeleted)
+            .GroupBy(u => u.Role)
+            .Select(g => new { Role = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        var totalUsers = userCounts.Sum(x => x.Count);
+        var totalManagers = userCounts.FirstOrDefault(x => x.Role == "Manager")?.Count ?? 0;
+        var totalAdmins = userCounts.FirstOrDefault(x => x.Role == "Admin")?.Count ?? 0;
+
+        // Single GROUP BY query for video analysis counts by status
+        var analysisCounts = await _context.Set<VideoAnalysis>()
+            .Where(v => !v.IsDeleted)
+            .GroupBy(v => v.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        var totalAnalyses = analysisCounts.Sum(x => x.Count);
+        var completedAnalyses = analysisCounts.FirstOrDefault(x => x.Status == "Completed")?.Count ?? 0;
+        var failedAnalyses = analysisCounts.FirstOrDefault(x => x.Status == "Failed")?.Count ?? 0;
+
         var totalSpots = await _spotRepository.CountAsync();
 
         return Ok(new
@@ -107,10 +128,10 @@ public class AdminController : ControllerBase
         if (user == null) return NotFound();
         if (user.Role == "Admin") return BadRequest(new { message = "Cannot delete admin users" });
 
-        var sessions = await _sessionRepository.FindAsync(s => s.UserId == id);
-        var videos = await _videoRepository.FindAsync(v => v.UserId == id);
+        var sessionCount = await _sessionRepository.CountAsync(s => s.UserId == id);
+        var videoCount = await _videoRepository.CountAsync(v => v.UserId == id);
 
-        if (!sessions.Any() && !videos.Any())
+        if (sessionCount == 0 && videoCount == 0)
             await _userRepository.HardDeleteAsync(id);
         else
             await _userRepository.DeleteAsync(id);

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -13,7 +13,8 @@ import * as L from 'leaflet';
   selector: 'app-fishing-spot-detail',
   imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './fishing-spot-detail.html',
-  styleUrl: './fishing-spot-detail.css'
+  styleUrl: './fishing-spot-detail.css',
+  encapsulation: ViewEncapsulation.None
 })
 export class FishingSpotDetail implements OnInit, OnDestroy {
   spot: FishingSpot | null = null;
@@ -254,7 +255,7 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
     this.reviewService.updateReview(this.editingReviewId, {
       rating: this.newReviewRating,
       comment: this.newReviewComment.trim() || undefined
-    }).subscribe({
+    }, this.spot!.id).subscribe({
       next: () => {
         this.showToast('Review updated!', 'success');
         this.editingReviewId = null;
@@ -273,7 +274,7 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
   deleteReview(reviewId: number): void {
     if (!confirm('Are you sure you want to delete this review?')) return;
     
-    this.reviewService.deleteReview(reviewId).subscribe({
+    this.reviewService.deleteReview(reviewId, this.spot!.id).subscribe({
       next: () => {
         this.showToast('Review deleted!', 'success');
         this.loadReviews(this.spot!.id);

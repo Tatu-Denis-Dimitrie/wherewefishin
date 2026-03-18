@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, HostListener, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, HostListener, ChangeDetectorRef, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -11,7 +11,6 @@ import { Booking } from '../../models/booking.model';
 import { UserService } from '../../services/user.service';
 import { User } from '../../models/user.model';
 import * as L from 'leaflet';
-import QRCode from 'qrcode';
 
 interface NearbySpot {
   spot: HomeSpot;
@@ -27,7 +26,8 @@ interface HomeSpot extends FishingSpot {
   selector: 'app-home',
   imports: [CommonModule, FormsModule],
   templateUrl: './home.html',
-  styleUrl: './home.css'
+  styleUrl: './home.css',
+  encapsulation: ViewEncapsulation.None
 })
 export class Home implements OnInit, AfterViewInit, OnDestroy {
   private map!: L.Map;
@@ -605,6 +605,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         `Status: ${booking.status}`
       ].join('\n');
 
+      const { default: QRCode } = await import('qrcode');
       this.sessionQrCode = await QRCode.toDataURL(content, { width: 180, margin: 1 });
       this.sessionQrBookingId = booking.id;
       this.isSessionQrVisible = true;

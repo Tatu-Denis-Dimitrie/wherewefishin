@@ -21,6 +21,7 @@ public class ReviewRepository : Repository<Review>
     public async Task<IEnumerable<Review>> GetByFishingSpotIdAsync(int fishingSpotId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
+            .AsNoTracking()
             .Include(r => r.User)
             .Where(r => r.FishingSpotId == fishingSpotId && !r.IsDeleted)
             .OrderByDescending(r => r.CreatedAt)
@@ -36,10 +37,13 @@ public class ReviewRepository : Repository<Review>
 
     public async Task<double?> GetAverageRatingAsync(int fishingSpotId, CancellationToken cancellationToken = default)
     {
-        var reviews = await _dbSet
-            .Where(r => r.FishingSpotId == fishingSpotId && !r.IsDeleted)
-            .ToListAsync(cancellationToken);
+        var hasReviews = await _dbSet
+            .AnyAsync(r => r.FishingSpotId == fishingSpotId && !r.IsDeleted, cancellationToken);
 
-        return reviews.Count > 0 ? reviews.Average(r => r.Rating) : null;
+        if (!hasReviews) return null;
+
+        return await _dbSet
+            .Where(r => r.FishingSpotId == fishingSpotId && !r.IsDeleted)
+            .AverageAsync(r => (double)r.Rating, cancellationToken);
     }
 }
