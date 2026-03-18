@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using NSubstitute;
 using WhereWeFishin.API.Controllers;
 using WhereWeFishin.Core.DTOs;
@@ -11,12 +12,14 @@ namespace WhereWeFishin.Tests.Controllers;
 public class FishingSpotsControllerTests
 {
     private readonly IRepository<FishingSpot> _spotRepository;
+    private readonly IOutputCacheStore _cacheStore;
     private readonly FishingSpotsController _controller;
 
     public FishingSpotsControllerTests()
     {
         _spotRepository = Substitute.For<IRepository<FishingSpot>>();
-        _controller = new FishingSpotsController(_spotRepository);
+        _cacheStore = Substitute.For<IOutputCacheStore>();
+        _controller = new FishingSpotsController(_spotRepository, _cacheStore);
     }
 
     private static FishingSpot CreateSpot(int id = 1, string name = "Lake Spot") => new()
