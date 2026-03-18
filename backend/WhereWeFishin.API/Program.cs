@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.Server.IIS;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
@@ -26,8 +27,11 @@ if (!string.IsNullOrWhiteSpace(stripeSecretKey))
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
     serverOptions.Limits.MaxRequestBodySize = 150 * 1024 * 1024; // 150MB
-    serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(5); // Align with nginx keepalive_timeout
+    serverOptions.Limits.MaxConcurrentConnections = 10000;
+    serverOptions.Limits.MaxConcurrentUpgradedConnections = 10000;
+    serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromSeconds(100); // Better aligned with Cloudflare timeouts
     serverOptions.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(30);
+    serverOptions.ListenAnyIP(8080); 
 });
 
 // Add services to the container
@@ -40,6 +44,23 @@ builder.Services.AddControllers(options =>
     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
 });
 builder.Services.AddEndpointsApiExplorer();
+
+// Trust X-Forwarded-* headers from reverse proxies (Cloudflare Tunnel)
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+    // In dev/tunnel scenarios, clear defaults so forwarded headers are honored.
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+// Keep IIS-hosted limits aligned with Kestrel upload limits
+builder.Services.Configure<IISServerOptions>(options =>
+{
+    options.MaxRequestBodySize = 150 * 1024 * 1024;
+});
 
 // Configure Swagger/OpenAPI
 builder.Services.AddSwaggerGen(c =>
@@ -192,6 +213,9 @@ builder.Services.AddHttpClient<IFishRecognitionService, FishRecognitionService>(
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
+
+// Must run first so request scheme/IP are correct for all subsequent middleware.
+app.UseForwardedHeaders();
 
 
 // Apply EF Core migrations automatically on startup (creates DB if it doesn't exist)
@@ -357,11 +381,11 @@ app.MapGet("/health/ready", async (ApplicationDbContext db) =>
     }
 });
 
-// Request timeout middleware – aborts requests that take longer than 120s
+// Request timeout middleware – aborts requests that take longer than 95s
 app.Use(async (context, next) =>
 {
     using var cts = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted);
-    cts.CancelAfter(TimeSpan.FromSeconds(120));
+    cts.CancelAfter(TimeSpan.FromSeconds(95));
     context.RequestAborted = cts.Token;
     await next();
 });
