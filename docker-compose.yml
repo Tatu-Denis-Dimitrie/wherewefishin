@@ -1,151 +1,115 @@
 services:
+    sqlserver:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        environment:
+            ACCEPT_EULA: "Y"
+            MSSQL_SA_PASSWORD: ${SQL_SA_PASSWORD:-YourStr0ngP@ssw0rd!}
+            MSSQL_PID: Express
+        volumes:
+            - sqlserver-data:/var/opt/mssql
+        healthcheck:
+            test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -Q "SELECT 1" -C || exit 1
+            interval: 15s
+            timeout: 5s
+            retries: 10
+            start_period: 45s
+        networks:
+            - app
 
-  # ── SQL Server ────────────────────────────────────────────
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: wherewefishin-db
-    environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: ${SQL_SA_PASSWORD:-YourStr0ngP@ssw0rd!}
-      MSSQL_PID: Express
-    ports:
-      - "1433:1433"
-    volumes:
-      - sqlserver-data:/var/opt/mssql
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-    healthcheck:
-      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$${MSSQL_SA_PASSWORD}" -Q "SELECT 1" -C || exit 1
-      interval: 15s
-      timeout: 5s
-      retries: 10
-      start_period: 45s
-    networks:
-      - app
-    restart: unless-stopped
+    backend:
+        build:
+            context: ./backend
+        environment:
+            ASPNETCORE_ENVIRONMENT: Production
+            ASPNETCORE_URLS: http://+:8080
+            ConnectionStrings__DefaultConnection: >-
+                Server=sqlserver;Database=WhereWeFishinDb;User Id=sa;
+                Password=${SQL_SA_PASSWORD:-YourStr0ngP@ssw0rd!};
+                TrustServerCertificate=true;MultipleActiveResultSets=true;
+                Connect Timeout=120;Max Pool Size=200;Min Pool Size=5;Pooling=true
+            Jwt__Key: ${JWT_KEY:-YourSuperSecretKeyThatShouldBeAtLeast32CharactersLongForHS256Algorithm}
+            Jwt__Issuer: WhereWeFishinAPI
+            Jwt__Audience: WhereWeFishinClient
+            Jwt__ExpirationHours: "24"
+            FishRecognitionService__Url: http://fish-recognition:5001
+            Smtp__Host: smtp.gmail.com
+            Smtp__Port: "587"
+            Smtp__EnableSsl: "true"
+            Smtp__Username: wherewefishing@gmail.com
+            Smtp__Password: ${SMTP_PASSWORD}
+            Smtp__FromEmail: wherewefishing@gmail.com
+            Smtp__FromName: WhereWeFishin
+            Smtp__UseDefaultCredentials: "false"
+            Smtp__FrontendUrl: ${FRONTEND_URL:-https://wherewefishin.uk}
+            Stripe__SecretKey: ${STRIPE_SECRET_KEY}
+        volumes:
+            - backend-uploads:/app/uploads
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+            interval: 10s
+            timeout: 5s
+            retries: 15
+            start_period: 90s
+        depends_on:
+            sqlserver:
+                condition: service_healthy
+        networks:
+            - app
 
-  # ── .NET Backend API ──────────────────────────────────────
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: wherewefishin-backend
-    environment:
-      ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__DefaultConnection: >-
-        Server=sqlserver;Database=WhereWeFishinDb;User Id=sa;
-        Password=${SQL_SA_PASSWORD:-YourStr0ngP@ssw0rd!};
-        TrustServerCertificate=true;MultipleActiveResultSets=true;
-        Connect Timeout=120;Max Pool Size=200;Min Pool Size=5;Pooling=true
-      Jwt__Key: ${JWT_KEY:-YourSuperSecretKeyThatShouldBeAtLeast32CharactersLongForHS256Algorithm}
-      Jwt__Issuer: WhereWeFishinAPI
-      Jwt__Audience: WhereWeFishinClient
-      Jwt__ExpirationHours: "24"
-      FishRecognitionService__Url: http://fish-recognition:5001
-      Smtp__Host: smtp.gmail.com
-      Smtp__Port: "587"
-      Smtp__EnableSsl: "true"
-      Smtp__Username: wherewefishing@gmail.com
-      Smtp__Password: eiyr qrvg ssom sqfp
-      Smtp__FromEmail: wherewefishing@gmail.com
-      Smtp__FromName: WhereWeFishin
-      Smtp__UseDefaultCredentials: "false"
-      Smtp__FrontendUrl: ${FRONTEND_URL:-https://wherewefishin.uk}
-      Stripe__SecretKey: ${STRIPE_SECRET_KEY:-sk_test_51T3tmZLbUF11stB2MBlfdXrkJDs40dmH5CcPhaQTKMOtpBVKAZlQ7SEGN4tGtKdIY3Dt1ojOjKnSSSOszmYuzGlD00DiB3OCmv}
-    ports:
-      - "8080:8080"
-    volumes:
-      - backend-uploads:/app/uploads
-    stop_grace_period: 30s
-    depends_on:
-      sqlserver:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 90s
-    networks:
-      - app
-    restart: unless-stopped
+    fish-recognition:
+        build:
+            context: ./fish-recognition-service
+        environment:
+            FLASK_ENV: production
+            FLASK_DEBUG: "0"
+            PYTHONUNBUFFERED: "1"
+            NVIDIA_VISIBLE_DEVICES: all
+            NVIDIA_DRIVER_CAPABILITIES: compute,utility
+        volumes:
+            - fish-uploads:/app/uploads
+            - fish-outputs:/app/outputs
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          count: 1
+                          capabilities: [gpu]
+        networks:
+            - app
 
-  # ── Fish Recognition (GPU) ───────────────────────────────
-  fish-recognition:
-    build:
-      context: ./fish-recognition-service
-      dockerfile: Dockerfile
-    container_name: wherewefishin-fish-recognition
-    environment:
-      FLASK_ENV: production
-      FLASK_DEBUG: "0"
-      PYTHONUNBUFFERED: "1"
-      NVIDIA_VISIBLE_DEVICES: all
-      NVIDIA_DRIVER_CAPABILITIES: compute,utility
-    ports:
-      - "5001:5001"
-    volumes:
-      - fish-uploads:/app/uploads
-      - fish-outputs:/app/outputs
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    networks:
-      - app
-    restart: unless-stopped
+    frontend:
+        build:
+            context: ./Frontend
+            args:
+                STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost/health"]
+            interval: 10s
+            timeout: 5s
+            retries: 10
+            start_period: 20s
+        networks:
+            - app
 
-  # ── Frontend (nginx reverse-proxy + Angular SPA) ─────────
-  frontend:
-    build:
-      context: ./Frontend
-      dockerfile: Dockerfile
-      args:
-        STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-pk_test_51T3tmZLbUF11stB2s4FUN6xMWGAhgT9P9daOS7hFjpB5X4VZldHe5pScprP7D1hJPjL1sM7JVOzsUBhX6rVyqEVt00Ucyq4JYv}
-    container_name: wherewefishin-frontend
-    ports:
-      - "80:80"
-    depends_on:
-      backend:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-sf", "http://127.0.0.1:80/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
-    networks:
-      - app
-    restart: unless-stopped
-
-  # ── Cloudflare Tunnel (HA replicas) ───────────────────────
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate --ha-connections 8 --protocol http2 run app-tunnel
-    environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      frontend:
-        condition: service_healthy
-    restart: always
-    deploy:
-      replicas: 8
-      resources:
-        limits:
-          memory: 512M
-    networks:
-      - app
+    cloudflared:
+        image: cloudflare/cloudflared:latest
+        command: tunnel --no-autoupdate run --ha-connections 4 --protocol http2 --token ${CLOUDFLARE_TUNNEL_TOKEN}
+        depends_on:
+            frontend:
+                condition: service_healthy
+            backend:
+                condition: service_healthy
+        restart: unless-stopped
+        networks:
+            - app
 
 networks:
-  app:
-    driver: bridge
+    app:
+        driver: bridge
+
 volumes:
-  sqlserver-data:
-  backend-uploads:
-  fish-uploads:
-  fish-outputs:
+    sqlserver-data:
+    backend-uploads:
+    fish-uploads:
+    fish-outputs:
