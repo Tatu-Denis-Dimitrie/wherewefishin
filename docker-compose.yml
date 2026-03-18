@@ -126,7 +126,7 @@ services:
   # ── Cloudflare Tunnel (HA replicas) ───────────────────────
   cloudflared:
     image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate --ha-connections 8 --protocol http2 run app-tunnel
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
@@ -134,7 +134,7 @@ services:
         condition: service_healthy
     restart: always
     deploy:
-      replicas: 8
+      replicas: 25
       resources:
         limits:
           memory: 512M
