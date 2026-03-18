@@ -123,7 +123,7 @@ services:
       - app
     restart: unless-stopped
 
-  # ── Cloudflare Tunnel (HA replicas) ───────────────────────
+  # ── Cloudflare Tunnel (HA replicas) ─────────────────────
   cloudflared:
     image: cloudflare/cloudflared:latest
     command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
