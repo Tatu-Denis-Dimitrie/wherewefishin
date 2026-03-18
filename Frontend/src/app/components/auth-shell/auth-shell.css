@@ -8,7 +8,7 @@
   min-height: 100vh;
   min-height: 100dvh;
   box-sizing: border-box;
-  padding: var(--safe-area-top) var(--safe-area-right) var(--safe-area-bottom) var(--safe-area-left);
+  padding: var(--safe-area-top) var(--safe-area-right) 0 var(--safe-area-left);
   display: flex;
   flex-direction: column;
   background:
