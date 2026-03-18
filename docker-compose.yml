@@ -124,7 +124,7 @@ services:
     restart: unless-stopped
 
   # ── Cloudflare Tunnel (HA replicas) ─────────────────────
-  cloudflared:
+  cloudflared-1:
     image: cloudflare/cloudflared:latest
     command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
     environment:
@@ -134,7 +134,216 @@ services:
         condition: service_healthy
     restart: always
     deploy:
-      replicas: 20
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app
+  cloudflared-2:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app
+  cloudflared-3:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app
+  cloudflared-4:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app
+  cloudflared-5:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app
+  cloudflared-6:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app
+  cloudflared-7:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app
+  cloudflared-8:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app
+  cloudflared-9:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app
+  cloudflared-10:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app
+  cloudflared-11:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app
+  cloudflared-12:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app
+  cloudflared-13:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app
+  cloudflared-14:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app
+  cloudflared-15:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      frontend:
+        condition: service_healthy
+    restart: always
+    deploy:
       resources:
         limits:
           memory: 512M
