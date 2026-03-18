@@ -123,9 +123,14 @@ services:
       - app
     restart: unless-stopped
 
-  # ── Cloudflare Tunnel (HA replicas) ─────────────────────
+  # ── Cloudflare Tunnel (3 replici HA) ──────────────────────
+  # Trei instanțe separate pe același tunel.
+  # Cloudflare rutează trafic la toate; dacă una moare, celelalte preiau.
+  # Docker restart: always le repornește automat fără intervenție.
+  # NU folosim watchdog - creează cicluri infinite de restarturi.
   cloudflared-1:
     image: cloudflare/cloudflared:latest
+    container_name: wherewefishin-tunnel-1
     command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
@@ -139,8 +144,10 @@ services:
           memory: 512M
     networks:
       - app
+
   cloudflared-2:
     image: cloudflare/cloudflared:latest
+    container_name: wherewefishin-tunnel-2
     command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
@@ -154,8 +161,10 @@ services:
           memory: 512M
     networks:
       - app
+
   cloudflared-3:
     image: cloudflare/cloudflared:latest
+    container_name: wherewefishin-tunnel-3
     command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
@@ -171,6 +180,7 @@ services:
       - app
   cloudflared-4:
     image: cloudflare/cloudflared:latest
+    container_name: wherewefishin-tunnel-4
     command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
@@ -186,6 +196,7 @@ services:
       - app
   cloudflared-5:
     image: cloudflare/cloudflared:latest
+    container_name: wherewefishin-tunnel-5
     command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
@@ -201,6 +212,7 @@ services:
       - app
   cloudflared-6:
     image: cloudflare/cloudflared:latest
+    container_name: wherewefishin-tunnel-6
     command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
@@ -215,140 +227,229 @@ services:
     networks:
       - app
   cloudflared-7:
-    image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
-    environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      frontend:
-        condition: service_healthy
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    networks:
-      - app
+      image: cloudflare/cloudflared:latest
+      container_name: wherewefishin-tunnel-7
+      command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+      environment:
+        TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+      depends_on:
+        frontend:
+          condition: service_healthy
+      restart: always
+      deploy:
+        resources:
+          limits:
+            memory: 512M
+      networks:
+        - app
   cloudflared-8:
-    image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
-    environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      frontend:
-        condition: service_healthy
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    networks:
-      - app
+      image: cloudflare/cloudflared:latest
+      container_name: wherewefishin-tunnel-8
+      command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+      environment:
+        TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+      depends_on:
+        frontend:
+          condition: service_healthy
+      restart: always
+      deploy:
+        resources:
+          limits:
+            memory: 512M
+      networks:
+        - app
   cloudflared-9:
-    image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
-    environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      frontend:
-        condition: service_healthy
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    networks:
-      - app
+      image: cloudflare/cloudflared:latest
+      container_name: wherewefishin-tunnel-9
+      command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+      environment:
+        TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+      depends_on:
+        frontend:
+          condition: service_healthy
+      restart: always
+      deploy:
+        resources:
+          limits:
+            memory: 512M
+      networks:
+        - app
   cloudflared-10:
-    image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
-    environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      frontend:
-        condition: service_healthy
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    networks:
-      - app
+      image: cloudflare/cloudflared:latest
+      container_name: wherewefishin-tunnel-10
+      command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+      environment:
+        TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+      depends_on:
+        frontend:
+          condition: service_healthy
+      restart: always
+      deploy:
+        resources:
+          limits:
+            memory: 512M
+      networks:
+        - app
   cloudflared-11:
-    image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
-    environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      frontend:
-        condition: service_healthy
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    networks:
-      - app
+      image: cloudflare/cloudflared:latest
+      container_name: wherewefishin-tunnel-11
+      command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+      environment:
+        TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+      depends_on:
+        frontend:
+          condition: service_healthy
+      restart: always
+      deploy:
+        resources:
+          limits:
+            memory: 512M
+      networks:
+        - app
   cloudflared-12:
-    image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
-    environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      frontend:
-        condition: service_healthy
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    networks:
-      - app
+      image: cloudflare/cloudflared:latest
+      container_name: wherewefishin-tunnel-12
+      command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+      environment:
+        TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+      depends_on:
+        frontend:
+          condition: service_healthy
+      restart: always
+      deploy:
+        resources:
+          limits:
+            memory: 512M
+      networks:
+        - app
   cloudflared-13:
-    image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
-    environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      frontend:
-        condition: service_healthy
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    networks:
-      - app
+      image: cloudflare/cloudflared:latest
+      container_name: wherewefishin-tunnel-13
+      command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+      environment:
+        TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+      depends_on:
+        frontend:
+          condition: service_healthy
+      restart: always
+      deploy:
+        resources:
+          limits:
+            memory: 512M
+      networks:
+        - app
   cloudflared-14:
-    image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
-    environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      frontend:
-        condition: service_healthy
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    networks:
-      - app
+      image: cloudflare/cloudflared:latest
+      container_name: wherewefishin-tunnel-14
+      command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+      environment:
+        TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+      depends_on:
+        frontend:
+          condition: service_healthy
+      restart: always
+      deploy:
+        resources:
+          limits:
+            memory: 512M
+      networks:
+        - app
   cloudflared-15:
-    image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
-    environment:
-      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
-    depends_on:
-      frontend:
-        condition: service_healthy
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    networks:
-      - app
+      image: cloudflare/cloudflared:latest
+      container_name: wherewefishin-tunnel-15
+      command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+      environment:
+        TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+      depends_on:
+        frontend:
+          condition: service_healthy
+      restart: always
+      deploy:
+        resources:
+          limits:
+            memory: 512M
+      networks:
+        - app
+  cloudflared-16:
+      image: cloudflare/cloudflared:latest
+      container_name: wherewefishin-tunnel-16
+      command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+      environment:
+        TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+      depends_on:
+        frontend:
+          condition: service_healthy
+      restart: always
+      deploy:
+        resources:
+          limits:
+            memory: 512M
+      networks:
+        - app
+  cloudflared-17:
+      image: cloudflare/cloudflared:latest
+      container_name: wherewefishin-tunnel-17
+      command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+      environment:
+        TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+      depends_on:
+        frontend:
+          condition: service_healthy
+      restart: always
+      deploy:
+        resources:
+          limits:
+            memory: 512M
+      networks:
+        - app
+  cloudflared-18:
+      image: cloudflare/cloudflared:latest
+      container_name: wherewefishin-tunnel-18
+      command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+      environment:
+        TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+      depends_on:
+        frontend:
+          condition: service_healthy
+      restart: always
+      deploy:
+        resources:
+          limits:
+            memory: 512M
+      networks:
+        - app
+  cloudflared-19:
+      image: cloudflare/cloudflared:latest
+      container_name: wherewefishin-tunnel-19
+      command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+      environment:
+        TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+      depends_on:
+        frontend:
+          condition: service_healthy
+      restart: always
+      deploy:
+        resources:
+          limits:
+            memory: 512M
+      networks:
+        - app
+  cloudflared-20:
+      image: cloudflare/cloudflared:latest
+      container_name: wherewefishin-tunnel-20
+      command: tunnel --no-autoupdate --ha-connections 4 --protocol http2 run app-tunnel
+      environment:
+        TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+      depends_on:
+        frontend:
+          condition: service_healthy
+      restart: always
+      deploy:
+        resources:
+          limits:
+            memory: 512M
+      networks:
+        - app
 
 networks:
   app:
