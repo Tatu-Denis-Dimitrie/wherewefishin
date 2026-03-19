@@ -2,7 +2,7 @@ import { HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { retry, timer } from 'rxjs';
 
 const MAX_RETRIES = 3;
-const INITIAL_DELAY_MS = 1000;
+const INITIAL_DELAY_MS = 1500;
 // Status 0 = network error (connection reset/refused)
 const RETRYABLE_STATUS_CODES = [0, 502, 503, 504];
 
@@ -21,7 +21,14 @@ export const retryInterceptor: HttpInterceptorFn = (req, next) => {
         if (!isIdempotent(req) && error.status !== 0 && error.status !== 502) {
           throw error;
         }
-        const delayMs = INITIAL_DELAY_MS * Math.pow(2, retryCount - 1);
+        // Don't retry upload/video endpoints (they are long-running)
+        if (isLongRunningRequest(req)) {
+          throw error;
+        }
+        // Exponential backoff with jitter to avoid thundering herd
+        const baseDelay = INITIAL_DELAY_MS * Math.pow(2, retryCount - 1);
+        const jitter = Math.random() * baseDelay * 0.3;
+        const delayMs = baseDelay + jitter;
         return timer(delayMs);
       }
     })
@@ -30,4 +37,9 @@ export const retryInterceptor: HttpInterceptorFn = (req, next) => {
 
 function isIdempotent(req: HttpRequest<unknown>): boolean {
   return ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE'].includes(req.method);
+}
+
+function isLongRunningRequest(req: HttpRequest<unknown>): boolean {
+  const url = req.url.toLowerCase();
+  return url.includes('/videoanalysis/upload') || url.includes('/processed-video/');
 }

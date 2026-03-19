@@ -211,6 +211,15 @@ builder.Services.AddHttpClient<IFishRecognitionService, FishRecognitionService>(
     client.Timeout = TimeSpan.FromMinutes(20); // For video processing - increased for longer videos
 });
 
+// Named HttpClient for fish-recognition auxiliary requests (delete, proxy)
+builder.Services.AddHttpClient("FishService", client =>
+{
+    var fishServiceUrl = builder.Configuration["FishRecognitionService:Url"]
+        ?? "http://localhost:5001";
+    client.BaseAddress = new Uri(fishServiceUrl);
+    client.Timeout = TimeSpan.FromMinutes(5);
+});
+
 // Register HttpClientFactory for general use
 builder.Services.AddHttpClient();
 
@@ -383,11 +392,16 @@ app.MapGet("/health/ready", async (ApplicationDbContext db) =>
     }
 });
 
-// Request timeout middleware – aborts requests that take longer than 95s
+// Request timeout middleware – longer for video endpoints, 120s for regular API
 app.Use(async (context, next) =>
 {
+    var path = context.Request.Path.Value ?? "";
+    var isVideoEndpoint = path.Contains("/videoanalysis/", StringComparison.OrdinalIgnoreCase)
+                       || path.Contains("/processed-video/", StringComparison.OrdinalIgnoreCase);
+    var timeout = isVideoEndpoint ? TimeSpan.FromMinutes(20) : TimeSpan.FromSeconds(120);
+
     using var cts = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted);
-    cts.CancelAfter(TimeSpan.FromSeconds(95));
+    cts.CancelAfter(timeout);
     context.RequestAborted = cts.Token;
     await next();
 });

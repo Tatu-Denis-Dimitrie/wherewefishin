@@ -163,8 +163,8 @@ public class VideoAnalysisController : ControllerBase
             try
             {
                 var outputFilename = Path.GetFileName(analysis.ProcessedVideoUrl.Replace('/', Path.DirectorySeparatorChar));
-                var httpClient = _httpClientFactory.CreateClient();
-                await httpClient.DeleteAsync($"{_fishRecognitionServiceUrl}/api/delete-output/{outputFilename}");
+                var httpClient = _httpClientFactory.CreateClient("FishService");
+                await httpClient.DeleteAsync($"api/delete-output/{outputFilename}");
             }
             catch (Exception ex)
             {
@@ -217,10 +217,8 @@ public class VideoAnalysisController : ControllerBase
     {
         try
         {
-            var videoUrl = $"{_fishRecognitionServiceUrl}/outputs/{filename}";
-
-            var httpClient = _httpClientFactory.CreateClient();
-            var requestMessage = new HttpRequestMessage(HttpMethod.Get, videoUrl);
+            var httpClient = _httpClientFactory.CreateClient("FishService");
+            var requestMessage = new HttpRequestMessage(HttpMethod.Get, $"outputs/{filename}");
 
             // Forward Range header so Python can return partial content (needed for video seeking)
             if (Request.Headers.TryGetValue("Range", out var rangeValues))

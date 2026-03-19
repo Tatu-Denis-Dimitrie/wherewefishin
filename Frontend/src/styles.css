@@ -118,9 +118,7 @@ body {
   width: 20px;
   height: 20px;
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow: visible;
 }
 .user-location-dot::after {
   content: '';
@@ -131,6 +129,9 @@ body {
   border-radius: 50%;
   box-shadow: 0 0 6px rgba(59,130,246,0.7);
   position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 .user-location-pulse {
   width: 40px;
@@ -156,6 +157,11 @@ body {
     max-width: 100% !important;
     overflow: hidden !important;
   }
+}
+
+/* Allow user-location icon and pulse to overflow outside the 20x20 icon bounds */
+.leaflet-marker-icon:has(.user-location-dot) {
+  overflow: visible !important;
 }
 
 /* ---- PWA portrait-only fallback on touch devices ---- */
