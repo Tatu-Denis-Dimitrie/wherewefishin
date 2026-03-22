@@ -73,6 +73,19 @@ public class FishingSpotsController : ControllerBase
         spot.PricePerHour = updateSpotDto.PricePerHour ?? spot.PricePerHour;
         if (updateSpotDto.ManagerId.HasValue) spot.ManagerId = updateSpotDto.ManagerId;
         else if (updateSpotDto.ManagerId == null && updateSpotDto.Name != null) spot.ManagerId = null; // explicit clear
+        if (updateSpotDto.ResetDefaultMapView)
+        {
+            spot.DefaultZoom = null;
+            spot.DefaultCenterLat = null;
+            spot.DefaultCenterLng = null;
+        }
+        else
+        {
+            if (updateSpotDto.DefaultZoom.HasValue) spot.DefaultZoom = updateSpotDto.DefaultZoom;
+            if (updateSpotDto.DefaultCenterLat.HasValue) spot.DefaultCenterLat = updateSpotDto.DefaultCenterLat;
+            if (updateSpotDto.DefaultCenterLng.HasValue) spot.DefaultCenterLng = updateSpotDto.DefaultCenterLng;
+        }
+        if (updateSpotDto.FishSpecies != null) spot.FishSpecies = updateSpotDto.FishSpecies;
 
         await _spotRepository.UpdateAsync(spot);
         await _cacheStore.EvictByTagAsync("fishingspots", default);
@@ -106,6 +119,10 @@ public class FishingSpotsController : ControllerBase
                 ? $"{spot.Manager.FirstName} {spot.Manager.LastName}".Trim()
                 : spot.Manager.Username
             : null,
+        DefaultZoom = spot.DefaultZoom,
+        DefaultCenterLat = spot.DefaultCenterLat,
+        DefaultCenterLng = spot.DefaultCenterLng,
+        FishSpecies = spot.FishSpecies,
         CreatedAt = spot.CreatedAt
     };
 }

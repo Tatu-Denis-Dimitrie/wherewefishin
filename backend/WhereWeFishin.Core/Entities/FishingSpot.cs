@@ -10,6 +10,13 @@ public class FishingSpot : BaseEntity
     public decimal PricePerHour { get; set; } = 0;
     public int UserId { get; set; }
     public int? ManagerId { get; set; }
+    
+    // Map display settings
+    public int? DefaultZoom { get; set; }
+    public double? DefaultCenterLat { get; set; }
+    public double? DefaultCenterLng { get; set; }
+    
+    public string? FishSpecies { get; set; }
 
     public User User { get; set; } = null!;
     public User? Manager { get; set; }

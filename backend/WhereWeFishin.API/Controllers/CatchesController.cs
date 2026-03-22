@@ -32,6 +32,19 @@ public class CatchesController : ControllerBase
         return catchEntity == null ? NotFound() : Ok(MapToDto(catchEntity));
     }
 
+    [HttpGet("spot/{spotId}/species")]
+    public async Task<ActionResult<IEnumerable<string>>> GetSpotSpecies(int spotId)
+    {
+        var catches = await _catchRepository.FindAsync(c => c.FishingSpotId == spotId);
+        var species = catches
+            .Select(c => c.FishSpecies.Trim())
+            .Where(s => !string.IsNullOrEmpty(s))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(s => s)
+            .ToList();
+        return Ok(species);
+    }
+
     [HttpPost]
     [Authorize]
     public async Task<ActionResult<CatchDto>> CreateCatch([FromBody] CreateCatchDto createCatchDto)

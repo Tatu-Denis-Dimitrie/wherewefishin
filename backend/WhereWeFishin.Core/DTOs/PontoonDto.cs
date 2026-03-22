@@ -10,6 +10,7 @@ public class PontoonDto
     public double NorthEastLat { get; set; }
     public double NorthEastLng { get; set; }
     public string? Color { get; set; }
+    public string? Coordinates { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
@@ -22,6 +23,7 @@ public class CreatePontoonDto
     public double NorthEastLat { get; set; }
     public double NorthEastLng { get; set; }
     public string? Color { get; set; }
+    public string? Coordinates { get; set; }
 }
 
 public class UpdatePontoonDto
@@ -32,4 +34,5 @@ public class UpdatePontoonDto
     public double? NorthEastLat { get; set; }
     public double? NorthEastLng { get; set; }
     public string? Color { get; set; }
+    public string? Coordinates { get; set; }
 }

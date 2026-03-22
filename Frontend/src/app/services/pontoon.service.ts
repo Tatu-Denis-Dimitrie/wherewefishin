@@ -12,6 +12,7 @@ export interface Pontoon {
   northEastLat: number;
   northEastLng: number;
   color?: string;
+  coordinates?: string;
   createdAt: Date;
 }
 
@@ -23,6 +24,7 @@ export interface CreatePontoon {
   northEastLat: number;
   northEastLng: number;
   color?: string;
+  coordinates?: string;
 }
 
 export interface UpdatePontoon {
@@ -32,6 +34,7 @@ export interface UpdatePontoon {
   northEastLat?: number;
   northEastLng?: number;
   color?: string;
+  coordinates?: string;
 }
 
 @Injectable({

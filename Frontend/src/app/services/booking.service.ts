@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { shareReplay, tap } from 'rxjs/operators';
 import {
   Booking,
+  BookedPeriod,
   CreateBookingRequest,
   CreatePaymentIntentRequest,
   PaymentIntentResponse
@@ -46,5 +47,12 @@ export class BookingService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
       tap(() => this.clearCache())
     );
+  }
+
+  getBookedPeriods(pontoonId?: number, spotId?: number): Observable<BookedPeriod[]> {
+    const params: string[] = [];
+    if (pontoonId) params.push(`pontoonId=${pontoonId}`);
+    else if (spotId) params.push(`spotId=${spotId}`);
+    return this.http.get<BookedPeriod[]>(`${this.apiUrl}/booked-periods?${params.join('&')}`);
   }
 }

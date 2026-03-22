@@ -60,7 +60,8 @@ public class PontoonsController : ControllerBase
             SouthWestLng = createPontoonDto.SouthWestLng,
             NorthEastLat = createPontoonDto.NorthEastLat,
             NorthEastLng = createPontoonDto.NorthEastLng,
-            Color = createPontoonDto.Color ?? "#3388ff"
+            Color = createPontoonDto.Color ?? "#3388ff",
+            Coordinates = createPontoonDto.Coordinates
         };
 
         await _pontoonRepository.AddAsync(pontoon);
@@ -96,6 +97,8 @@ public class PontoonsController : ControllerBase
             pontoon.NorthEastLng = updatePontoonDto.NorthEastLng.Value;
         if (updatePontoonDto.Color != null)
             pontoon.Color = updatePontoonDto.Color;
+        if (updatePontoonDto.Coordinates != null)
+            pontoon.Coordinates = updatePontoonDto.Coordinates;
 
         await _pontoonRepository.UpdateAsync(pontoon);
         return NoContent();
@@ -132,6 +135,7 @@ public class PontoonsController : ControllerBase
         NorthEastLat = pontoon.NorthEastLat,
         NorthEastLng = pontoon.NorthEastLng,
         Color = pontoon.Color,
+        Coordinates = pontoon.Coordinates,
         CreatedAt = pontoon.CreatedAt
     };
 }

@@ -12,6 +12,10 @@ public class FishingSpotDto
     public int UserId { get; set; }
     public int? ManagerId { get; set; }
     public string? ManagerName { get; set; }
+    public int? DefaultZoom { get; set; }
+    public double? DefaultCenterLat { get; set; }
+    public double? DefaultCenterLng { get; set; }
+    public string? FishSpecies { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
@@ -36,4 +40,9 @@ public class UpdateFishingSpotDto
     public string? ImageUrl { get; set; }
     public decimal? PricePerHour { get; set; }
     public int? ManagerId { get; set; }
+    public int? DefaultZoom { get; set; }
+    public double? DefaultCenterLat { get; set; }
+    public double? DefaultCenterLng { get; set; }
+    public bool ResetDefaultMapView { get; set; }
+    public string? FishSpecies { get; set; }
 }

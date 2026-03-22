@@ -45,3 +45,8 @@ export interface PaymentIntentResponse {
   amount: number;
   currency: string;
 }
+
+export interface BookedPeriod {
+  startDate: string;
+  endDate: string;
+}

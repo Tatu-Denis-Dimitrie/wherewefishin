@@ -45,41 +45,6 @@
       <!-- Left: Info -->
       <div class="info-col">
 
-        <!-- Description card -->
-        @if (spot.description) {
-          <div class="card">
-            <h3 class="card-title">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-              About this spot
-            </h3>
-            <p class="description-text">{{ spot.description }}</p>
-          </div>
-        }
-
-        <!-- Details card -->
-        <div class="card">
-          <h3 class="card-title">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            Details
-          </h3>
-          <div class="detail-rows">
-            <div class="detail-row">
-              <span class="detail-label">Coordinates</span>
-              <span class="detail-value mono">{{ spot.latitude.toFixed(5) }}, {{ spot.longitude.toFixed(5) }}</span>
-            </div>
-            @if (spot.managerName) {
-              <div class="detail-row">
-                <span class="detail-label">Manager</span>
-                <span class="detail-value">{{ spot.managerName }}</span>
-              </div>
-            }
-            <div class="detail-row">
-              <span class="detail-label">Added</span>
-              <span class="detail-value">{{ spot.createdAt | date:'dd MMM yyyy' }}</span>
-            </div>
-          </div>
-        </div>
-
         <!-- Mini map -->
         <div class="card map-card">
           <h3 class="card-title">
@@ -106,23 +71,79 @@
           }
         </div>
 
+        <!-- About + Details combined -->
+        <div class="card about-card">
+          <h3 class="card-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            About this spot
+          </h3>
+          @if (spot.description) {
+            <p class="description-text">{{ spot.description }}</p>
+          }
+          <div class="detail-chips">
+            <div class="detail-chip">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <span>{{ spot.latitude.toFixed(4) }}, {{ spot.longitude.toFixed(4) }}</span>
+            </div>
+            @if (spot.managerName) {
+              <div class="detail-chip">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span>{{ spot.managerName }}</span>
+              </div>
+            }
+            <div class="detail-chip">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span>Added {{ spot.createdAt | date:'dd MMM yyyy' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fish Species -->
+        @if (fishSpecies.length > 0) {
+          <div class="card fish-card">
+            <h3 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 12c0 0-2-4.5 0-7.5C9.5 2 12 4.5 12 4.5s2.5-2.5 5.5 0c2 3 0 7.5 0 7.5s2 4.5 0 7.5c-3 2.5-5.5 0-5.5 0s-2.5 2.5-5.5 0C4.5 16.5 6.5 12 6.5 12z"/></svg>
+              Fish Species
+              <span class="fish-count-badge">{{ fishSpecies.length }}</span>
+            </h3>
+            <div class="fish-species-grid">
+              @for (species of fishSpecies; track species) {
+                <div class="fish-tag">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="1"/><path d="M20.2 20.2c-2.7-2.7-6.2-4.2-8.2-4.2s-5.5 1.5-8.2 4.2"/><path d="M3.8 3.8c2.7 2.7 6.2 4.2 8.2 4.2s5.5-1.5 8.2-4.2"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/></svg>
+                  {{ species }}
+                </div>
+              }
+            </div>
+          </div>
+        }
+
         <!-- Reviews Section -->
         <div class="card reviews-card">
-          <h3 class="card-title">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            Reviews
+          <div class="reviews-header-row">
+            <h3 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              Reviews
+            </h3>
             @if (reviewStats && reviewStats.totalReviews > 0) {
-              <span class="review-stats">
-                {{ reviewStats.averageRating?.toFixed(1) }} ★ ({{ reviewStats.totalReviews }} reviews)
-              </span>
+              <div class="review-score-badge">
+                <span class="score-number">{{ reviewStats.averageRating?.toFixed(1) }}</span>
+                <div class="score-details">
+                  <span class="score-stars">
+                    @for (star of [1,2,3,4,5]; track star) {
+                      <span [class.filled]="star <= (reviewStats.averageRating ?? 0)">★</span>
+                    }
+                  </span>
+                  <span class="score-count">{{ reviewStats.totalReviews }} reviews</span>
+                </div>
+              </div>
             }
-          </h3>
+          </div>
 
           <!-- Add/Edit Review Form -->
           @if (authService.isLoggedIn() && (!userHasReviewed || editingReviewId)) {
             <div class="review-form">
               <div class="rating-input">
-                <span class="rating-label">{{ editingReviewId ? 'Edit' : 'Rate' }}:</span>
+                <span class="rating-label">{{ editingReviewId ? 'Edit your rating' : 'Your rating' }}:</span>
                 <div class="stars-input">
                   @for (star of [1,2,3,4,5]; track star) {
                     <button 
@@ -135,7 +156,7 @@
               </div>
               <textarea 
                 [(ngModel)]="newReviewComment" 
-                placeholder="Write a review (optional)..."
+                placeholder="Share your experience..."
                 rows="3"
                 class="review-textarea"></textarea>
               <div class="review-form-actions">
@@ -177,24 +198,28 @@
                       } @else {
                         <div class="reviewer-avatar-placeholder">{{ review.username.charAt(0).toUpperCase() }}</div>
                       }
-                      <span class="reviewer-name">{{ review.username }}</span>
+                      <div class="reviewer-name-row">
+                        <span class="reviewer-name">{{ review.username }}</span>
+                        <span class="review-date">{{ review.createdAt | date:'dd MMM yyyy' }}</span>
+                      </div>
                     </div>
-                    <div class="review-meta">
-                      <span class="review-stars">
-                        @for (star of [1,2,3,4,5]; track star) {
-                          <span [class.filled]="star <= review.rating">★</span>
-                        }
-                      </span>
-                      <span class="review-date">{{ review.createdAt | date:'dd MMM yyyy' }}</span>
-                    </div>
+                    <span class="review-rating-pill">
+                      {{ review.rating }}.0 ★
+                    </span>
                   </div>
                   @if (review.comment) {
                     <p class="review-comment">{{ review.comment }}</p>
                   }
                   @if (canEditReview(review)) {
                     <div class="review-actions">
-                      <button class="btn-edit-review" (click)="startEditReview(review)">Edit</button>
-                      <button class="btn-delete-review" (click)="deleteReview(review.id)">Delete</button>
+                      <button class="btn-edit-review" (click)="startEditReview(review)">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        Edit
+                      </button>
+                      <button class="btn-delete-review" (click)="deleteReview(review.id)">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        Delete
+                      </button>
                     </div>
                   }
                 </div>
@@ -240,8 +265,84 @@
             }
 
             <div class="form-group">
-              <label>Start Date and Time</label>
-              <input type="datetime-local" [(ngModel)]="startDate" class="form-input">
+              <label>Select Dates</label>
+              <div class="calendar-widget">
+                <div class="calendar-header">
+                  <button class="cal-nav-btn" (click)="prevMonth()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                  </button>
+                  <span class="cal-month-label">{{ calendarMonthLabel }}</span>
+                  <button class="cal-nav-btn" (click)="nextMonth()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                </div>
+                <div class="calendar-weekdays">
+                  <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+                </div>
+                <div class="calendar-grid">
+                  @for (day of calendarDays; track day.date.getTime()) {
+                    <button
+                      class="cal-day"
+                      [class.other-month]="!day.isCurrentMonth"
+                      [class.today]="day.isToday"
+                      [class.booked]="day.isBooked && day.isCurrentMonth"
+                      [class.partially-booked]="day.isPartiallyBooked && day.isCurrentMonth && !day.isBooked"
+                      [class.past]="day.isPast"
+                      [class.selected]="day.isSelected && day.isCurrentMonth"
+                      [class.in-range]="day.isInRange && day.isCurrentMonth && !day.isSelected"
+                      [class.range-start]="day.isRangeStart && day.isCurrentMonth"
+                      [class.range-end]="day.isRangeEnd && day.isCurrentMonth"
+                      [disabled]="day.isPast || !day.isCurrentMonth"
+                      [title]="day.bookedIntervals && day.isCurrentMonth && !day.isPast ? 'Booked: ' + day.bookedIntervals : ''"
+                      (click)="selectCalendarDay(day)">
+                      {{ day.dayNum }}
+                      @if (day.isBooked && day.isCurrentMonth && !day.isPast) {
+                        <span class="booked-dot"></span>
+                      }
+                      @if (day.isPartiallyBooked && day.isCurrentMonth && !day.isBooked && !day.isPast) {
+                        <span class="partial-dot"></span>
+                        <span class="partial-tooltip">{{ day.bookedIntervals }}</span>
+                      }
+                    </button>
+                  }
+                </div>
+                <div class="calendar-legend">
+                  <span class="legend-item">
+                    <span class="legend-dot legend-dot-booked"></span>
+                    Fully booked
+                  </span>
+                  <span class="legend-item">
+                    <span class="legend-dot legend-dot-partial"></span>
+                    Partial
+                  </span>
+                  <span class="legend-item">
+                    <span class="legend-dot legend-dot-available"></span>
+                    Available
+                  </span>
+                </div>
+              </div>
+              @if (rangeStartDate) {
+                <div class="range-summary">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  {{ rangeLabel }}
+                </div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label>Start Time</label>
+              <div class="time-spinner" (wheel)="onTimeWheel($event)">
+                <button class="spinner-btn" (click)="incrementHour()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+                </button>
+                <span class="spinner-value" 
+                      (touchstart)="onTimeTouchStart($event)" 
+                      (touchmove)="onTimeTouchMove($event)" 
+                      (touchend)="onTimeTouchEnd()">{{ formattedHour }}</span>
+                <button class="spinner-btn" (click)="decrementHour()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+              </div>
             </div>
 
             <div class="form-group">
@@ -250,9 +351,14 @@
                 @for (d of DURATIONS; track d) {
                   <button
                     class="duration-pill"
-                    [class.active]="durationHours === d"
-                    (click)="durationHours = d">
+                    [class.active]="durationHours === d && !isCustomDuration"
+                    (click)="selectDuration(d)">
                     {{ d }}h
+                  </button>
+                }
+                @if (isCustomDuration) {
+                  <button class="duration-pill active custom-pill">
+                    Custom · {{ durationHours }}h
                   </button>
                 }
               </div>

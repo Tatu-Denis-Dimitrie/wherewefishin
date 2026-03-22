@@ -221,6 +221,43 @@ public class BookingsController : ControllerBase
         return CreatedAtAction(nameof(GetBooking), new { id = session.Id }, MapToDto(session, validation.Spot!.Name, validation.Pontoon?.Name));
     }
 
+    // GET api/bookings/booked-periods?pontoonId=X or ?spotId=X
+    [HttpGet("booked-periods")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<BookedPeriodDto>>> GetBookedPeriods([FromQuery] int? pontoonId, [FromQuery] int? spotId)
+    {
+        if (pontoonId == null && spotId == null)
+            return BadRequest("Either pontoonId or spotId is required.");
+
+        IEnumerable<FishingSession> sessions;
+        if (pontoonId.HasValue)
+        {
+            sessions = await _sessionRepository.FindAsync(s =>
+                s.PontoonId == pontoonId.Value &&
+                s.Status != SessionStatus.Cancelled);
+        }
+        else
+        {
+            sessions = await _sessionRepository.FindAsync(s =>
+                s.FishingSpotId == spotId!.Value &&
+                s.PontoonId == null &&
+                s.Status != SessionStatus.Cancelled);
+        }
+
+        var now = DateTime.UtcNow;
+        var periods = sessions
+            .Where(s => s.StartDate.AddHours(s.DurationHours) > now)
+            .Select(s => new BookedPeriodDto
+            {
+                StartDate = s.StartDate,
+                EndDate = s.StartDate.AddHours(s.DurationHours)
+            })
+            .OrderBy(p => p.StartDate)
+            .ToList();
+
+        return Ok(periods);
+    }
+
     // GET api/bookings/{id}
     [HttpGet("{id}")]
     public async Task<ActionResult<BookingDto>> GetBooking(int id)

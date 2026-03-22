@@ -40,6 +40,12 @@ public class FishingSpotConfiguration : IEntityTypeConfiguration<FishingSpot>
             .HasPrecision(10, 2)
             .HasDefaultValue(0m);
 
+        builder.Property(f => f.DefaultCenterLat)
+            .HasPrecision(9, 6);
+
+        builder.Property(f => f.DefaultCenterLng)
+            .HasPrecision(9, 6);
+
         builder.HasMany(f => f.Catches)
             .WithOne(c => c.FishingSpot)
             .HasForeignKey(c => c.FishingSpotId)

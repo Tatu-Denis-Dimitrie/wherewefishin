@@ -17,6 +17,9 @@ public class PontoonConfiguration : IEntityTypeConfiguration<Pontoon>
         builder.Property(p => p.Color)
             .HasMaxLength(20);
 
+        builder.Property(p => p.Coordinates)
+            .HasColumnType("nvarchar(max)");
+
         builder.Property(p => p.SouthWestLat)
             .HasPrecision(18, 15);
 

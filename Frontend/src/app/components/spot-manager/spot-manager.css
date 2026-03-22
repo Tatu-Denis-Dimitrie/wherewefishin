@@ -276,6 +276,105 @@
   border-color: var(--accent-moss);
   box-shadow: 0 0 0 3px var(--accent-moss-dim);
 }
+.field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: rgba(23, 34, 18, 0.42);
+  border: 1px solid rgba(232, 224, 208, 0.22);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+  transition: border-color var(--transition);
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 80px;
+}
+.field textarea:focus {
+  border-color: var(--accent-moss);
+  box-shadow: 0 0 0 3px var(--accent-moss-dim);
+}
+
+/* ---- Fish Species ---- */
+.species-count-badge {
+  margin-left: auto;
+  background: var(--accent-moss-dim);
+  color: var(--accent-moss);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.species-input-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.species-input-row input {
+  flex: 1;
+  padding: 10px 12px;
+  background: rgba(23, 34, 18, 0.42);
+  border: 1px solid rgba(232, 224, 208, 0.22);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+  transition: border-color var(--transition);
+}
+.species-input-row input:focus {
+  border-color: var(--accent-moss);
+}
+.btn-add-species {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  background: var(--accent-moss);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: filter var(--transition);
+  flex-shrink: 0;
+}
+.btn-add-species:hover { filter: brightness(1.1); }
+.species-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.species-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(125, 179, 74, 0.12);
+  border: 1px solid rgba(125, 179, 74, 0.3);
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--accent-moss);
+  font-weight: 500;
+}
+.species-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  padding: 0;
+}
+.species-remove:hover {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
 
 /* ---- Color Picker ---- */
 .color-picker {
@@ -299,10 +398,42 @@
 }
 
 /* ---- Drawing Actions ---- */
-.drawing-actions, .edit-actions {
+.drawing-actions, .edit-actions, .map-view-actions {
   display: flex;
   gap: 12px;
   margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.drawing-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.point-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-moss);
+}
+
+.btn-undo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: rgba(254, 202, 87, 0.12);
+  color: #feca57;
+  border: 1px solid rgba(254, 202, 87, 0.3);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.btn-undo:hover {
+  background: rgba(254, 202, 87, 0.22);
+  border-color: rgba(254, 202, 87, 0.5);
 }
 
 .btn-reposition {
@@ -471,4 +602,12 @@
   width: 100%;
   height: 100%;
   min-height: 500px;
+}
+
+/* ---- Vertex Markers ---- */
+.vertex-marker {
+  cursor: grab;
+}
+.vertex-marker:active {
+  cursor: grabbing;
 }

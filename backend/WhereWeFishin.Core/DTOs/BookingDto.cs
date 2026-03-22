@@ -44,3 +44,9 @@ public class PaymentIntentDto
     public long Amount { get; set; }
     public string Currency { get; set; } = "ron";
 }
+
+public class BookedPeriodDto
+{
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+}

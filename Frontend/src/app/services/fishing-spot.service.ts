@@ -15,6 +15,10 @@ export interface FishingSpot {
   userId: number;
   managerId?: number;
   managerName?: string;
+  defaultZoom?: number;
+  defaultCenterLat?: number;
+  defaultCenterLng?: number;
+  fishSpecies?: string;
   createdAt: Date;
 }
 

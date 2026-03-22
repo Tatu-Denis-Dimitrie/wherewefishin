@@ -2,11 +2,15 @@ import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { FishingSpotService, FishingSpot } from '../../services/fishing-spot.service';
 import { CartService } from '../../services/cart.service';
 import { ReviewService, Review, ReviewStats } from '../../services/review.service';
 import { PontoonService, Pontoon } from '../../services/pontoon.service';
+import { BookingService } from '../../services/booking.service';
+import { BookedPeriod } from '../../models/booking.model';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 import * as L from 'leaflet';
 
 @Component({
@@ -25,6 +29,7 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
   startDate = '';
   durationHours = 24;
   readonly DURATIONS = [12, 24, 48, 72];
+  isCustomDuration = false;
 
   showMessage = '';
   messageType: 'success' | 'error' = 'success';
@@ -43,24 +48,40 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
   pontoons: Pontoon[] = [];
   selectedPontoonId: number | null = null;
 
+  // Fish species
+  fishSpecies: string[] = [];
+
+  // Calendar
+  calendarMonth = new Date();
+  calendarDays: { date: Date; dayNum: number; isCurrentMonth: boolean; isToday: boolean; isBooked: boolean; isPartiallyBooked: boolean; bookedHours: number; bookedIntervals: string; isPast: boolean; isSelected: boolean; isInRange: boolean; isRangeStart: boolean; isRangeEnd: boolean }[] = [];
+  bookedPeriods: BookedPeriod[] = [];
+  selectedHour = 8;
+  rangeStartDate: Date | null = null;
+  rangeEndDate: Date | null = null;
+
   private map: L.Map | null = null;
-  private pontoonLayers: Map<number, L.Rectangle> = new Map();
+  private pontoonLayers: Map<number, L.Polygon | L.Rectangle> = new Map();
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private http: HttpClient,
     private fishingSpotService: FishingSpotService,
     public cartService: CartService,
     private reviewService: ReviewService,
     private pontoonService: PontoonService,
+    private bookingService: BookingService,
     public authService: AuthService
   ) {}
 
   ngOnInit(): void {
     const defaultStart = new Date();
     defaultStart.setHours(defaultStart.getHours() + 1, 0, 0, 0);
+    this.selectedHour = defaultStart.getHours();
     defaultStart.setMinutes(defaultStart.getMinutes() - defaultStart.getTimezoneOffset());
     this.startDate = defaultStart.toISOString().slice(0, 16);
+    this.calendarMonth = new Date(defaultStart.getFullYear(), defaultStart.getMonth(), 1);
+    this.buildCalendar();
 
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this.fishingSpotService.getById(id).subscribe({
@@ -69,6 +90,7 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
         this.loading = false;
         this.loadReviews(id);
         this.loadPontoons(id);
+        this.loadFishSpecies(id);
         setTimeout(() => this.initMap(), 100);
       },
       error: () => {
@@ -108,6 +130,7 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
           this.selectedPontoonId = pontoons[0].id;
         }
         this.renderPontoonsOnMap();
+        this.loadBookedPeriods();
       }
     });
   }
@@ -119,16 +142,24 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
     this.pontoonLayers.forEach(layer => layer.remove());
     this.pontoonLayers.clear();
 
-    // Add pontoons as rectangles
+    // Add pontoons as polygons or rectangles (backward compat)
     this.pontoons.forEach(pontoon => {
-      const bounds: L.LatLngBoundsExpression = [
-        [pontoon.southWestLat, pontoon.southWestLng],
-        [pontoon.northEastLat, pontoon.northEastLng]
-      ];
-      const rect = L.rectangle(bounds, this.getPontoonLayerStyle(pontoon.id, pontoon.color)).addTo(this.map!);
-      rect.bindTooltip(pontoon.name, { permanent: false, direction: 'center' });
-      rect.on('click', () => this.selectPontoon(pontoon.id));
-      this.pontoonLayers.set(pontoon.id, rect);
+      let layer: L.Polygon | L.Rectangle;
+
+      if (pontoon.coordinates) {
+        const coords: [number, number][] = JSON.parse(pontoon.coordinates);
+        layer = L.polygon(coords.map(c => L.latLng(c[0], c[1])), this.getPontoonLayerStyle(pontoon.id, pontoon.color)).addTo(this.map!);
+      } else {
+        const bounds: L.LatLngBoundsExpression = [
+          [pontoon.southWestLat, pontoon.southWestLng],
+          [pontoon.northEastLat, pontoon.northEastLng]
+        ];
+        layer = L.rectangle(bounds, this.getPontoonLayerStyle(pontoon.id, pontoon.color)).addTo(this.map!);
+      }
+
+      layer.bindTooltip(pontoon.name, { permanent: false, direction: 'center' });
+      layer.on('click', () => this.selectPontoon(pontoon.id));
+      this.pontoonLayers.set(pontoon.id, layer);
     });
 
     this.updatePontoonLayerStyles();
@@ -137,6 +168,7 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
   selectPontoon(pontoonId: number): void {
     this.selectedPontoonId = pontoonId;
     this.updatePontoonLayerStyles();
+    this.loadBookedPeriods();
   }
 
   private getPontoonLayerStyle(pontoonId: number, color?: string): L.PathOptions {
@@ -164,6 +196,293 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
     });
   }
 
+  // ---- Calendar methods ----
+  loadBookedPeriods(): void {
+    if (!this.spot) return;
+    const obs = this.selectedPontoonId
+      ? this.bookingService.getBookedPeriods(this.selectedPontoonId)
+      : this.bookingService.getBookedPeriods(undefined, this.spot.id);
+    obs.subscribe({
+      next: (periods) => {
+        this.bookedPeriods = periods;
+        this.buildCalendar();
+      },
+      error: () => {
+        this.bookedPeriods = [];
+        this.buildCalendar();
+      }
+    });
+  }
+
+  private loadFishSpecies(spotId: number): void {
+    // Start with manually managed species from spot
+    const managedSpecies: string[] = this.spot?.fishSpecies ? JSON.parse(this.spot.fishSpecies) : [];
+    
+    this.http.get<string[]>(`${environment.apiBaseUrl}/api/catches/spot/${spotId}/species`).subscribe({
+      next: (catchSpecies) => {
+        // Combine both, deduplicate (case-insensitive)
+        const seen = new Set(managedSpecies.map(s => s.toLowerCase()));
+        const combined = [...managedSpecies];
+        for (const s of catchSpecies) {
+          if (!seen.has(s.toLowerCase())) {
+            seen.add(s.toLowerCase());
+            combined.push(s);
+          }
+        }
+        this.fishSpecies = combined;
+      },
+      error: () => this.fishSpecies = managedSpecies
+    });
+  }
+
+  buildCalendar(): void {
+    const year = this.calendarMonth.getFullYear();
+    const month = this.calendarMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const rangeStart = this.rangeStartDate ? new Date(this.rangeStartDate) : null;
+    const rangeEnd = this.rangeEndDate ? new Date(this.rangeEndDate) : null;
+    if (rangeStart) rangeStart.setHours(0, 0, 0, 0);
+    if (rangeEnd) rangeEnd.setHours(0, 0, 0, 0);
+
+    const days: typeof this.calendarDays = [];
+
+    // Fill leading days from prev month
+    const startWeekday = (firstDay.getDay() + 6) % 7;
+    for (let i = startWeekday - 1; i >= 0; i--) {
+      const d = new Date(year, month, -i);
+      days.push(this.makeCalendarDay(d, false, today, rangeStart, rangeEnd));
+    }
+
+    // Current month days
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      const date = new Date(year, month, d);
+      days.push(this.makeCalendarDay(date, true, today, rangeStart, rangeEnd));
+    }
+
+    // Fill trailing days
+    const totalCells = Math.ceil(days.length / 7) * 7;
+    let nextDay = 1;
+    while (days.length < totalCells) {
+      const d = new Date(year, month + 1, nextDay++);
+      days.push(this.makeCalendarDay(d, false, today, rangeStart, rangeEnd));
+    }
+
+    this.calendarDays = days;
+  }
+
+  private makeCalendarDay(date: Date, isCurrentMonth: boolean, today: Date, rangeStart: Date | null, rangeEnd: Date | null) {
+    const dateMidnight = new Date(date);
+    dateMidnight.setHours(0, 0, 0, 0);
+    const dateEnd = new Date(dateMidnight);
+    dateEnd.setHours(23, 59, 59, 999);
+
+    const bookedHours = this.getBookedHoursForDay(dateMidnight, dateEnd);
+    const isFullyBooked = bookedHours >= 24;
+    const isPartiallyBooked = bookedHours > 0 && bookedHours < 24;
+    const bookedIntervals = isPartiallyBooked || isFullyBooked ? this.getBookedIntervalsForDay(dateMidnight, dateEnd) : '';
+
+    const isRangeStart = rangeStart ? dateMidnight.getTime() === rangeStart.getTime() : false;
+    const isRangeEnd = rangeEnd ? dateMidnight.getTime() === rangeEnd.getTime() : false;
+    const isInRange = rangeStart && rangeEnd
+      ? dateMidnight >= rangeStart && dateMidnight <= rangeEnd
+      : isRangeStart;
+
+    return {
+      date,
+      dayNum: date.getDate(),
+      isCurrentMonth,
+      isToday: dateMidnight.getTime() === today.getTime(),
+      isBooked: isFullyBooked,
+      isPartiallyBooked,
+      bookedHours,
+      bookedIntervals,
+      isPast: dateMidnight < today,
+      isSelected: isRangeStart || isRangeEnd,
+      isInRange,
+      isRangeStart,
+      isRangeEnd
+    };
+  }
+
+  private getBookedIntervalsForDay(dayStart: Date, dayEnd: Date): string {
+    const intervals: string[] = [];
+    for (const p of this.bookedPeriods) {
+      const pStart = new Date(p.startDate);
+      const pEnd = new Date(p.endDate);
+      const overlapStart = pStart > dayStart ? pStart : dayStart;
+      const overlapEnd = pEnd < dayEnd ? pEnd : dayEnd;
+      if (overlapStart < overlapEnd) {
+        const sh = overlapStart.getHours().toString().padStart(2, '0');
+        const sm = overlapStart.getMinutes().toString().padStart(2, '0');
+        const eh = overlapEnd.getHours().toString().padStart(2, '0');
+        const em = overlapEnd.getMinutes().toString().padStart(2, '0');
+        intervals.push(`${sh}:${sm}-${eh}:${em}`);
+      }
+    }
+    return intervals.join(', ');
+  }
+
+  private getBookedHoursForDay(dayStart: Date, dayEnd: Date): number {
+    let totalHours = 0;
+    for (const p of this.bookedPeriods) {
+      const pStart = new Date(p.startDate);
+      const pEnd = new Date(p.endDate);
+      const overlapStart = pStart > dayStart ? pStart : dayStart;
+      const overlapEnd = pEnd < dayEnd ? pEnd : dayEnd;
+      if (overlapStart < overlapEnd) {
+        totalHours += (overlapEnd.getTime() - overlapStart.getTime()) / (1000 * 60 * 60);
+      }
+    }
+    return Math.round(totalHours * 10) / 10;
+  }
+
+  private isDayBooked(dayStart: Date, dayEnd: Date): boolean {
+    return this.bookedPeriods.some(p => {
+      const pStart = new Date(p.startDate);
+      const pEnd = new Date(p.endDate);
+      return pStart < dayEnd && pEnd > dayStart;
+    });
+  }
+
+  prevMonth(): void {
+    this.calendarMonth = new Date(
+      this.calendarMonth.getFullYear(),
+      this.calendarMonth.getMonth() - 1,
+      1
+    );
+    this.buildCalendar();
+  }
+
+  nextMonth(): void {
+    this.calendarMonth = new Date(
+      this.calendarMonth.getFullYear(),
+      this.calendarMonth.getMonth() + 1,
+      1
+    );
+    this.buildCalendar();
+  }
+
+  selectCalendarDay(day: typeof this.calendarDays[0]): void {
+    if (day.isPast || !day.isCurrentMonth) return;
+    const d = day.date;
+    const clickedDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+    if (!this.rangeStartDate || (this.rangeStartDate && this.rangeEndDate)) {
+      // No range yet or range complete — start new range
+      this.rangeStartDate = clickedDate;
+      this.rangeEndDate = null;
+      this.isCustomDuration = false;
+    } else {
+      // Have start, pick end
+      if (clickedDate < this.rangeStartDate) {
+        // Clicked before start — swap
+        this.rangeEndDate = this.rangeStartDate;
+        this.rangeStartDate = clickedDate;
+      } else if (clickedDate.getTime() === this.rangeStartDate.getTime()) {
+        // Same day — single day selection
+        this.rangeEndDate = null;
+        this.isCustomDuration = false;
+      } else {
+        this.rangeEndDate = clickedDate;
+      }
+    }
+
+    this.updateStartDateFromRange();
+    this.buildCalendar();
+  }
+
+  private updateStartDateFromRange(): void {
+    if (!this.rangeStartDate) return;
+    const d = this.rangeStartDate;
+    const selected = new Date(d.getFullYear(), d.getMonth(), d.getDate(), this.selectedHour, 0);
+    const offset = selected.getTimezoneOffset();
+    const local = new Date(selected.getTime() - offset * 60000);
+    this.startDate = local.toISOString().slice(0, 16);
+
+    if (this.rangeEndDate) {
+      // Calculate total hours from start to end+selectedHour
+      const start = new Date(this.rangeStartDate.getFullYear(), this.rangeStartDate.getMonth(), this.rangeStartDate.getDate(), this.selectedHour, 0);
+      const end = new Date(this.rangeEndDate.getFullYear(), this.rangeEndDate.getMonth(), this.rangeEndDate.getDate(), this.selectedHour, 0);
+      const diffMs = end.getTime() - start.getTime();
+      const diffHours = Math.max(24, Math.round(diffMs / (1000 * 60 * 60)));
+      this.durationHours = diffHours;
+      this.isCustomDuration = true;
+    }
+  }
+
+  incrementHour(): void {
+    this.selectedHour = (this.selectedHour + 1) % 24;
+    this.updateStartDateFromRange();
+  }
+
+  decrementHour(): void {
+    this.selectedHour = (this.selectedHour - 1 + 24) % 24;
+    this.updateStartDateFromRange();
+  }
+
+  // Scroll wheel on time spinner
+  onTimeWheel(event: WheelEvent): void {
+    event.preventDefault();
+    if (event.deltaY < 0) this.incrementHour();
+    else if (event.deltaY > 0) this.decrementHour();
+  }
+
+  // Touch swipe on time spinner
+  private timeTouchStartY = 0;
+  private timeTouchAccum = 0;
+
+  onTimeTouchStart(event: TouchEvent): void {
+    this.timeTouchStartY = event.touches[0].clientY;
+    this.timeTouchAccum = 0;
+  }
+
+  onTimeTouchMove(event: TouchEvent): void {
+    event.preventDefault();
+    const dy = this.timeTouchStartY - event.touches[0].clientY;
+    this.timeTouchAccum += dy;
+    this.timeTouchStartY = event.touches[0].clientY;
+    const threshold = 30;
+    while (this.timeTouchAccum >= threshold) {
+      this.incrementHour();
+      this.timeTouchAccum -= threshold;
+    }
+    while (this.timeTouchAccum <= -threshold) {
+      this.decrementHour();
+      this.timeTouchAccum += threshold;
+    }
+  }
+
+  onTimeTouchEnd(): void {
+    this.timeTouchAccum = 0;
+  }
+
+  get formattedHour(): string {
+    return `${String(this.selectedHour).padStart(2, '0')}:00`;
+  }
+
+  selectDuration(d: number): void {
+    this.durationHours = d;
+    this.isCustomDuration = false;
+    // Clear range end when picking preset duration
+    this.rangeEndDate = null;
+    this.buildCalendar();
+  }
+
+  get calendarMonthLabel(): string {
+    return this.calendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
+
+  get rangeLabel(): string {
+    if (!this.rangeStartDate) return 'Select dates on calendar';
+    const fmt = (d: Date) => d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+    if (!this.rangeEndDate) return fmt(this.rangeStartDate);
+    return `${fmt(this.rangeStartDate)} → ${fmt(this.rangeEndDate)}`;
+  }
+
   ngOnDestroy(): void {
     if (this.map) {
       this.map.remove();
@@ -176,6 +495,10 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
     const el = document.getElementById('spot-mini-map');
     if (!el) return;
 
+    const centerLat = this.spot.defaultCenterLat ?? this.spot.latitude;
+    const centerLng = this.spot.defaultCenterLng ?? this.spot.longitude;
+    const zoom = this.spot.defaultZoom ?? 16;
+
     this.map = L.map('spot-mini-map', {
       zoomControl: false,
       scrollWheelZoom: false,
@@ -185,11 +508,11 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
       boxZoom: false,
       keyboard: false,
       attributionControl: false
-    }).setView([this.spot.latitude, this.spot.longitude], 16);
+    }).setView([centerLat, centerLng], zoom);
 
     L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
       attribution: '© Google Maps',
-      maxZoom: 20
+      maxZoom: 22
     }).addTo(this.map);
 
     const icon = L.divIcon({

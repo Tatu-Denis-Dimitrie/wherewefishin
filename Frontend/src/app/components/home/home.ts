@@ -19,7 +19,7 @@ interface NearbySpot {
 }
 
 interface HomeSpot extends FishingSpot {
-  fishSpecies: string[];
+  parsedFishSpecies: string[];
 }
 
 @Component({
@@ -274,7 +274,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.fishingSpotService.getAll().subscribe({
       next: (spots) => {
         this.spots = spots.map(s => this.enrichSpotWithSpecies(s));
-        this.fishSpeciesOptions = Array.from(new Set(this.spots.flatMap(s => s.fishSpecies))).sort((a, b) => a.localeCompare(b));
+        this.fishSpeciesOptions = Array.from(new Set(this.spots.flatMap(s => s.parsedFishSpecies))).sort((a, b) => a.localeCompare(b));
         if (this.selectedFishSpecies !== 'all' && !this.fishSpeciesOptions.includes(this.selectedFishSpecies)) {
           this.selectedFishSpecies = 'all';
         }
@@ -326,8 +326,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
            <span style="background:#4a7c3022;color:#4a7c30;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #4a7c3044">${spot.pricePerHour} RON / h</span>
          </div>`
       : '';
-    const fishHtml = spot.fishSpecies.length > 0
-      ? `<div style="color:#93c5fd;font-size:11px;margin-bottom:6px;line-height:1.35">Fish: ${spot.fishSpecies.join(', ')}</div>`
+    const fishHtml = spot.parsedFishSpecies.length > 0
+      ? `<div style="color:#93c5fd;font-size:11px;margin-bottom:6px;line-height:1.35">Fish: ${spot.parsedFishSpecies.join(', ')}</div>`
       : '';
 
     const pontoonSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;margin-bottom:1px"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M7 7V5a2 2 0 0 1 4 0v2M13 7V5a2 2 0 0 1 4 0v2"/><line x1="12" y1="12" x2="12" y2="12.01"/></svg>`;
@@ -667,20 +667,30 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private enrichSpotWithSpecies(spot: FishingSpot): HomeSpot {
+    // Use managed fish species from the spot if available
+    if (spot.fishSpecies) {
+      try {
+        const managed: string[] = JSON.parse(spot.fishSpecies);
+        if (managed.length > 0) {
+          return { ...spot, parsedFishSpecies: managed };
+        }
+      } catch {}
+    }
+
     const normalizedName = spot.name.trim().toLowerCase();
     const mappedSpecies = this.spotSpeciesByName[normalizedName];
     const fallbackSpecies = this.fallbackSpeciesSets[spot.id % this.fallbackSpeciesSets.length];
 
     return {
       ...spot,
-      fishSpecies: [...(mappedSpecies ?? fallbackSpecies)]
+      parsedFishSpecies: [...(mappedSpecies ?? fallbackSpecies)]
     };
   }
 
   private applyFishFilter(): void {
     this.visibleSpots = this.selectedFishSpecies === 'all'
       ? [...this.spots]
-      : this.spots.filter(spot => spot.fishSpecies.includes(this.selectedFishSpecies));
+      : this.spots.filter(spot => spot.parsedFishSpecies.includes(this.selectedFishSpecies));
 
     this.rebuildClosestSpots();
     this.renderMarkers();
@@ -698,7 +708,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       color: '#3b82f6',
       fillColor: '#3b82f6',
       fillOpacity: 0.1,
-      weight: 1
+      weight: 1,
+      interactive: false
     }).addTo(this.map);
 
     const icon = L.divIcon({

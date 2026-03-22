@@ -28,26 +28,28 @@ export class SpotManager implements OnInit, OnDestroy {
   isDrawingMode = false;
   newPontoonName = '';
   newPontoonColor = '#3388ff';
+  drawingPoints: L.LatLng[] = [];
   
   // Edit pontoon
   editingPontoonId: number | null = null;
   editPontoonName = '';
   editPontoonColor = '';
 
-  // Drag state (auto-active when pontoon is selected)
-  private _isDragging = false;
-  private repositionDragStart: L.LatLng | null = null;
-  private repositionOrigBounds: L.LatLngBounds | null = null;
-  private dragTouchId: number | null = null;
+  // Zoom/center settings
+  mapZoom = 18;
+  mapCenterLat = 0;
+  mapCenterLng = 0;
 
-  private readonly containerTouchStartHandler = (event: TouchEvent) => this.onContainerTouchStart(event);
-  private readonly containerTouchMoveHandler = (event: TouchEvent) => this.onContainerTouchMove(event);
-  private readonly containerTouchEndHandler = (event: TouchEvent) => this.onContainerTouchEnd(event);
+  // Spot details editing
+  editDescription = '';
+  fishSpeciesInput = '';
+  fishSpeciesList: string[] = [];
 
   private map: L.Map | null = null;
-  private pontoonLayers: Map<number, L.Rectangle> = new Map();
-  private drawingRect: L.Rectangle | null = null;
-  private startLatLng: L.LatLng | null = null;
+  private pontoonLayers: Map<number, L.Polygon | L.Rectangle> = new Map();
+  private drawingPolygon: L.Polygon | null = null;
+  private drawingMarkers: L.CircleMarker[] = [];
+  private editVertexMarkers: L.CircleMarker[] = [];
 
   readonly COLORS = [
     '#3388ff', '#ff6b6b', '#4ecdc4', '#feca57', 
@@ -76,13 +78,15 @@ export class SpotManager implements OnInit, OnDestroy {
         this.spot = spot;
         this.loading = false;
         
-        // Check if user has permission
         const userId = this.authService.getUserId();
         if (!this.authService.isAdmin() && spot.managerId !== userId && spot.userId !== userId) {
           this.router.navigate(['/home']);
           return;
         }
         
+        this.editDescription = spot.description || '';
+        this.fishSpeciesList = spot.fishSpecies ? JSON.parse(spot.fishSpecies) : [];
+
         setTimeout(() => {
           this.initMap();
           this.loadPontoons();
@@ -97,14 +101,6 @@ export class SpotManager implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.map) {
-      if (this.isTouchDevice) {
-        const container = this.map.getContainer();
-        container.removeEventListener('touchstart', this.containerTouchStartHandler);
-        container.removeEventListener('touchmove', this.containerTouchMoveHandler);
-        container.removeEventListener('touchend', this.containerTouchEndHandler);
-        container.removeEventListener('touchcancel', this.containerTouchEndHandler);
-      }
-
       this.map.remove();
       this.map = null;
     }
@@ -125,14 +121,22 @@ export class SpotManager implements OnInit, OnDestroy {
     const el = document.getElementById('manager-map');
     if (!el) return;
 
+    const centerLat = this.spot.defaultCenterLat ?? this.spot.latitude;
+    const centerLng = this.spot.defaultCenterLng ?? this.spot.longitude;
+    const zoom = this.spot.defaultZoom ?? 18;
+
+    this.mapZoom = zoom;
+    this.mapCenterLat = centerLat;
+    this.mapCenterLng = centerLng;
+
     this.map = L.map('manager-map', {
       zoomControl: true,
       scrollWheelZoom: true,
-      dragging: !this.isTouchDevice,
+      dragging: true,
       touchZoom: true,
       doubleClickZoom: false,
       attributionControl: false
-    }).setView([this.spot.latitude, this.spot.longitude], 18);
+    }).setView([centerLat, centerLng], zoom);
 
     L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
       attribution: '© Google Maps',
@@ -152,378 +156,340 @@ export class SpotManager implements OnInit, OnDestroy {
     });
     L.marker([this.spot.latitude, this.spot.longitude], { icon }).addTo(this.map);
 
-    // Setup drawing events
-    this.map.on('mousedown', (e: L.LeafletMouseEvent) => this.onMapMouseDown(e));
-    this.map.on('mousemove', (e: L.LeafletMouseEvent) => this.onMapMouseMove(e));
-    this.map.on('mouseup', () => this.onMapMouseUp());
-
-    if (this.isTouchDevice) {
-      this.map.on('click', (e: L.LeafletMouseEvent) => this.onMapTapToDraw(e));
-
-      const container = this.map.getContainer();
-      container.addEventListener('touchstart', this.containerTouchStartHandler, { passive: false });
-      container.addEventListener('touchmove', this.containerTouchMoveHandler, { passive: false });
-      container.addEventListener('touchend', this.containerTouchEndHandler, { passive: false });
-      container.addEventListener('touchcancel', this.containerTouchEndHandler, { passive: false });
-    }
+    // Drawing click handler
+    this.map.on('click', (e: L.LeafletMouseEvent) => this.onMapClick(e));
   }
+
+  // ---- Rendering ----
 
   private renderPontoons(): void {
     if (!this.map) return;
 
-    // Clear existing
     this.pontoonLayers.forEach(layer => layer.remove());
     this.pontoonLayers.clear();
 
-    // Add pontoons
     this.pontoons.forEach(pontoon => {
-      const bounds: L.LatLngBoundsExpression = [
-        [pontoon.southWestLat, pontoon.southWestLng],
-        [pontoon.northEastLat, pontoon.northEastLng]
-      ];
-      const rect = L.rectangle(bounds, {
-        color: pontoon.color || '#3388ff',
-        weight: 2,
-        fillOpacity: 0.35,
-        interactive: true
-      }).addTo(this.map!);
+      let layer: L.Polygon | L.Rectangle;
 
-      rect.bindTooltip(pontoon.name, { permanent: false, direction: 'center' });
-      rect.on('click', () => this.selectPontoon(pontoon));
+      if (pontoon.coordinates) {
+        // Polygon pontoon
+        const coords: [number, number][] = JSON.parse(pontoon.coordinates);
+        layer = L.polygon(coords.map(c => L.latLng(c[0], c[1])), {
+          color: pontoon.color || '#3388ff',
+          weight: 2,
+          fillOpacity: 0.35,
+          interactive: true
+        }).addTo(this.map!);
+      } else {
+        // Legacy rectangle pontoon
+        const bounds: L.LatLngBoundsExpression = [
+          [pontoon.southWestLat, pontoon.southWestLng],
+          [pontoon.northEastLat, pontoon.northEastLng]
+        ];
+        layer = L.rectangle(bounds, {
+          color: pontoon.color || '#3388ff',
+          weight: 2,
+          fillOpacity: 0.35,
+          interactive: true
+        }).addTo(this.map!);
+      }
 
-      // Repositioning drag events
-      rect.on('mousedown', (e: L.LeafletMouseEvent) => this.onPontoonDragStart(e, pontoon.id));
-      rect.on('touchstart', (e: L.LeafletEvent) => this.onPontoonTouchStart(e, pontoon.id));
-
-      this.pontoonLayers.set(pontoon.id, rect);
+      layer.bindTooltip(pontoon.name, { permanent: false, direction: 'center' });
+      layer.on('click', () => this.selectPontoon(pontoon));
+      this.pontoonLayers.set(pontoon.id, layer);
     });
   }
+
+  // ---- Drawing Mode ----
 
   toggleDrawingMode(): void {
     this.isDrawingMode = !this.isDrawingMode;
     this.editingPontoonId = null;
-    this._isDragging = false;
-    this.repositionDragStart = null;
-    this.repositionOrigBounds = null;
-    this.dragTouchId = null;
+    this.clearEditVertexMarkers();
 
-    if (this.map) {
-      if (this.isDrawingMode) {
-        this.map.dragging.disable();
+    if (this.isDrawingMode) {
+      if (this.map) {
         (this.map.getContainer() as HTMLElement).style.cursor = 'crosshair';
-      } else {
-        if (this.isTouchDevice) {
-          this.map.dragging.disable();
-        } else {
-          this.map.dragging.enable();
-        }
+      }
+      this.drawingPoints = [];
+      this.clearDrawingPreview();
+    } else {
+      if (this.map) {
         (this.map.getContainer() as HTMLElement).style.cursor = '';
       }
+      this.drawingPoints = [];
+      this.clearDrawingPreview();
+      this.pontoonLayers.forEach(layer => {
+        layer.setStyle({ weight: 2, dashArray: undefined });
+      });
     }
   }
 
-  private onMapMouseDown(e: L.LeafletMouseEvent): void {
-    if (this.isTouchDevice || !this.isDrawingMode || !this.map) return;
+  private onMapClick(e: L.LeafletMouseEvent): void {
+    if (!this.isDrawingMode || !this.map) return;
 
-    this.startLatLng = e.latlng;
-    const bounds = L.latLngBounds(e.latlng, e.latlng);
-    this.drawingRect = L.rectangle(bounds, {
-      color: this.newPontoonColor,
-      weight: 2,
-      fillOpacity: 0.35,
-      dashArray: '5, 5'
-    }).addTo(this.map);
-  }
+    const clickLatLng = e.latlng;
 
-  private onMapMouseMove(e: L.LeafletMouseEvent): void {
-    // Handle repositioning drag
-    if (this._isDragging) {
-      this.applyRepositionFromLatLng(e.latlng);
-      return;
-    }
-
-    // Handle drawing drag
-    if (!this.isDrawingMode || !this.drawingRect || !this.startLatLng) return;
-    this.drawingRect.setBounds(L.latLngBounds(this.startLatLng, e.latlng));
-  }
-
-  private onMapMouseUp(): void {
-    // Handle repositioning end
-    if (this._isDragging) {
-      this.finishRepositionDrag();
-      return;
-    }
-
-    // Handle drawing end with mouse (desktop)
-    if (this.isTouchDevice) return;
-    this.finalizeDrawingRect();
-  }
-
-  private onMapTapToDraw(e: L.LeafletMouseEvent): void {
-    if (!this.isTouchDevice || !this.isDrawingMode || !this.map) return;
-
-    if (!this.startLatLng) {
-      this.startLatLng = e.latlng;
-      if (this.drawingRect) {
-        this.drawingRect.remove();
+    // Check if clicking near the first point to close the polygon
+    if (this.drawingPoints.length >= 3) {
+      const firstPoint = this.map.latLngToContainerPoint(this.drawingPoints[0]);
+      const clickPoint = this.map.latLngToContainerPoint(clickLatLng);
+      const dist = firstPoint.distanceTo(clickPoint);
+      if (dist < 15) {
+        this.finishDrawing();
+        return;
       }
+    }
 
-      this.drawingRect = L.rectangle(L.latLngBounds(e.latlng, e.latlng), {
+    this.drawingPoints.push(clickLatLng);
+    this.updateDrawingPreview();
+  }
+
+  private updateDrawingPreview(): void {
+    if (!this.map) return;
+    this.clearDrawingPreview();
+
+    if (this.drawingPoints.length === 0) return;
+
+    // Draw vertex markers
+    this.drawingPoints.forEach((pt, i) => {
+      const marker = L.circleMarker(pt, {
+        radius: i === 0 && this.drawingPoints.length >= 3 ? 8 : 5,
+        color: i === 0 ? '#fff' : this.newPontoonColor,
+        fillColor: i === 0 ? this.newPontoonColor : '#fff',
+        fillOpacity: 1,
+        weight: 2,
+        interactive: false
+      }).addTo(this.map!);
+      this.drawingMarkers.push(marker);
+    });
+
+    // Draw polygon preview
+    if (this.drawingPoints.length >= 2) {
+      this.drawingPolygon = L.polygon(this.drawingPoints, {
         color: this.newPontoonColor,
         weight: 2,
-        fillOpacity: 0.35,
-        dashArray: '5, 5'
+        fillOpacity: 0.25,
+        dashArray: '6, 4',
+        interactive: false
       }).addTo(this.map);
-
-      this.showToast('Tap the second corner to finish the pontoon', 'success');
-      return;
     }
-
-    if (this.drawingRect) {
-      this.drawingRect.setBounds(L.latLngBounds(this.startLatLng, e.latlng));
-    }
-    this.finalizeDrawingRect();
   }
 
-  private finalizeDrawingRect(): void {
-    if (!this.isDrawingMode || !this.drawingRect || !this.startLatLng || !this.spot) return;
+  private clearDrawingPreview(): void {
+    this.drawingMarkers.forEach(m => m.remove());
+    this.drawingMarkers = [];
+    if (this.drawingPolygon) {
+      this.drawingPolygon.remove();
+      this.drawingPolygon = null;
+    }
+  }
 
-    const bounds = this.drawingRect.getBounds();
-    const sw = bounds.getSouthWest();
-    const ne = bounds.getNorthEast();
+  undoLastPoint(): void {
+    if (this.drawingPoints.length === 0) return;
+    this.drawingPoints.pop();
+    this.updateDrawingPreview();
+  }
 
-    // Check if it's a valid rectangle (not just a click)
-    if (Math.abs(sw.lat - ne.lat) < 0.00001 || Math.abs(sw.lng - ne.lng) < 0.00001) {
-      this.drawingRect.remove();
-      this.drawingRect = null;
-      this.startLatLng = null;
-      this.showToast('Select a larger area for the pontoon', 'error');
+  finishDrawing(): void {
+    if (this.drawingPoints.length < 3 || !this.spot) {
+      this.showToast('At least 3 points are needed to create a pontoon', 'error');
       return;
     }
+
+    const coords: [number, number][] = this.drawingPoints.map(p => [p.lat, p.lng]);
+    
+    // Calculate bounding box for backward compat
+    const lats = coords.map(c => c[0]);
+    const lngs = coords.map(c => c[1]);
 
     const pontoonData: CreatePontoon = {
       fishingSpotId: this.spot.id,
       name: this.newPontoonName || `Pontoon ${this.pontoons.length + 1}`,
-      southWestLat: sw.lat,
-      southWestLng: sw.lng,
-      northEastLat: ne.lat,
-      northEastLng: ne.lng,
-      color: this.newPontoonColor
+      southWestLat: Math.min(...lats),
+      southWestLng: Math.min(...lngs),
+      northEastLat: Math.max(...lats),
+      northEastLng: Math.max(...lngs),
+      color: this.newPontoonColor,
+      coordinates: JSON.stringify(coords)
     };
 
     this.pontoonService.createPontoon(pontoonData).subscribe({
       next: () => {
-        this.showToast('Pontoon added successfully!', 'success');
+        this.showToast('Pontoon created!', 'success');
         this.loadPontoons();
         this.newPontoonName = '';
         this.toggleDrawingMode();
       },
       error: () => {
-        this.showToast('Error adding pontoon', 'error');
+        this.showToast('Error creating pontoon', 'error');
       }
     });
 
-    this.drawingRect.remove();
-    this.drawingRect = null;
-    this.startLatLng = null;
+    this.clearDrawingPreview();
+    this.drawingPoints = [];
   }
 
-  // ---------- Repositioning ----------
-
-  private onPontoonDragStart(e: L.LeafletMouseEvent, pontoonId: number): void {
-    if (this.isTouchDevice || this.editingPontoonId !== pontoonId || this.isDrawingMode) return;
-
-    L.DomEvent.stopPropagation(e);
-    this.beginReposition(pontoonId, e.latlng);
-  }
-
-  private onPontoonTouchStart(e: L.LeafletEvent, pontoonId: number): void {
-    if (!this.isTouchDevice || this.editingPontoonId !== pontoonId || this.isDrawingMode) return;
-
-    const originalEvent = (e as L.LeafletEvent & { originalEvent?: TouchEvent }).originalEvent;
-    if (!originalEvent || originalEvent.touches.length === 0) return;
-
-    L.DomEvent.stopPropagation(e);
-    originalEvent.preventDefault();
-
-    this.dragTouchId = originalEvent.touches[0].identifier;
-    const startLatLng = this.touchToLatLng(originalEvent.touches[0]);
-    this.beginReposition(pontoonId, startLatLng);
-  }
-
-  private beginReposition(pontoonId: number, startLatLng: L.LatLng): void {
-    const layer = this.pontoonLayers.get(pontoonId);
-    if (!layer) return;
-
-    this._isDragging = true;
-    this.repositionDragStart = startLatLng;
-    this.repositionOrigBounds = L.latLngBounds(
-      layer.getBounds().getSouthWest(),
-      layer.getBounds().getNorthEast()
-    );
-
-    if (this.map) {
-      this.map.dragging.disable();
-    }
-  }
-
-  private applyRepositionFromLatLng(currentLatLng: L.LatLng): void {
-    if (!this._isDragging || !this.repositionDragStart || !this.repositionOrigBounds || !this.editingPontoonId) return;
-
-    const layer = this.pontoonLayers.get(this.editingPontoonId);
-    if (!layer) return;
-
-    const dlat = currentLatLng.lat - this.repositionDragStart.lat;
-    const dlng = currentLatLng.lng - this.repositionDragStart.lng;
-
-    const newBounds = L.latLngBounds(
-      [this.repositionOrigBounds.getSouthWest().lat + dlat, this.repositionOrigBounds.getSouthWest().lng + dlng],
-      [this.repositionOrigBounds.getNorthEast().lat + dlat, this.repositionOrigBounds.getNorthEast().lng + dlng]
-    );
-
-    layer.setBounds(newBounds);
-  }
-
-  private finishRepositionDrag(): void {
-    if (!this._isDragging || !this.editingPontoonId) return;
-
-    const layer = this.pontoonLayers.get(this.editingPontoonId);
-    if (layer) {
-      const newBounds = layer.getBounds();
-      const sw = newBounds.getSouthWest();
-      const ne = newBounds.getNorthEast();
-
-      this.pontoonService.updatePontoon(this.editingPontoonId, {
-        southWestLat: sw.lat,
-        southWestLng: sw.lng,
-        northEastLat: ne.lat,
-        northEastLng: ne.lng
-      }).subscribe({
-        next: () => {
-          this.showToast('Position updated!', 'success');
-          this.loadPontoons();
-        },
-        error: () => {
-          this.showToast('Error updating position', 'error');
-          this.loadPontoons();
-        }
-      });
-    }
-
-    this._isDragging = false;
-    this.repositionDragStart = null;
-    this.repositionOrigBounds = null;
-    this.dragTouchId = null;
-
-    if (this.map) {
-      if (this.isTouchDevice) {
-        this.map.dragging.disable();
-      } else {
-        this.map.dragging.enable();
-      }
-    }
-  }
-
-  private onContainerTouchStart(event: TouchEvent): void {
-    if (!this.map || this.isDrawingMode || this._isDragging) return;
-
-    if (event.touches.length >= 2) {
-      this.map.dragging.enable();
-    } else {
-      this.map.dragging.disable();
-    }
-  }
-
-  private onContainerTouchMove(event: TouchEvent): void {
-    if (!this.map) return;
-
-    if (this._isDragging) {
-      const touch = this.getTrackedTouch(event);
-      if (!touch) return;
-
-      event.preventDefault();
-      const latLng = this.touchToLatLng(touch);
-      this.applyRepositionFromLatLng(latLng);
-      return;
-    }
-
-    if (this.isDrawingMode) return;
-
-    if (event.touches.length >= 2) {
-      this.map.dragging.enable();
-    } else {
-      this.map.dragging.disable();
-    }
-  }
-
-  private onContainerTouchEnd(event: TouchEvent): void {
-    if (!this.map) return;
-
-    if (this._isDragging) {
-      const trackedTouchStillActive = this.dragTouchId !== null
-        ? Array.from(event.touches).some(touch => touch.identifier === this.dragTouchId)
-        : event.touches.length > 0;
-
-      if (!trackedTouchStillActive) {
-        event.preventDefault();
-        this.finishRepositionDrag();
-      }
-      return;
-    }
-
-    if (this.isDrawingMode) return;
-
-    if (event.touches.length >= 2) {
-      this.map.dragging.enable();
-    } else {
-      this.map.dragging.disable();
-    }
-  }
-
-  private getTrackedTouch(event: TouchEvent): Touch | null {
-    if (this.dragTouchId === null) {
-      return event.touches[0] ?? event.changedTouches[0] ?? null;
-    }
-
-    return Array.from(event.touches).find(touch => touch.identifier === this.dragTouchId)
-      ?? Array.from(event.changedTouches).find(touch => touch.identifier === this.dragTouchId)
-      ?? null;
-  }
-
-  private touchToLatLng(touch: Touch): L.LatLng {
-    const containerRect = this.map!.getContainer().getBoundingClientRect();
-    const containerPoint = L.point(
-      touch.clientX - containerRect.left,
-      touch.clientY - containerRect.top
-    );
-
-    return this.map!.containerPointToLatLng(containerPoint);
-  }
+  // ---- Editing ----
 
   selectPontoon(pontoon: Pontoon): void {
+    if (this.isDrawingMode) return;
+    
     this.editingPontoonId = pontoon.id;
     this.editPontoonName = pontoon.name;
     this.editPontoonColor = pontoon.color || '#3388ff';
-    this.isDrawingMode = false;
 
-    if (this.map) {
-      if (this.isTouchDevice) {
-        this.map.dragging.disable();
-        (this.map.getContainer() as HTMLElement).style.cursor = '';
-      } else {
-        this.map.dragging.enable();
-        (this.map.getContainer() as HTMLElement).style.cursor = 'move';
-      }
-    }
-
-    // Highlight selected pontoon
+    // Highlight selected
     this.pontoonLayers.forEach((layer, id) => {
       if (id === pontoon.id) {
         layer.setStyle({ weight: 4, dashArray: '5, 5' });
       } else {
-        layer.setStyle({ weight: 2, dashArray: '' });
+        layer.setStyle({ weight: 2, dashArray: undefined });
       }
     });
+
+    // Show vertex markers for editing
+    this.showEditVertexMarkers(pontoon);
+  }
+
+  private showEditVertexMarkers(pontoon: Pontoon): void {
+    this.clearEditVertexMarkers();
+    if (!this.map) return;
+
+    let coords: L.LatLng[];
+    const layer = this.pontoonLayers.get(pontoon.id);
+    if (!layer) return;
+
+    if (pontoon.coordinates) {
+      const parsed: [number, number][] = JSON.parse(pontoon.coordinates);
+      coords = parsed.map(c => L.latLng(c[0], c[1]));
+    } else {
+      // Rectangle — get 4 corners
+      const bounds = (layer as L.Rectangle).getBounds();
+      const sw = bounds.getSouthWest();
+      const ne = bounds.getNorthEast();
+      coords = [
+        L.latLng(sw.lat, sw.lng),
+        L.latLng(sw.lat, ne.lng),
+        L.latLng(ne.lat, ne.lng),
+        L.latLng(ne.lat, sw.lng)
+      ];
+    }
+
+    coords.forEach((pt, idx) => {
+      const marker = L.circleMarker(pt, {
+        radius: 6,
+        color: '#fff',
+        fillColor: pontoon.color || '#3388ff',
+        fillOpacity: 1,
+        weight: 2,
+        interactive: true,
+        className: 'vertex-marker'
+      }).addTo(this.map!);
+
+      this.makeVertexDraggable(marker, idx, pontoon);
+      this.editVertexMarkers.push(marker);
+    });
+  }
+
+  private makeVertexDraggable(marker: L.CircleMarker, index: number, pontoon: Pontoon): void {
+    let dragging = false;
+
+    marker.on('mousedown', (e: L.LeafletMouseEvent) => {
+      L.DomEvent.stopPropagation(e);
+      (e as any).originalEvent?.preventDefault();
+      dragging = true;
+      this.map!.dragging.disable();
+
+      const onMove = (me: L.LeafletMouseEvent) => {
+        if (!dragging) return;
+        marker.setLatLng(me.latlng);
+        this.updatePolygonFromVertices(pontoon);
+      };
+
+      const onUp = () => {
+        if (!dragging) return;
+        dragging = false;
+        this.map!.dragging.enable();
+        this.map!.off('mousemove', onMove as any);
+        this.map!.off('mouseup', onUp);
+        this.saveVertexPositions(pontoon);
+      };
+
+      this.map!.on('mousemove', onMove as any);
+      this.map!.on('mouseup', onUp);
+    });
+
+    // Touch support
+    marker.on('touchstart' as any, (e: any) => {
+      L.DomEvent.stopPropagation(e);
+      if (e.originalEvent) e.originalEvent.preventDefault();
+      dragging = true;
+      this.map!.dragging.disable();
+    });
+
+    this.map!.getContainer().addEventListener('touchmove', (te: TouchEvent) => {
+      if (!dragging) return;
+      te.preventDefault();
+      const touch = te.touches[0];
+      const containerRect = this.map!.getContainer().getBoundingClientRect();
+      const containerPoint = L.point(
+        touch.clientX - containerRect.left,
+        touch.clientY - containerRect.top
+      );
+      const latLng = this.map!.containerPointToLatLng(containerPoint);
+      marker.setLatLng(latLng);
+      this.updatePolygonFromVertices(pontoon);
+    }, { passive: false });
+
+    this.map!.getContainer().addEventListener('touchend', () => {
+      if (!dragging) return;
+      dragging = false;
+      this.map!.dragging.enable();
+      this.saveVertexPositions(pontoon);
+    });
+  }
+
+  private updatePolygonFromVertices(pontoon: Pontoon): void {
+    const layer = this.pontoonLayers.get(pontoon.id);
+    if (!layer || !(layer instanceof L.Polygon)) return;
+
+    const newCoords = this.editVertexMarkers.map(m => m.getLatLng());
+    (layer as L.Polygon).setLatLngs(newCoords);
+  }
+
+  private saveVertexPositions(pontoon: Pontoon): void {
+    const coords: [number, number][] = this.editVertexMarkers.map(m => {
+      const ll = m.getLatLng();
+      return [ll.lat, ll.lng];
+    });
+
+    const lats = coords.map(c => c[0]);
+    const lngs = coords.map(c => c[1]);
+
+    this.pontoonService.updatePontoon(pontoon.id, {
+      coordinates: JSON.stringify(coords),
+      southWestLat: Math.min(...lats),
+      southWestLng: Math.min(...lngs),
+      northEastLat: Math.max(...lats),
+      northEastLng: Math.max(...lngs)
+    }).subscribe({
+      next: () => {
+        this.showToast('Shape updated!', 'success');
+        // Update local data
+        const p = this.pontoons.find(pp => pp.id === pontoon.id);
+        if (p) p.coordinates = JSON.stringify(coords);
+      },
+      error: () => {
+        this.showToast('Error saving shape', 'error');
+        this.loadPontoons();
+      }
+    });
+  }
+
+  private clearEditVertexMarkers(): void {
+    this.editVertexMarkers.forEach(m => m.remove());
+    this.editVertexMarkers = [];
   }
 
   updatePontoon(): void {
@@ -564,23 +530,106 @@ export class SpotManager implements OnInit, OnDestroy {
     this.editingPontoonId = null;
     this.editPontoonName = '';
     this.editPontoonColor = '';
-    this._isDragging = false;
-    this.repositionDragStart = null;
-    this.repositionOrigBounds = null;
-    this.dragTouchId = null;
+    this.clearEditVertexMarkers();
 
     if (this.map) {
-      if (this.isTouchDevice) {
-        this.map.dragging.disable();
-      } else {
-        this.map.dragging.enable();
-      }
       (this.map.getContainer() as HTMLElement).style.cursor = '';
     }
 
-    // Remove highlight
     this.pontoonLayers.forEach(layer => {
-      layer.setStyle({ weight: 2, dashArray: '' });
+      layer.setStyle({ weight: 2, dashArray: undefined });
+    });
+  }
+
+  // ---- Zoom/Center Settings ----
+
+  saveMapView(): void {
+    if (!this.map || !this.spot) return;
+    const center = this.map.getCenter();
+    const zoom = this.map.getZoom();
+
+    this.fishingSpotService.update(this.spot.id, {
+      defaultZoom: zoom,
+      defaultCenterLat: center.lat,
+      defaultCenterLng: center.lng
+    }).subscribe({
+      next: () => {
+        this.spot!.defaultZoom = zoom;
+        this.spot!.defaultCenterLat = center.lat;
+        this.spot!.defaultCenterLng = center.lng;
+        this.mapZoom = zoom;
+        this.mapCenterLat = center.lat;
+        this.mapCenterLng = center.lng;
+        this.showToast('Map view saved! Users will see this default view.', 'success');
+      },
+      error: () => {
+        this.showToast('Error saving map view', 'error');
+      }
+    });
+  }
+
+  resetMapView(): void {
+    if (!this.map || !this.spot) return;
+    this.map.setView([this.spot.latitude, this.spot.longitude], 18);
+    
+    this.fishingSpotService.update(this.spot.id, {
+      resetDefaultMapView: true
+    } as any).subscribe({
+      next: () => {
+        this.spot!.defaultZoom = undefined;
+        this.spot!.defaultCenterLat = undefined;
+        this.spot!.defaultCenterLng = undefined;
+        this.showToast('Map view reset to default', 'success');
+      },
+      error: () => {
+        this.showToast('Error resetting map view', 'error');
+      }
+    });
+  }
+
+  // ---- Spot Details ----
+
+  saveDescription(): void {
+    if (!this.spot) return;
+    this.fishingSpotService.update(this.spot.id, {
+      description: this.editDescription
+    }).subscribe({
+      next: () => {
+        this.spot!.description = this.editDescription;
+        this.showToast('Description saved!', 'success');
+      },
+      error: () => this.showToast('Error saving description', 'error')
+    });
+  }
+
+  addFishSpecies(): void {
+    const species = this.fishSpeciesInput.trim();
+    if (!species || !this.spot) return;
+    if (this.fishSpeciesList.some(s => s.toLowerCase() === species.toLowerCase())) {
+      this.showToast('Species already added', 'error');
+      return;
+    }
+    this.fishSpeciesList.push(species);
+    this.fishSpeciesInput = '';
+    this.saveFishSpecies();
+  }
+
+  removeFishSpecies(index: number): void {
+    this.fishSpeciesList.splice(index, 1);
+    this.saveFishSpecies();
+  }
+
+  private saveFishSpecies(): void {
+    if (!this.spot) return;
+    const json = JSON.stringify(this.fishSpeciesList);
+    this.fishingSpotService.update(this.spot.id, {
+      fishSpecies: json
+    } as any).subscribe({
+      next: () => {
+        this.spot!.fishSpecies = json;
+        this.showToast('Fish species updated!', 'success');
+      },
+      error: () => this.showToast('Error saving fish species', 'error')
     });
   }
 
