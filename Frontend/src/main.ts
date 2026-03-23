@@ -84,6 +84,7 @@ async function enforcePortraitMode(): Promise<void> {
 
 bootstrapApplication(App, appConfig)
   .then(() => {
+    (window as any).__wwfReady = true;
     preventPwaAppZoom();
     void enforcePortraitMode();
 
@@ -91,4 +92,19 @@ bootstrapApplication(App, appConfig)
       void enforcePortraitMode();
     });
   })
-  .catch((err) => console.error(err));
+  .catch((err) => {
+    console.error(err);
+    // If bootstrap fails (e.g. stale SW serving broken chunks), clear SW caches and reload
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        if (!regs.length) return;
+        Promise.all(regs.map(r => r.unregister())).then(() =>
+          caches.keys()
+        ).then(keys =>
+          Promise.all(keys.map(k => caches.delete(k)))
+        ).then(() =>
+          window.location.reload()
+        );
+      });
+    }
+  });
