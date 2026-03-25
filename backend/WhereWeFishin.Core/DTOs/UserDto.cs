@@ -19,3 +19,13 @@ public class UpdateUserDto
     public string? LastName { get; set; }
     public string? ProfilePictureUrl { get; set; }
 }
+
+public class UpdateRoleDto
+{
+    public string Role { get; set; } = string.Empty;
+}
+
+public class ToggleStatusDto
+{
+    public bool Enable { get; set; }
+}

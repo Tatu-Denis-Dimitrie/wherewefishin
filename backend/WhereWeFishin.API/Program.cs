@@ -149,15 +149,8 @@ builder.Services.AddResponseCompression(options =>
     options.Providers.Add<GzipCompressionProvider>();
 });
 
-builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
-{
-    options.Level = CompressionLevel.Fastest;
-});
-
-builder.Services.Configure<GzipCompressionProviderOptions>(options =>
-{
-    options.Level = CompressionLevel.Fastest;
-});
+builder.Services.Configure<BrotliCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
+builder.Services.Configure<GzipCompressionProviderOptions>(o => o.Level = CompressionLevel.Fastest);
 
 // Output caching (in-memory cache for GET responses — near-zero TTFB on cache hit)
 builder.Services.AddOutputCache(options =>
@@ -208,7 +201,7 @@ builder.Services.AddHttpClient<IFishRecognitionService, FishRecognitionService>(
     var fishServiceUrl = builder.Configuration["FishRecognitionService:Url"] 
         ?? throw new InvalidOperationException("Fish Recognition Service URL not configured");
     client.BaseAddress = new Uri(fishServiceUrl);
-    client.Timeout = TimeSpan.FromMinutes(20); // For video processing - increased for longer videos
+    client.Timeout = TimeSpan.FromMinutes(20);
 });
 
 // Named HttpClient for fish-recognition auxiliary requests (delete, proxy)
@@ -229,7 +222,7 @@ var app = builder.Build();
 app.UseForwardedHeaders();
 
 
-// Apply EF Core migrations automatically on startup (creates DB if it doesn't exist)
+// Apply EF Core migrations and seed on startup
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -239,22 +232,7 @@ using (var scope = app.Services.CreateScope())
         logger.LogInformation("Applying database migrations...");
         await context.Database.MigrateAsync();
         logger.LogInformation("Database migrations applied successfully.");
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "An error occurred while applying database migrations.");
-        throw;
-    }
-}
 
-// Seed database automatically if empty
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<ApplicationDbContext>();
-    var logger = services.GetRequiredService<ILogger<Program>>();
-    try
-    {
         if (context.Users.Any())
         {
             logger.LogInformation("Database already has data - skipping seeding.");
@@ -268,13 +246,13 @@ using (var scope = app.Services.CreateScope())
             await context.SaveChangesAsync();
             logger.LogInformation("Added {Count} users", users.Count);
 
-            var userIds = context.Users.Select(u => u.Id).ToList();
+            var userIds = users.Select(u => u.Id).ToList();
             var fishingSpots = WhereWeFishin.Database.MockData.SeedData.GetFishingSpots(userIds);
             await context.FishingSpots.AddRangeAsync(fishingSpots);
             await context.SaveChangesAsync();
             logger.LogInformation("Added {Count} fishing spots", fishingSpots.Count);
 
-            var spotIds = context.FishingSpots.Select(f => f.Id).ToList();
+            var spotIds = fishingSpots.Select(f => f.Id).ToList();
             var catches = WhereWeFishin.Database.MockData.SeedData.GetCatches(userIds, spotIds);
             await context.Catches.AddRangeAsync(catches);
             await context.SaveChangesAsync();
@@ -288,24 +266,8 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "An error occurred while seeding the database.");
+        logger.LogError(ex, "An error occurred during database startup.");
         throw;
-    }
-}
-
-// Pre-warm SQL connection pool to avoid cold-start 502s
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    try
-    {
-        await context.Database.ExecuteSqlRawAsync("SELECT 1");
-        logger.LogInformation("SQL Server connection pre-warmed successfully.");
-    }
-    catch (Exception ex)
-    {
-        logger.LogWarning(ex, "SQL Server pre-warm failed (non-fatal).");
     }
 }
 

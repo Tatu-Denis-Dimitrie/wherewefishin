@@ -193,13 +193,3 @@ public class AdminController : ControllerBase
         return NoContent();
     }
 }
-
-public class UpdateRoleDto
-{
-    public string Role { get; set; } = string.Empty;
-}
-
-public class ToggleStatusDto
-{
-    public bool Enable { get; set; }
-}

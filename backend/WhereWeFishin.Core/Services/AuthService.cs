@@ -39,42 +39,10 @@ public class AuthService : IAuthService
         if (user == null)
             return null;
 
-        bool passwordValid;
-        if (user.PasswordHash.StartsWith("$2"))
-        {
-            // BCrypt hash
-            passwordValid = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
-        }
-        else
-        {
-            // Plain-text password (migration from legacy version): verify and re-hash
-            passwordValid = request.Password == user.PasswordHash;
-            if (passwordValid)
-            {
-                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-                user.UpdatedAt = DateTime.UtcNow;
-                await _userRepository.UpdateAsync(user);
-            }
-        }
-
-        if (!passwordValid)
+        if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             return null;
 
-        var token = GenerateJwtToken(user.Id, user.Username, user.Email, user.Role);
-        var expiresAt = DateTime.UtcNow.AddHours(
-            double.Parse(_configuration["Jwt:ExpirationHours"] ?? "24"));
-
-        return new AuthResponse
-        {
-            Token = token,
-            Username = user.Username,
-            Email = user.Email,
-            Role = user.Role,
-            UserId = user.Id,
-            ExpiresAt = expiresAt,
-            FirstName = user.FirstName,
-            LastName = user.LastName
-        };
+        return BuildAuthResponse(user);
     }
 
     public async Task<AuthResponse?> RegisterAsync(RegisterRequest request)
@@ -105,21 +73,7 @@ public class AuthService : IAuthService
             _logger.LogWarning(ex, "Failed to send welcome email to {Email}", user.Email);
         }
 
-        var token = GenerateJwtToken(user.Id, user.Username, user.Email, user.Role);
-        var expiresAt = DateTime.UtcNow.AddHours(
-            double.Parse(_configuration["Jwt:ExpirationHours"] ?? "24"));
-
-        return new AuthResponse
-        {
-            Token = token,
-            Username = user.Username,
-            Email = user.Email,
-            Role = user.Role,
-            UserId = user.Id,
-            ExpiresAt = expiresAt,
-            FirstName = user.FirstName,
-            LastName = user.LastName
-        };
+        return BuildAuthResponse(user);
     }
 
     public async Task<bool> UserExistsAsync(string username, string email)
@@ -210,45 +164,22 @@ public class AuthService : IAuthService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    private string HashPassword(string password)
+    private AuthResponse BuildAuthResponse(User user)
     {
-        using var rng = RandomNumberGenerator.Create();
-        var salt = new byte[16];
-        rng.GetBytes(salt);
+        var token = GenerateJwtToken(user.Id, user.Username, user.Email, user.Role);
+        var expiresAt = DateTime.UtcNow.AddHours(
+            double.Parse(_configuration["Jwt:ExpirationHours"] ?? "24"));
 
-        using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 10000, HashAlgorithmName.SHA256);
-        var hash = pbkdf2.GetBytes(32);
-
-        var hashBytes = new byte[48];
-        Array.Copy(salt, 0, hashBytes, 0, 16);
-        Array.Copy(hash, 0, hashBytes, 16, 32);
-
-        return Convert.ToBase64String(hashBytes);
-    }
-
-    private bool VerifyPassword(string password, string storedHash)
-    {
-        try
+        return new AuthResponse
         {
-            var hashBytes = Convert.FromBase64String(storedHash);
-
-            var salt = new byte[16];
-            Array.Copy(hashBytes, 0, salt, 0, 16);
-
-            using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 10000, HashAlgorithmName.SHA256);
-            var hash = pbkdf2.GetBytes(32);
-
-            for (int i = 0; i < 32; i++)
-            {
-                if (hashBytes[i + 16] != hash[i])
-                    return false;
-            }
-
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
+            Token = token,
+            Username = user.Username,
+            Email = user.Email,
+            Role = user.Role,
+            UserId = user.Id,
+            ExpiresAt = expiresAt,
+            FirstName = user.FirstName,
+            LastName = user.LastName
+        };
     }
 }

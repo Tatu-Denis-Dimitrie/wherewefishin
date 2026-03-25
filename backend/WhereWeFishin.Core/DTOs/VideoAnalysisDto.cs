@@ -40,11 +40,6 @@ public class BoundingBoxDto
     public int Height { get; set; }
 }
 
-public class UploadVideoRequest
-{
-    public string? Description { get; set; }
-}
-
 public class AnalysisResultDto
 {
     public bool Success { get; set; }

@@ -39,7 +39,7 @@ services:
         Password=${SQL_SA_PASSWORD:-YourStr0ngP@ssw0rd!};
         TrustServerCertificate=true;MultipleActiveResultSets=true;
         Connect Timeout=120;Max Pool Size=200;Min Pool Size=5;Pooling=true
-      Jwt__Key: ${JWT_KEY:-YourSuperSecretKeyThatShouldBeAtLeast32CharactersLongForHS256Algorithm}
+      Jwt__Key: ${JWT_KEY}
       Jwt__Issuer: WhereWeFishinAPI
       Jwt__Audience: WhereWeFishinClient
       Jwt__ExpirationHours: "24"
@@ -48,7 +48,7 @@ services:
       Smtp__Port: "587"
       Smtp__EnableSsl: "true"
       Smtp__Username: wherewefishing@gmail.com
-      Smtp__Password: eiyr qrvg ssom sqfp
+      Smtp__Password: ${SMTP_PASSWORD}
       Smtp__FromEmail: wherewefishing@gmail.com
       Smtp__FromName: WhereWeFishin
       Smtp__UseDefaultCredentials: "false"
@@ -123,11 +123,7 @@ services:
       - app
     restart: unless-stopped
 
-  # ── Cloudflare Tunnel (3 replici HA) ──────────────────────
-  # Trei instanțe separate pe același tunel.
-  # Cloudflare rutează trafic la toate; dacă una moare, celelalte preiau.
-  # Docker restart: always le repornește automat fără intervenție.
-  # NU folosim watchdog - creează cicluri infinite de restarturi.
+  # ── Cloudflare Tunnel (x replici HA) ──────────────────────
   cloudflared-1:
     image: cloudflare/cloudflared:latest
     container_name: wherewefishin-tunnel-1

@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit, OnDestroy, HostListener, ChangeDetect
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { FishingSpotService, FishingSpot, CreateFishingSpot } from '../../services/fishing-spot.service';
 import { AdminService, AdminStats } from '../../services/admin.service';
@@ -127,11 +128,14 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.initMap();
-    this.loadSpots();
+    // If forkJoin resolved from cache before ngAfterViewInit (shareReplay sync emit),
+    // the markers were skipped because markersLayer didn't exist yet — render them now.
+    if (this.spots.length > 0) {
+      this.applyFishFilter();
+    }
     const restoredFromCache = this.restoreCachedUserLocation();
     if (!restoredFromCache) {
-      // Ask for geolocation only when we don't have a cached location.
-      setTimeout(() => this.locateUser(), 500);
+      this.locateUser();
     }
     setTimeout(() => this.map.invalidateSize(), 250);
     this.cdr.detectChanges();
@@ -140,82 +144,60 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   private loadDashboardData(): void {
     this.loadingStats = true;
     const userId = this.authService.getUserId();
-    
+
     if (!userId) {
       this.loadingStats = false;
       this.loadingLatestSession = false;
       return;
     }
 
-    if (this.isUser()) {
-      this.loadLatestPurchasedSession();
-    } else {
-      this.loadingLatestSession = false;
-    }
+    forkJoin({
+      spots:    this.fishingSpotService.getAll(),
+      analyses: this.videoAnalysisService.getUserAnalyses(userId),
+      bookings: this.isUser() ? this.bookingService.getMyBookings() : of([] as Booking[]),
+      stats:    this.isAdmin() ? this.adminService.getStats() : of(null)
+    }).subscribe({
+      next: ({ spots, analyses, bookings, stats }) => {
+        // Spots — shared with map (replaces separate loadSpots call)
+        this.spots = spots.map(s => this.enrichSpotWithSpecies(s));
+        this.fishSpeciesOptions = Array.from(
+          new Set(this.spots.flatMap(s => s.parsedFishSpecies))
+        ).sort((a, b) => a.localeCompare(b));
+        if (this.selectedFishSpecies !== 'all' && !this.fishSpeciesOptions.includes(this.selectedFishSpecies)) {
+          this.selectedFishSpecies = 'all';
+        }
+        this.applyFishFilter();
 
-    // Load user's analyses (for all roles)
-    this.videoAnalysisService.getUserAnalyses(userId).subscribe({
-      next: (analyses) => {
+        // Spot count for manager/admin dashboard card
+        if (this.isManager() || this.isAdmin()) {
+          this.userSpotsCount = spots.filter(s => s.userId === userId).length;
+        }
+
+        // Analyses count (all roles)
         this.userAnalysesCount = analyses.length;
         this.userCompletedCount = analyses.filter(a => a.status === 'Completed').length;
+
+        // Bookings (regular users)
+        if (this.isUser() && bookings.length > 0) {
+          const now = Date.now();
+          const active = bookings.filter(b => b.status?.toLowerCase() !== 'cancelled');
+          this.latestFutureSession = active
+            .filter(b => new Date(b.startDate).getTime() >= now)
+            .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0] ?? null;
+          this.latestPastSession = active
+            .filter(b => new Date(b.startDate).getTime() < now)
+            .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())[0] ?? null;
+          this.updateSelectedSession();
+        }
+
+        // Admin system stats
+        if (stats) this.stats = stats;
+
         this.loadingStats = false;
-      },
-      error: () => {
-        this.loadingStats = false;
-      }
-    });
-
-    // Load manager/admin specific data
-    if (this.isManager() || this.isAdmin()) {
-      this.fishingSpotService.getAll().subscribe({
-        next: (allSpots) => {
-          this.userSpotsCount = allSpots.filter(s => s.userId === userId).length;
-        },
-        error: () => {}
-      });
-
-      this.userService.getManagers().subscribe({
-        next: (managers) => { this.managers = managers; },
-        error: () => {}
-      });
-    }
-    
-    // Load admin system stats
-    if (this.isAdmin()) {
-      this.adminService.getStats().subscribe({
-        next: (stats) => {
-          this.stats = stats;
-        },
-        error: () => {}
-      });
-    }
-  }
-
-  private loadLatestPurchasedSession(): void {
-    this.loadingLatestSession = true;
-
-    this.bookingService.getMyBookings().subscribe({
-      next: (bookings) => {
-        const now = Date.now();
-        const purchased = bookings.filter(b => b.status?.toLowerCase() !== 'cancelled');
-
-        const futureSessions = purchased
-          .filter(b => new Date(b.startDate).getTime() >= now)
-          .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-
-        const pastSessions = purchased
-          .filter(b => new Date(b.startDate).getTime() < now)
-          .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
-
-        this.latestFutureSession = futureSessions[0] ?? null;
-        this.latestPastSession = pastSessions[0] ?? null;
-        this.updateSelectedSession();
         this.loadingLatestSession = false;
       },
       error: () => {
-        this.latestPurchasedSession = null;
-        this.latestFutureSession = null;
-        this.latestPastSession = null;
+        this.loadingStats = false;
         this.loadingLatestSession = false;
       }
     });
@@ -285,6 +267,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private renderMarkers(): void {
+    if (!this.markersLayer) return;  // map not yet initialized (cache sync emit in ngOnInit)
     this.markersLayer.clearLayers();
     this.markerSpotMap.clear();
 
@@ -460,6 +443,13 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     if (this.isAddMode) {
       this.map.getContainer().style.cursor = 'crosshair';
       this.map.once('click', (e: L.LeafletMouseEvent) => this.onMapClick(e));
+      // Lazy-load managers only when the add-spot form is actually opened
+      if (this.managers.length === 0) {
+        this.userService.getManagers().subscribe({
+          next: (managers) => { this.managers = managers; },
+          error: () => {}
+        });
+      }
     } else {
       this.map.getContainer().style.cursor = '';
       this.cancelAddSpot();
@@ -503,6 +493,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.fishingSpotService.create(spot).subscribe({
       next: () => {
         this.showToast('Fishing spot added!', 'success');
+        this.adminService.clearStatsCache();
         this.cancelAddSpot();
         this.loadSpots();
       },
@@ -534,6 +525,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.fishingSpotService.delete(spot.id).subscribe({
       next: () => {
         this.showToast(`"${spot.name}" deleted`, 'success');
+        this.adminService.clearStatsCache();
         this.loadSpots();
       },
       error: () => this.showToast('Failed to delete spot', 'error')

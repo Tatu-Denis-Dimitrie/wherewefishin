@@ -25,7 +25,7 @@ public class FishRecognitionService : IFishRecognitionService
 
     public async Task<AnalysisResultDto> AnalyzeVideoAsync(Stream videoStream, string fileName, int userId)
     {
-        VideoAnalysis analysis = new()
+        var analysis = new VideoAnalysis
         {
             UserId = userId,
             FileName = fileName,
@@ -48,79 +48,51 @@ public class FishRecognitionService : IFishRecognitionService
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
-                analysis.Status = "Failed";
-                analysis.ErrorMessage = $"Python service error: {error}";
-                await _videoRepository.UpdateAsync(analysis);
-
-                return new AnalysisResultDto
-                {
-                    Success = false,
-                    Error = analysis.ErrorMessage
-                };
+                return await FailAnalysis(analysis, $"Python service error: {error}");
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();
             var pythonResult = JsonSerializer.Deserialize<PythonAnalysisResponse>(responseContent, 
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-            if (pythonResult?.Success == true && pythonResult.Results != null)
+            if (pythonResult?.Success != true || pythonResult.Results == null)
+                return await FailAnalysis(analysis, "Invalid response from Python service");
+
+            var results = pythonResult.Results;
+            analysis.Duration = results.Duration;
+            analysis.TotalFrames = results.TotalFrames;
+            analysis.Fps = results.Fps;
+            analysis.TotalDetections = results.TotalUniqueFish ?? results.TotalDetections;
+            analysis.ProcessedVideoUrl = results.ProcessedVideoUrl;
+
+            if (results.DominantFish != null)
             {
-                analysis.Duration = pythonResult.Results.Duration;
-                analysis.TotalFrames = pythonResult.Results.TotalFrames;
-                analysis.Fps = pythonResult.Results.Fps;
-                analysis.TotalDetections = pythonResult.Results.TotalUniqueFish ?? pythonResult.Results.TotalDetections;
-                
-                if (!string.IsNullOrEmpty(pythonResult.Results.ProcessedVideoUrl))
-                {
-                    analysis.ProcessedVideoUrl = pythonResult.Results.ProcessedVideoUrl;
-                }
-                
-                if (pythonResult.Results.DominantFish != null)
-                {
-                    analysis.DominantFishType = pythonResult.Results.DominantFish.Type;
-                    analysis.DominantFishCount = pythonResult.Results.DominantFish.Count;
-                }
-
-                analysis.FishCountsJson = JsonSerializer.Serialize(pythonResult.Results.FishCounts);
-                analysis.DetectionsJson = JsonSerializer.Serialize(pythonResult.Results.Detections);
-                analysis.Status = "Completed";
-
-                await _videoRepository.UpdateAsync(analysis);
-
-                return new AnalysisResultDto
-                {
-                    Success = true,
-                    Analysis = MapToDto(analysis, pythonResult.Results)
-                };
+                analysis.DominantFishType = results.DominantFish.Type;
+                analysis.DominantFishCount = results.DominantFish.Count;
             }
 
-            analysis.Status = "Failed";
-            analysis.ErrorMessage = "Invalid response from Python service";
+            analysis.FishCountsJson = JsonSerializer.Serialize(results.FishCounts);
+            analysis.DetectionsJson = JsonSerializer.Serialize(results.Detections);
+            analysis.Status = "Completed";
             await _videoRepository.UpdateAsync(analysis);
 
-            return new AnalysisResultDto
-            {
-                Success = false,
-                Error = analysis.ErrorMessage
-            };
+            return new AnalysisResultDto { Success = true, Analysis = MapToDto(analysis, results) };
         }
         catch (Exception ex)
         {
-            analysis.Status = "Failed";
-            analysis.ErrorMessage = ex.Message;
-
-            // Only update if the row was actually persisted (AddAsync succeeded)
             if (analysis.Id > 0)
-            {
-                try { await _videoRepository.UpdateAsync(analysis); } catch { /* best-effort */ }
-            }
+                await FailAnalysis(analysis, ex.Message);
 
-            return new AnalysisResultDto
-            {
-                Success = false,
-                Error = ex.Message
-            };
+            return new AnalysisResultDto { Success = false, Error = ex.Message };
         }
+    }
+
+    private async Task<AnalysisResultDto> FailAnalysis(VideoAnalysis analysis, string error)
+    {
+        analysis.Status = "Failed";
+        analysis.ErrorMessage = error;
+        try { await _videoRepository.UpdateAsync(analysis); } catch { /* best-effort */ }
+        return new AnalysisResultDto { Success = false, Error = error };
     }
 
     public async Task<bool> IsServiceHealthyAsync()
@@ -150,9 +122,7 @@ public class FishRecognitionService : IFishRecognitionService
             }
         }
         catch
-        {
-            // Log error
-        }
+        {}
 
         return new List<string>();
     }
@@ -176,7 +146,6 @@ public class FishRecognitionService : IFishRecognitionService
         }).ToList();
 
         string? processedVideoUrl = entity.ProcessedVideoUrl;
-        // Keep as relative path (e.g. "outputs/filename.mp4") — the frontend resolves it.
 
         return new VideoAnalysisDto
         {

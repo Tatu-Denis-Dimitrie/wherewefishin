@@ -42,7 +42,6 @@ public class BookingsController : ControllerBase
         _stripeEnabled = !string.IsNullOrWhiteSpace(configuration["Stripe:SecretKey"]);
     }
 
-    // GET api/bookings - returns bookings for the logged-in user
     [HttpGet]
     public async Task<ActionResult<IEnumerable<BookingDto>>> GetMyBookings()
     {
@@ -50,39 +49,17 @@ public class BookingsController : ControllerBase
         if (userId == null) return Unauthorized();
 
         var sessions = await _sessionRepository.FindAsync(s => s.UserId == userId.Value);
-        var spotIds = sessions.Select(s => s.FishingSpotId).Distinct().ToHashSet();
-        var pontoonIds = sessions.Where(s => s.PontoonId.HasValue).Select(s => s.PontoonId!.Value).Distinct().ToHashSet();
-        var spots = await _spotRepository.FindAsync(s => spotIds.Contains(s.Id));
-        var pontoons = pontoonIds.Count > 0
-            ? await _pontoonRepository.FindAsync(p => pontoonIds.Contains(p.Id))
-            : [];
-        var spotMap = spots.ToDictionary(s => s.Id, s => s.Name);
-        var pontoonMap = pontoons.ToDictionary(p => p.Id, p => p.Name);
-
-        return Ok(sessions
-            .OrderByDescending(s => s.CreatedAt)
-            .Select(s => MapToDto(s, spotMap.GetValueOrDefault(s.FishingSpotId, "Unknown"), 
-                                     s.PontoonId.HasValue ? pontoonMap.GetValueOrDefault(s.PontoonId.Value) : null)));
+        return Ok(await MapSessionsToDtos(sessions));
     }
 
-    // GET api/bookings/all - Admin: returns all bookings
     [HttpGet("all")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<BookingDto>>> GetAllBookings()
     {
         var sessions = await _sessionRepository.GetAllAsync();
-        var spots = await _spotRepository.GetAllAsync();
-        var pontoons = await _pontoonRepository.GetAllAsync();
-        var spotMap = spots.ToDictionary(s => s.Id, s => s.Name);
-        var pontoonMap = pontoons.ToDictionary(p => p.Id, p => p.Name);
-
-        return Ok(sessions
-            .OrderByDescending(s => s.CreatedAt)
-            .Select(s => MapToDto(s, spotMap.GetValueOrDefault(s.FishingSpotId, "Unknown"),
-                                     s.PontoonId.HasValue ? pontoonMap.GetValueOrDefault(s.PontoonId.Value) : null)));
+        return Ok(await MapSessionsToDtos(sessions));
     }
 
-    // POST api/bookings/payment-intent - creates a Stripe PaymentIntent for a booking candidate
     [HttpPost("payment-intent")]
     public async Task<ActionResult<PaymentIntentDto>> CreatePaymentIntent([FromBody] CreatePaymentIntentDto dto)
     {
@@ -143,7 +120,6 @@ public class BookingsController : ControllerBase
         }
     }
 
-    // POST api/bookings - create a booking
     [HttpPost]
     public async Task<ActionResult<BookingDto>> CreateBooking([FromBody] CreateBookingDto dto)
     {
@@ -214,14 +190,12 @@ public class BookingsController : ControllerBase
         }
         catch (Exception ex)
         {
-            // Do not block booking creation if SMTP delivery fails.
             _logger.LogWarning(ex, "Booking confirmation email failed for booking {BookingId}", session.Id);
         }
 
         return CreatedAtAction(nameof(GetBooking), new { id = session.Id }, MapToDto(session, validation.Spot!.Name, validation.Pontoon?.Name));
     }
 
-    // GET api/bookings/booked-periods?pontoonId=X or ?spotId=X
     [HttpGet("booked-periods")]
     [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<BookedPeriodDto>>> GetBookedPeriods([FromQuery] int? pontoonId, [FromQuery] int? spotId)
@@ -258,7 +232,6 @@ public class BookingsController : ControllerBase
         return Ok(periods);
     }
 
-    // GET api/bookings/{id}
     [HttpGet("{id}")]
     public async Task<ActionResult<BookingDto>> GetBooking(int id)
     {
@@ -281,7 +254,6 @@ public class BookingsController : ControllerBase
         return Ok(MapToDto(session, spot?.Name ?? "Unknown", pontoon?.Name));
     }
 
-    // DELETE api/bookings/{id} - cancel a booking
     [HttpDelete("{id}")]
     public async Task<IActionResult> CancelBooking(int id)
     {
@@ -331,20 +303,11 @@ public class BookingsController : ControllerBase
         var startUtc = startDate.ToUniversalTime();
         var endUtc = startUtc.AddHours(durationHours);
 
-        IEnumerable<FishingSession> existingSessions;
-        if (pontoonId.HasValue)
-        {
-            existingSessions = await _sessionRepository.FindAsync(s =>
-                s.PontoonId == pontoonId.Value &&
-                s.Status != SessionStatus.Cancelled);
-        }
-        else
-        {
-            existingSessions = await _sessionRepository.FindAsync(s =>
-                s.FishingSpotId == fishingSpotId &&
-                s.PontoonId == null &&
-                s.Status != SessionStatus.Cancelled);
-        }
+        var existingSessions = await _sessionRepository.FindAsync(s =>
+            s.Status != SessionStatus.Cancelled &&
+            (pontoonId.HasValue
+                ? s.PontoonId == pontoonId.Value
+                : s.FishingSpotId == fishingSpotId && s.PontoonId == null));
 
         var hasOverlap = existingSessions.Any(s =>
             startUtc < s.StartDate.AddHours(s.DurationHours) &&
@@ -421,6 +384,23 @@ public class BookingsController : ControllerBase
 
     private static long ToStripeAmount(decimal amount)
         => Convert.ToInt64(decimal.Round(amount * 100m, 0, MidpointRounding.AwayFromZero));
+
+    private async Task<IEnumerable<BookingDto>> MapSessionsToDtos(IEnumerable<FishingSession> sessions)
+    {
+        var spotIds = sessions.Select(s => s.FishingSpotId).Distinct().ToHashSet();
+        var pontoonIds = sessions.Where(s => s.PontoonId.HasValue).Select(s => s.PontoonId!.Value).Distinct().ToHashSet();
+        var spots = await _spotRepository.FindAsync(s => spotIds.Contains(s.Id));
+        var pontoons = pontoonIds.Count > 0
+            ? await _pontoonRepository.FindAsync(p => pontoonIds.Contains(p.Id))
+            : [];
+        var spotMap = spots.ToDictionary(s => s.Id, s => s.Name);
+        var pontoonMap = pontoons.ToDictionary(p => p.Id, p => p.Name);
+
+        return sessions
+            .OrderByDescending(s => s.CreatedAt)
+            .Select(s => MapToDto(s, spotMap.GetValueOrDefault(s.FishingSpotId, "Unknown"),
+                                     s.PontoonId.HasValue ? pontoonMap.GetValueOrDefault(s.PontoonId.Value) : null));
+    }
 
     private static BookingDto MapToDto(FishingSession session, string spotName, string? pontoonName = null) => new()
     {

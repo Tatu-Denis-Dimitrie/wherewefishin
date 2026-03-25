@@ -220,11 +220,9 @@ public class VideoAnalysisController : ControllerBase
             var httpClient = _httpClientFactory.CreateClient("FishService");
             var requestMessage = new HttpRequestMessage(HttpMethod.Get, $"outputs/{filename}");
 
-            // Forward Range header so Python can return partial content (needed for video seeking)
             if (Request.Headers.TryGetValue("Range", out var rangeValues))
                 requestMessage.Headers.TryAddWithoutValidation("Range", rangeValues.ToArray());
 
-            // ResponseHeadersRead = stream body instead of loading entire video into memory
             var response = await httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead);
 
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -235,7 +233,6 @@ public class VideoAnalysisController : ControllerBase
 
             var contentType = response.Content.Headers.ContentType?.ToString() ?? "video/mp4";
 
-            // Set status and headers before writing body
             Response.StatusCode = (int)response.StatusCode;
             Response.ContentType = contentType;
             Response.Headers["Accept-Ranges"] = "bytes";
@@ -246,7 +243,6 @@ public class VideoAnalysisController : ControllerBase
             if (response.Content.Headers.ContentLength.HasValue)
                 Response.Headers["Content-Length"] = response.Content.Headers.ContentLength.Value.ToString();
 
-            // Stream body directly to response without buffering
             await using var stream = await response.Content.ReadAsStreamAsync();
             await stream.CopyToAsync(Response.Body);
             return new EmptyResult();
@@ -255,45 +251,6 @@ public class VideoAnalysisController : ControllerBase
         {
             _logger.LogError(ex, "Error proxying processed video: {Filename}", filename);
             return StatusCode(500, new { error = "Failed to retrieve processed video" });
-        }
-    }
-
-    [HttpGet("test-uploads")]
-    public IActionResult TestUploadsAccess()
-    {
-        try
-        {
-            var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
-            
-            if (!Directory.Exists(uploadsPath))
-            {
-                return Ok(new { 
-                    status = "error",
-                    message = "Uploads directory does not exist",
-                    path = uploadsPath 
-                });
-            }
-
-            var files = Directory.GetFiles(uploadsPath)
-                .Select(f => new {
-                    filename = Path.GetFileName(f),
-                    size = new FileInfo(f).Length,
-                    url = $"{Request.Scheme}://{Request.Host}/uploads/{Path.GetFileName(f)}"
-                })
-                .ToList();
-
-            return Ok(new {
-                status = "success",
-                uploadsPath = uploadsPath,
-                fileCount = files.Count,
-                files = files,
-                testUrl = files.Any() ? files[0].url : null
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error testing uploads access");
-            return StatusCode(500, new { error = ex.Message });
         }
     }
 
@@ -335,9 +292,6 @@ public class VideoAnalysisController : ControllerBase
         }
 
         string? processedVideoUrl = entity.ProcessedVideoUrl;
-        // Return the relative path as-is (e.g. "outputs/filename.mp4").
-        // The frontend routes it to the Python service directly (local)
-        // or via nginx /outputs/ proxy (Docker). No .NET proxying needed.
 
         return new VideoAnalysisDto
         {

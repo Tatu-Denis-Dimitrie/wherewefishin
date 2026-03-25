@@ -65,12 +65,10 @@ public class ReviewsController : ControllerBase
         var spot = await _spotRepository.GetByIdAsync(createReviewDto.FishingSpotId);
         if (spot == null) return NotFound("Fishing spot not found");
 
-        // Check if user already has a review for this spot
         var existingReview = await _reviewRepository.GetByUserAndSpotAsync(userId.Value, createReviewDto.FishingSpotId);
         if (existingReview != null)
             return BadRequest("You have already reviewed this fishing spot. You can edit your existing review.");
 
-        // Validate rating
         if (createReviewDto.Rating < 1 || createReviewDto.Rating > 5)
             return BadRequest("Rating must be between 1 and 5");
 
@@ -86,7 +84,6 @@ public class ReviewsController : ControllerBase
 
         await _cacheStore.EvictByTagAsync("reviews", default);
 
-        // Reload with User included
         var createdReview = await _reviewRepository.GetByIdAsync(review.Id);
         return CreatedAtAction(nameof(GetReview), new { id = review.Id }, MapToDto(createdReview!));
     }
@@ -101,7 +98,6 @@ public class ReviewsController : ControllerBase
         var review = await _reviewRepository.GetByIdAsync(id);
         if (review == null) return NotFound();
 
-        // Check if the user owns this review or is admin
         if (review.UserId != userId && !User.IsInRole("Admin"))
             return Forbid();
 
@@ -130,7 +126,6 @@ public class ReviewsController : ControllerBase
         var review = await _reviewRepository.GetByIdAsync(id);
         if (review == null) return NotFound();
 
-        // Check if the user owns this review or is admin
         if (review.UserId != userId && !User.IsInRole("Admin"))
             return Forbid();
 

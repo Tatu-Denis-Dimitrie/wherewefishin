@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.OutputCaching;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Interfaces;
-using System.Security.Claims;
 
 namespace WhereWeFishin.API.Controllers;
 
@@ -72,7 +71,7 @@ public class FishingSpotsController : ControllerBase
         spot.ImageUrl = updateSpotDto.ImageUrl ?? spot.ImageUrl;
         spot.PricePerHour = updateSpotDto.PricePerHour ?? spot.PricePerHour;
         if (updateSpotDto.ManagerId.HasValue) spot.ManagerId = updateSpotDto.ManagerId;
-        else if (updateSpotDto.ManagerId == null && updateSpotDto.Name != null) spot.ManagerId = null; // explicit clear
+        else if (updateSpotDto.ManagerId == null && updateSpotDto.Name != null) spot.ManagerId = null;
         if (updateSpotDto.ResetDefaultMapView)
         {
             spot.DefaultZoom = null;

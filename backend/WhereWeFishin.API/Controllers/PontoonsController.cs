@@ -48,7 +48,6 @@ public class PontoonsController : ControllerBase
         var spot = await _spotRepository.GetByIdAsync(createPontoonDto.FishingSpotId);
         if (spot == null) return NotFound("Fishing spot not found");
 
-        // Check if user is admin or manages this spot
         if (!User.IsInRole("Admin") && spot.ManagerId != userId && spot.UserId != userId)
             return Forbid("You don't have permission to add pontoons to this fishing spot");
 
@@ -81,7 +80,6 @@ public class PontoonsController : ControllerBase
         var spot = await _spotRepository.GetByIdAsync(pontoon.FishingSpotId);
         if (spot == null) return NotFound("Fishing spot not found");
 
-        // Check if user is admin or manages this spot
         if (!User.IsInRole("Admin") && spot.ManagerId != userId && spot.UserId != userId)
             return Forbid("You don't have permission to edit pontoons on this fishing spot");
 
@@ -117,7 +115,6 @@ public class PontoonsController : ControllerBase
         var spot = await _spotRepository.GetByIdAsync(pontoon.FishingSpotId);
         if (spot == null) return NotFound("Fishing spot not found");
 
-        // Check if user is admin or manages this spot
         if (!User.IsInRole("Admin") && spot.ManagerId != userId && spot.UserId != userId)
             return Forbid("You don't have permission to delete pontoons from this fishing spot");
 
