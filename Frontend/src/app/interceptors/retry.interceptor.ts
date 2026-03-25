@@ -1,5 +1,5 @@
 import { HttpInterceptorFn, HttpRequest } from '@angular/common/http';
-import { retry, timer } from 'rxjs';
+import { retry, throwError, timer } from 'rxjs';
 
 const MAX_RETRIES = 3;
 const INITIAL_DELAY_MS = 1500;
@@ -11,13 +11,13 @@ export const retryInterceptor: HttpInterceptorFn = (req, next) => {
       count: MAX_RETRIES,
       delay: (error, retryCount) => {
         if (!RETRYABLE_STATUS_CODES.includes(error.status)) {
-          throw error;
+          return throwError(() => error);
         }
         if (!isIdempotent(req) && error.status !== 0 && error.status !== 502) {
-          throw error;
+          return throwError(() => error);
         }
         if (isLongRunningRequest(req)) {
-          throw error;
+          return throwError(() => error);
         }
         const baseDelay = INITIAL_DELAY_MS * Math.pow(2, retryCount - 1);
         const jitter = Math.random() * baseDelay * 0.3;

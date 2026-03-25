@@ -120,8 +120,7 @@ body {
   position: relative;
   overflow: visible;
 }
-.user-location-dot::after {
-  content: '';
+.user-location-center {
   width: 14px;
   height: 14px;
   background: #3b82f6;
@@ -132,6 +131,8 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  z-index: 2;
+  pointer-events: auto;
 }
 .user-location-pulse {
   width: 40px;
@@ -142,6 +143,7 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  z-index: 1;
   animation: locationPulse 2s ease-out infinite;
 }
 @keyframes locationPulse {
@@ -160,7 +162,8 @@ body {
 }
 
 /* Allow user-location icon and pulse to overflow outside the 20x20 icon bounds */
-.leaflet-marker-icon:has(.user-location-dot) {
+.leaflet-marker-icon:has(.user-location-dot),
+.leaflet-marker-icon > .user-location-dot {
   overflow: visible !important;
 }
 

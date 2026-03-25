@@ -49,7 +49,7 @@ public class AuthServiceTests
             Id = 1,
             Username = "testuser",
             Email = "test@test.com",
-            PasswordHash = "correctpassword",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("correctpassword"),
             Role = "User"
         };
         _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User> { user });
@@ -81,7 +81,7 @@ public class AuthServiceTests
             Id = 2,
             Username = "anotheruser",
             Email = "another@test.com",
-            PasswordHash = "mypassword",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("mypassword"),
             Role = "User"
         };
         _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User> { user });
@@ -109,7 +109,7 @@ public class AuthServiceTests
             Id = 1,
             Username = "testuser",
             Email = "test@test.com",
-            PasswordHash = "correctpassword",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("correctpassword"),
             Role = "User"
         };
         _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User> { user });
@@ -155,7 +155,7 @@ public class AuthServiceTests
             Id = 1,
             Username = "TestUser",
             Email = "test@test.com",
-            PasswordHash = "pass",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("pass"),
             Role = "User"
         };
         _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User> { user });

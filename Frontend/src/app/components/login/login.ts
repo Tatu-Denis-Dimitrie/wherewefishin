@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -28,7 +28,8 @@ export class Login {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {
     this.loginForm = this.fb.group({
       usernameOrEmail: ['', [Validators.required]],
@@ -58,6 +59,7 @@ export class Login {
         error: (error) => {
           this.isLoading = false;
           this.errorMessage = error.error?.message || 'Invalid username or password';
+          this.cdr.detectChanges();
         }
       });
     }

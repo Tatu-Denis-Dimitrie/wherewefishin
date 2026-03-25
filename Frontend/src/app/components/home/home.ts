@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, HostListener, ChangeDetectorRef, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, HostListener, ChangeDetectorRef, NgZone, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -50,7 +50,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     ['Trout', 'Chub'],
     ['Carp', 'Pike', 'Perch']
   ];
-  private userLocationMarker: L.Marker | null = null;
+  private userLocationMarker: L.CircleMarker | null = null;
   private userLocationCircle: L.Circle | null = null;
   private userLatLng: L.LatLng | null = null;
   private routeLayer: L.GeoJSON | null = null;
@@ -113,7 +113,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     private bookingService: BookingService,
     private router: Router,
     private userService: UserService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private zone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -235,6 +236,16 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private initMap(): void {
+    // Fix Leaflet default marker icon path (broken by bundlers in production)
+    delete (L.Icon.Default.prototype as any).options.iconUrl;
+    delete (L.Icon.Default.prototype as any).options.iconRetinaUrl;
+    delete (L.Icon.Default.prototype as any).options.shadowUrl;
+    L.Icon.Default.mergeOptions({
+      iconUrl: 'assets/marker-icon.png',
+      iconRetinaUrl: 'assets/marker-icon-2x.png',
+      shadowUrl: 'assets/marker-shadow.png'
+    });
+
     this.map = L.map('map', {
       center: [45.9432, 24.9668],
       zoom: 8,
@@ -381,17 +392,17 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       this.locatingUser = true;
       this.showToast('Getting location...', 'success');
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
+        (pos) => this.zone.run(() => {
           this.locatingUser = false;
           const userLatLng = L.latLng(pos.coords.latitude, pos.coords.longitude);
           this.setUserLocation(userLatLng, pos.coords.accuracy, false);
           this.persistUserLocation(userLatLng, pos.coords.accuracy);
           drawRoute(userLatLng);
-        },
-        () => {
+        }),
+        () => this.zone.run(() => {
           this.locatingUser = false;
           this.showToast('Enable location to view the route on the map', 'error');
-        },
+        }),
         { enableHighAccuracy: true, timeout: 8000 }
       );
     } else {
@@ -414,15 +425,15 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     }
     this.locatingUser = true;
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      (position) => this.zone.run(() => {
         this.locatingUser = false;
         const { latitude, longitude, accuracy } = position.coords;
         const latlng = L.latLng(latitude, longitude);
         this.setUserLocation(latlng, accuracy, true);
         this.persistUserLocation(latlng, accuracy);
         this.showToast('Location found!', 'success');
-      },
-      (err) => {
+      }),
+      (err) => this.zone.run(() => {
         this.locatingUser = false;
         const messages: Record<number, string> = {
           1: 'Location access was denied',
@@ -430,7 +441,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
           3: 'Location request timed out'
         };
         this.showToast(messages[err.code] ?? 'Error getting location', 'error');
-      },
+      }),
       { enableHighAccuracy: true, timeout: 10000 }
     );
   }
@@ -695,27 +706,27 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     if (this.userLocationMarker) this.map.removeLayer(this.userLocationMarker);
     if (this.userLocationCircle) this.map.removeLayer(this.userLocationCircle);
 
+    // Google Maps style: large semi-transparent blue circle for base accuracy
     this.userLocationCircle = L.circle(latlng, {
-      radius: accuracy,
-      color: '#3b82f6',
-      fillColor: '#3b82f6',
-      fillOpacity: 0.1,
+      radius: accuracy, // zona mea aproximativa
+      color: '#4285f4', // classic google blue
       weight: 1,
-      interactive: false
+      opacity: 0.3,
+      fillColor: '#4285f4',
+      fillOpacity: 0.15
     }).addTo(this.map);
 
-    const icon = L.divIcon({
-      className: '',
-      html: `<div class="user-location-dot"><div class="user-location-pulse"></div></div>`,
-      iconSize: [20, 20],
-      iconAnchor: [10, 10]
-    });
-
-    this.userLocationMarker = L.marker(latlng, { icon })
-      .bindPopup(`<b>Your location</b><br>Accuracy: ~${Math.round(accuracy)} m`)
-      .addTo(this.map);
+    // Google Maps style: solid blue dot on top for exact marker
+    this.userLocationMarker = L.circleMarker(latlng, {
+      radius: 8,
+      color: '#fff',
+      weight: 2,
+      fillColor: '#4285f4',
+      fillOpacity: 1
+    }).addTo(this.map);
 
     this.rebuildClosestSpots();
+    this.cdr.detectChanges();
 
     if (animate) {
       this.map.flyTo(latlng, 14, { duration: 1.2 });
