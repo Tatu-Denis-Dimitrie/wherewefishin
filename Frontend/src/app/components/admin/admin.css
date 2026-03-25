@@ -126,6 +126,7 @@
 }
 .badge-admin   { background: rgba(196,68,45,.15); color: var(--color-error); }
 .badge-manager { background: rgba(74,144,164,.15); color: var(--accent-water); }
+.badge-employee { background: rgba(212,168,75,.15); color: var(--accent-amber); }
 .badge-user    { background: rgba(125,179,74,.12); color: var(--accent-moss); }
 
 /* Actions */

@@ -183,6 +183,7 @@ export class Admin implements OnInit {
     switch (role) {
       case 'Admin': return 'badge-admin';
       case 'Manager': return 'badge-manager';
+      case 'Employee': return 'badge-employee';
       default: return 'badge-user';
     }
   }

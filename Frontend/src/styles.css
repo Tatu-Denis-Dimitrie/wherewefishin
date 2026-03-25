@@ -113,43 +113,14 @@ body {
   color: var(--bg-deep);
 }
 
-/* ---- User location marker (Leaflet DivIcon) ---- */
-.user-location-dot {
-  width: 20px;
-  height: 20px;
-  position: relative;
-  overflow: visible;
+
+
+/* ---- User location marker ---- */
+@keyframes userLocPulse {
+  0%   { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2.8); opacity: 0; }
 }
-.user-location-center {
-  width: 14px;
-  height: 14px;
-  background: #3b82f6;
-  border: 3px solid #fff;
-  border-radius: 50%;
-  box-shadow: 0 0 6px rgba(59,130,246,0.7);
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 2;
-  pointer-events: auto;
-}
-.user-location-pulse {
-  width: 40px;
-  height: 40px;
-  background: rgba(59, 130, 246, 0.25);
-  border-radius: 50%;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1;
-  animation: locationPulse 2s ease-out infinite;
-}
-@keyframes locationPulse {
-  0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
-}
+.leaflet-marker-icon { overflow: visible !important; }
 
 /* ---- Mobile z-index fix for Leaflet maps ---- */
 /* Prevents maps from overlapping the mobile menu (backdrop z-index: 150) */
@@ -161,11 +132,6 @@ body {
   }
 }
 
-/* Allow user-location icon and pulse to overflow outside the 20x20 icon bounds */
-.leaflet-marker-icon:has(.user-location-dot),
-.leaflet-marker-icon > .user-location-dot {
-  overflow: visible !important;
-}
 
 /* ---- PWA portrait-only fallback on touch devices ---- */
 @media (display-mode: standalone) and (orientation: landscape) and (pointer: coarse) {

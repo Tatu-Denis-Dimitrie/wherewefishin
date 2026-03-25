@@ -166,16 +166,12 @@ export class Cart implements OnInit, OnDestroy {
   private async generateQrCodes(bookings: Booking[]): Promise<void> {
     for (const booking of bookings) {
       if (this.qrCodeMap[booking.id]) continue;
-      const content = [
-        `WhereWeFishin - Booking #${booking.id}`,
-        `Username: ${this.authService.getUsername()}`,
-        `Booking ID: #${booking.id}`,
-        `Spot: ${booking.fishingSpotName}`,
-        `Start: ${new Date(booking.startDate).toLocaleString('en-US')}`,
-        `Duration: ${booking.durationHours}h`,
-        `Total: ${booking.totalPrice.toFixed(2)} RON`,
-        `Status: ${booking.status}`
-      ].join('\n');
+      const content = JSON.stringify({
+        bookingId: booking.id,
+        token: booking.verificationToken || '',
+        spot: booking.fishingSpotName,
+        user: this.authService.getUsername()
+      });
       this.qrCodeMap[booking.id] = await QRCode.toDataURL(content, { width: 180, margin: 1 });
     }
   }

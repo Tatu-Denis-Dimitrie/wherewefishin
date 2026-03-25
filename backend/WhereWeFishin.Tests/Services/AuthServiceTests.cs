@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using NSubstitute;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
+using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
 using WhereWeFishin.Core.Services;
 
@@ -50,7 +51,7 @@ public class AuthServiceTests
             Username = "testuser",
             Email = "test@test.com",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("correctpassword"),
-            Role = "User"
+            Role = UserRole.User
         };
         _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User> { user });
 
@@ -67,7 +68,7 @@ public class AuthServiceTests
         Assert.NotNull(result);
         Assert.Equal("testuser", result.Username);
         Assert.Equal("test@test.com", result.Email);
-        Assert.Equal("User", result.Role);
+        Assert.Equal(Roles.User, result.Role);
         Assert.Equal(1, result.UserId);
         Assert.NotEmpty(result.Token);
     }
@@ -82,7 +83,7 @@ public class AuthServiceTests
             Username = "anotheruser",
             Email = "another@test.com",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("mypassword"),
-            Role = "User"
+            Role = UserRole.User
         };
         _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User> { user });
 
@@ -110,7 +111,7 @@ public class AuthServiceTests
             Username = "testuser",
             Email = "test@test.com",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("correctpassword"),
-            Role = "User"
+            Role = UserRole.User
         };
         _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User> { user });
 
@@ -156,7 +157,7 @@ public class AuthServiceTests
             Username = "TestUser",
             Email = "test@test.com",
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("pass"),
-            Role = "User"
+            Role = UserRole.User
         };
         _userRepository.FindAsync(Arg.Any<Expression<Func<User, bool>>>(), Arg.Any<CancellationToken>()).Returns(new List<User> { user });
 
@@ -199,7 +200,7 @@ public class AuthServiceTests
         Assert.NotNull(result);
         Assert.Equal("newuser", result.Username);
         Assert.Equal("new@test.com", result.Email);
-        Assert.Equal("User", result.Role);
+        Assert.Equal(Roles.User, result.Role);
         Assert.NotEmpty(result.Token);
         await _emailService.Received(1).SendWelcomeEmailAsync("new@test.com", "New");
     }
@@ -320,7 +321,7 @@ public class AuthServiceTests
     public void GenerateJwtToken_ReturnsNonEmptyToken()
     {
         // Act
-        var token = _authService.GenerateJwtToken(1, "testuser", "test@test.com", "User");
+        var token = _authService.GenerateJwtToken(1, "testuser", "test@test.com", Roles.User);
 
         // Assert
         Assert.NotEmpty(token);

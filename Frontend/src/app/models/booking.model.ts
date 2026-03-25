@@ -21,6 +21,7 @@ export interface Booking {
   durationHours: number;
   totalPrice: number;
   status: string;
+  verificationToken?: string;
   createdAt: string;
 }
 

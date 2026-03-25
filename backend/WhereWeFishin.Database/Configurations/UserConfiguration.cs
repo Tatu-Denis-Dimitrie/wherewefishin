@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using WhereWeFishin.Core.Entities;
+using WhereWeFishin.Core.Enums;
 
 namespace WhereWeFishin.Database.Configurations;
 
@@ -24,7 +25,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.Role)
             .IsRequired()
             .HasMaxLength(20)
-            .HasDefaultValue("User");
+            .HasDefaultValue(UserRole.User)
+            .HasConversion<string>();
 
         builder.Property(u => u.FirstName)
             .HasMaxLength(50);

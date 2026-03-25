@@ -24,4 +24,5 @@ public class FishingSpot : BaseEntity
     public ICollection<FishingSession> Sessions { get; set; } = new List<FishingSession>();
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
     public ICollection<Pontoon> Pontoons { get; set; } = new List<Pontoon>();
+    public ICollection<SpotEmployee> SpotEmployees { get; set; } = new List<SpotEmployee>();
 }

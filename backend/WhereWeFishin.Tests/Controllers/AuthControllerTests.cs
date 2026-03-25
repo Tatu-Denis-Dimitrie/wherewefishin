@@ -4,6 +4,7 @@ using NSubstitute;
 using System.Security.Claims;
 using WhereWeFishin.API.Controllers;
 using WhereWeFishin.Core.DTOs;
+using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
 
@@ -33,7 +34,7 @@ public class AuthControllerTests
             Token = "jwt-token",
             Username = "testuser",
             Email = "test@test.com",
-            Role = "User",
+            Role = Roles.User,
             UserId = 1,
             ExpiresAt = DateTime.UtcNow.AddHours(24)
         };
@@ -80,7 +81,7 @@ public class AuthControllerTests
             Token = "new-token",
             Username = "newuser",
             Email = "new@test.com",
-            Role = "User",
+            Role = Roles.User,
             UserId = 5,
             ExpiresAt = DateTime.UtcNow.AddHours(24)
         };

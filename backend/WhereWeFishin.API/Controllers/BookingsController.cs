@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
+using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
 using System.Security.Claims;
 using System.Globalization;
@@ -53,7 +54,7 @@ public class BookingsController : ControllerBase
     }
 
     [HttpGet("all")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = Roles.Admin)]
     public async Task<ActionResult<IEnumerable<BookingDto>>> GetAllBookings()
     {
         var sessions = await _sessionRepository.GetAllAsync();
@@ -156,7 +157,8 @@ public class BookingsController : ControllerBase
             StartDate = validation.StartUtc,
             DurationHours = dto.DurationHours,
             TotalPrice = validation.TotalPrice,
-            Status = SessionStatus.Confirmed
+            Status = SessionStatus.Confirmed,
+            VerificationToken = Guid.NewGuid().ToString("N")
         };
 
         await _sessionRepository.AddAsync(session);
@@ -241,7 +243,7 @@ public class BookingsController : ControllerBase
         var session = await _sessionRepository.GetByIdAsync(id);
         if (session == null) return NotFound();
 
-        var isAdmin = User.IsInRole("Admin");
+        var isAdmin = User.IsInRole(Roles.Admin);
         if (session.UserId != userId.Value && !isAdmin)
             return Forbid();
 
@@ -263,7 +265,7 @@ public class BookingsController : ControllerBase
         var session = await _sessionRepository.GetByIdAsync(id);
         if (session == null) return NotFound();
 
-        var isAdmin = User.IsInRole("Admin");
+        var isAdmin = User.IsInRole(Roles.Admin);
         if (session.UserId != userId.Value && !isAdmin)
             return Forbid();
 
@@ -414,6 +416,7 @@ public class BookingsController : ControllerBase
         DurationHours = session.DurationHours,
         TotalPrice = session.TotalPrice,
         Status = session.Status.ToString(),
+        VerificationToken = session.VerificationToken,
         CreatedAt = session.CreatedAt
     };
 }

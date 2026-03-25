@@ -12,6 +12,7 @@ public class BookingDto
     public int DurationHours { get; set; }
     public decimal TotalPrice { get; set; }
     public string Status { get; set; } = string.Empty;
+    public string? VerificationToken { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 

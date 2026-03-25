@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
+using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
 
 namespace WhereWeFishin.API.Controllers;
@@ -84,7 +85,7 @@ public class CatchesController : ControllerBase
         var catchEntity = await _catchRepository.GetByIdAsync(id);
         if (catchEntity == null) return NotFound();
 
-        if (catchEntity.UserId != userId.Value && !User.IsInRole("Admin"))
+        if (catchEntity.UserId != userId.Value && !User.IsInRole(Roles.Admin))
             return Forbid();
 
         catchEntity.FishSpecies = updateCatchDto.FishSpecies ?? catchEntity.FishSpecies;
@@ -108,7 +109,7 @@ public class CatchesController : ControllerBase
         var catchEntity = await _catchRepository.GetByIdAsync(id);
         if (catchEntity == null) return NotFound();
 
-        if (catchEntity.UserId != userId.Value && !User.IsInRole("Admin"))
+        if (catchEntity.UserId != userId.Value && !User.IsInRole(Roles.Admin))
             return Forbid();
         
         await _catchRepository.DeleteAsync(id);

@@ -50,7 +50,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     ['Trout', 'Chub'],
     ['Carp', 'Pike', 'Perch']
   ];
-  private userLocationMarker: L.CircleMarker | null = null;
+  private userLocationMarker: L.Marker | null = null;
   private userLocationCircle: L.Circle | null = null;
   private userLatLng: L.LatLng | null = null;
   private routeLayer: L.GeoJSON | null = null;
@@ -706,24 +706,83 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     if (this.userLocationMarker) this.map.removeLayer(this.userLocationMarker);
     if (this.userLocationCircle) this.map.removeLayer(this.userLocationCircle);
 
-    // Google Maps style: large semi-transparent blue circle for base accuracy
+    const accuracyText = accuracy < 1000
+      ? `±${Math.round(accuracy)} m`
+      : `±${(accuracy / 1000).toFixed(1)} km`;
+
+    // Cerc de acuratețe — se redimensionează automat la zoom
     this.userLocationCircle = L.circle(latlng, {
-      radius: accuracy, // zona mea aproximativa
-      color: '#4285f4', // classic google blue
-      weight: 1,
-      opacity: 0.3,
+      radius: accuracy,
+      color: '#4285f4',
+      weight: 1.5,
+      opacity: 0.4,
       fillColor: '#4285f4',
-      fillOpacity: 0.15
+      fillOpacity: 0.1,
+      interactive: false
     }).addTo(this.map);
 
-    // Google Maps style: solid blue dot on top for exact marker
-    this.userLocationMarker = L.circleMarker(latlng, {
-      radius: 8,
-      color: '#fff',
-      weight: 2,
-      fillColor: '#4285f4',
-      fillOpacity: 1
-    }).addTo(this.map);
+    // Punct animat cu DivIcon — stiluri inline pentru a evita probleme CSS
+    const icon = L.divIcon({
+      className: '',
+      html: `
+        <div style="position:relative;width:18px;height:18px;overflow:visible">
+          <div style="
+            position:absolute;width:44px;height:44px;
+            background:rgba(66,133,244,0.22);border-radius:50%;
+            top:50%;left:50%;
+            transform:translate(-50%,-50%) scale(0.3);
+            animation:userLocPulse 2.2s ease-out infinite;
+            pointer-events:none;
+          "></div>
+          <div style="
+            position:absolute;width:18px;height:18px;
+            background:#4285f4;border:3px solid #fff;border-radius:50%;
+            box-shadow:0 2px 10px rgba(66,133,244,0.6);
+            top:0;left:0;cursor:pointer;
+            transition:transform 0.15s ease;
+          "></div>
+        </div>`,
+      iconSize: [18, 18],
+      iconAnchor: [9, 9],
+      popupAnchor: [0, -14]
+    });
+
+    this.userLocationMarker = L.marker(latlng, { icon, zIndexOffset: 1000 })
+      .bindPopup(
+        `<div style="font-family:inherit;min-width:160px">
+          <b style="font-size:13px;color:#1e293b">Locația ta</b><br>
+          <span style="font-size:11px;color:#64748b">Acuratețe GPS: <b>${accuracyText}</b></span><br>
+          <span style="font-size:11px;color:#94a3b8">Se caută adresa...</span>
+        </div>`,
+        { maxWidth: 240 }
+      )
+      .addTo(this.map);
+
+    this.userLocationMarker.on('click', () => {
+      this.userLocationMarker!.openPopup();
+      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latlng.lat}&lon=${latlng.lng}&format=json&accept-language=ro`)
+        .then(r => r.json())
+        .then((data: { display_name?: string; address?: Record<string, string> }) => {
+          const a = data.address ?? {};
+          const place = [a['road'], a['suburb'], a['city'] ?? a['town'] ?? a['village'], a['county']]
+            .filter(Boolean).join(', ') || data.display_name || `${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
+          this.userLocationMarker!.setPopupContent(
+            `<div style="font-family:inherit;min-width:160px">
+              <b style="font-size:13px;color:#1e293b">Locația ta</b><br>
+              <span style="font-size:12px;color:#334155">${place}</span><br>
+              <span style="font-size:11px;color:#64748b;margin-top:3px;display:block">Acuratețe GPS: <b>${accuracyText}</b></span>
+            </div>`
+          );
+        })
+        .catch(() => {
+          this.userLocationMarker!.setPopupContent(
+            `<div style="font-family:inherit">
+              <b style="font-size:13px;color:#1e293b">Locația ta</b><br>
+              <span style="font-size:11px;color:#64748b">Acuratețe GPS: <b>${accuracyText}</b></span>
+            </div>`
+          );
+        });
+    });
 
     this.rebuildClosestSpots();
     this.cdr.detectChanges();

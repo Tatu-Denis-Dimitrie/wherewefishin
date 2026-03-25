@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
+using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
 
 namespace WhereWeFishin.API.Controllers;
@@ -112,7 +113,7 @@ public class VideoAnalysisController : ControllerBase
         if (currentUserId == null)
             return Unauthorized();
 
-        if (currentUserId.Value != userId && !User.IsInRole("Admin"))
+        if (currentUserId.Value != userId && !User.IsInRole(Roles.Admin))
             return Forbid();
 
         var userAnalyses = await _videoRepository.FindAsync(a => a.UserId == userId);
@@ -137,7 +138,7 @@ public class VideoAnalysisController : ControllerBase
             return NotFound();
         }
 
-        if (analysis.UserId != currentUserId.Value && !User.IsInRole("Admin"))
+        if (analysis.UserId != currentUserId.Value && !User.IsInRole(Roles.Admin))
             return Forbid();
 
         return Ok(MapToDto(analysis));
@@ -155,7 +156,7 @@ public class VideoAnalysisController : ControllerBase
         if (analysis == null)
             return NotFound();
 
-        if (analysis.UserId != currentUserId.Value && !User.IsInRole("Admin"))
+        if (analysis.UserId != currentUserId.Value && !User.IsInRole(Roles.Admin))
             return Forbid();
 
         if (!string.IsNullOrEmpty(analysis.ProcessedVideoUrl))

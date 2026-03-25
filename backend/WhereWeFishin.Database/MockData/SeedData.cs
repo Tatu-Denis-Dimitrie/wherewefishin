@@ -1,5 +1,6 @@
 using BCrypt.Net;
 using WhereWeFishin.Core.Entities;
+using WhereWeFishin.Core.Enums;
 
 namespace WhereWeFishin.Database.MockData;
 
@@ -41,7 +42,7 @@ public static class SeedData
                 PasswordHash = adminHash,
                 FirstName = "Gimi",
                 LastName = "Sefu",
-                Role = "Admin",
+                Role = UserRole.Admin,
                 CreatedAt = DateTime.UtcNow.AddYears(-1),
                 UpdatedAt = DateTime.UtcNow
             },
@@ -54,7 +55,7 @@ public static class SeedData
                 PasswordHash = managerHash,
                 FirstName = "George",
                 LastName = "Marinescu",
-                Role = "Manager",
+                Role = UserRole.Manager,
                 CreatedAt = DateTime.UtcNow.AddMonths(-10),
                 UpdatedAt = DateTime.UtcNow
             },
@@ -65,7 +66,7 @@ public static class SeedData
                 PasswordHash = managerHash,
                 FirstName = "Elena",
                 LastName = "Vasilescu",
-                Role = "Manager",
+                Role = UserRole.Manager,
                 CreatedAt = DateTime.UtcNow.AddMonths(-8),
                 UpdatedAt = DateTime.UtcNow
             },
@@ -78,7 +79,7 @@ public static class SeedData
                 PasswordHash = userHash,
                 FirstName = "Ion",
                 LastName = "Popescu",
-                Role = "User",
+                Role = UserRole.User,
                 CreatedAt = DateTime.UtcNow.AddMonths(-6),
                 UpdatedAt = DateTime.UtcNow.AddMonths(-2)
             },
@@ -89,7 +90,7 @@ public static class SeedData
                 PasswordHash = userHash,
                 FirstName = "Maria",
                 LastName = "Ionescu",
-                Role = "User",
+                Role = UserRole.User,
                 CreatedAt = DateTime.UtcNow.AddMonths(-5),
                 UpdatedAt = DateTime.UtcNow.AddMonths(-1)
             },
@@ -100,7 +101,7 @@ public static class SeedData
                 PasswordHash = userHash,
                 FirstName = "Andrei",
                 LastName = "Popa",
-                Role = "User",
+                Role = UserRole.User,
                 CreatedAt = DateTime.UtcNow.AddMonths(-4),
                 UpdatedAt = DateTime.UtcNow.AddDays(-10)
             },
@@ -111,7 +112,7 @@ public static class SeedData
                 PasswordHash = userHash,
                 FirstName = "Petre",
                 LastName = "Balanescu",
-                Role = "User",
+                Role = UserRole.User,
                 CreatedAt = DateTime.UtcNow.AddMonths(-3),
                 UpdatedAt = DateTime.UtcNow.AddDays(-5)
             },
@@ -122,7 +123,7 @@ public static class SeedData
                 PasswordHash = userHash,
                 FirstName = "Carmen",
                 LastName = "Nistor",
-                Role = "User",
+                Role = UserRole.User,
                 CreatedAt = DateTime.UtcNow.AddMonths(-2),
                 UpdatedAt = DateTime.UtcNow.AddDays(-3)
             },
@@ -133,7 +134,7 @@ public static class SeedData
                 PasswordHash = userHash,
                 FirstName = "Dan",
                 LastName = "Cretu",
-                Role = "User",
+                Role = UserRole.User,
                 CreatedAt = DateTime.UtcNow.AddMonths(-1),
                 UpdatedAt = DateTime.UtcNow.AddDays(-1)
             },
@@ -144,7 +145,7 @@ public static class SeedData
                 PasswordHash = userHash,
                 FirstName = "Adriana",
                 LastName = "Dobre",
-                Role = "User",
+                Role = UserRole.User,
                 CreatedAt = DateTime.UtcNow.AddDays(-20),
                 UpdatedAt = DateTime.UtcNow
             }

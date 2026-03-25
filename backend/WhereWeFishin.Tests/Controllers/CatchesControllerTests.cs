@@ -5,6 +5,7 @@ using System.Security.Claims;
 using WhereWeFishin.API.Controllers;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
+using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
 
 namespace WhereWeFishin.Tests.Controllers;
@@ -22,7 +23,7 @@ public class CatchesControllerTests
         SetupUser(1);
     }
 
-    private void SetupUser(int userId, string role = "User")
+    private void SetupUser(int userId, string role = Roles.User)
     {
         var claims = new List<Claim>
         {

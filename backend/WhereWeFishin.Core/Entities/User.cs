@@ -1,3 +1,5 @@
+using WhereWeFishin.Core.Enums;
+
 namespace WhereWeFishin.Core.Entities;
 
 public class User : BaseEntity
@@ -8,7 +10,7 @@ public class User : BaseEntity
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string? ProfilePictureUrl { get; set; }
-    public string Role { get; set; } = "User";
+    public UserRole Role { get; set; } = UserRole.User;
     public string? PasswordResetCode { get; set; }
     public DateTime? PasswordResetCodeExpiry { get; set; }
 

@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
+using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
 
 namespace WhereWeFishin.Core.Services;
@@ -57,7 +58,7 @@ public class AuthService : IAuthService
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             FirstName = request.FirstName,
             LastName = request.LastName,
-            Role = "User",
+            Role = UserRole.User,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -166,7 +167,7 @@ public class AuthService : IAuthService
 
     private AuthResponse BuildAuthResponse(User user)
     {
-        var token = GenerateJwtToken(user.Id, user.Username, user.Email, user.Role);
+        var token = GenerateJwtToken(user.Id, user.Username, user.Email, user.Role.ToString());
         var expiresAt = DateTime.UtcNow.AddHours(
             double.Parse(_configuration["Jwt:ExpirationHours"] ?? "24"));
 
@@ -175,7 +176,7 @@ public class AuthService : IAuthService
             Token = token,
             Username = user.Username,
             Email = user.Email,
-            Role = user.Role,
+            Role = user.Role.ToString(),
             UserId = user.Id,
             ExpiresAt = expiresAt,
             FirstName = user.FirstName,

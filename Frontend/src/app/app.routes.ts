@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, adminGuard, managerGuard } from './guards/auth.guard';
+import { authGuard, adminGuard, managerGuard, employeeGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -22,6 +22,7 @@ export const routes: Routes = [
       { path: 'admin', loadComponent: () => import('./components/admin/admin').then(m => m.Admin), canActivate: [adminGuard] },
       { path: 'cart', loadComponent: () => import('./components/cart/cart').then(m => m.Cart) },
       { path: 'faq', loadComponent: () => import('./components/faq/faq').then(m => m.Faq) },
+      { path: 'scan-qr', loadComponent: () => import('./components/qr-scanner/qr-scanner').then(m => m.QrScanner), canActivate: [employeeGuard] },
       { path: 'spots/:id', loadComponent: () => import('./components/fishing-spot-detail/fishing-spot-detail').then(m => m.FishingSpotDetail) },
       { path: 'spots/:id/manage', loadComponent: () => import('./components/spot-manager/spot-manager').then(m => m.SpotManager), canActivate: [managerGuard] }
     ]

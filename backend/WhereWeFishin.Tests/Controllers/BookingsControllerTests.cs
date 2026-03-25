@@ -8,6 +8,7 @@ using System.Security.Claims;
 using WhereWeFishin.API.Controllers;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
+using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
 
 namespace WhereWeFishin.Tests.Controllers;
@@ -54,10 +55,10 @@ public class BookingsControllerTests
             _configuration);
 
         // Default: authenticated as user 1
-        SetupUser(userId: 1, role: "User");
+        SetupUser(userId: 1, role: Roles.User);
     }
 
-    private void SetupUser(int userId, string role = "User")
+    private void SetupUser(int userId, string role = Roles.User)
     {
         var claims = new List<Claim>
         {
@@ -384,7 +385,7 @@ public class BookingsControllerTests
     public async Task GetBooking_AsAdmin_CanAccessOtherUsersBooking()
     {
         // Arrange – session belongs to user 2, current user is admin
-        SetupUser(userId: 99, role: "Admin");
+        SetupUser(userId: 99, role: Roles.Admin);
         var session = CreateSession(1, userId: 2, spotId: 1);
         var spot = CreateSpot(1);
         _sessionRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(session);

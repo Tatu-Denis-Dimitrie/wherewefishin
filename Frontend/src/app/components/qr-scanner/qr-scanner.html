@@ -1,0 +1,181 @@
+<div class="scanner-page">
+  <h1 class="page-title">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+      <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+      <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+      <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+      <rect x="7" y="7" width="10" height="10" rx="1"/>
+    </svg>
+    QR Scanner
+  </h1>
+
+  <!-- Assigned spots info -->
+  @if (loadingSpots) {
+    <div class="info-card">Loading assigned spots...</div>
+  } @else if (assignedSpots.length === 0) {
+    <div class="info-card warning">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span>You are not assigned to any fishing spot. Contact your manager.</span>
+    </div>
+  } @else {
+    <div class="info-card">
+      <strong>Assigned spots:</strong>
+      <span class="spot-tags">
+        @for (spot of assignedSpots; track spot.id) {
+          <span class="spot-tag">{{ spot.fishingSpotName }}</span>
+        }
+      </span>
+    </div>
+  }
+
+  <!-- Scanner area -->
+  <div class="scanner-container">
+    <!-- Idle placeholder — shown when not scanning and no result/error -->
+    @if (!scanning && !result && !errorMessage) {
+      <div class="scanner-placeholder" (click)="startScanner()">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+          <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+          <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+          <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+          <line x1="7" y1="12" x2="17" y2="12"/>
+        </svg>
+        <p>Tap to open camera</p>
+        <p class="placeholder-hint">QR code will be detected automatically</p>
+      </div>
+    }
+
+    <!-- Camera feed — always in DOM, visible only when scanning -->
+    <div id="qr-reader" [class.visible]="scanning"></div>
+
+    @if (scanning) {
+      <div class="scanner-status-bar">
+        @if (verifying) {
+          <div class="status-indicator verifying">
+            <div class="pulse-dot verifying"></div>
+            <span>Verifying booking...</span>
+          </div>
+        } @else {
+          <div class="status-indicator ready">
+            <div class="pulse-dot ready"></div>
+            <span>Looking for QR code...</span>
+          </div>
+        }
+        <button class="btn btn-stop" (click)="stopScanner()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="6" y="6" width="12" height="12" rx="2"/>
+          </svg>
+          Stop
+        </button>
+      </div>
+    }
+  </div>
+
+  <!-- Error (camera stopped, shown after failed scan) -->
+  @if (errorMessage && !scanning) {
+    <div class="result-card error">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="15" y1="9" x2="9" y2="15"/>
+        <line x1="9" y1="9" x2="15" y2="15"/>
+      </svg>
+      <p>{{ errorMessage }}</p>
+      <button class="btn btn-rescan" (click)="rescan()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+          <path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+          <line x1="7" y1="12" x2="17" y2="12"/>
+        </svg>
+        Scan Again
+      </button>
+    </div>
+  }
+
+  <!-- Result (camera stopped, shown after successful scan) -->
+  @if (result && !scanning) {
+    <div class="result-card" [class.valid]="result.valid" [class.invalid]="!result.valid">
+      <div class="result-icon">
+        @if (result.valid) {
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        } @else {
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+        }
+      </div>
+
+      <h2 class="result-status">{{ result.valid ? 'VALID' : 'INVALID' }}</h2>
+      <p class="result-message">{{ result.message }}</p>
+
+      @if (result.bookingId) {
+        <div class="result-details">
+          <div class="detail-row">
+            <span class="detail-label">Booking #</span>
+            <span class="detail-value">{{ result.bookingId }}</span>
+          </div>
+          @if (result.username) {
+            <div class="detail-row">
+              <span class="detail-label">Client</span>
+              <span class="detail-value">{{ result.username }}</span>
+            </div>
+          }
+          @if (result.fishingSpotName) {
+            <div class="detail-row">
+              <span class="detail-label">Spot</span>
+              <span class="detail-value">{{ result.fishingSpotName }}</span>
+            </div>
+          }
+          @if (result.pontoonName) {
+            <div class="detail-row">
+              <span class="detail-label">Pontoon</span>
+              <span class="detail-value">{{ result.pontoonName }}</span>
+            </div>
+          }
+          @if (result.startDate) {
+            <div class="detail-row">
+              <span class="detail-label">Start</span>
+              <span class="detail-value">{{ result.startDate | date:'dd.MM.yyyy HH:mm' }}</span>
+            </div>
+          }
+          @if (result.durationHours) {
+            <div class="detail-row">
+              <span class="detail-label">Duration</span>
+              <span class="detail-value">{{ result.durationHours }}h</span>
+            </div>
+          }
+          @if (result.totalPrice) {
+            <div class="detail-row">
+              <span class="detail-label">Total</span>
+              <span class="detail-value">{{ result.totalPrice | number:'1.2-2' }} RON</span>
+            </div>
+          }
+          @if (result.status) {
+            <div class="detail-row">
+              <span class="detail-label">Status</span>
+              <span class="detail-value status-badge" [class]="'status-' + result.status.toLowerCase()">{{ result.status }}</span>
+            </div>
+          }
+        </div>
+      }
+
+      <button class="btn btn-rescan" (click)="rescan()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+          <path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+          <line x1="7" y1="12" x2="17" y2="12"/>
+        </svg>
+        Scan Again
+      </button>
+    </div>
+  }
+</div>

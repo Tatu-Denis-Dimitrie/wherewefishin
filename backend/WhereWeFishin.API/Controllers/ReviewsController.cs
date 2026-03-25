@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.OutputCaching;
 using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
+using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
 using WhereWeFishin.Database.Repositories;
 
@@ -98,7 +99,7 @@ public class ReviewsController : ControllerBase
         var review = await _reviewRepository.GetByIdAsync(id);
         if (review == null) return NotFound();
 
-        if (review.UserId != userId && !User.IsInRole("Admin"))
+        if (review.UserId != userId && !User.IsInRole(Roles.Admin))
             return Forbid();
 
         if (updateReviewDto.Rating.HasValue)
@@ -126,7 +127,7 @@ public class ReviewsController : ControllerBase
         var review = await _reviewRepository.GetByIdAsync(id);
         if (review == null) return NotFound();
 
-        if (review.UserId != userId && !User.IsInRole("Admin"))
+        if (review.UserId != userId && !User.IsInRole(Roles.Admin))
             return Forbid();
 
         await _reviewRepository.DeleteAsync(id);

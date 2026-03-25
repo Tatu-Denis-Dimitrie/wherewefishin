@@ -611,3 +611,34 @@
 .vertex-marker:active {
   cursor: grabbing;
 }
+
+/* ---- Employee Management ---- */
+.employee-select {
+  flex: 1;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-size: 13px;
+  outline: none;
+}
+
+.employee-select:focus {
+  border-color: var(--accent-moss);
+}
+
+.employee-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.employee-item svg {
+  color: var(--accent-moss);
+  flex-shrink: 0;
+}
+
+.employee-remove {
+  margin-left: auto;
+}

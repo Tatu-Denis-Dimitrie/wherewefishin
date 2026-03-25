@@ -4,7 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FishingSpotService, FishingSpot } from '../../services/fishing-spot.service';
 import { PontoonService, Pontoon, CreatePontoon } from '../../services/pontoon.service';
+import { EmployeeService } from '../../services/employee.service';
 import { AuthService } from '../../services/auth.service';
+import { SpotEmployee } from '../../models/employee.model';
+import { User } from '../../models/user.model';
 import * as L from 'leaflet';
 
 @Component({
@@ -45,6 +48,12 @@ export class SpotManager implements OnInit, OnDestroy {
   fishSpeciesInput = '';
   fishSpeciesList: string[] = [];
 
+  // Employee management
+  spotEmployees: SpotEmployee[] = [];
+  availableEmployees: User[] = [];
+  selectedEmployeeId: number | null = null;
+  loadingEmployees = false;
+
   private map: L.Map | null = null;
   private pontoonLayers: Map<number, L.Polygon | L.Rectangle> = new Map();
   private drawingPolygon: L.Polygon | null = null;
@@ -61,6 +70,7 @@ export class SpotManager implements OnInit, OnDestroy {
     private router: Router,
     private fishingSpotService: FishingSpotService,
     private pontoonService: PontoonService,
+    private employeeService: EmployeeService,
     private authService: AuthService
   ) {}
 
@@ -90,6 +100,7 @@ export class SpotManager implements OnInit, OnDestroy {
         setTimeout(() => {
           this.initMap();
           this.loadPontoons();
+          this.loadEmployees();
         }, 100);
       },
       error: () => {
@@ -635,6 +646,57 @@ export class SpotManager implements OnInit, OnDestroy {
 
   goBack(): void {
     this.router.navigate(['/profile']);
+  }
+
+  // ---- Employee Management ----
+
+  loadEmployees(): void {
+    if (!this.spot) return;
+    this.loadingEmployees = true;
+    this.employeeService.getSpotEmployees(this.spot.id).subscribe({
+      next: (employees) => {
+        this.spotEmployees = employees;
+        this.loadingEmployees = false;
+      },
+      error: () => {
+        this.loadingEmployees = false;
+      }
+    });
+    this.employeeService.getAvailableEmployees().subscribe({
+      next: (employees) => {
+        this.availableEmployees = employees;
+      }
+    });
+  }
+
+  assignEmployee(): void {
+    if (!this.selectedEmployeeId || !this.spot) return;
+    this.employeeService.assignEmployee({
+      userId: this.selectedEmployeeId,
+      fishingSpotId: this.spot.id
+    }).subscribe({
+      next: () => {
+        this.showToast('Angajat asignat cu succes!', 'success');
+        this.selectedEmployeeId = null;
+        this.loadEmployees();
+      },
+      error: () => {
+        this.showToast('Eroare la asignarea angajatului', 'error');
+      }
+    });
+  }
+
+  removeSpotEmployee(id: number): void {
+    if (!confirm('Ești sigur că vrei să elimini acest angajat de pe baltă?')) return;
+    this.employeeService.removeEmployee(id).subscribe({
+      next: () => {
+        this.showToast('Angajat eliminat!', 'success');
+        this.loadEmployees();
+      },
+      error: () => {
+        this.showToast('Eroare la eliminarea angajatului', 'error');
+      }
+    });
   }
 
   private showToast(msg: string, type: 'success' | 'error'): void {

@@ -16,6 +16,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<FishingSession> FishingSessions { get; set; }
     public DbSet<Review> Reviews { get; set; }
     public DbSet<Pontoon> Pontoons { get; set; }
+    public DbSet<SpotEmployee> SpotEmployees { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

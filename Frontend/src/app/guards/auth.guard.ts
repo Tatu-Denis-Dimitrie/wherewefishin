@@ -25,3 +25,12 @@ export const managerGuard: CanActivateFn = () => {
   router.navigate(['/home']);
   return false;
 };
+
+export const employeeGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  const role = authService.getRole();
+  if (role === 'Employee' || role === 'Manager' || role === 'Admin') return true;
+  router.navigate(['/home']);
+  return false;
+};

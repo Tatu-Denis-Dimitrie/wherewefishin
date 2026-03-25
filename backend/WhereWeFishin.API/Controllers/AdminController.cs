@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
+using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
 using WhereWeFishin.Database.Context;
 
@@ -10,7 +11,7 @@ namespace WhereWeFishin.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = Roles.Admin)]
 public class AdminController : ControllerBase
 {
     private readonly IRepository<User> _userRepository;
@@ -44,8 +45,8 @@ public class AdminController : ControllerBase
             .ToListAsync();
 
         var totalUsers = userCounts.Sum(x => x.Count);
-        var totalManagers = userCounts.FirstOrDefault(x => x.Role == "Manager")?.Count ?? 0;
-        var totalAdmins = userCounts.FirstOrDefault(x => x.Role == "Admin")?.Count ?? 0;
+        var totalManagers = userCounts.FirstOrDefault(x => x.Role == UserRole.Manager)?.Count ?? 0;
+        var totalAdmins = userCounts.FirstOrDefault(x => x.Role == UserRole.Admin)?.Count ?? 0;
 
         // Single GROUP BY query for video analysis counts by status
         var analysisCounts = await _context.Set<VideoAnalysis>()
@@ -84,7 +85,7 @@ public class AdminController : ControllerBase
             FirstName = u.FirstName,
             LastName = u.LastName,
             ProfilePictureUrl = u.ProfilePictureUrl,
-            Role = u.Role,
+            Role = u.Role.ToString(),
             CreatedAt = u.CreatedAt,
             IsActive = !u.IsDeleted
         }));
@@ -95,7 +96,7 @@ public class AdminController : ControllerBase
     {
         var user = await _userRepository.GetByIdIncludingDeletedAsync(id);
         if (user == null) return NotFound();
-        if (user.Role == "Admin") return BadRequest(new { message = "Cannot disable admin users" });
+        if (user.Role == UserRole.Admin) return BadRequest(new { message = "Cannot disable admin users" });
 
         user.IsDeleted = !dto.Enable;
         user.UpdatedAt = DateTime.UtcNow;
@@ -110,15 +111,14 @@ public class AdminController : ControllerBase
         var user = await _userRepository.GetByIdAsync(id);
         if (user == null) return NotFound();
 
-        var validRoles = new[] { "User", "Manager", "Admin" };
-        if (!validRoles.Contains(dto.Role))
-            return BadRequest(new { message = "Invalid role. Valid: User, Manager, Admin" });
+        if (!Enum.TryParse<UserRole>(dto.Role, ignoreCase: true, out var newRole))
+            return BadRequest(new { message = "Invalid role. Valid: User, Employee, Manager, Admin" });
 
-        user.Role = dto.Role;
+        user.Role = newRole;
         user.UpdatedAt = DateTime.UtcNow;
         await _userRepository.UpdateAsync(user);
 
-        return Ok(new { message = $"Role updated to {dto.Role}", userId = id });
+        return Ok(new { message = $"Role updated to {newRole}", userId = id });
     }
 
     [HttpDelete("users/{id}")]
@@ -126,7 +126,7 @@ public class AdminController : ControllerBase
     {
         var user = await _userRepository.GetByIdAsync(id);
         if (user == null) return NotFound();
-        if (user.Role == "Admin") return BadRequest(new { message = "Cannot delete admin users" });
+        if (user.Role == UserRole.Admin) return BadRequest(new { message = "Cannot delete admin users" });
 
         var sessionCount = await _sessionRepository.CountAsync(s => s.UserId == id);
         var videoCount = await _videoRepository.CountAsync(v => v.UserId == id);

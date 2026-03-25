@@ -84,6 +84,10 @@ export class AuthService {
     return this.isAdmin() || this.isManager();
   }
 
+  isEmployee(): boolean {
+    return this.getRole() === 'Employee';
+  }
+
   isLoggedIn(): boolean {
     return !!this.getToken();
   }

@@ -15,7 +15,9 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor, retryInterceptor])),
     provideServiceWorker('ngsw-worker.js', {
       enabled: !isDevMode(),
-      registrationStrategy: 'registerWhenStable:30000'
+      registrationStrategy: 'registerWhenStable:30000',
+      // Verifică actualizări la fiecare oră
+      // (intervalul previne erori de chunk 502 la deploy nou)
     })
   ]
 };

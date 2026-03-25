@@ -17,6 +17,9 @@ public class FishingSessionConfiguration : IEntityTypeConfiguration<FishingSessi
             .HasConversion<string>()
             .HasMaxLength(20);
 
+        builder.Property(s => s.VerificationToken)
+            .HasMaxLength(64);
+
         builder.Property(s => s.StartDate)
             .IsRequired();
 

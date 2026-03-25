@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
+using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
 
 namespace WhereWeFishin.API.Controllers;
@@ -26,7 +27,7 @@ public class UsersController : ControllerBase
     [HttpGet("managers")]
     public async Task<ActionResult<IEnumerable<UserDto>>> GetManagers()
     {
-        var managers = await _userRepository.FindAsync(u => u.Role == "Manager");
+        var managers = await _userRepository.FindAsync(u => u.Role == UserRole.Manager);
         return Ok(managers.Select(MapToDto));
     }
 
@@ -68,7 +69,7 @@ public class UsersController : ControllerBase
         FirstName = user.FirstName,
         LastName = user.LastName,
         ProfilePictureUrl = user.ProfilePictureUrl,
-        Role = user.Role,
+        Role = user.Role.ToString(),
         CreatedAt = user.CreatedAt
     };
 }

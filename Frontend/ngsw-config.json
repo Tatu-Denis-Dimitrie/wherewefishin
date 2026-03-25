@@ -18,16 +18,6 @@
       }
     },
     {
-      "name": "lazy-chunks",
-      "installMode": "lazy",
-      "updateMode": "lazy",
-      "resources": {
-        "files": [
-          "/chunk*.js"
-        ]
-      }
-    },
-    {
       "name": "assets",
       "installMode": "lazy",
       "updateMode": "prefetch",

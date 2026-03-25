@@ -14,6 +14,7 @@ import { filter, Subscription } from 'rxjs';
 })
 export class Layout implements OnInit, OnDestroy {
   isAdmin = false;
+  isEmployee = false;
   mobileMenuOpen = false;
   private navigationSubscription?: Subscription;
 
@@ -25,6 +26,7 @@ export class Layout implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.isAdmin = this.authService.isAdmin();
+    this.isEmployee = this.authService.isEmployee();
 
     // Keep a single, predictable scroll container for routed app pages.
     this.navigationSubscription = this.router.events
