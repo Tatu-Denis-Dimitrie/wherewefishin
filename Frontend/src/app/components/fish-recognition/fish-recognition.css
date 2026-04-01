@@ -170,6 +170,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1rem;
+  align-items: start;
 }
 
 .analysis-card {
@@ -193,6 +194,7 @@
   background: #000;
 }
 .card-body { padding: 1rem 1.25rem; }
+.card-body-processing { padding: .65rem 1rem; }
 
 .card-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: .75rem; }
 .meta-date { font-size: .78rem; color: var(--text-muted); }
@@ -260,6 +262,94 @@
   animation: spin .8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Processing card ── */
+.analysis-card.is-processing {
+  border-color: rgba(74, 144, 164, 0.35);
+  align-self: start;
+}
+
+.card-processing-media {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  background: rgba(74, 144, 164, 0.06);
+  min-height: 160px;
+  gap: .75rem;
+}
+
+.processing-animation {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.processing-fish-icon {
+  color: var(--accent-water, #4a90a4);
+  animation: fishSwim 2s ease-in-out infinite;
+  z-index: 1;
+}
+
+@keyframes fishSwim {
+  0%, 100% { transform: translateX(-4px) rotate(-2deg); }
+  50% { transform: translateX(4px) rotate(2deg); }
+}
+
+.processing-pulse {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(74, 144, 164, 0.12);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(0.8); opacity: 0.4; }
+  50% { transform: scale(1.3); opacity: 0; }
+}
+
+.processing-bar-wrap {
+  width: 80%;
+  max-width: 200px;
+}
+
+.processing-bar {
+  height: 4px;
+  background: rgba(74, 144, 164, 0.15);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.processing-bar-fill {
+  height: 100%;
+  width: 40%;
+  background: var(--accent-water, #4a90a4);
+  border-radius: 999px;
+  animation: indeterminate 1.5s ease-in-out infinite;
+}
+
+@keyframes indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}
+
+.processing-text {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--accent-water, #4a90a4);
+  letter-spacing: .3px;
+}
+
+.processing-filename {
+  font-size: .82rem;
+  color: var(--text-muted);
+  word-break: break-all;
+  margin-bottom: .5rem;
+}
 
 /* ── Responsive ── */
 @media (max-width: 600px) {

@@ -47,22 +47,22 @@ export class Login {
   }
 
   onSubmit(): void {
-    if (this.loginForm.valid) {
-      this.isLoading = true;
-      this.errorMessage = '';
+    if (this.isLoading || this.loginForm.invalid) return;
 
-      this.authService.login(this.loginForm.value).subscribe({
-        next: () => {
-          this.isLoading = false;
-          this.router.navigate(['/home']);
-        },
-        error: (error) => {
-          this.isLoading = false;
-          this.errorMessage = error.error?.message || 'Invalid username or password';
-          this.cdr.detectChanges();
-        }
-      });
-    }
+    this.isLoading = true;
+    this.errorMessage = '';
+
+    this.authService.login(this.loginForm.value).subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.router.navigate(['/home']);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        this.errorMessage = error.error?.message || 'Invalid username or password';
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   onForgotSubmit(): void {

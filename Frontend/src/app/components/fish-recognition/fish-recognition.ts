@@ -23,6 +23,9 @@ export class FishRecognition implements OnInit, OnDestroy {
   uploadProgress = 0;
   serviceHealthy = false;
   supportedFish: string[] = [];
+  private pollingInterval: ReturnType<typeof setInterval> | null = null;
+  private progressInterval: ReturnType<typeof setInterval> | null = null;
+  private progressStartTime = 0;
 
   constructor(
     private videoAnalysisService: VideoAnalysisService,
@@ -42,8 +45,9 @@ export class FishRecognition implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Cleanup video preview URL to avoid memory leaks
     this.cleanupPreviewUrl();
+    this.stopPolling();
+    this.stopProgress();
   }
 
   private cleanupPreviewUrl(): void {
@@ -85,6 +89,7 @@ export class FishRecognition implements OnInit, OnDestroy {
       next: (analyses) => {
         this.analyses = analyses;
         this.loading = false;
+        this.checkForProcessingAnalyses();
       },
       error: (err) => {
         this.error = 'Failed to load analyses';
@@ -92,6 +97,41 @@ export class FishRecognition implements OnInit, OnDestroy {
         console.error('Error loading analyses:', err);
       }
     });
+  }
+
+  private checkForProcessingAnalyses(): void {
+    const hasProcessing = this.analyses.some(a => a.status?.toLowerCase() === 'processing');
+    if (hasProcessing && !this.pollingInterval) {
+      this.startPolling();
+    } else if (!hasProcessing && this.pollingInterval) {
+      this.stopPolling();
+    }
+  }
+
+  private startPolling(): void {
+    this.stopPolling();
+    this.pollingInterval = setInterval(() => {
+      this.videoAnalysisService.clearUserAnalysesCache();
+      const userId = this.authService.getUserId();
+      if (!userId) return;
+      this.videoAnalysisService.getUserAnalyses(userId).subscribe({
+        next: (analyses) => {
+          const wasProcessing = this.analyses.some(a => a.status?.toLowerCase() === 'processing');
+          this.analyses = analyses;
+          const stillProcessing = analyses.some(a => a.status?.toLowerCase() === 'processing');
+          if (wasProcessing && !stillProcessing) {
+            this.stopPolling();
+          }
+        }
+      });
+    }, 5000);
+  }
+
+  private stopPolling(): void {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
   }
 
   onFileSelected(event: Event): void {
@@ -153,17 +193,19 @@ export class FishRecognition implements OnInit, OnDestroy {
     this.uploading = true;
     this.error = '';
     this.uploadProgress = 0;
+    this.progressStartTime = Date.now();
 
-    // Simulare progres
-    const progressInterval = setInterval(() => {
-      if (this.uploadProgress < 90) {
-        this.uploadProgress += 10;
-      }
-    }, 500);
+    this.startAsymptoticProgress();
+
+    // After 3s, reload analyses to pick up the "Processing" record and start polling
+    setTimeout(() => {
+      this.videoAnalysisService.clearUserAnalysesCache();
+      this.loadAnalyses();
+    }, 3000);
 
     this.videoAnalysisService.uploadVideo(this.selectedFile).subscribe({
       next: (result) => {
-        clearInterval(progressInterval);
+        this.stopProgress();
         this.uploadProgress = 100;
         
         if (result.success) {
@@ -171,29 +213,49 @@ export class FishRecognition implements OnInit, OnDestroy {
           this.selectedFile = null;
           this.uploading = false;
           
-          // Cleanup preview
           this.cleanupPreviewUrl();
           
-          // Reset file input
           const fileInput = document.getElementById('videoFile') as HTMLInputElement;
           if (fileInput) fileInput.value = '';
           
+          this.videoAnalysisService.clearUserAnalysesCache();
+          this.loadAnalyses();
           setTimeout(() => {
             this.successMessage = '';
-            this.loadAnalyses();
-          }, 2000);
+          }, 3000);
         } else {
           this.error = result.error || 'Analysis failed';
           this.uploading = false;
         }
       },
       error: (err) => {
-        clearInterval(progressInterval);
-        this.error = 'Failed to upload and analyze video';
+        this.stopProgress();
         this.uploading = false;
         console.error('Error uploading video:', err);
+
+        // The backend may have completed even if the HTTP call timed out.
+        // Reload analyses to check.
+        this.videoAnalysisService.clearUserAnalysesCache();
+        this.loadAnalyses();
       }
     });
+  }
+
+  private startAsymptoticProgress(): void {
+    this.stopProgress();
+    this.progressInterval = setInterval(() => {
+      const elapsed = (Date.now() - this.progressStartTime) / 1000;
+      // Asymptotic curve: fast at start, slows down approaching 95%
+      // ~50% at 5s, ~75% at 15s, ~85% at 30s, ~92% at 60s, ~95% at 120s
+      this.uploadProgress = Math.min(95, Math.round(95 * (1 - Math.exp(-elapsed / 15))));
+    }, 300);
+  }
+
+  private stopProgress(): void {
+    if (this.progressInterval) {
+      clearInterval(this.progressInterval);
+      this.progressInterval = null;
+    }
   }
 
   deleteAnalysis(id: number): void {

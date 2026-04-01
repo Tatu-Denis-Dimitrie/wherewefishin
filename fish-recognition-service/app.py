@@ -25,12 +25,12 @@ USE_AV1_CODEC = False
 USE_HALF_PRECISION = True
 IMG_SIZE = 640
 TRACKER_CONFIG = 'bytetrack.yaml'   # alternative: 'botsort.yaml' (more precise, slower)
-TRACK_CONFIDENCE = 0.5               # minimum confidence threshold (higher = fewer false positives)
+TRACK_CONFIDENCE = 0.69               # minimum confidence threshold (higher = fewer false positives)
 TRACK_PERSIST = True                 # keep track IDs between frames
 
 # ── Trail / Tracking Points ─────────────────────────────────
 TRAIL_ENABLED = True                 # draw the trail for each fish
-TRAIL_MAX_POINTS = 30                # how many recent points to keep per fish (higher = longer trail)
+TRAIL_MAX_POINTS = 35                # how many recent points to keep per fish (higher = longer trail)
 TRAIL_DOT_RADIUS = 3                 # circle radius per trail point
 TRAIL_LINE_THICKNESS = 2             # line thickness between points
 TRAIL_FADE = True                    # older points become more transparent
