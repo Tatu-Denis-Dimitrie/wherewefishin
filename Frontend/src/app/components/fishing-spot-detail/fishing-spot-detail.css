@@ -1044,6 +1044,25 @@
   padding-top: 10px;
   border-top: 1px solid var(--border-subtle);
 }
+.calendar-error {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  background: rgba(196, 68, 45, 0.12);
+  border: 1px solid rgba(196, 68, 45, 0.35);
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: #e87461;
+  margin-top: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.calendar-error svg { flex-shrink: 0; color: #e87461; }
 .legend-item {
   display: flex;
   align-items: center;

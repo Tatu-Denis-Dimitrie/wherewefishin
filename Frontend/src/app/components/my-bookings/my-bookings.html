@@ -1,0 +1,84 @@
+<div class="bookings-page">
+  @if (showMessage) {
+    <div class="toast-message" [class.success]="messageType === 'success'" [class.error]="messageType === 'error'">
+      {{ messageType === 'success' ? '✓' : '✗' }} {{ showMessage }}
+    </div>
+  }
+
+  <div class="page-header">
+    <h2>My Bookings</h2>
+  </div>
+
+  @if (loadingBookings) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      Loading bookings...
+    </div>
+  } @else if (myBookings.length === 0) {
+    <div class="empty-state">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      <p>You have no bookings yet.</p>
+      <button class="btn-primary" (click)="goToMap()">Book a Pontoon</button>
+    </div>
+  } @else {
+    <div class="bookings-list">
+      @for (booking of myBookings; track booking.id) {
+        <div class="booking-card" [class.cancelled]="booking.status === 'Cancelled'">
+          <div class="booking-header">
+            <div class="booking-spot">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              {{ booking.fishingSpotName }}
+              @if (booking.pontoonName) {
+                <span class="booking-pontoon">- {{ booking.pontoonName }}</span>
+              }
+            </div>
+            <span class="status-badge" [class]="statusClass(booking.status)">{{ booking.status }}</span>
+          </div>
+          <div class="booking-details">
+            <div class="detail-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              {{ booking.startDate | date:'dd MMM yyyy, HH:mm' }} &bull; session {{ booking.durationHours }}h
+            </div>
+            <div class="detail-item price-detail">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="1" x2="12" y2="23"/>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+              {{ booking.totalPrice | currency:'RON':'symbol':'1.2-2' }}
+            </div>
+          </div>
+          @if (booking.status !== 'Cancelled') {
+            <div class="booking-actions">
+              <button class="btn-cancel-booking" (click)="cancelBooking(booking.id)">Cancel Booking</button>
+            </div>
+          }
+          <div class="qr-section">
+            <button class="btn-qr-toggle" (click)="toggleQr(booking.id)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+                <path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01"/>
+              </svg>
+              {{ isQrExpanded(booking.id) ? 'Hide QR Code' : 'Show QR Code' }}
+            </button>
+            @if (isQrExpanded(booking.id) && qrCodeMap[booking.id]) {
+              <div class="qr-code-container">
+                <img [src]="qrCodeMap[booking.id]" alt="Booking QR Code" class="qr-code-img" />
+                <p class="qr-hint">Scan the QR code at the fishing location</p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

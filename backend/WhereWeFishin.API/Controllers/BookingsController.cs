@@ -295,9 +295,8 @@ public class BookingsController : ControllerBase
                 return (null, null, default, default, 0m, BadRequest("Pontoon does not belong to this fishing spot."));
         }
 
-        var allowedDurations = new[] { 12, 24, 48, 72 };
-        if (!allowedDurations.Contains(durationHours))
-            return (null, null, default, default, 0m, BadRequest("Duration must be 12, 24, 48 or 72 hours."));
+        if (durationHours < 1 || durationHours > 8760)
+            return (null, null, default, default, 0m, BadRequest("Duration must be between 1 and 8760 hours."));
 
         if (startDate < DateTime.UtcNow.AddMinutes(-5))
             return (null, null, default, default, 0m, BadRequest("Start date cannot be in the past."));

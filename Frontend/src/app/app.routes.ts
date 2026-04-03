@@ -21,6 +21,7 @@ export const routes: Routes = [
       { path: 'fish-recognition', loadComponent: () => import('./components/fish-recognition/fish-recognition').then(m => m.FishRecognition) },
       { path: 'admin', loadComponent: () => import('./components/admin/admin').then(m => m.Admin), canActivate: [adminGuard] },
       { path: 'cart', loadComponent: () => import('./components/cart/cart').then(m => m.Cart) },
+      { path: 'my-bookings', loadComponent: () => import('./components/my-bookings/my-bookings').then(m => m.MyBookings) },
       { path: 'faq', loadComponent: () => import('./components/faq/faq').then(m => m.Faq) },
       { path: 'scan-qr', loadComponent: () => import('./components/qr-scanner/qr-scanner').then(m => m.QrScanner), canActivate: [employeeGuard] },
       { path: 'spots/:id', loadComponent: () => import('./components/fishing-spot-detail/fishing-spot-detail').then(m => m.FishingSpotDetail) },

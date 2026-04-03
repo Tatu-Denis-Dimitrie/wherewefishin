@@ -58,6 +58,7 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
   selectedHour = 8;
   rangeStartDate: Date | null = null;
   rangeEndDate: Date | null = null;
+  calendarError = '';
 
   private map: L.Map | null = null;
   private pontoonLayers: Map<number, L.Polygon | L.Rectangle> = new Map();
@@ -348,6 +349,18 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
     });
   }
 
+  private findOverlappingBooking(periods: BookedPeriod[], from: Date, to: Date): BookedPeriod | undefined {
+    return periods.find(p => {
+      const pStart = new Date(p.startDate);
+      const pEnd = new Date(p.endDate);
+      return from < pEnd && to > pStart;
+    });
+  }
+
+  private formatDateShort(d: Date): string {
+    return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+  }
+
   prevMonth(): void {
     this.calendarMonth = new Date(
       this.calendarMonth.getFullYear(),
@@ -368,27 +381,59 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
 
   selectCalendarDay(day: typeof this.calendarDays[0]): void {
     if (day.isPast || !day.isCurrentMonth) return;
-    const d = day.date;
-    const clickedDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const clickedDate = new Date(day.date.getFullYear(), day.date.getMonth(), day.date.getDate());
 
     if (!this.rangeStartDate || (this.rangeStartDate && this.rangeEndDate)) {
-      // No range yet or range complete — start new range
+      // Deselect end date on re-click
+      if (this.rangeStartDate && this.rangeEndDate &&
+          clickedDate.getTime() === this.rangeEndDate.getTime()) {
+        this.calendarError = '';
+        this.rangeEndDate = null;
+        this.isCustomDuration = false;
+        this.updateStartDateFromRange();
+        this.buildCalendar();
+        return;
+      }
+      // Start new range
+      this.calendarError = '';
       this.rangeStartDate = clickedDate;
       this.rangeEndDate = null;
       this.isCustomDuration = false;
     } else {
-      // Have start, pick end
-      if (clickedDate < this.rangeStartDate) {
-        // Clicked before start — swap
-        this.rangeEndDate = this.rangeStartDate;
-        this.rangeStartDate = clickedDate;
-      } else if (clickedDate.getTime() === this.rangeStartDate.getTime()) {
-        // Same day — single day selection
+      // Deselect start date on re-click
+      if (clickedDate.getTime() === this.rangeStartDate.getTime()) {
+        this.calendarError = '';
+        this.rangeStartDate = null;
         this.rangeEndDate = null;
         this.isCustomDuration = false;
-      } else {
-        this.rangeEndDate = clickedDate;
+        this.updateStartDateFromRange();
+        this.buildCalendar();
+        return;
       }
+
+      // Order start/end
+      let start = this.rangeStartDate;
+      let end = clickedDate;
+      if (clickedDate < this.rangeStartDate) {
+        start = clickedDate;
+        end = this.rangeStartDate;
+      }
+
+      // Overlap check
+      const rangeStart = new Date(start);
+      rangeStart.setHours(this.selectedHour, 0, 0, 0);
+      const rangeEnd = new Date(end);
+      rangeEnd.setHours(this.selectedHour, 0, 0, 0);
+
+      const overlapping = this.findOverlappingBooking(this.bookedPeriods, rangeStart, rangeEnd);
+      if (overlapping) {
+        this.calendarError = `Perioadă ocupată din ${this.formatDateShort(new Date(overlapping.startDate))}`;
+        return;
+      }
+
+      this.calendarError = '';
+      this.rangeStartDate = start;
+      this.rangeEndDate = end;
     }
 
     this.updateStartDateFromRange();
