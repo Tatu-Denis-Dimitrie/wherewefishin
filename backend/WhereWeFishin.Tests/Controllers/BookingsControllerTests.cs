@@ -194,10 +194,10 @@ public class BookingsControllerTests
     }
 
     [Theory]
-    [InlineData(1)]
-    [InlineData(6)]
-    [InlineData(36)]
-    [InlineData(100)]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(-12)]
+    [InlineData(8761)]
     public async Task CreateBooking_WithInvalidDuration_ReturnsBadRequest(int invalidDuration)
     {
         // Arrange

@@ -205,7 +205,7 @@ export class Cart implements OnInit, OnDestroy {
       isCustomDuration: !this.DURATIONS.includes(item.durationHours)
     };
 
-    if (state.isCustomDuration && item.durationHours > 24) {
+    if (item.durationHours > 24) {
       const endDate = new Date(existing);
       endDate.setHours(endDate.getHours() + item.durationHours);
       state.rangeEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
@@ -407,7 +407,14 @@ export class Cart implements OnInit, OnDestroy {
     const state = this.calendarStates.get(key);
     if (state) {
       state.isCustomDuration = false;
-      state.rangeEndDate = null;
+      if (d > 24 && state.rangeStartDate) {
+        const startWithHour = new Date(state.rangeStartDate);
+        startWithHour.setHours(state.selectedHour, 0, 0, 0);
+        const endDate = new Date(startWithHour.getTime() + d * 3600000);
+        state.rangeEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      } else {
+        state.rangeEndDate = null;
+      }
       this.buildCalendar(key);
     }
     this.cartService.updateItem(item.spotId, { durationHours: d }, item.pontoonId);
@@ -429,7 +436,14 @@ export class Cart implements OnInit, OnDestroy {
     const state = this.calendarStates.get(key);
     if (state) {
       state.isCustomDuration = true;
-      state.rangeEndDate = null;
+      if (h > 24 && state.rangeStartDate) {
+        const startWithHour = new Date(state.rangeStartDate);
+        startWithHour.setHours(state.selectedHour, 0, 0, 0);
+        const endDate = new Date(startWithHour.getTime() + h * 3600000);
+        state.rangeEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      } else {
+        state.rangeEndDate = null;
+      }
       this.buildCalendar(key);
     }
     this.cartService.updateItem(item.spotId, { durationHours: h }, item.pontoonId);
