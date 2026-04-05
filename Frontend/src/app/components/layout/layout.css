@@ -202,6 +202,8 @@
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
 }
 
 .main-content app-site-footer {

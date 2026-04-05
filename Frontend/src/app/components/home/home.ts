@@ -65,7 +65,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   fishSpeciesOptions: string[] = [];
   selectedFishSpecies = 'all';
   hasUserLocation = false;
-  readonly closestSpotsLimit = 3;
+  readonly closestSpotsLimit = 4;
   isAddMode = false;
   isDeleteMode = false;
   showMessage = '';
@@ -80,6 +80,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   userAnalysesCount = 0;
   userCompletedCount = 0;
   userSpotsCount = 0;
+  userBookingsCount = 0;
+  userVisitedLakesCount = 0;
   loadingStats = true;
   loadingLatestSession = true;
   selectedSessionView: 'future' | 'past' = 'future';
@@ -180,8 +182,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
         // Bookings (regular users)
         if (this.isUser() && bookings.length > 0) {
-          const now = Date.now();
           const active = bookings.filter(b => b.status?.toLowerCase() !== 'cancelled');
+          this.userBookingsCount = active.length;
+          this.userVisitedLakesCount = new Set(active.map(b => b.fishingSpotId)).size;
+          const now = Date.now();
           this.latestFutureSession = active
             .filter(b => new Date(b.startDate).getTime() >= now)
             .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0] ?? null;

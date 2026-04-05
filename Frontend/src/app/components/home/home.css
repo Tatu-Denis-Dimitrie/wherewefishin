@@ -4,8 +4,11 @@
    HOME — Woodland Angler
    ======================== */
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
   color: var(--text-primary);
+  height: 100%;
+  min-height: 0;
 }
 
 .home-page {
@@ -15,6 +18,8 @@
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
 }
 
 /* Toast */
@@ -131,11 +136,22 @@
 /* ---- Dashboard Grid ---- */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: 420px 1fr;
   gap: 24px;
-  grid-template-rows: minmax(0, 1fr);
+  align-items: start;
   width: 100%;
   min-width: 0;
+}
+
+/* Admin: cards on top row, map below */
+.dashboard-grid.admin-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  grid-template-columns: unset;
+  grid-template-rows: unset;
+  flex: 1;
+  min-height: 0;
 }
 
 /* ---- Statistics Section ---- */
@@ -144,6 +160,25 @@
   flex-direction: column;
   gap: 20px;
   min-width: 0;
+  overflow-y: auto;
+}
+
+/* Admin: horizontal row of cards */
+.admin-layout .stats-section {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
+.admin-layout .stats-section > .section-title {
+  flex-basis: 100%;
+  margin-bottom: 0;
+}
+
+.admin-layout .stats-section > .loading-spinner {
+  flex-basis: 100%;
 }
 
 .section-title {
@@ -164,6 +199,14 @@
   gap: 12px;
   width: 100%;
   min-width: 0;
+}
+
+/* Admin: auto-fill horizontal */
+.admin-layout .stats-grid {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 210px));
+  flex: 0 0 auto;
+  min-width: 260px;
+  width: auto;
 }
 
 .stat-card {
@@ -218,6 +261,16 @@
   color: var(--accent-amber);
 }
 
+.bookings-icon {
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+}
+
+.visited-icon {
+  background: rgba(20, 184, 166, 0.15);
+  color: #2dd4bf;
+}
+
 .stat-content {
   flex: 1;
   min-width: 0;
@@ -259,6 +312,11 @@
   box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.11);
   backdrop-filter: blur(12px) saturate(125%);
   -webkit-backdrop-filter: blur(12px) saturate(125%);
+}
+
+.admin-layout .latest-session {
+  flex: 1;
+  min-width: 260px;
 }
 
 .latest-session-header {
@@ -498,8 +556,13 @@
   -webkit-backdrop-filter: blur(12px) saturate(125%);
 }
 
+.admin-layout .nearby-locations {
+  flex: 1;
+  min-width: 260px;
+}
+
 .stats-section .nearby-locations {
-  margin-top: -8px;
+  margin-top: 0;
 }
 
 .nearby-header {
@@ -665,9 +728,19 @@
 .map-section {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 0;
+  position: sticky;
+  top: 0;
+  height: calc(100dvh - 48px);
+  min-height: 400px;
   min-width: 0;
+}
+
+/* Admin: map fills remaining flex space */
+.admin-layout .map-section {
+  position: static;
+  height: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .map-header {
@@ -700,7 +773,6 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 600px;
   width: 100%;
   min-width: 0;
   z-index: 0;
@@ -708,6 +780,15 @@
   box-shadow: 0 18px 34px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.11);
   backdrop-filter: blur(12px) saturate(125%);
   -webkit-backdrop-filter: blur(12px) saturate(125%);
+  /* Default: fills sticky map-section */
+  flex: 1;
+  height: 100%;
+}
+
+/* Admin: map fills remaining flex space */
+.admin-layout .map-section .map-card {
+  height: clamp(400px, calc(100vh - 300px), 900px);
+  flex: none;
 }
 
 .map-fish-filter {
@@ -789,9 +870,13 @@
   transition: all 0.35s ease;
 }
 
-/* Expanded map — larger but not fullscreen */
+/* Expanded map — larger */
 .map-card.expanded {
-  height: 750px;
+  height: calc(100dvh - 48px);
+}
+
+.admin-layout .map-section .map-card.expanded {
+  height: clamp(500px, calc(100vh - 180px), 960px);
 }
 
 .map-expand-btn {
@@ -1107,19 +1192,31 @@
     font-size: 20px;
   }
 
-  .dashboard-grid {
+  /* Reset admin-layout overrides for mobile */
+  .dashboard-grid,
+  .dashboard-grid.admin-layout {
+    display: grid;
     grid-template-columns: 1fr;
     grid-template-rows: auto;
     gap: 20px;
     width: 100%;
   }
 
-  .stats-section {
+  .stats-section,
+  .admin-layout .stats-section {
     order: 2;
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .admin-layout .stats-section > .section-title {
+    flex-basis: auto;
   }
 
   .latest-session {
     order: -1;
+    flex: none;
+    min-width: 0;
   }
 
   .map-section {
@@ -1130,6 +1227,9 @@
   .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
+    flex: none;
+    min-width: 0;
+    width: 100%;
   }
 
   .stat-card {
@@ -1219,6 +1319,8 @@
 
   .nearby-locations {
     padding: 10px;
+    flex: none;
+    min-width: 0;
   }
 }
 
