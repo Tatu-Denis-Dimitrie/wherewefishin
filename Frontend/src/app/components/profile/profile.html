@@ -1,239 +1,558 @@
-<div class="page-shell">
-  <!-- Page header -->
-  <header class="page-header">
-    <h1>Profile</h1>
-  </header>
+<div class="profile-page">
 
   <!-- Toasts -->
-  <div class="toast toast-error" *ngIf="error">{{ error }}</div>
-  <div class="toast toast-success" *ngIf="successMessage">{{ successMessage }}</div>
+  @if (error) {
+    <div class="profile-toast toast-error">{{ error }}</div>
+  }
+  @if (successMessage) {
+    <div class="profile-toast toast-success">{{ successMessage }}</div>
+  }
 
-  <!-- Profile card -->
-  <div class="profile-card" *ngIf="user">
-    <!-- Avatar + identity -->
-    <div class="profile-header">
-      <div class="avatar-ring">
-        <img *ngIf="user.profilePictureUrl" [src]="user.profilePictureUrl" class="avatar-img" alt="Avatar" />
-        <span *ngIf="!user.profilePictureUrl" class="avatar-initials">{{ getInitials() }}</span>
-      </div>
-      <div class="identity">
-        <h2>{{ getDisplayName() }}</h2>
-        <span class="handle">&#64;{{ user.username }}</span>
-        <span class="role-badge" [ngClass]="{
-          'badge-admin': user.role === 'Admin',
-          'badge-manager': user.role === 'Manager',
-          'badge-user': user.role === 'User'
-        }">{{ user.role }}</span>
-      </div>
+  <!-- Loading state -->
+  @if (!user && loading) {
+    <div class="loading-full">
+      <div class="spinner"></div>
     </div>
+  }
 
-    <!-- Detail grid (view mode) -->
-    <div class="detail-grid" *ngIf="!isEditing">
-      <div class="detail-item">
-        <span class="detail-label">Email</span>
-        <span class="detail-value">{{ user.email }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="detail-label">First Name</span>
-        <span class="detail-value">{{ user.firstName || '—' }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="detail-label">Last Name</span>
-        <span class="detail-value">{{ user.lastName || '—' }}</span>
-      </div>
-      <div class="detail-item">
-        <span class="detail-label">Member Since</span>
-        <span class="detail-value">{{ formatDate(user.createdAt) }}</span>
-      </div>
-    </div>
+  @if (user) {
+    <div class="profile-layout">
 
-    <!-- Edit form -->
-    <div class="edit-form" *ngIf="isEditing">
-      <div class="field">
-        <label>First Name</label>
-        <input type="text" [(ngModel)]="editForm.firstName" placeholder="First name" />
-      </div>
-      <div class="field">
-        <label>Last Name</label>
-        <input type="text" [(ngModel)]="editForm.lastName" placeholder="Last name" />
-      </div>
-      <div class="field">
-        <label>Profile Picture URL</label>
-        <input type="text" [(ngModel)]="editForm.profilePictureUrl" placeholder="https://..." />
-      </div>
-    </div>
-
-    <!-- Action buttons -->
-    <div class="profile-actions">
-      <button class="btn-outline" (click)="toggleEdit()">
-        {{ isEditing ? 'Cancel' : 'Edit Profile' }}
-      </button>
-      <button class="btn-primary" *ngIf="isEditing" (click)="saveProfile()" [disabled]="loading">
-        {{ loading ? 'Saving…' : 'Save Changes' }}
-      </button>
-    </div>
-  </div>
-
-  <!-- User Statistics Section -->
-  <div class="stats-section" *ngIf="user && !loadingStats">
-    <h3 class="section-heading">My Activity</h3>
-    
-    <div class="activity-grid">
-      <div class="activity-card">
-        <div class="activity-icon analyses-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="23 7 16 12 23 17 23 7"/>
-            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-          </svg>
-        </div>
-        <div class="activity-info">
-          <div class="activity-value">{{ userAnalysesCount }}</div>
-          <div class="activity-label">Total Analyses</div>
-        </div>
-      </div>
-
-      <div class="activity-card">
-        <div class="activity-icon success-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-            <polyline points="22 4 12 14.01 9 11.01"/>
-          </svg>
-        </div>
-        <div class="activity-info">
-          <div class="activity-value">{{ userCompletedCount }}</div>
-          <div class="activity-label">Completed</div>
-        </div>
-      </div>
-
-      <div class="activity-card" *ngIf="isManager() || isAdmin()">
-        <div class="activity-icon spots-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-            <circle cx="12" cy="10" r="3"/>
-          </svg>
-        </div>
-        <div class="activity-info">
-          <div class="activity-value">{{ userSpotsCount }}</div>
-          <div class="activity-label">Spots Added</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Recent Analyses -->
-    <div class="recent-section" *ngIf="recentAnalyses.length > 0">
-      <h4 class="subsection-heading">Recent Analyses</h4>
-      <div class="recent-list">
-        @for (analysis of recentAnalyses; track analysis.id) {
-          <div class="recent-item">
-            <div class="recent-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="23 7 16 12 23 17 23 7"/>
-                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-              </svg>
+      <!-- ════════════ HEADER BANNER ════════════ -->
+      <header class="profile-header">
+        <div class="header-body">
+          <div class="header-cover">
+            <div class="cover-pattern"></div>
+          </div>
+          <div class="header-identity">
+            <div class="avatar-ring">
+              @if (user.profilePictureUrl) {
+                <img [src]="user.profilePictureUrl" class="avatar-img" alt="Avatar" />
+              } @else {
+                <span class="avatar-initials">{{ getInitials() }}</span>
+              }
             </div>
-            <div class="recent-info">
-              <div class="recent-name">{{ analysis.fileName }}</div>
-              <div class="recent-meta">
-                <span class="badge-mini" [ngClass]="getStatusClass(analysis.status)">{{ analysis.status }}</span>
-                @if (analysis.status === 'Completed' && analysis.totalDetections) {
-                  <span class="recent-count">{{ analysis.totalUniqueFish ?? analysis.totalDetections }} unique fish detected</span>
-                }
+            <div class="header-info">
+              <div class="header-name-row">
+                <h1 class="header-name">{{ getDisplayName() }}</h1>
+                <span class="role-badge" [ngClass]="{
+                  'badge-admin':   user.role === 'Admin',
+                  'badge-manager': user.role === 'Manager',
+                  'badge-user':    user.role === 'User'
+                }">{{ user.role }}</span>
+              </div>
+              <p class="header-handle">&#64;{{ user.username }}</p>
+              <div class="header-meta">
+                <span class="meta-chip">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                  {{ user.email }}
+                </span>
+                <span class="meta-chip">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  Since {{ formatDate(user.createdAt) }}
+                </span>
               </div>
             </div>
           </div>
-        }
-      </div>
-    </div>
-
-    <!-- Manager Spots Section -->
-    <div class="manager-spots-section" *ngIf="(isManager() || isAdmin()) && userSpots.length > 0">
-      <h4 class="subsection-heading">My Fishing Spots</h4>
-      <div class="spots-list">
-        @for (spot of userSpots; track spot.id) {
-          <div class="spot-item">
-            <div class="spot-info">
-              <div class="spot-name">{{ spot.name }}</div>
-              <div class="spot-coords">{{ spot.latitude.toFixed(4) }}, {{ spot.longitude.toFixed(4) }}</div>
+        </div>
+        <div class="header-stats">
+          <div class="hstat">
+            <div class="hstat-value">{{ userAnalysesCount }}</div>
+            <div class="hstat-label">Analyses</div>
+          </div>
+          <div class="hstat">
+            <div class="hstat-value">{{ userBookingsCount }}</div>
+            <div class="hstat-label">Bookings</div>
+          </div>
+          @if (isManager() || isAdmin()) {
+            <div class="hstat">
+              <div class="hstat-value">{{ userSpotsCount }}</div>
+              <div class="hstat-label">Spots</div>
             </div>
-            <div class="spot-actions">
-              <a [routerLink]="['/spots', spot.id]" class="btn-view-spot">View</a>
-              <a [routerLink]="['/spots', spot.id, 'manage']" class="btn-manage-pontoons">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="3" y1="9" x2="21" y2="9"/>
-                  <line x1="9" y1="21" x2="9" y2="9"/>
-                </svg>
-                Manage Pontoons
-              </a>
+          }
+        </div>
+      </header>
+
+      <!-- ════════════ TAB BAR ════════════ -->
+      <nav class="tab-bar">
+        <button class="tab-btn" [class.tab-active]="activeTab === 'overview'" (click)="setTab('overview')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          <span class="tab-label">Overview</span>
+        </button>
+        <button class="tab-btn" [class.tab-active]="activeTab === 'bookings'" (click)="setTab('bookings')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span class="tab-label">Bookings</span>
+          @if (userBookingsCount > 0) {
+            <span class="tab-badge">{{ userBookingsCount }}</span>
+          }
+        </button>
+        <button class="tab-btn" [class.tab-active]="activeTab === 'settings'" (click)="setTab('settings')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span class="tab-label">Settings</span>
+        </button>
+
+        <div class="tab-bar-right">
+          @if (isAdmin()) {
+            <a routerLink="/admin" class="tab-btn tab-admin">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              <span class="tab-label">Admin</span>
+            </a>
+          }
+          <button class="tab-btn tab-logout" (click)="logout()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            <span class="tab-label">Sign Out</span>
+          </button>
+        </div>
+      </nav>
+
+      <!-- ════════════ TAB CONTENT ════════════ -->
+      <main class="profile-main">
+
+        <!-- ── OVERVIEW TAB ── -->
+        @if (activeTab === 'overview') {
+          <div class="tab-panel">
+
+            <!-- Stat cards row -->
+            <div class="stat-cards">
+              <div class="stat-card">
+                <div class="stat-icon-wrap sicon-blue">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="23 7 16 12 23 17 23 7"/>
+                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                  </svg>
+                </div>
+                <div class="stat-text">
+                  <div class="stat-num">{{ userAnalysesCount }}</div>
+                  <div class="stat-lbl">Total Analyses</div>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-icon-wrap sicon-green">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                  </svg>
+                </div>
+                <div class="stat-text">
+                  <div class="stat-num">{{ userCompletedCount }}</div>
+                  <div class="stat-lbl">Completed</div>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-icon-wrap sicon-purple">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                </div>
+                <div class="stat-text">
+                  <div class="stat-num">{{ userBookingsCount }}</div>
+                  <div class="stat-lbl">Active Bookings</div>
+                </div>
+              </div>
+
+              @if (isManager() || isAdmin()) {
+                <div class="stat-card">
+                  <div class="stat-icon-wrap sicon-moss">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                  </div>
+                  <div class="stat-text">
+                    <div class="stat-num">{{ userSpotsCount }}</div>
+                    <div class="stat-lbl">Spots Managed</div>
+                  </div>
+                </div>
+              }
+
+              @if (isAdmin() && adminStats) {
+                <div class="stat-card">
+                  <div class="stat-icon-wrap sicon-amber">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                      <circle cx="9" cy="7" r="4"/>
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                  </div>
+                  <div class="stat-text">
+                    <div class="stat-num">{{ adminStats.totalUsers }}</div>
+                    <div class="stat-lbl">Total Users</div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Content cards -->
+            <div class="overview-grid">
+
+              @if (recentAnalyses.length > 0) {
+                <div class="content-card">
+                  <div class="content-card-head">
+                    <h3>Recent Analyses</h3>
+                    <a routerLink="/analyses" class="link-see-all">See all →</a>
+                  </div>
+                  <div class="item-list">
+                    @for (analysis of recentAnalyses; track analysis.id) {
+                      <div class="list-item">
+                        <div class="item-icon iicon-blue">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="23 7 16 12 23 17 23 7"/>
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                          </svg>
+                        </div>
+                        <div class="item-body">
+                          <div class="item-name">{{ analysis.fileName }}</div>
+                          <div class="item-meta">
+                            <span class="badge-mini" [ngClass]="getStatusClass(analysis.status)">{{ analysis.status }}</span>
+                            @if (analysis.status === 'Completed' && analysis.totalDetections) {
+                              <span class="meta-detail">{{ analysis.totalUniqueFish ?? analysis.totalDetections }} fish</span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
+              @if ((isManager() || isAdmin()) && userSpots.length > 0) {
+                <div class="content-card">
+                  <div class="content-card-head">
+                    <h3>My Fishing Spots</h3>
+                  </div>
+                  <div class="item-list">
+                    @for (spot of userSpots; track spot.id) {
+                      <div class="list-item">
+                        <div class="item-icon iicon-moss">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                            <circle cx="12" cy="10" r="3"/>
+                          </svg>
+                        </div>
+                        <div class="item-body">
+                          <div class="item-name">{{ spot.name }}</div>
+                          <div class="item-meta">
+                            <span class="meta-detail coord">{{ spot.latitude.toFixed(4) }}, {{ spot.longitude.toFixed(4) }}</span>
+                          </div>
+                        </div>
+                        <div class="item-actions">
+                          <a [routerLink]="['/spots', spot.id]" class="btn-xs btn-ghost">View</a>
+                          <a [routerLink]="['/spots', spot.id, 'manage']" class="btn-xs btn-moss">Manage</a>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
+              @if (isAdmin() && adminStats) {
+                <div class="content-card">
+                  <div class="content-card-head">
+                    <h3>System Overview</h3>
+                    <a routerLink="/admin" class="link-see-all">Admin panel →</a>
+                  </div>
+                  <div class="admin-stats-grid">
+                    <div class="asstat">
+                      <div class="asstat-label">Users</div>
+                      <div class="asstat-value">{{ adminStats.totalUsers }}</div>
+                    </div>
+                    <div class="asstat">
+                      <div class="asstat-label">Spots</div>
+                      <div class="asstat-value">{{ adminStats.totalSpots }}</div>
+                    </div>
+                    <div class="asstat">
+                      <div class="asstat-label">Analyses</div>
+                      <div class="asstat-value">{{ adminStats.totalAnalyses }}</div>
+                    </div>
+                  </div>
+                </div>
+              }
+
+              <!-- Quick actions when no other content (regular user with no data) -->
+              @if (recentAnalyses.length === 0 && !isManager() && !isAdmin()) {
+                <div class="quick-actions">
+                  <a routerLink="/home" class="qa-card">
+                    <div class="qa-icon qaicon-moss">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                        <circle cx="12" cy="10" r="3"/>
+                      </svg>
+                    </div>
+                    <div class="qa-text">
+                      <div class="qa-title">Browse Fishing Spots</div>
+                      <div class="qa-sub">Find and book your next session</div>
+                    </div>
+                  </a>
+                  <a routerLink="/fish-recognition" class="qa-card">
+                    <div class="qa-icon qaicon-blue">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="23 7 16 12 23 17 23 7"/>
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+                      </svg>
+                    </div>
+                    <div class="qa-text">
+                      <div class="qa-title">Analyse a Video</div>
+                      <div class="qa-sub">Detect fish species with AI</div>
+                    </div>
+                  </a>
+                  <a routerLink="/my-bookings" class="qa-card">
+                    <div class="qa-icon qaicon-purple">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                      </svg>
+                    </div>
+                    <div class="qa-text">
+                      <div class="qa-title">My Bookings</div>
+                      <div class="qa-sub">View all your reservations</div>
+                    </div>
+                  </a>
+                </div>
+              }
+
             </div>
           </div>
         }
+
+        <!-- ── BOOKINGS TAB ── -->
+        @if (activeTab === 'bookings') {
+          <div class="tab-panel">
+
+            @if (loadingBookings) {
+              <div class="inline-loader">
+                <div class="spinner-sm"></div>
+                <span>Loading bookings…</span>
+              </div>
+            } @else if (recentBookings.length === 0) {
+              <div class="empty-state">
+                <div class="empty-icon">
+                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                </div>
+                <p class="empty-title">No bookings yet</p>
+                <p class="empty-sub">Explore fishing spots and make your first reservation.</p>
+                <a routerLink="/home" class="btn-primary-sm">Browse Spots</a>
+              </div>
+            } @else {
+              <div class="bookings-table">
+                <div class="bt-head">
+                  <span>Spot</span>
+                  <span>Date</span>
+                  <span>Duration</span>
+                  <span>Total</span>
+                  <span>Status</span>
+                </div>
+                @for (booking of recentBookings; track booking.id) {
+                  <div class="bt-row" [class.bt-cancelled]="booking.status === 'Cancelled'">
+                    <div class="bt-spot">
+                      <div class="bt-spot-name">{{ booking.fishingSpotName }}</div>
+                      @if (booking.pontoonName) {
+                        <div class="bt-pontoon">{{ booking.pontoonName }}</div>
+                      }
+                    </div>
+                    <div class="bt-date">{{ formatBookingDate(booking.startDate) }}</div>
+                    <div class="bt-dur">{{ booking.durationHours }}h</div>
+                    <div class="bt-price">{{ formatPrice(booking.totalPrice) }}</div>
+                    <div class="bt-status">
+                      <span class="bstatus-badge" [ngClass]="getBookingStatusClass(booking.status)">
+                        {{ booking.status }}
+                      </span>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ── SETTINGS TAB ── -->
+        @if (activeTab === 'settings') {
+          <div class="tab-panel">
+
+            <div class="settings-grid">
+              <div class="settings-card">
+                <div class="settings-card-head">
+                  <div>
+                    <h3>Personal Information</h3>
+                    <p>Update your name and profile picture</p>
+                  </div>
+                  @if (!isEditing) {
+                    <button class="btn-edit-inline" (click)="toggleEdit()">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                      Edit
+                    </button>
+                  }
+                </div>
+
+                @if (!isEditing) {
+                  <div class="info-grid">
+                    <div class="info-cell">
+                      <span class="info-lbl">First Name</span>
+                      <span class="info-val">{{ user.firstName || '—' }}</span>
+                    </div>
+                    <div class="info-cell">
+                      <span class="info-lbl">Last Name</span>
+                      <span class="info-val">{{ user.lastName || '—' }}</span>
+                    </div>
+                    <div class="info-cell">
+                      <span class="info-lbl">Email</span>
+                      <span class="info-val">{{ user.email }}</span>
+                    </div>
+                    <div class="info-cell">
+                      <span class="info-lbl">Username</span>
+                      <span class="info-val">{{ user.username }}</span>
+                    </div>
+                    <div class="info-cell info-cell-full">
+                      <span class="info-lbl">Profile Picture URL</span>
+                      <span class="info-val url-val">{{ user.profilePictureUrl || '—' }}</span>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="edit-grid">
+                    <div class="edit-field">
+                      <label>First Name</label>
+                      <input type="text" [(ngModel)]="editForm.firstName" placeholder="First name" />
+                    </div>
+                    <div class="edit-field">
+                      <label>Last Name</label>
+                      <input type="text" [(ngModel)]="editForm.lastName" placeholder="Last name" />
+                    </div>
+                    <div class="edit-field edit-field-full">
+                      <label>Profile Picture URL</label>
+                      <input type="url" [(ngModel)]="editForm.profilePictureUrl" placeholder="https://..." />
+                    </div>
+                    <div class="edit-actions">
+                      <button class="btn-cancel" (click)="toggleEdit()">Cancel</button>
+                      <button class="btn-save" (click)="saveProfile()" [disabled]="loading">
+                        {{ loading ? 'Saving…' : 'Save Changes' }}
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <div class="settings-card">
+                <div class="settings-card-head">
+                  <div>
+                    <h3>Security</h3>
+                    <p>Manage your password and account safety</p>
+                  </div>
+                </div>
+                <div class="security-list">
+                  <div class="security-row">
+                    <div class="security-icon-wrap sec-neutral">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                      </svg>
+                    </div>
+                    <div class="security-info">
+                      <div class="security-title">Password</div>
+                      <div class="security-sub">Keep your account secure with a strong password</div>
+                    </div>
+                    <button class="btn-ghost-sm" (click)="openChangePassword()">Change</button>
+                  </div>
+                  <div class="security-row">
+                    <div class="security-icon-wrap sec-ok">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                      </svg>
+                    </div>
+                    <div class="security-info">
+                      <div class="security-title">Account Status</div>
+                      <div class="security-sub">Your account is active and in good standing</div>
+                    </div>
+                    <span class="badge-active">Active</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        }
+
+      </main>
+    </div>
+  }
+
+  <!-- ════════════ CHANGE PASSWORD MODAL ════════════ -->
+  @if (showPasswordModal) {
+    <div class="modal-overlay" (click)="closeChangePassword()">
+      <div class="modal-box" (click)="$event.stopPropagation()">
+        <div class="modal-head">
+          <h3>Change Password</h3>
+          <button class="modal-close-btn" (click)="closeChangePassword()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="edit-field">
+            <label>Current Password</label>
+            <input type="password" [(ngModel)]="passwordForm.currentPassword" placeholder="••••••••" />
+          </div>
+          <div class="edit-field">
+            <label>New Password</label>
+            <input type="password" [(ngModel)]="passwordForm.newPassword" placeholder="••••••••" />
+          </div>
+          <div class="edit-field">
+            <label>Confirm New Password</label>
+            <input type="password" [(ngModel)]="passwordForm.confirmPassword" placeholder="••••••••" />
+          </div>
+          @if (passwordError) {
+            <div class="field-error">{{ passwordError }}</div>
+          }
+        </div>
+        <div class="modal-foot">
+          <button class="btn-cancel" (click)="closeChangePassword()">Cancel</button>
+          <button class="btn-save" (click)="changePassword()" [disabled]="loading">
+            {{ loading ? 'Updating…' : 'Update Password' }}
+          </button>
+        </div>
       </div>
     </div>
-  </div>
+  }
 
-  <!-- Admin Dashboard Section -->
-  <div class="admin-section" *ngIf="isAdmin() && adminStats && !loadingStats">
-    <h3 class="section-heading">System Overview</h3>
-    
-    <div class="admin-grid">
-      <div class="admin-card">
-        <div class="admin-icon users-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg>
-        </div>
-        <div class="admin-info">
-          <div class="admin-value">{{ adminStats.totalUsers }}</div>
-          <div class="admin-label">Total Users</div>
-        </div>
-      </div>
-
-      <div class="admin-card">
-        <div class="admin-icon spots-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-            <circle cx="12" cy="10" r="3"/>
-          </svg>
-        </div>
-        <div class="admin-info">
-          <div class="admin-value">{{ adminStats.totalSpots }}</div>
-          <div class="admin-label">Fishing Spots</div>
-        </div>
-      </div>
-
-      <div class="admin-card">
-        <div class="admin-icon analyses-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="23 7 16 12 23 17 23 7"/>
-            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-          </svg>
-        </div>
-        <div class="admin-info">
-          <div class="admin-value">{{ adminStats.totalAnalyses }}</div>
-          <div class="admin-label">System Analyses</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="admin-actions">
-      <a routerLink="/admin" class="btn-admin">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="7" height="7"/>
-          <rect x="14" y="3" width="7" height="7"/>
-          <rect x="14" y="14" width="7" height="7"/>
-          <rect x="3" y="14" width="7" height="7"/>
-        </svg>
-        Go to Admin Panel
-      </a>
-    </div>
-  </div>
-
-  <!-- Loading -->
-  <div class="loading-spinner" *ngIf="loading && !user">
-    <div class="spinner"></div>
-  </div>
 </div>

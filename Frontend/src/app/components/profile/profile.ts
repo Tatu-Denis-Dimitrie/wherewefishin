@@ -7,8 +7,12 @@ import { AuthService } from '../../services/auth.service';
 import { VideoAnalysisService } from '../../services/video-analysis.service';
 import { FishingSpotService, FishingSpot } from '../../services/fishing-spot.service';
 import { AdminService, AdminStats } from '../../services/admin.service';
+import { BookingService } from '../../services/booking.service';
 import { User, UpdateUser } from '../../models/user.model';
+import { Booking } from '../../models/booking.model';
 import { VideoAnalysis } from '../../models/video-analysis.model';
+
+type ProfileTab = 'overview' | 'bookings' | 'settings';
 
 @Component({
   selector: 'app-profile',
@@ -22,12 +26,19 @@ export class Profile implements OnInit {
   loading = false;
   error = '';
   successMessage = '';
-  
+
+  activeTab: ProfileTab = 'overview';
+
   editForm: UpdateUser = {
     firstName: '',
     lastName: '',
     profilePictureUrl: ''
   };
+
+  // Password change modal
+  showPasswordModal = false;
+  passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
+  passwordError = '';
 
   // Role-specific data
   userAnalysesCount = 0;
@@ -38,12 +49,18 @@ export class Profile implements OnInit {
   adminStats: AdminStats | null = null;
   loadingStats = false;
 
+  // Bookings
+  recentBookings: Booking[] = [];
+  userBookingsCount = 0;
+  loadingBookings = false;
+
   constructor(
     private userService: UserService,
     private authService: AuthService,
     private videoAnalysisService: VideoAnalysisService,
     private fishingSpotService: FishingSpotService,
     private adminService: AdminService,
+    private bookingService: BookingService,
     private router: Router
   ) {}
 
@@ -55,6 +72,25 @@ export class Profile implements OnInit {
     
     this.loadUserProfile();
     this.loadRoleSpecificData();
+    this.loadBookings();
+  }
+
+  setTab(tab: ProfileTab): void {
+    this.activeTab = tab;
+  }
+
+  loadBookings(): void {
+    this.loadingBookings = true;
+    this.bookingService.getMyBookings().subscribe({
+      next: (bookings) => {
+        this.recentBookings = [...bookings].sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        this.userBookingsCount = bookings.filter(b => b.status !== 'Cancelled').length;
+        this.loadingBookings = false;
+      },
+      error: () => { this.loadingBookings = false; }
+    });
   }
 
   loadRoleSpecificData(): void {
@@ -220,5 +256,71 @@ export class Profile implements OnInit {
       case 'failed': return 'status-failed';
       default: return 'status-pending';
     }
+  }
+
+  openChangePassword(): void {
+    this.passwordForm = { currentPassword: '', newPassword: '', confirmPassword: '' };
+    this.passwordError = '';
+    this.showPasswordModal = true;
+  }
+
+  closeChangePassword(): void {
+    this.showPasswordModal = false;
+    this.passwordError = '';
+  }
+
+  changePassword(): void {
+    const { currentPassword, newPassword, confirmPassword } = this.passwordForm;
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      this.passwordError = 'All fields are required.';
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      this.passwordError = 'Passwords do not match.';
+      return;
+    }
+    if (newPassword.length < 6) {
+      this.passwordError = 'New password must be at least 6 characters.';
+      return;
+    }
+    const userId = this.authService.getUserId();
+    if (!userId) return;
+
+    this.loading = true;
+    this.passwordError = '';
+    this.userService.changePassword(userId, { currentPassword, newPassword }).subscribe({
+      next: () => {
+        this.showPasswordModal = false;
+        this.successMessage = 'Password changed successfully!';
+        this.loading = false;
+        setTimeout(() => { this.successMessage = ''; }, 3000);
+      },
+      error: (err) => {
+        this.passwordError = err.error?.message ?? 'Incorrect current password.';
+        this.loading = false;
+      }
+    });
+  }
+
+  logout(): void {
+    this.authService.logout();
+  }
+
+  formatBookingDate(date: string): string {
+    return new Date(date).toLocaleDateString('ro-RO', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  getBookingStatusClass(status: string): string {
+    switch (status.toLowerCase()) {
+      case 'confirmed': return 'bstatus-confirmed';
+      case 'cancelled': return 'bstatus-cancelled';
+      case 'pending': return 'bstatus-pending';
+      case 'completed': return 'bstatus-done';
+      default: return 'bstatus-pending';
+    }
+  }
+
+  formatPrice(price: number): string {
+    return price.toLocaleString('ro-RO', { style: 'currency', currency: 'RON', maximumFractionDigits: 0 });
   }
 }

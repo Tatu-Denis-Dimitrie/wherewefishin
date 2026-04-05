@@ -5,6 +5,11 @@ import { shareReplay } from 'rxjs/operators';
 import { User, UpdateUser } from '../models/user.model';
 import { environment } from '../../environments/environment';
 
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -33,6 +38,10 @@ export class UserService {
 
   updateUser(id: number, userData: UpdateUser): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}`, userData);
+  }
+
+  changePassword(id: number, payload: ChangePasswordPayload): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${id}/change-password`, payload);
   }
 
   deleteUser(id: number): Observable<void> {

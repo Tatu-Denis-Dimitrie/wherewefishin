@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Enums;
@@ -11,10 +13,12 @@ namespace WhereWeFishin.API.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IRepository<User> _userRepository;
+    private readonly IAuthService _authService;
 
-    public UsersController(IRepository<User> userRepository)
+    public UsersController(IRepository<User> userRepository, IAuthService authService)
     {
         _userRepository = userRepository;
+        _authService = authService;
     }
 
     [HttpGet]
@@ -50,6 +54,20 @@ public class UsersController : ControllerBase
 
         await _userRepository.UpdateAsync(user);
         return NoContent();
+    }
+
+    [HttpPost("{id}/change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword(int id, [FromBody] ChangePasswordRequest request)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        var callerId = User.GetUserId();
+        if (callerId != id && !User.IsInRole("Admin"))
+            return Forbid();
+
+        var success = await _authService.ChangePasswordAsync(id, request);
+        return success ? NoContent() : BadRequest(new { message = "Current password is incorrect." });
     }
 
     [HttpDelete("{id}")]

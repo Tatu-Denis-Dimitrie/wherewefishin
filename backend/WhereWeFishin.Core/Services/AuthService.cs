@@ -165,6 +165,20 @@ public class AuthService : IAuthService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
+    public async Task<bool> ChangePasswordAsync(int userId, ChangePasswordRequest request)
+    {
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null) return false;
+
+        if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+            return false;
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        user.UpdatedAt = DateTime.UtcNow;
+        await _userRepository.UpdateAsync(user);
+        return true;
+    }
+
     private AuthResponse BuildAuthResponse(User user)
     {
         var token = GenerateJwtToken(user.Id, user.Username, user.Email, user.Role.ToString());
