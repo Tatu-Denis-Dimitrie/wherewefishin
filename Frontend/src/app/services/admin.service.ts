@@ -10,10 +10,17 @@ export interface AdminStats {
   totalUsers: number;
   totalManagers: number;
   totalAdmins: number;
+  deactivatedUsers: number;
   totalAnalyses: number;
   completedAnalyses: number;
   failedAnalyses: number;
+  totalBookings: number;
+  confirmedBookings: number;
+  cancelledBookings: number;
   totalSpots: number;
+  totalPontoons: number;
+  totalReviews: number;
+  totalCatches: number;
 }
 
 export interface UpdateFishingSpot {

@@ -21,6 +21,7 @@ export class MyBookings implements OnInit {
 
   qrCodeMap: Record<number, string> = {};
   expandedQr = new Set<number>();
+  enlargedQrId: number | null = null;
 
   constructor(
     private bookingService: BookingService,
@@ -56,7 +57,7 @@ export class MyBookings implements OnInit {
         spot: booking.fishingSpotName,
         user: this.authService.getUsername()
       });
-      this.qrCodeMap[booking.id] = await QRCode.toDataURL(content, { width: 180, margin: 1 });
+      this.qrCodeMap[booking.id] = await QRCode.toDataURL(content, { width: 420, margin: 2 });
     }
   }
 
@@ -72,11 +73,23 @@ export class MyBookings implements OnInit {
     return this.expandedQr.has(id);
   }
 
+  openQrModal(id: number): void {
+    if (!this.qrCodeMap[id]) return;
+    this.enlargedQrId = id;
+  }
+
+  closeQrModal(): void {
+    this.enlargedQrId = null;
+  }
+
   cancelBooking(id: number): void {
     if (!confirm('Are you sure you want to cancel this booking?')) return;
     this.bookingService.cancelBooking(id).subscribe({
       next: () => {
         delete this.qrCodeMap[id];
+        if (this.enlargedQrId === id) {
+          this.enlargedQrId = null;
+        }
         this.showToast('Booking cancelled', 'success');
         this.loadBookings();
       },

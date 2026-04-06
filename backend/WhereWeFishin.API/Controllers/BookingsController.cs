@@ -53,6 +53,15 @@ public class BookingsController : ControllerBase
         return Ok(await MapSessionsToDtos(sessions));
     }
 
+    [HttpGet("payment-configuration")]
+    public ActionResult<PaymentConfigurationDto> GetPaymentConfiguration()
+    {
+        return Ok(new PaymentConfigurationDto
+        {
+            StripeEnabled = _stripeEnabled
+        });
+    }
+
     [HttpGet("all")]
     [Authorize(Roles = Roles.Admin)]
     public async Task<ActionResult<IEnumerable<BookingDto>>> GetAllBookings()

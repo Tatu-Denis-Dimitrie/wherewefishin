@@ -214,23 +214,28 @@
             <span>{{ cartService.total() | currency:'RON':'symbol':'1.2-2' }}</span>
           </div>
           <div class="payment-box">
-            <h4>Card Payment (Stripe)</h4>
-            <p class="payment-note">Test card: 4242 4242 4242 4242, any future date, any CVC.</p>
-            <div class="accepted-cards" aria-label="Carduri acceptate">
-              <img src="assets/cards/visa.svg" alt="Visa" class="accepted-card" />
-              <img src="assets/cards/mastercard.svg" alt="Mastercard" class="accepted-card" />
-              <img src="assets/cards/amex.svg" alt="American Express" class="accepted-card" />
-            </div>
-            <p class="cards-caption">Carduri acceptate: Visa, Mastercard, American Express</p>
-            <div #cardElementHost class="stripe-card-element" [class.disabled]="checkingOut"></div>
-            @if (cardValidationError) {
-              <p class="payment-error">{{ cardValidationError }}</p>
-            }
-            @if (stripeError) {
-              <p class="payment-error">{{ stripeError }}</p>
+            @if (stripeRequired) {
+              <h4>Card Payment (Stripe)</h4>
+              <p class="payment-note">Test card: 4242 4242 4242 4242, any future date, any CVC.</p>
+              <div class="accepted-cards" aria-label="Carduri acceptate">
+                <img src="assets/cards/visa.svg" alt="Visa" class="accepted-card" />
+                <img src="assets/cards/mastercard.svg" alt="Mastercard" class="accepted-card" />
+                <img src="assets/cards/amex.svg" alt="American Express" class="accepted-card" />
+              </div>
+              <p class="cards-caption">Carduri acceptate: Visa, Mastercard, American Express</p>
+              <div #cardElementHost class="stripe-card-element" [class.disabled]="checkingOut"></div>
+              @if (cardValidationError) {
+                <p class="payment-error">{{ cardValidationError }}</p>
+              }
+              @if (stripeError) {
+                <p class="payment-error">{{ stripeError }}</p>
+              }
+            } @else {
+              <h4>Booking Confirmation</h4>
+              <p class="payment-note">Online payment is not configured on this server. Your booking will be confirmed directly after checkout.</p>
             }
           </div>
-          <button class="btn-checkout" (click)="checkout()" [disabled]="checkingOut || !stripeReady">
+          <button class="btn-checkout" (click)="checkout()" [disabled]="checkingOut || !paymentConfigurationLoaded || (stripeRequired && !stripeReady)">
             @if (checkingOut) {
               <span class="spinner"></span> Processing...
             } @else {
@@ -238,7 +243,7 @@
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                 <polyline points="22 4 12 14.01 9 11.01"/>
               </svg>
-              Pay and Confirm Bookings
+              {{ stripeRequired ? 'Pay and Confirm Bookings' : 'Confirm Bookings' }}
             }
           </button>
         </div>

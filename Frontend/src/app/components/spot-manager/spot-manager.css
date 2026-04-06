@@ -152,6 +152,13 @@
     min-height: 420px;
   }
 
+  .map-preview-badge {
+    top: 10px;
+    right: 10px;
+    font-size: 10px;
+    padding: 7px 9px;
+  }
+
   /* Mobile buttons */
   .drawing-actions,
   .edit-actions {
@@ -181,6 +188,13 @@
   .manager-map {
     min-height: 360px;
   }
+
+  .map-preview-badge {
+    top: 8px;
+    right: 8px;
+    font-size: 9px;
+    padding: 6px 8px;
+  }
 }
 
 /* ---- Sidebar ---- */
@@ -189,6 +203,55 @@
   flex-direction: column;
   gap: 16px;
   overflow-y: auto;
+}
+
+/* ---- Sidebar Tabs ---- */
+.sidebar-tabs {
+  display: flex;
+  gap: 4px;
+  background: linear-gradient(150deg, rgba(236, 233, 220, 0.06) 0%, rgba(42, 63, 34, 0.22) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.18);
+  border-radius: var(--radius-md, 10px);
+  padding: 4px;
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm, 6px);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tab-btn:hover {
+  color: var(--text-secondary);
+  background: rgba(232, 224, 208, 0.06);
+}
+
+.tab-btn.active {
+  background: linear-gradient(150deg, rgba(236, 233, 220, 0.12) 0%, rgba(42, 63, 34, 0.38) 100%);
+  border-color: rgba(232, 224, 208, 0.22);
+  color: var(--accent-moss);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.tab-btn.active svg {
+  color: var(--accent-moss);
+}
+
+.tab-btn svg {
+  flex-shrink: 0;
+  opacity: 0.7;
 }
 
 .control-card {
@@ -238,6 +301,13 @@
   color: var(--text-muted);
   margin: 12px 0 0;
   line-height: 1.5;
+}
+
+.map-preview-note {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(232, 224, 208, 0.78);
 }
 
 /* ---- Drawing Form ---- */
@@ -588,6 +658,7 @@
 
 /* ---- Map ---- */
 .map-container {
+  position: relative;
   border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid rgba(232, 224, 208, 0.24);
@@ -596,6 +667,32 @@
   backdrop-filter: blur(12px) saturate(122%);
   -webkit-backdrop-filter: blur(12px) saturate(122%);
   min-height: 400px;
+}
+
+.map-preview-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 13, 0.72);
+  border: 1px solid rgba(251, 191, 36, 0.34);
+  color: #fbbf24;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+.map-preview-badge svg {
+  flex-shrink: 0;
 }
 
 .manager-map {

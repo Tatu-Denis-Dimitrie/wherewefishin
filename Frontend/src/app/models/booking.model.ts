@@ -47,6 +47,10 @@ export interface PaymentIntentResponse {
   currency: string;
 }
 
+export interface PaymentConfiguration {
+  stripeEnabled: boolean;
+}
+
 export interface BookedPeriod {
   startDate: string;
   endDate: string;

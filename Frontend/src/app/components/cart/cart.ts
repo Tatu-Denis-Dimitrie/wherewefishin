@@ -61,7 +61,7 @@ export class Cart implements OnInit, OnDestroy {
 
     if (!element) {
       this.cardElement?.unmount();
-      this.stripeReady = false;
+      this.stripeReady = !this.stripeRequired;
       return;
     }
 
@@ -81,6 +81,8 @@ export class Cart implements OnInit, OnDestroy {
   stripeReady = false;
   stripeError = '';
   cardValidationError = '';
+  stripeRequired = true;
+  paymentConfigurationLoaded = false;
 
   private stripe: Stripe | null = null;
   private stripeElements: StripeElements | null = null;
@@ -96,8 +98,8 @@ export class Cart implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.scheduleCardMount();
     this.initCalendars();
+    this.loadPaymentConfiguration();
   }
 
   ngOnDestroy(): void {
@@ -110,6 +112,11 @@ export class Cart implements OnInit, OnDestroy {
   }
 
   private scheduleCardMount(): void {
+    if (!this.stripeRequired) {
+      this.stripeReady = true;
+      return;
+    }
+
     this.mountCardTimer = setTimeout(() => {
       this.mountCardTimer = undefined;
       void this.mountCardElement();
@@ -117,6 +124,12 @@ export class Cart implements OnInit, OnDestroy {
   }
 
   private async mountCardElement(): Promise<void> {
+    if (!this.stripeRequired) {
+      this.stripeReady = true;
+      this.stripeError = '';
+      return;
+    }
+
     if (!this.cardMountElement) {
       this.stripeReady = false;
       return;
@@ -162,6 +175,32 @@ export class Cart implements OnInit, OnDestroy {
       this.stripeReady = false;
       this.stripeError = 'Could not load Stripe payment form.';
     }
+  }
+
+  private loadPaymentConfiguration(): void {
+    this.paymentConfigurationLoaded = false;
+
+    this.bookingService.getPaymentConfiguration().subscribe({
+      next: config => {
+        this.stripeRequired = config.stripeEnabled;
+        this.paymentConfigurationLoaded = true;
+
+        if (!this.stripeRequired) {
+          this.stripeReady = true;
+          this.stripeError = '';
+          this.cardValidationError = '';
+          this.cardElement?.unmount();
+          return;
+        }
+
+        this.scheduleCardMount();
+      },
+      error: () => {
+        this.paymentConfigurationLoaded = true;
+        this.stripeRequired = true;
+        this.scheduleCardMount();
+      }
+    });
   }
 
   removeFromCart(spotId: number, pontoonId?: number): void {
@@ -530,6 +569,7 @@ export class Cart implements OnInit, OnDestroy {
   async checkout(): Promise<void> {
     const items = [...this.cartService.items()];
     if (items.length === 0) return;
+    if (!this.paymentConfigurationLoaded) return;
 
     // Validate start dates
     const now = new Date();
@@ -552,50 +592,69 @@ export class Cart implements OnInit, OnDestroy {
       }
     }
 
-    if (this.cardValidationError) {
-      this.showToast('Card details are not valid.', 'error');
-      return;
-    }
+    if (this.stripeRequired) {
+      if (this.cardValidationError) {
+        this.showToast('Card details are not valid.', 'error');
+        return;
+      }
 
-    if (!this.stripeReady || !this.stripe || !this.cardElement) {
-      await this.mountCardElement();
-    }
+      if (!this.stripeReady || !this.stripe || !this.cardElement) {
+        await this.mountCardElement();
+      }
 
-    if (!this.stripeReady || !this.stripe || !this.cardElement) {
-      this.showToast(this.stripeError || 'Payment form is not available.', 'error');
-      return;
+      if (!this.stripeReady || !this.stripe || !this.cardElement) {
+        this.showToast(this.stripeError || 'Payment form is not available.', 'error');
+        return;
+      }
     }
 
     this.checkingOut = true;
     let completed = 0;
     let errors = 0;
     let firstError = '';
+    let usedStripe = this.stripeRequired;
 
     for (const item of items) {
       try {
-        const paymentIntentResponse = await firstValueFrom(this.bookingService.createPaymentIntent({
-          fishingSpotId: item.spotId,
-          pontoonId: item.pontoonId,
-          startDate: new Date(item.startDate).toISOString(),
-          durationHours: item.durationHours
-        }));
+        let paymentIntentId: string | undefined;
 
-        const paymentResult = await this.stripe.confirmCardPayment(paymentIntentResponse.clientSecret, {
-          payment_method: {
-            card: this.cardElement,
-            billing_details: {
-              name: this.authService.getUsername() || undefined
+        if (this.stripeRequired) {
+          try {
+            const paymentIntentResponse = await firstValueFrom(this.bookingService.createPaymentIntent({
+              fishingSpotId: item.spotId,
+              pontoonId: item.pontoonId,
+              startDate: new Date(item.startDate).toISOString(),
+              durationHours: item.durationHours
+            }));
+
+            const paymentResult = await this.stripe!.confirmCardPayment(paymentIntentResponse.clientSecret, {
+              payment_method: {
+                card: this.cardElement!,
+                billing_details: {
+                  name: this.authService.getUsername() || undefined
+                }
+              }
+            });
+
+            if (paymentResult.error) {
+              throw new Error(paymentResult.error.message ?? 'Payment failed.');
             }
+
+            const { paymentIntent } = paymentResult;
+            if (!paymentIntent?.id || paymentIntent.status !== 'succeeded') {
+              throw new Error('Payment was not confirmed by Stripe.');
+            }
+
+            paymentIntentId = paymentIntent.id;
+          } catch (error: unknown) {
+            if (!this.isStripeUnavailableError(error)) {
+              throw error;
+            }
+
+            this.stripeRequired = false;
+            this.stripeReady = true;
+            this.stripeError = '';
           }
-        });
-
-        if (paymentResult.error) {
-          throw new Error(paymentResult.error.message ?? 'Payment failed.');
-        }
-
-        const { paymentIntent } = paymentResult;
-        if (!paymentIntent?.id || paymentIntent.status !== 'succeeded') {
-          throw new Error('Payment was not confirmed by Stripe.');
         }
 
         await firstValueFrom(this.bookingService.createBooking({
@@ -603,9 +662,10 @@ export class Cart implements OnInit, OnDestroy {
           pontoonId: item.pontoonId,
           startDate: new Date(item.startDate).toISOString(),
           durationHours: item.durationHours,
-          paymentIntentId: paymentIntent.id
+          paymentIntentId
         }));
 
+        usedStripe = usedStripe || !!paymentIntentId;
         completed++;
         this.cartService.removeItem(item.spotId, item.pontoonId);
       } catch (error: unknown) {
@@ -619,7 +679,11 @@ export class Cart implements OnInit, OnDestroy {
     this.checkingOut = false;
 
     if (errors === 0) {
-      this.showToast('All bookings have been confirmed and paid!', 'success');
+      this.showToast(
+        usedStripe
+          ? 'All bookings have been confirmed and paid!'
+          : 'All bookings have been confirmed!',
+        'success');
       setTimeout(() => this.router.navigate(['/my-bookings']), 1500);
       return;
     }
@@ -634,6 +698,19 @@ export class Cart implements OnInit, OnDestroy {
       'error'
     );
     setTimeout(() => this.router.navigate(['/my-bookings']), 2000);
+  }
+
+  private isStripeUnavailableError(error: unknown): boolean {
+    if (!(error instanceof HttpErrorResponse)) {
+      return false;
+    }
+
+    if (error.status !== 503) {
+      return false;
+    }
+
+    const payload = typeof error.error === 'string' ? error.error : error.message;
+    return payload.toLowerCase().includes('stripe payment is not configured on server');
   }
 
   private formatDateShort(d: Date): string {

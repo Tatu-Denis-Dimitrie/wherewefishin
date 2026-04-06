@@ -88,9 +88,9 @@
 
     <div class="analyses-grid">
       @for (a of analyses; track a.id) {
-        <div class="analysis-card" [class.is-processing]="a.status?.toLowerCase() === 'processing'">
+        <div class="analysis-card" [class.is-processing]="a.status.toLowerCase() === 'processing'">
           <!-- Processing state -->
-          <div class="card-processing-media" *ngIf="a.status?.toLowerCase() === 'processing'">
+          <div class="card-processing-media" *ngIf="a.status.toLowerCase() === 'processing'">
             <div class="processing-animation">
               <svg class="processing-fish-icon" width="52" height="52" viewBox="0 0 512 512" fill="none" stroke="currentColor">
                 <path
@@ -120,10 +120,10 @@
             <span class="processing-text">Analyzing video…</span>
           </div>
 
-          <div class="card-media" *ngIf="a.processedVideoUrl && a.status?.toLowerCase() !== 'processing'">
+          <div class="card-media" *ngIf="a.processedVideoUrl && a.status.toLowerCase() !== 'processing'">
             <video [src]="getVideoUrl(a.processedVideoUrl)" controls></video>
           </div>
-          <div class="card-body" [class.card-body-processing]="a.status?.toLowerCase() === 'processing'">
+          <div class="card-body" [class.card-body-processing]="a.status.toLowerCase() === 'processing'">
             <div class="card-meta">
               <span class="badge" [ngClass]="getStatusClass(a.status)">{{ a.status }}</span>
               <span class="meta-date">{{ formatDate(a.createdAt) }}</span>

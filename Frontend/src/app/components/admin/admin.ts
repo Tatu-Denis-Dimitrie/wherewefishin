@@ -23,6 +23,32 @@ export class Admin implements OnInit {
   editingSpotId: number | null = null;
   editingSpotPrice: number = 0;
 
+  get activeUsersCount(): number {
+    return this.stats?.totalUsers ?? this.users.filter(user => user.isActive).length;
+  }
+
+  get disabledUsersCount(): number {
+    return this.stats?.deactivatedUsers ?? this.users.filter(user => !user.isActive).length;
+  }
+
+  get totalAccountsCount(): number {
+    return this.activeUsersCount + this.disabledUsersCount;
+  }
+
+  get managedSpotsCount(): number {
+    return this.fishingSpots.filter(spot => !!spot.managerName).length;
+  }
+
+  get unmanagedSpotsCount(): number {
+    return Math.max(0, this.fishingSpots.length - this.managedSpotsCount);
+  }
+
+  get averageSpotPrice(): number {
+    if (this.fishingSpots.length === 0) return 0;
+    const total = this.fishingSpots.reduce((sum, spot) => sum + spot.pricePerHour, 0);
+    return total / this.fishingSpots.length;
+  }
+
   constructor(
     private authService: AuthService,
     private adminService: AdminService,

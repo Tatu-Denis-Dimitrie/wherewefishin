@@ -37,7 +37,7 @@ public class AdminController : ControllerBase
     [HttpGet("stats")]
     public async Task<ActionResult> GetStats()
     {
-        // Single GROUP BY query for user counts by role
+        // User counts by role (active only)
         var userCounts = await _context.Set<User>()
             .Where(u => !u.IsDeleted)
             .GroupBy(u => u.Role)
@@ -47,8 +47,9 @@ public class AdminController : ControllerBase
         var totalUsers = userCounts.Sum(x => x.Count);
         var totalManagers = userCounts.FirstOrDefault(x => x.Role == UserRole.Manager)?.Count ?? 0;
         var totalAdmins = userCounts.FirstOrDefault(x => x.Role == UserRole.Admin)?.Count ?? 0;
+        var deactivatedUsers = await _context.Set<User>().CountAsync(u => u.IsDeleted);
 
-        // Single GROUP BY query for video analysis counts by status
+        // Video analysis counts by status
         var analysisCounts = await _context.Set<VideoAnalysis>()
             .Where(v => !v.IsDeleted)
             .GroupBy(v => v.Status)
@@ -59,17 +60,38 @@ public class AdminController : ControllerBase
         var completedAnalyses = analysisCounts.FirstOrDefault(x => x.Status == "Completed")?.Count ?? 0;
         var failedAnalyses = analysisCounts.FirstOrDefault(x => x.Status == "Failed")?.Count ?? 0;
 
+        // Session/booking counts by status
+        var sessionCounts = await _context.Set<FishingSession>()
+            .Where(s => !s.IsDeleted)
+            .GroupBy(s => s.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        var totalBookings = sessionCounts.Sum(x => x.Count);
+        var confirmedBookings = sessionCounts.FirstOrDefault(x => x.Status == SessionStatus.Confirmed)?.Count ?? 0;
+        var cancelledBookings = sessionCounts.FirstOrDefault(x => x.Status == SessionStatus.Cancelled)?.Count ?? 0;
+
         var totalSpots = await _spotRepository.CountAsync();
+        var totalPontoons = await _context.Set<Pontoon>().CountAsync(p => !p.IsDeleted);
+        var totalReviews = await _context.Set<Review>().CountAsync(r => !r.IsDeleted);
+        var totalCatches = await _context.Set<Catch>().CountAsync(c => !c.IsDeleted);
 
         return Ok(new
         {
             totalUsers,
             totalManagers,
             totalAdmins,
+            deactivatedUsers,
             totalAnalyses,
             completedAnalyses,
             failedAnalyses,
-            totalSpots
+            totalBookings,
+            confirmedBookings,
+            cancelledBookings,
+            totalSpots,
+            totalPontoons,
+            totalReviews,
+            totalCatches
         });
     }
 

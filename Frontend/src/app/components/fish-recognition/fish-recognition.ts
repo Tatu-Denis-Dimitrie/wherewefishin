@@ -100,7 +100,7 @@ export class FishRecognition implements OnInit, OnDestroy {
   }
 
   private checkForProcessingAnalyses(): void {
-    const hasProcessing = this.analyses.some(a => a.status?.toLowerCase() === 'processing');
+    const hasProcessing = this.analyses.some(a => a.status.toLowerCase() === 'processing');
     if (hasProcessing && !this.pollingInterval) {
       this.startPolling();
     } else if (!hasProcessing && this.pollingInterval) {
@@ -116,9 +116,9 @@ export class FishRecognition implements OnInit, OnDestroy {
       if (!userId) return;
       this.videoAnalysisService.getUserAnalyses(userId).subscribe({
         next: (analyses) => {
-          const wasProcessing = this.analyses.some(a => a.status?.toLowerCase() === 'processing');
+          const wasProcessing = this.analyses.some(a => a.status.toLowerCase() === 'processing');
           this.analyses = analyses;
-          const stillProcessing = analyses.some(a => a.status?.toLowerCase() === 'processing');
+          const stillProcessing = analyses.some(a => a.status.toLowerCase() === 'processing');
           if (wasProcessing && !stillProcessing) {
             this.stopPolling();
           }

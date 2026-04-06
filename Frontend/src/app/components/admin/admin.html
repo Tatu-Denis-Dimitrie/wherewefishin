@@ -1,188 +1,239 @@
 <div class="page-shell">
-  <!-- Page header -->
-  <header class="page-header">
-    <h1>Admin Panel</h1>
+  <header class="hero-panel">
+    <div class="hero-copy">
+      <span class="hero-eyebrow">System Control Center</span>
+      <h1>Admin Panel</h1>
+      <p class="hero-description">
+        Monitor account access, booking flow and spot operations from one workspace.
+      </p>
+    </div>
+
+    <div class="hero-summary">
+      <div class="hero-chip">
+        <span class="hero-chip-label">Accounts</span>
+        <strong>{{ totalAccountsCount }}</strong>
+      </div>
+      <div class="hero-chip">
+        <span class="hero-chip-label">Spots</span>
+        <strong>{{ fishingSpots.length }}</strong>
+      </div>
+      <div class="hero-chip">
+        <span class="hero-chip-label">Bookings</span>
+        <strong>{{ stats?.totalBookings ?? 0 }}</strong>
+      </div>
+    </div>
   </header>
 
-  <!-- Toasts -->
-  <div class="toast toast-error" *ngIf="error">{{ error }}</div>
-  <div class="toast toast-success" *ngIf="successMessage">{{ successMessage }}</div>
+  @if (error || successMessage) {
+    <div class="toast-stack">
+      @if (error) {
+        <div class="toast toast-error">{{ error }}</div>
+      }
+      @if (successMessage) {
+        <div class="toast toast-success">{{ successMessage }}</div>
+      }
+    </div>
+  }
 
-  <!-- Stats grid -->
-  <section class="stats-grid" *ngIf="stats">
-    <div class="stat-card">
-      <span class="stat-icon users-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      </span>
-      <div class="stat-data">
-        <span class="stat-value">{{ stats.totalUsers }}</span>
-        <span class="stat-label">Total Users</span>
+  <section class="management-section">
+    <div class="section-header">
+      <div>
+        <span class="section-eyebrow">Access Control</span>
+        <h2>User Management</h2>
+        <p>Review user access, change roles and disable accounts without leaving the admin workspace.</p>
       </div>
-    </div>
-    <div class="stat-card">
-      <span class="stat-icon managers-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      </span>
-      <div class="stat-data">
-        <span class="stat-value">{{ stats.totalManagers }}</span>
-        <span class="stat-label">Managers</span>
-      </div>
-    </div>
-    <div class="stat-card">
-      <span class="stat-icon analyses-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-      </span>
-      <div class="stat-data">
-        <span class="stat-value">{{ stats.totalAnalyses }}</span>
-        <span class="stat-label">Analyses</span>
-      </div>
-    </div>
-    <div class="stat-card">
-      <span class="stat-icon spots-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      </span>
-      <div class="stat-data">
-        <span class="stat-value">{{ stats.totalSpots }}</span>
-        <span class="stat-label">Fishing Spots</span>
-      </div>
-    </div>
-  </section>
 
-  <!-- Users table -->
-  <section class="users-section">
-    <h2>User Management</h2>
-    <div class="table-wrap">
-      <table class="users-table">
-        <thead>
-          <tr>
-            <th>User</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (user of users; track user.id) {
-            <tr [class.row-disabled]="!user.isActive">
-              <td class="cell-user">
-                <div class="cell-user-wrap">
-                  <div class="user-avatar" [class.avatar-disabled]="!user.isActive">{{ user.username.charAt(0).toUpperCase() }}</div>
-                  <div class="user-info">
-                    <span class="user-name">
-                      {{ user.firstName || '' }} {{ user.lastName || '' }}
-                      @if (!user.isActive) {
-                        <span class="badge-disabled">Disabled</span>
-                      }
-                    </span>
-                    <span class="user-handle">&#64;{{ user.username }}</span>
-                  </div>
-                </div>
-              </td>
-              <td class="cell-email">{{ user.email }}</td>
-              <td>
-                <span class="role-badge" [ngClass]="getRoleBadgeClass(user.role)">{{ user.role }}</span>
-              </td>
-              <td class="cell-actions">
-                <div class="action-row">
-                  @if (user.isActive) {
-                    <select
-                      class="role-select"
-                      [value]="user.role"
-                      (change)="changeRole(user, $any($event.target).value)"
-                    >
-                      <option value="User">User</option>
-                      <option value="Employee">Employee</option>
-                      <option value="Manager">Manager</option>
-                      <option value="Admin">Admin</option>
-                    </select>
-                  }
-                  <button
-                    class="btn-toggle-sm"
-                    [class.btn-enable]="!user.isActive"
-                    [class.btn-disable]="user.isActive"
-                    (click)="toggleStatus(user)"
-                  >
-                    {{ user.isActive ? 'Disable' : 'Enable' }}
-                  </button>
-                  <button class="btn-danger-sm" (click)="deleteUser(user)">Delete</button>
-                </div>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+      <div class="section-pills">
+        <span class="section-pill">{{ users.length }} loaded</span>
+        <span class="section-pill section-pill-muted">{{ disabledUsersCount }} disabled</span>
+      </div>
     </div>
-  </section>
 
-  <!-- Fishing Spots table -->
-  <section class="users-section">
-    <h2>Fishing Spots Management</h2>
-    <div class="table-wrap">
-      <table class="users-table">
-        <thead>
-          <tr>
-            <th>Spot Name</th>
-            <th>Location</th>
-            <th>Manager</th>
-            <th>Price per Hour</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (spot of fishingSpots; track spot.id) {
+    <div class="panel-card">
+      <div class="panel-toolbar">
+        <div class="toolbar-metric">
+          <span class="toolbar-label">Active</span>
+          <strong>{{ activeUsersCount }}</strong>
+        </div>
+        <div class="toolbar-metric">
+          <span class="toolbar-label">Managers</span>
+          <strong>{{ stats?.totalManagers ?? 0 }}</strong>
+        </div>
+        <div class="toolbar-metric">
+          <span class="toolbar-label">Admins</span>
+          <strong>{{ stats?.totalAdmins ?? 0 }}</strong>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="users-table">
+          <thead>
             <tr>
-              <td class="cell-user">
-                <div class="spot-info">
-                  <span class="spot-name">{{ spot.name }}</span>
-                  @if (spot.description) {
-                    <span class="spot-desc">{{ spot.description }}</span>
-                  }
-                </div>
-              </td>
-              <td class="cell-location">
-                {{ spot.latitude.toFixed(4) }}, {{ spot.longitude.toFixed(4) }}
-              </td>
-              <td>
-                @if (spot.managerName) {
-                  <span class="manager-name">{{ spot.managerName }}</span>
-                } @else {
-                  <span class="no-manager">No manager</span>
-                }
-              </td>
-              <td class="cell-price">
-                @if (editingSpotId === spot.id) {
-                  <div class="price-edit">
-                    <input 
-                      type="number" 
-                      [(ngModel)]="editingSpotPrice" 
-                      min="0" 
-                      step="0.01"
-                      class="price-input"
-                    >
-                    <button class="btn-save-sm" (click)="saveFishingSpotPrice(spot)">Save</button>
-                    <button class="btn-cancel-sm" (click)="cancelEditingPrice()">Cancel</button>
-                  </div>
-                } @else {
-                  <div class="price-display">
-                    <span class="price-value">${{ spot.pricePerHour.toFixed(2) }}</span>
-                    <button class="btn-edit-sm" (click)="startEditingPrice(spot)">Edit</button>
-                  </div>
-                }
-              </td>
-              <td class="cell-actions">
-                <div class="action-row">
-                  <button class="btn-danger-sm" (click)="deleteFishingSpot(spot)">Delete</button>
-                </div>
-              </td>
+              <th>User</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Actions</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @if (users.length === 0) {
+              <tr>
+                <td colspan="4" class="empty-table-row">No users available right now.</td>
+              </tr>
+            } @else {
+              @for (user of users; track user.id) {
+                <tr [class.row-disabled]="!user.isActive">
+                  <td class="cell-user">
+                    <div class="cell-user-wrap">
+                      <div class="user-avatar" [class.avatar-disabled]="!user.isActive">{{ user.username.charAt(0).toUpperCase() }}</div>
+                      <div class="user-info">
+                        <span class="user-name">
+                          {{ user.firstName || '' }} {{ user.lastName || '' }}
+                          @if (!user.isActive) {
+                            <span class="badge-disabled">Disabled</span>
+                          }
+                        </span>
+                        <span class="user-handle">&#64;{{ user.username }}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="cell-email">{{ user.email }}</td>
+                  <td>
+                    <span class="role-badge" [ngClass]="getRoleBadgeClass(user.role)">{{ user.role }}</span>
+                  </td>
+                  <td class="cell-actions">
+                    <div class="action-row">
+                      @if (user.isActive) {
+                        <select
+                          class="role-select"
+                          [value]="user.role"
+                          (change)="changeRole(user, $any($event.target).value)">
+                          <option value="User">User</option>
+                          <option value="Employee">Employee</option>
+                          <option value="Manager">Manager</option>
+                          <option value="Admin">Admin</option>
+                        </select>
+                      }
+                      <button
+                        class="btn-toggle-sm"
+                        [class.btn-enable]="!user.isActive"
+                        [class.btn-disable]="user.isActive"
+                        (click)="toggleStatus(user)">
+                        {{ user.isActive ? 'Disable' : 'Enable' }}
+                      </button>
+                      <button class="btn-danger-sm" (click)="deleteUser(user)">Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
 
-  <!-- Loading -->
-  <div class="loading-spinner" *ngIf="loading">
-    <div class="spinner"></div>
-  </div>
+  <section class="management-section">
+    <div class="section-header">
+      <div>
+        <span class="section-eyebrow">Lake Operations</span>
+        <h2>Fishing Spots Management</h2>
+        <p>Keep prices clean, see manager coverage and maintain the live spot catalogue from one table.</p>
+      </div>
+
+      <div class="section-pills">
+        <span class="section-pill">{{ fishingSpots.length }} spots</span>
+        <span class="section-pill section-pill-muted">{{ unmanagedSpotsCount }} unmanaged</span>
+      </div>
+    </div>
+
+    <div class="panel-card">
+      <div class="panel-toolbar">
+        <div class="toolbar-metric">
+          <span class="toolbar-label">Managed</span>
+          <strong>{{ managedSpotsCount }}</strong>
+        </div>
+        <div class="toolbar-metric">
+          <span class="toolbar-label">Unmanaged</span>
+          <strong>{{ unmanagedSpotsCount }}</strong>
+        </div>
+        <div class="toolbar-metric">
+          <span class="toolbar-label">Avg. price</span>
+          <strong>{{ averageSpotPrice | number:'1.2-2' }} RON</strong>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="users-table">
+          <thead>
+            <tr>
+              <th>Spot Name</th>
+              <th>Location</th>
+              <th>Manager</th>
+              <th>Price per Hour</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (fishingSpots.length === 0) {
+              <tr>
+                <td colspan="5" class="empty-table-row">No fishing spots available right now.</td>
+              </tr>
+            } @else {
+              @for (spot of fishingSpots; track spot.id) {
+                <tr>
+                  <td class="cell-user">
+                    <div class="spot-info">
+                      <span class="spot-name">{{ spot.name }}</span>
+                      @if (spot.description) {
+                        <span class="spot-desc">{{ spot.description }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td class="cell-location">{{ spot.latitude.toFixed(4) }}, {{ spot.longitude.toFixed(4) }}</td>
+                  <td>
+                    @if (spot.managerName) {
+                      <span class="manager-name">{{ spot.managerName }}</span>
+                    } @else {
+                      <span class="no-manager">No manager</span>
+                    }
+                  </td>
+                  <td class="cell-price">
+                    @if (editingSpotId === spot.id) {
+                      <div class="price-edit">
+                        <input
+                          type="number"
+                          [(ngModel)]="editingSpotPrice"
+                          min="0"
+                          step="0.01"
+                          class="price-input">
+                        <button class="btn-save-sm" (click)="saveFishingSpotPrice(spot)">Save</button>
+                        <button class="btn-cancel-sm" (click)="cancelEditingPrice()">Cancel</button>
+                      </div>
+                    } @else {
+                      <div class="price-display">
+                        <span class="price-value">{{ spot.pricePerHour | number:'1.2-2' }} RON</span>
+                        <button class="btn-edit-sm" (click)="startEditingPrice(spot)">Edit</button>
+                      </div>
+                    }
+                  </td>
+                  <td class="cell-actions">
+                    <div class="action-row">
+                      <button class="btn-danger-sm" (click)="deleteFishingSpot(spot)">Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  @if (loading) {
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+    </div>
+  }
 </div>

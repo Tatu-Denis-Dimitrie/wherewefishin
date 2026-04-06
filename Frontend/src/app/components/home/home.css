@@ -7,8 +7,8 @@
   display: flex;
   flex-direction: column;
   color: var(--text-primary);
-  height: 100%;
-  min-height: 0;
+  flex: 1;
+  min-height: 100%;
 }
 
 .home-page {
@@ -151,7 +151,7 @@
   grid-template-columns: unset;
   grid-template-rows: unset;
   flex: 1;
-  min-height: 0;
+  min-height: calc(100dvh - 96px);
 }
 
 /* ---- Statistics Section ---- */
@@ -165,11 +165,12 @@
 
 /* Admin: horizontal row of cards */
 .admin-layout .stats-section {
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 16px;
-  align-items: flex-start;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 12px;
+  align-items: stretch;
   flex-shrink: 0;
+  overflow-y: visible;
 }
 
 .admin-layout .stats-section > .section-title {
@@ -201,12 +202,11 @@
   min-width: 0;
 }
 
-/* Admin: auto-fill horizontal */
+/* Admin: stable desktop grid, explicit columns */
 .admin-layout .stats-grid {
-  grid-template-columns: repeat(auto-fill, minmax(160px, 210px));
-  flex: 0 0 auto;
-  min-width: 260px;
-  width: auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width: 100%;
+  gap: 12px;
 }
 
 .stat-card {
@@ -222,6 +222,15 @@
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(12px) saturate(125%);
   -webkit-backdrop-filter: blur(12px) saturate(125%);
+}
+
+.admin-layout .stat-card {
+  min-width: 0;
+  min-height: 94px;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 14px;
 }
 
 .stat-card:hover {
@@ -271,9 +280,60 @@
   color: #2dd4bf;
 }
 
+.managers-icon {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.admins-icon {
+  background: rgba(236, 72, 153, 0.15);
+  color: #f472b6;
+}
+
+.error-icon {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.processing-icon {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+.pontoons-icon {
+  background: rgba(20, 184, 166, 0.15);
+  color: #2dd4bf;
+}
+
+.reviews-icon {
+  background: rgba(251, 146, 60, 0.15);
+  color: #fb923c;
+}
+
+.catches-icon {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+.deactivated-icon {
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+}
+
 .stat-content {
   flex: 1;
   min-width: 0;
+}
+
+.admin-layout .stat-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.admin-layout .stat-value {
+  margin-bottom: 0;
 }
 
 .stat-value {
@@ -285,12 +345,19 @@
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
   font-weight: 500;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.admin-layout .stat-label {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 /* ---- Shared subsection title ---- */
@@ -738,9 +805,11 @@
 /* Admin: map fills remaining flex space */
 .admin-layout .map-section {
   position: static;
-  height: auto;
-  flex: 1;
-  min-height: 0;
+  height: unset;
+  flex: 1 1 0;
+  min-height: 300px;
+  width: 100%;
+  min-width: 0;
 }
 
 .map-header {
@@ -787,8 +856,9 @@
 
 /* Admin: map fills remaining flex space */
 .admin-layout .map-section .map-card {
-  height: clamp(400px, calc(100vh - 300px), 900px);
-  flex: none;
+  flex: 1 1 0;
+  min-height: 300px;
+  height: unset;
 }
 
 .map-fish-filter {
@@ -877,6 +947,7 @@
 
 .admin-layout .map-section .map-card.expanded {
   height: clamp(500px, calc(100vh - 180px), 960px);
+  flex: none;
 }
 
 .map-expand-btn {
@@ -1232,6 +1303,11 @@
     width: 100%;
   }
 
+  .admin-layout .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
   .stat-card {
     flex-direction: row;
     text-align: left;
@@ -1239,12 +1315,39 @@
     min-width: 0;
   }
 
+  .admin-layout .stat-card {
+    min-height: 104px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 14px 12px;
+    gap: 12px;
+  }
+
+  .admin-layout .stat-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .admin-layout .stat-content {
+    width: auto;
+  }
+
   .stat-value {
     font-size: 20px;
   }
 
   .stat-label {
-    font-size: 10px;
+    font-size: 11px;
+  }
+
+  .admin-layout .stat-label {
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .admin-layout .stat-value {
+    font-size: 22px;
   }
 
   .map-card {
@@ -1400,6 +1503,19 @@
     padding: 10px;
   }
 
+  .admin-layout .stat-card {
+    min-height: 98px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 13px 11px;
+    gap: 11px;
+  }
+
+  .admin-layout .stat-content {
+    width: auto;
+  }
+
   .nearby-locations {
     padding: 9px;
   }
@@ -1420,6 +1536,20 @@
 
   .stat-value {
     font-size: 18px;
+  }
+
+  .admin-layout .stat-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .admin-layout .stat-value {
+    font-size: 19px;
+  }
+
+  .admin-layout .stat-label {
+    font-size: 11px;
+    line-height: 1.2;
   }
 }
 
@@ -1480,7 +1610,21 @@
     gap: 10px;
   }
 
+  .admin-layout .stat-card {
+    min-height: 88px;
+    padding: 11px 9px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 9px;
+  }
+
   .stat-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .admin-layout .stat-icon {
     width: 34px;
     height: 34px;
   }
@@ -1489,8 +1633,17 @@
     font-size: 16px;
   }
 
+  .admin-layout .stat-value {
+    font-size: 16px;
+  }
+
   .stat-label {
-    font-size: 9px;
+    font-size: 10px;
+  }
+
+  .admin-layout .stat-label {
+    font-size: 10px;
+    line-height: 1.2;
   }
 
   .spot-form {
@@ -1546,3 +1699,36 @@
     height: 16px;
   }
 }
+
+  @media (min-width: 1100px) {
+    .dashboard-grid.admin-layout .stats-section {
+      width: 100%;
+    }
+
+    .dashboard-grid.admin-layout .stats-grid {
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 10px;
+      width: 100%;
+    }
+
+    .dashboard-grid.admin-layout .stat-card {
+        gap: 12px;
+        padding: 16px 12px;
+        min-height: 112px;
+    }
+
+    .dashboard-grid.admin-layout .stat-icon {
+        width: 42px;
+        height: 42px;
+    }
+
+    .dashboard-grid.admin-layout .stat-value {
+        font-size: clamp(18px, 1.15vw, 24px);
+      line-height: 1;
+    }
+
+    .dashboard-grid.admin-layout .stat-label {
+      font-size: clamp(11px, 0.8vw, 13px);
+        line-height: 1.2;
+    }
+  }

@@ -46,6 +46,11 @@ public class PaymentIntentDto
     public string Currency { get; set; } = "ron";
 }
 
+public class PaymentConfigurationDto
+{
+    public bool StripeEnabled { get; set; }
+}
+
 public class BookedPeriodDto
 {
     public DateTime StartDate { get; set; }

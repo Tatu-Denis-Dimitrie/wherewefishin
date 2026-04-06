@@ -6,6 +6,7 @@ import {
   Booking,
   BookedPeriod,
   CreateBookingRequest,
+  PaymentConfiguration,
   CreatePaymentIntentRequest,
   PaymentIntentResponse
 } from '../models/booking.model';
@@ -41,6 +42,10 @@ export class BookingService {
 
   createPaymentIntent(request: CreatePaymentIntentRequest): Observable<PaymentIntentResponse> {
     return this.http.post<PaymentIntentResponse>(`${this.apiUrl}/payment-intent`, request);
+  }
+
+  getPaymentConfiguration(): Observable<PaymentConfiguration> {
+    return this.http.get<PaymentConfiguration>(`${this.apiUrl}/payment-configuration`);
   }
 
   cancelBooking(id: number): Observable<void> {

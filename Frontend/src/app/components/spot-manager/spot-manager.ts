@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -54,11 +54,24 @@ export class SpotManager implements OnInit, OnDestroy {
   selectedEmployeeId: number | null = null;
   loadingEmployees = false;
 
+  // Sidebar tabs
+  activeTab: 'pontoons' | 'settings' | 'extra' = 'pontoons';
+
   private map: L.Map | null = null;
   private pontoonLayers: Map<number, L.Polygon | L.Rectangle> = new Map();
   private drawingPolygon: L.Polygon | null = null;
   private drawingMarkers: L.CircleMarker[] = [];
   private editVertexMarkers: L.CircleMarker[] = [];
+  private profileViewportPreview: L.Rectangle | null = null;
+
+  private readonly detailMapHeight = 220;
+  private readonly detailPageDesktopMaxWidth = 1100;
+  private readonly detailPageDesktopHorizontalPadding = 64;
+  private readonly detailPageMobileHorizontalPadding = 32;
+  private readonly detailBookingColumnWidth = 360;
+  private readonly detailGridGap = 20;
+  private readonly detailCardDesktopHorizontalPadding = 44;
+  private readonly detailCardMobileHorizontalPadding = 32;
 
   readonly COLORS = [
     '#3388ff', '#ff6b6b', '#4ecdc4', '#feca57', 
@@ -111,10 +124,18 @@ export class SpotManager implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.removeProfileViewportPreview();
     if (this.map) {
       this.map.remove();
       this.map = null;
     }
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    if (!this.map) return;
+    this.map.invalidateSize();
+    this.syncProfileViewportPreview();
   }
 
   private loadPontoons(): void {
@@ -169,6 +190,9 @@ export class SpotManager implements OnInit, OnDestroy {
 
     // Drawing click handler
     this.map.on('click', (e: L.LeafletMouseEvent) => this.onMapClick(e));
+    this.map.on('move', () => this.syncProfileViewportPreview());
+    this.map.on('zoom', () => this.syncProfileViewportPreview());
+    this.syncProfileViewportPreview();
   }
 
   // ---- Rendering ----
@@ -209,6 +233,86 @@ export class SpotManager implements OnInit, OnDestroy {
       layer.on('click', () => this.selectPontoon(pontoon));
       this.pontoonLayers.set(pontoon.id, layer);
     });
+
+    this.syncProfileViewportPreview();
+  }
+
+  setActiveTab(tab: 'pontoons' | 'settings' | 'extra'): void {
+    this.activeTab = tab;
+    this.syncProfileViewportPreview();
+  }
+
+  private syncProfileViewportPreview(): void {
+    if (!this.map) return;
+
+    if (this.activeTab !== 'settings') {
+      this.removeProfileViewportPreview();
+      return;
+    }
+
+    const previewBounds = this.getProfileViewportBounds();
+    if (!previewBounds) return;
+
+    if (!this.profileViewportPreview) {
+      this.profileViewportPreview = L.rectangle(previewBounds, {
+        color: '#fbbf24',
+        weight: 2,
+        dashArray: '10 6',
+        opacity: 0.95,
+        fillColor: '#fbbf24',
+        fillOpacity: 0.05,
+        interactive: false
+      }).addTo(this.map);
+    } else {
+      this.profileViewportPreview.setBounds(previewBounds);
+      if (!this.map.hasLayer(this.profileViewportPreview)) {
+        this.profileViewportPreview.addTo(this.map);
+      }
+    }
+
+    this.profileViewportPreview.bringToFront();
+  }
+
+  private removeProfileViewportPreview(): void {
+    if (!this.profileViewportPreview) return;
+    this.profileViewportPreview.remove();
+  }
+
+  private getProfileViewportBounds(): L.LatLngBounds | null {
+    if (!this.map) return null;
+
+    const viewport = this.getProfileMapViewportSize();
+    const mapSize = this.map.getSize();
+    if (mapSize.x === 0 || mapSize.y === 0) return null;
+
+    const centerPoint = L.point(mapSize.x / 2, mapSize.y / 2);
+    const halfWidth = viewport.width / 2;
+    const halfHeight = viewport.height / 2;
+
+    const northWest = this.map.containerPointToLatLng(L.point(centerPoint.x - halfWidth, centerPoint.y - halfHeight));
+    const southEast = this.map.containerPointToLatLng(L.point(centerPoint.x + halfWidth, centerPoint.y + halfHeight));
+
+    return L.latLngBounds(northWest, southEast);
+  }
+
+  private getProfileMapViewportSize(): { width: number; height: number } {
+    const viewportWidth = window.innerWidth;
+
+    if (viewportWidth <= 820) {
+      const detailPageWidth = Math.max(300, viewportWidth - this.detailPageMobileHorizontalPadding);
+      return {
+        width: Math.max(220, detailPageWidth - this.detailCardMobileHorizontalPadding),
+        height: this.detailMapHeight
+      };
+    }
+
+    const detailPageWidth = Math.min(viewportWidth, this.detailPageDesktopMaxWidth) - this.detailPageDesktopHorizontalPadding;
+    const infoColumnWidth = detailPageWidth - this.detailBookingColumnWidth - this.detailGridGap;
+
+    return {
+      width: Math.max(240, infoColumnWidth - this.detailCardDesktopHorizontalPadding),
+      height: this.detailMapHeight
+    };
   }
 
   // ---- Drawing Mode ----
