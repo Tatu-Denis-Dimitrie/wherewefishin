@@ -19,65 +19,255 @@
   @if (!loading && notFound) {
     <div class="state-center">
       <p class="not-found-msg">Fishing spot not found.</p>
-      <button class="btn-back" (click)="goBack()">← Back</button>
+      <button class="btn-back" (click)="goBack()">Go Back</button>
     </div>
   }
 
-  <!-- Content -->
   @if (!loading && spot) {
-    <div class="page-header">
-      <button class="btn-back" (click)="goBack()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-        Back to profile
-      </button>
-      <div class="header-info">
-        <h1>Pontoon Management</h1>
-        <span class="spot-name">{{ spot.name }}</span>
-      </div>
-    </div>
+    <div class="manager-layout" [class.has-map]="shouldShowMap">
 
-    <div class="manager-layout">
-      
-      <!-- Sidebar -->
-      <div class="sidebar">
-        
-        <!-- Tabs -->
-        <div class="sidebar-tabs">
-          <button class="tab-btn" [class.active]="activeTab === 'pontoons'" (click)="setActiveTab('pontoons')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/></svg>
-            Pontoane
-          </button>
-          <button class="tab-btn" [class.active]="activeTab === 'settings'" (click)="setActiveTab('settings')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            Setări
-          </button>
-          <button class="tab-btn" [class.active]="activeTab === 'extra'" (click)="setActiveTab('extra')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Extra
-          </button>
+      <!-- Sidebar — always visible -->
+      <aside class="sidebar">
+        <button class="btn-back sidebar-back" (click)="goBack()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          Back
+        </button>
+
+        <div class="sidebar-spot-info">
+          <h1 class="sidebar-spot-name">{{ spot.name }}</h1>
+          <p class="sidebar-spot-meta">{{ spot.pricePerHour }} RON/h · {{ pontoons.length }} pontoons</p>
         </div>
 
-        <!-- ===== TAB: Pontoane ===== -->
-        @if (activeTab === 'pontoons') {
-        <div class="control-card">
-          <h3 class="card-title">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/></svg>
-            Add Pontoon
-          </h3>
-          
-          @if (!isDrawingMode) {
-            <button class="btn-draw" (click)="toggleDrawingMode()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Draw new pontoon
-            </button>
-            <p class="help-text">
-              Click to start drawing. Place points on the map to define the pontoon shape. Click the first point again (or press Finish) to complete.
-            </p>
-          } @else {
-            <div class="drawing-form">
+        <nav class="sidebar-nav">
+          <button class="nav-btn" [class.active]="activeTab === 'dashboard'" (click)="setActiveTab('dashboard')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Dashboard
+          </button>
+
+          <button class="nav-btn" [class.active]="activeTab === 'pontoons'" (click)="setActiveTab('pontoons')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/></svg>
+            Pontoons
+          </button>
+
+          <button class="nav-btn" [class.active]="activeTab === 'stocking'" (click)="setActiveTab('stocking')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 16s1-4 5-4 5 4 9 4 5-4 5-4"/><path d="M2 12s1-4 5-4 5 4 9 4 5-4 5-4"/></svg>
+            Stocking
+          </button>
+
+          <button class="nav-btn" [class.active]="activeTab === 'settings'" (click)="setActiveTab('settings')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Settings
+          </button>
+        </nav>
+      </aside>
+
+      <!-- Content area -->
+      <div class="content-area">
+        <div class="tab-panels">
+
+          <!-- ===== DASHBOARD ===== -->
+          @if (activeTab === 'dashboard') {
+          <div class="control-card">
+            <h3 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              Statistics
+            </h3>
+            @if (loadingStats) {
+              <p class="help-text">Loading statistics...</p>
+            } @else if (statistics) {
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <span class="stat-value">{{ statistics.totalBookings }}</span>
+                  <span class="stat-label">Total Bookings</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ statistics.activeBookings }}</span>
+                  <span class="stat-label">Active Bookings</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ statistics.totalRevenue | number:'1.0-0' }} RON</span>
+                  <span class="stat-label">Total Revenue</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ statistics.averageRating ? (statistics.averageRating | number:'1.1-1') + ' ★' : '–' }}</span>
+                  <span class="stat-label">Rating ({{ statistics.totalReviews }} reviews)</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ statistics.totalPontoons }}</span>
+                  <span class="stat-label">Pontoons</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ statistics.totalEmployees }}</span>
+                  <span class="stat-label">Employees</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ statistics.cancelledBookings }}</span>
+                  <span class="stat-label">Cancellations</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">{{ statistics.totalStockings }}</span>
+                  <span class="stat-label">Stockings</span>
+                </div>
+              </div>
+              <div class="card-actions-spaced">
+                <button class="btn-save" (click)="loadStatistics()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                  Refresh
+                </button>
+              </div>
+            }
+          </div>
+
+          <!-- Chart -->
+          @if (statistics) {
+          <div class="control-card">
+            <h3 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              Overview
+            </h3>
+            <div class="chart-container">
+              @for (bar of chartBars; track bar.label) {
+                <div class="chart-bar-group">
+                  <span class="chart-bar-value">{{ bar.value }}</span>
+                  <div class="chart-bar-track">
+                    <div class="chart-bar-fill" [style.height.%]="bar.percent" [style.backgroundColor]="bar.color"></div>
+                  </div>
+                  <span class="chart-bar-label">{{ bar.label }}</span>
+                </div>
+              }
+            </div>
+          </div>
+          }
+
+          <!-- Quick Info -->
+          <div class="control-card">
+            <h3 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              Info
+            </h3>
+            <div class="info-list">
+              <div class="info-row">
+                <span class="info-label">Price/hour</span>
+                <span class="info-value">{{ spot.pricePerHour }} RON</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Manager</span>
+                <span class="info-value">{{ spot.managerName || '–' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Coordinates</span>
+                <span class="info-value">{{ spot.latitude.toFixed(4) }}, {{ spot.longitude.toFixed(4) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent stockings preview -->
+          @if (stockings.length > 0) {
+          <div class="control-card">
+            <h3 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 16s1-4 5-4 5 4 9 4 5-4 5-4"/><path d="M2 12s1-4 5-4 5 4 9 4 5-4 5-4"/></svg>
+              Recent Stockings
+            </h3>
+            <div class="pontoons-list">
+              @for (s of stockings.slice(0, 3); track s.id) {
+                <div class="pontoon-item">
+                  <span class="pontoon-name">{{ s.species }} · {{ s.quantity }} pcs · {{ s.stockingDate | date:'dd MMM yyyy' }}</span>
+                </div>
+              }
+            </div>
+            @if (stockings.length > 3) {
+              <button class="inline-link-action" type="button" (click)="setActiveTab('stocking')">
+                View all ({{ stockings.length }})
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </button>
+            }
+          </div>
+          }
+          }
+
+          <!-- ===== PONTOONS ===== -->
+          @if (activeTab === 'pontoons') {
+          <div class="control-card">
+            <h3 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/></svg>
+              Add Pontoon
+            </h3>
+            
+            @if (!isDrawingMode) {
+              <button class="btn-draw" (click)="toggleDrawingMode()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Draw new pontoon
+              </button>
+              <p class="help-text">
+                Click to start drawing. Place points on the map to define the pontoon shape. Click the first point again (or press Finish) to complete.
+              </p>
+            } @else {
+              <div class="drawing-form">
+                <div class="field">
+                  <label>Pontoon name</label>
+                  <input type="text" [(ngModel)]="newPontoonName" placeholder="e.g.: Pontoon A1">
+                </div>
+                
+                <div class="field">
+                  <label>Color</label>
+                  <div class="color-picker">
+                    @for (color of COLORS; track color) {
+                      <button 
+                        type="button"
+                        class="color-btn" 
+                        [style.backgroundColor]="color"
+                        [class.active]="newPontoonColor === color"
+                        (click)="newPontoonColor = color">
+                      </button>
+                    }
+                  </div>
+                </div>
+
+                <div class="drawing-progress">
+                  <span class="point-count">{{ drawingPoints.length }} points placed</span>
+                </div>
+                
+                <div class="drawing-actions">
+                  @if (drawingPoints.length >= 3) {
+                    <button class="btn-save" (click)="finishDrawing()">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                      Finish
+                    </button>
+                  }
+                  @if (drawingPoints.length > 0) {
+                    <button class="btn-undo" (click)="undoLastPoint()">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                      Undo
+                    </button>
+                  }
+                  <button class="btn-cancel" (click)="toggleDrawingMode()">Cancel</button>
+                </div>
+                
+                <div class="drawing-instructions">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  @if (drawingPoints.length === 0) {
+                    Click on the map to place the first point
+                  } @else if (drawingPoints.length < 3) {
+                    Place at least {{ 3 - drawingPoints.length }} more point{{ 3 - drawingPoints.length > 1 ? 's' : '' }}
+                  } @else {
+                    Click the first point to close, or press Finish
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Edit Pontoon -->
+          @if (editingPontoonId) {
+            <div class="control-card edit-card">
+              <h3 class="card-title">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Edit Pontoon
+              </h3>
+              
               <div class="field">
-                <label>Pontoon name</label>
-                <input type="text" [(ngModel)]="newPontoonName" placeholder="e.g.: Pontoon A1">
+                <label>Name</label>
+                <input type="text" [(ngModel)]="editPontoonName">
               </div>
               
               <div class="field">
@@ -88,256 +278,282 @@
                       type="button"
                       class="color-btn" 
                       [style.backgroundColor]="color"
-                      [class.active]="newPontoonColor === color"
-                      (click)="newPontoonColor = color">
+                      [class.active]="editPontoonColor === color"
+                      (click)="editPontoonColor = color">
                     </button>
                   }
                 </div>
               </div>
+              
+              <div class="edit-actions">
+                <button class="btn-save" (click)="updatePontoon()">Save</button>
+                <button class="btn-delete" (click)="deletePontoon()">Delete</button>
+                <button class="btn-cancel" (click)="cancelEdit()">Cancel</button>
+              </div>
 
-              <div class="drawing-progress">
-                <span class="point-count">{{ drawingPoints.length }} points placed</span>
-              </div>
-              
-              <div class="drawing-actions">
-                @if (drawingPoints.length >= 3) {
-                  <button class="btn-save" (click)="finishDrawing()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                    Finish
-                  </button>
-                }
-                @if (drawingPoints.length > 0) {
-                  <button class="btn-undo" (click)="undoLastPoint()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                    Undo
-                  </button>
-                }
-                <button class="btn-cancel" (click)="toggleDrawingMode()">Cancel</button>
-              </div>
-              
-              <div class="drawing-instructions">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                @if (drawingPoints.length === 0) {
-                  Click on the map to place the first point
-                } @else if (drawingPoints.length < 3) {
-                  Place at least {{ 3 - drawingPoints.length }} more point{{ 3 - drawingPoints.length > 1 ? 's' : '' }}
-                } @else {
-                  Click the first point to close, or press Finish
-                }
+              <div class="reposition-instructions">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 9l-3 3 3 3"/><path d="M9 5l3-3 3 3"/><path d="M15 19l-3 3-3-3"/><path d="M19 9l3 3-3 3"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+                Drag the vertex points to reshape. Click Save to confirm name/color changes.
               </div>
             </div>
           }
-        </div>
 
-        <!-- Edit Pontoon -->
-        @if (editingPontoonId) {
-          <div class="control-card edit-card">
+          <!-- Pontoons List -->
+          <div class="control-card">
             <h3 class="card-title">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              Edit Pontoon
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              Pontoons ({{ pontoons.length }})
             </h3>
             
-            <div class="field">
-              <label>Name</label>
-              <input type="text" [(ngModel)]="editPontoonName">
-            </div>
-            
-            <div class="field">
-              <label>Color</label>
-              <div class="color-picker">
-                @for (color of COLORS; track color) {
-                  <button 
-                    type="button"
-                    class="color-btn" 
-                    [style.backgroundColor]="color"
-                    [class.active]="editPontoonColor === color"
-                    (click)="editPontoonColor = color">
-                  </button>
+            @if (pontoons.length === 0) {
+              <p class="empty-list">No pontoons yet. Add the first pontoon!</p>
+            } @else {
+              <div class="pontoons-list">
+                @for (pontoon of pontoons; track pontoon.id) {
+                  <div 
+                    class="pontoon-item" 
+                    [class.selected]="editingPontoonId === pontoon.id"
+                    (click)="selectPontoon(pontoon)">
+                    <span class="pontoon-color" [style.backgroundColor]="pontoon.color"></span>
+                    <span class="pontoon-name">{{ pontoon.name }}</span>
+                  </div>
                 }
               </div>
-            </div>
-            
-            <div class="edit-actions">
-              <button class="btn-save" (click)="updatePontoon()">Save</button>
-              <button class="btn-delete" (click)="deletePontoon()">Delete</button>
-              <button class="btn-cancel" (click)="cancelEdit()">Cancel</button>
-            </div>
-
-            <div class="reposition-instructions">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 9l-3 3 3 3"/><path d="M9 5l3-3 3 3"/><path d="M15 19l-3 3-3-3"/><path d="M19 9l3 3-3 3"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
-              Drag the vertex points to reshape. Click Save to confirm name/color changes.
-            </div>
-          </div>
-        }
-
-        <!-- Pontoons List -->
-        <div class="control-card">
-          <h3 class="card-title">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-            Pontoons ({{ pontoons.length }})
-          </h3>
-          
-          @if (pontoons.length === 0) {
-            <p class="empty-list">No pontoons yet. Add the first pontoon!</p>
-          } @else {
-            <div class="pontoons-list">
-              @for (pontoon of pontoons; track pontoon.id) {
-                <div 
-                  class="pontoon-item" 
-                  [class.selected]="editingPontoonId === pontoon.id"
-                  (click)="selectPontoon(pontoon)">
-                  <span class="pontoon-color" [style.backgroundColor]="pontoon.color"></span>
-                  <span class="pontoon-name">{{ pontoon.name }}</span>
-                </div>
-              }
-            </div>
-          }
-        </div>
-        }
-
-        <!-- ===== TAB: Setări ===== -->
-        @if (activeTab === 'settings') {
-        <!-- Map View Settings -->
-        <div class="control-card">
-          <h3 class="card-title">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-            Default Map View
-          </h3>
-          <p class="help-text">
-            Position and zoom the map as you want users to see it, then click "Save Current View".
-          </p>
-          <p class="map-preview-note">
-            The dashed frame on the map shows the area visible in the profile page map card, so you can frame it exactly.
-          </p>
-          <div class="map-view-actions">
-            <button class="btn-save" (click)="saveMapView()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-              Save Current View
-            </button>
-            <button class="btn-cancel" (click)="resetMapView()">Reset</button>
-          </div>
-        </div>
-
-        <!-- About / Description -->
-        <div class="control-card">
-          <h3 class="card-title">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            About the Spot
-          </h3>
-          <div class="field">
-            <label>Description</label>
-            <textarea
-              [(ngModel)]="editDescription"
-              rows="4"
-              placeholder="Describe the fishing spot..."></textarea>
-          </div>
-          <div class="map-view-actions">
-            <button class="btn-save" (click)="saveDescription()">Save Description</button>
-          </div>
-        </div>
-        }
-
-        <!-- ===== TAB: Extra ===== -->
-        @if (activeTab === 'extra') {
-        <!-- Fish Species -->
-        <div class="control-card">
-          <h3 class="card-title">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 16s1-4 5-4 5 4 9 4 5-4 5-4"/><path d="M2 12s1-4 5-4 5 4 9 4 5-4 5-4"/></svg>
-            Fish Species
-            <span class="species-count-badge">{{ fishSpeciesList.length }}</span>
-          </h3>
-          <div class="species-input-row">
-            <input 
-              type="text" 
-              [(ngModel)]="fishSpeciesInput" 
-              placeholder="e.g.: Carp"
-              (keyup.enter)="addFishSpecies()">
-            <button class="btn-add-species" (click)="addFishSpecies()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </button>
-          </div>
-          @if (fishSpeciesList.length > 0) {
-            <div class="species-tags">
-              @for (species of fishSpeciesList; track species; let i = $index) {
-                <div class="species-tag">
-                  <span>{{ species }}</span>
-                  <button class="species-remove" (click)="removeFishSpecies(i)">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                  </button>
-                </div>
-              }
-            </div>
-          } @else {
-            <p class="empty-list">No fish species added yet.</p>
-          }
-        </div>
-
-        <!-- Employees -->
-        <div class="control-card">
-          <h3 class="card-title">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-            Angajați ({{ spotEmployees.length }})
-          </h3>
-
-          @if (loadingEmployees) {
-            <p class="help-text">Se încarcă...</p>
-          } @else {
-            <!-- Assign new employee -->
-            @if (availableEmployees.length > 0) {
-              <div class="species-input-row">
-                <select [(ngModel)]="selectedEmployeeId" class="employee-select">
-                  <option [ngValue]="null" disabled>Selectează angajat...</option>
-                  @for (emp of availableEmployees; track emp.id) {
-                    <option [ngValue]="emp.id">{{ emp.firstName ? emp.firstName + ' ' + (emp.lastName || '') : emp.username }} ({{ emp.username }})</option>
-                  }
-                </select>
-                <button class="btn-add-species" (click)="assignEmployee()" [disabled]="!selectedEmployeeId">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                </button>
-              </div>
-            } @else {
-              <p class="help-text">Nu există utilizatori cu rolul de Employee. Setează rolul din Admin panel.</p>
             }
+          </div>
+          }
 
-            <!-- Employees list -->
-            @if (spotEmployees.length > 0) {
+          <!-- ===== STOCKING ===== -->
+          @if (activeTab === 'stocking') {
+          <div class="control-card">
+            <h3 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Stocking
+            </h3>
+            <div class="stocking-form">
+              <div class="field">
+                <label>Species</label>
+                <input type="text" [(ngModel)]="newStockingSpecies" placeholder="e.g.: Carp, Crucian...">
+              </div>
+              <div class="field">
+                <label>Quantity (pcs)</label>
+                <input type="number" [(ngModel)]="newStockingQuantity" placeholder="e.g.: 500" min="1">
+              </div>
+              <div class="field">
+                <label>Stocking Date</label>
+                <input type="date" [(ngModel)]="newStockingDate">
+              </div>
+              <div class="field">
+                <label>Notes (optional)</label>
+                <textarea [(ngModel)]="newStockingNotes" rows="2" placeholder="Additional details..."></textarea>
+              </div>
+              <button class="btn-save btn-full" (click)="addStocking()" [disabled]="!newStockingSpecies.trim() || !newStockingQuantity || !newStockingDate">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add
+              </button>
+            </div>
+          </div>
+
+          <!-- Stocking History -->
+          <div class="control-card">
+            <h3 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              Stocking History ({{ stockings.length }})
+            </h3>
+            @if (loadingStockings) {
+              <p class="help-text">Loading...</p>
+            } @else if (stockings.length === 0) {
+              <p class="empty-list">No stocking records yet.</p>
+            } @else {
               <div class="pontoons-list">
-                @for (emp of spotEmployees; track emp.id) {
-                  <div class="pontoon-item employee-item">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    <span class="pontoon-name">{{ emp.firstName ? emp.firstName + ' ' + (emp.lastName || '') : emp.username }}</span>
-                    <button class="species-remove employee-remove" (click)="removeSpotEmployee(emp.id); $event.stopPropagation()">
+                @for (s of stockings; track s.id) {
+                  @if (editingStockingId === s.id) {
+                    <div class="stocking-edit-card">
+                      <div class="field">
+                        <label>Species</label>
+                        <input type="text" [(ngModel)]="editStockingSpecies">
+                      </div>
+                      <div class="field">
+                        <label>Quantity</label>
+                        <input type="number" [(ngModel)]="editStockingQuantity" min="1">
+                      </div>
+                      <div class="field">
+                        <label>Date</label>
+                        <input type="date" [(ngModel)]="editStockingDate">
+                      </div>
+                      <div class="field">
+                        <label>Notes</label>
+                        <textarea [(ngModel)]="editStockingNotes" rows="2"></textarea>
+                      </div>
+                      <div class="edit-actions">
+                        <button class="btn-save" (click)="saveEditStocking()">Save</button>
+                        <button class="btn-cancel" (click)="cancelEditStocking()">Cancel</button>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="pontoon-item stocking-item">
+                      <div class="stocking-info">
+                        <span class="stocking-species">{{ s.species }}</span>
+                        <span class="stocking-detail">{{ s.quantity }} pcs · {{ s.stockingDate | date:'dd MMM yyyy' }}</span>
+                        @if (s.notes) {
+                          <span class="stocking-notes">{{ s.notes }}</span>
+                        }
+                      </div>
+                      <div class="stocking-actions">
+                        <button class="species-remove" (click)="startEditStocking(s); $event.stopPropagation()" title="Edit">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <button class="species-remove" (click)="deleteStocking(s.id); $event.stopPropagation()" title="Delete">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
+            }
+          </div>
+          }
+
+          <!-- ===== SETTINGS ===== -->
+          @if (activeTab === 'settings') {
+          <!-- Map View Settings -->
+          <div class="control-card">
+            <h3 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              Default Map View
+            </h3>
+            <p class="help-text">
+              Position and zoom the map as you want users to see it, then click "Save Current View".
+            </p>
+            <p class="map-preview-note">
+              The dashed frame on the map shows the area visible in the profile page map card.
+            </p>
+            <div class="map-view-actions">
+              <button class="btn-save" (click)="saveMapView()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                Save Current View
+              </button>
+              <button class="btn-cancel" (click)="resetMapView()">Reset</button>
+            </div>
+          </div>
+
+          <!-- About / Description -->
+          <div class="control-card">
+            <h3 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              About the Spot
+            </h3>
+            <div class="field">
+              <label>Description</label>
+              <textarea
+                [(ngModel)]="editDescription"
+                rows="4"
+                placeholder="Describe the fishing spot..."></textarea>
+            </div>
+            <div class="map-view-actions">
+              <button class="btn-save" (click)="saveDescription()">Save Description</button>
+            </div>
+          </div>
+
+          <!-- Fish Species -->
+          <div class="control-card">
+            <h3 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 16s1-4 5-4 5 4 9 4 5-4 5-4"/><path d="M2 12s1-4 5-4 5 4 9 4 5-4 5-4"/></svg>
+              Fish Species
+              <span class="species-count-badge">{{ fishSpeciesList.length }}</span>
+            </h3>
+            <div class="species-input-row">
+              <input 
+                type="text" 
+                [(ngModel)]="fishSpeciesInput" 
+                placeholder="e.g.: Carp"
+                (keyup.enter)="addFishSpecies()">
+              <button class="btn-add-species" (click)="addFishSpecies()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+            </div>
+            @if (fishSpeciesList.length > 0) {
+              <div class="species-tags">
+                @for (species of fishSpeciesList; track species; let i = $index) {
+                  <div class="species-tag">
+                    <span>{{ species }}</span>
+                    <button class="species-remove" (click)="removeFishSpecies(i)">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                   </div>
                 }
               </div>
             } @else {
-              <p class="empty-list">Niciun angajat asignat.</p>
+              <p class="empty-list">No fish species added yet.</p>
             }
-          }
-        </div>
-        }
-        
-      </div>
-
-      <!-- Map -->
-      <div class="map-container">
-        @if (activeTab === 'settings') {
-          <div class="map-preview-badge">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-              <path d="M8 8h8v8H8z" stroke-dasharray="3 2"/>
-            </svg>
-            Profile map preview
           </div>
-        }
-        <div id="manager-map" class="manager-map"></div>
+
+          <!-- Employees -->
+          <div class="control-card">
+            <h3 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              Employees ({{ spotEmployees.length }})
+            </h3>
+
+            @if (loadingEmployees) {
+              <p class="help-text">Loading...</p>
+            } @else {
+              @if (availableEmployees.length > 0) {
+                <div class="species-input-row">
+                  <select [(ngModel)]="selectedEmployeeId" class="employee-select">
+                    <option [ngValue]="null" disabled>Select employee...</option>
+                    @for (emp of availableEmployees; track emp.id) {
+                      <option [ngValue]="emp.id">{{ emp.firstName ? emp.firstName + ' ' + (emp.lastName || '') : emp.username }} ({{ emp.username }})</option>
+                    }
+                  </select>
+                  <button class="btn-add-species" (click)="assignEmployee()" [disabled]="!selectedEmployeeId">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  </button>
+                </div>
+              } @else {
+                <p class="help-text">No users with Employee role available. Set the role from the Admin panel.</p>
+              }
+
+              @if (spotEmployees.length > 0) {
+                <div class="pontoons-list">
+                  @for (emp of spotEmployees; track emp.id) {
+                    <div class="pontoon-item employee-item">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      <span class="pontoon-name">{{ emp.firstName ? emp.firstName + ' ' + (emp.lastName || '') : emp.username }}</span>
+                      <button class="species-remove employee-remove" (click)="removeSpotEmployee(emp.id); $event.stopPropagation()">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="empty-list">No employees assigned yet.</p>
+              }
+            }
+          </div>
+          }
+
+        </div>
+
+        <!-- Map (shared, hidden when not needed) -->
+        <div class="map-wrapper" [class.is-hidden]="!shouldShowMap">
+          @if (activeTab === 'settings') {
+            <div class="map-preview-badge">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <path d="M8 8h8v8H8z" stroke-dasharray="3 2"/>
+              </svg>
+              Profile Map Preview
+            </div>
+          }
+          <div id="manager-map" class="manager-map"></div>
+        </div>
       </div>
 
     </div>

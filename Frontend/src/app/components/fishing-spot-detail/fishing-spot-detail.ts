@@ -8,7 +8,9 @@ import { CartService } from '../../services/cart.service';
 import { ReviewService, Review, ReviewStats } from '../../services/review.service';
 import { PontoonService, Pontoon } from '../../services/pontoon.service';
 import { BookingService } from '../../services/booking.service';
+import { StockingService } from '../../services/stocking.service';
 import { BookedPeriod } from '../../models/booking.model';
+import { FishStocking } from '../../models/stocking.model';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 import * as L from 'leaflet';
@@ -51,6 +53,9 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
   // Fish species
   fishSpecies: string[] = [];
 
+  // Fish stocking
+  stockings: FishStocking[] = [];
+
   // Calendar
   calendarMonth = new Date();
   calendarDays: { date: Date; dayNum: number; isCurrentMonth: boolean; isToday: boolean; isBooked: boolean; isPartiallyBooked: boolean; bookedHours: number; bookedIntervals: string; isPast: boolean; isSelected: boolean; isInRange: boolean; isRangeStart: boolean; isRangeEnd: boolean }[] = [];
@@ -72,6 +77,7 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
     private reviewService: ReviewService,
     private pontoonService: PontoonService,
     private bookingService: BookingService,
+    private stockingService: StockingService,
     public authService: AuthService
   ) {}
 
@@ -92,6 +98,7 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
         this.loadReviews(id);
         this.loadPontoons(id);
         this.loadFishSpecies(id);
+        this.loadStockings(id);
         setTimeout(() => this.initMap(), 100);
       },
       error: () => {
@@ -233,6 +240,13 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
         this.fishSpecies = combined;
       },
       error: () => this.fishSpecies = managedSpecies
+    });
+  }
+
+  private loadStockings(spotId: number): void {
+    this.stockingService.getStockings(spotId).subscribe({
+      next: (stockings) => this.stockings = stockings,
+      error: () => this.stockings = []
     });
   }
 

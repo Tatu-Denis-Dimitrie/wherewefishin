@@ -22,6 +22,8 @@ export class Admin implements OnInit {
   successMessage = '';
   editingSpotId: number | null = null;
   editingSpotPrice: number = 0;
+  spotManagerSelections: Record<number, number | null> = {};
+  savingManagerSpotId: number | null = null;
 
   get activeUsersCount(): number {
     return this.stats?.totalUsers ?? this.users.filter(user => user.isActive).length;
@@ -36,7 +38,7 @@ export class Admin implements OnInit {
   }
 
   get managedSpotsCount(): number {
-    return this.fishingSpots.filter(spot => !!spot.managerName).length;
+    return this.fishingSpots.filter(spot => spot.managerId != null).length;
   }
 
   get unmanagedSpotsCount(): number {
@@ -47,6 +49,10 @@ export class Admin implements OnInit {
     if (this.fishingSpots.length === 0) return 0;
     const total = this.fishingSpots.reduce((sum, spot) => sum + spot.pricePerHour, 0);
     return total / this.fishingSpots.length;
+  }
+
+  get managerOptions(): User[] {
+    return this.users.filter(user => user.role === 'Manager');
   }
 
   constructor(
@@ -86,6 +92,7 @@ export class Admin implements OnInit {
     this.adminService.getFishingSpots().subscribe({
       next: (spots) => {
         this.fishingSpots = spots;
+        this.syncSpotManagerSelections();
       },
       error: () => {
         this.error = 'Failed to load fishing spots';
@@ -189,6 +196,48 @@ export class Admin implements OnInit {
     });
   }
 
+  getSelectedManagerId(spot: FishingSpot): number | null {
+    return this.spotManagerSelections[spot.id] ?? spot.managerId ?? null;
+  }
+
+  updateSelectedManager(spotId: number, managerId: number | null): void {
+    this.spotManagerSelections[spotId] = managerId;
+  }
+
+  hasManagerSelectionChanged(spot: FishingSpot): boolean {
+    return this.getSelectedManagerId(spot) !== (spot.managerId ?? null);
+  }
+
+  canSaveManager(spot: FishingSpot): boolean {
+    return this.getSelectedManagerId(spot) !== null && this.hasManagerSelectionChanged(spot);
+  }
+
+  saveFishingSpotManager(spot: FishingSpot): void {
+    const managerId = this.getSelectedManagerId(spot);
+    if (managerId === null) {
+      this.error = 'Please select a manager';
+      setTimeout(() => this.error = '', 3000);
+      return;
+    }
+
+    this.savingManagerSpotId = spot.id;
+    this.adminService.updateFishingSpot(spot.id, { managerId }).subscribe({
+      next: () => {
+        spot.managerId = managerId;
+        spot.managerName = this.getManagerDisplayName(managerId);
+        this.spotManagerSelections[spot.id] = managerId;
+        this.savingManagerSpotId = null;
+        this.successMessage = `Manager updated for "${spot.name}"`;
+        setTimeout(() => this.successMessage = '', 3000);
+      },
+      error: () => {
+        this.savingManagerSpotId = null;
+        this.error = 'Failed to update fishing spot manager';
+        setTimeout(() => this.error = '', 3000);
+      }
+    });
+  }
+
   deleteFishingSpot(spot: FishingSpot): void {
     if (!confirm(`Delete fishing spot "${spot.name}"? This cannot be undone.`)) return;
 
@@ -212,5 +261,27 @@ export class Admin implements OnInit {
       case 'Employee': return 'badge-employee';
       default: return 'badge-user';
     }
+  }
+
+  getManagerOptionLabel(manager: User): string {
+    const fullName = `${manager.firstName ?? ''} ${manager.lastName ?? ''}`.trim();
+    const primaryLabel = fullName ? `${fullName} (@${manager.username})` : manager.username;
+    return manager.isActive ? primaryLabel : `${primaryLabel} - disabled`;
+  }
+
+  private getManagerDisplayName(managerId: number): string {
+    const manager = this.users.find(user => user.id === managerId);
+    if (!manager) return 'Assigned manager';
+
+    const fullName = `${manager.firstName ?? ''} ${manager.lastName ?? ''}`.trim();
+    return fullName || manager.username;
+  }
+
+  private syncSpotManagerSelections(): void {
+    const nextSelections: Record<number, number | null> = {};
+    for (const spot of this.fishingSpots) {
+      nextSelections[spot.id] = spot.managerId ?? null;
+    }
+    this.spotManagerSelections = nextSelections;
   }
 }

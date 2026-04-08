@@ -381,6 +381,24 @@
   flex-wrap: wrap;
 }
 
+.manager-assignment {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 220px;
+}
+
+.manager-select {
+  width: 100%;
+  max-width: 240px;
+}
+
+.manager-helper {
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(232, 224, 208, 0.58);
+}
+
 .role-select,
 .price-input {
   padding: 9px 10px;
@@ -430,6 +448,16 @@
 .btn-save-sm:hover,
 .btn-cancel-sm:hover {
   transform: translateY(-1px);
+}
+
+.btn-toggle-sm:disabled,
+.btn-danger-sm:disabled,
+.btn-edit-sm:disabled,
+.btn-save-sm:disabled,
+.btn-cancel-sm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .btn-toggle-sm.btn-disable {

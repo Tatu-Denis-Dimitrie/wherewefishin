@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
+using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Enums;
@@ -13,11 +14,28 @@ namespace WhereWeFishin.API.Controllers;
 public class FishingSpotsController : ControllerBase
 {
     private readonly IRepository<FishingSpot> _spotRepository;
+    private readonly IRepository<FishingSession> _sessionRepository;
+    private readonly IRepository<Review> _reviewRepository;
+    private readonly IRepository<Pontoon> _pontoonRepository;
+    private readonly IRepository<SpotEmployee> _employeeRepository;
+    private readonly IRepository<FishStocking> _stockingRepository;
     private readonly IOutputCacheStore _cacheStore;
 
-    public FishingSpotsController(IRepository<FishingSpot> spotRepository, IOutputCacheStore cacheStore)
+    public FishingSpotsController(
+        IRepository<FishingSpot> spotRepository,
+        IRepository<FishingSession> sessionRepository,
+        IRepository<Review> reviewRepository,
+        IRepository<Pontoon> pontoonRepository,
+        IRepository<SpotEmployee> employeeRepository,
+        IRepository<FishStocking> stockingRepository,
+        IOutputCacheStore cacheStore)
     {
         _spotRepository = spotRepository;
+        _sessionRepository = sessionRepository;
+        _reviewRepository = reviewRepository;
+        _pontoonRepository = pontoonRepository;
+        _employeeRepository = employeeRepository;
+        _stockingRepository = stockingRepository;
         _cacheStore = cacheStore;
     }
 
@@ -101,6 +119,39 @@ public class FishingSpotsController : ControllerBase
         await _spotRepository.DeleteAsync(id);
         await _cacheStore.EvictByTagAsync("fishingspots", default);
         return NoContent();
+    }
+
+    [HttpGet("{id}/statistics")]
+    [Authorize(Roles = Roles.AdminOrManager)]
+    public async Task<ActionResult<SpotStatisticsDto>> GetSpotStatistics(int id)
+    {
+        var spot = await _spotRepository.GetByIdAsync(id);
+        if (spot == null) return NotFound();
+
+        var userId = User.GetUserId();
+        if (!User.IsInRole(Roles.Admin) && spot.ManagerId != userId && spot.UserId != userId)
+            return Forbid();
+
+        var sessions = await _sessionRepository.FindAsync(s => s.FishingSpotId == id);
+        var sessionsList = sessions.ToList();
+        var reviews = await _reviewRepository.FindAsync(r => r.FishingSpotId == id);
+        var reviewsList = reviews.ToList();
+        var pontoons = await _pontoonRepository.CountAsync(p => p.FishingSpotId == id);
+        var employees = await _employeeRepository.CountAsync(e => e.FishingSpotId == id);
+        var stockings = await _stockingRepository.CountAsync(s => s.FishingSpotId == id);
+
+        return Ok(new SpotStatisticsDto
+        {
+            TotalBookings = sessionsList.Count,
+            ActiveBookings = sessionsList.Count(s => s.Status == SessionStatus.Confirmed || s.Status == SessionStatus.Pending),
+            CancelledBookings = sessionsList.Count(s => s.Status == SessionStatus.Cancelled),
+            TotalRevenue = sessionsList.Where(s => s.Status != SessionStatus.Cancelled).Sum(s => s.TotalPrice),
+            TotalReviews = reviewsList.Count,
+            AverageRating = reviewsList.Count > 0 ? reviewsList.Average(r => r.Rating) : null,
+            TotalPontoons = pontoons,
+            TotalEmployees = employees,
+            TotalStockings = stockings
+        });
     }
 
     private static FishingSpotDto MapToDto(FishingSpot spot) => new()

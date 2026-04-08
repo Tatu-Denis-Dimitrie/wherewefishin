@@ -6,8 +6,10 @@ import { FishingSpotService, FishingSpot } from '../../services/fishing-spot.ser
 import { PontoonService, Pontoon, CreatePontoon } from '../../services/pontoon.service';
 import { EmployeeService } from '../../services/employee.service';
 import { AuthService } from '../../services/auth.service';
+import { StockingService } from '../../services/stocking.service';
 import { SpotEmployee } from '../../models/employee.model';
 import { User } from '../../models/user.model';
+import { FishStocking, SpotStatistics } from '../../models/stocking.model';
 import * as L from 'leaflet';
 
 @Component({
@@ -55,7 +57,57 @@ export class SpotManager implements OnInit, OnDestroy {
   loadingEmployees = false;
 
   // Sidebar tabs
-  activeTab: 'pontoons' | 'settings' | 'extra' = 'pontoons';
+  activeTab: 'dashboard' | 'pontoons' | 'settings' | 'stocking' = 'dashboard';
+
+  get shouldShowMap(): boolean {
+    return this.activeTab === 'pontoons' || this.activeTab === 'settings';
+  }
+
+  get activeTabLabel(): string {
+    switch (this.activeTab) {
+      case 'dashboard':
+        return 'Dashboard';
+      case 'pontoons':
+        return 'Pontoons';
+      case 'stocking':
+        return 'Stocking';
+      case 'settings':
+        return 'Settings';
+      default:
+        return 'Dashboard';
+    }
+  }
+
+  get chartBars(): { label: string; value: number; percent: number; color: string }[] {
+    if (!this.statistics) return [];
+    const items = [
+      { label: 'Bookings', value: this.statistics.totalBookings, color: '#8cc45c' },
+      { label: 'Active', value: this.statistics.activeBookings, color: '#4ecdc4' },
+      { label: 'Cancelled', value: this.statistics.cancelledBookings, color: '#ff6b6b' },
+      { label: 'Revenue', value: Math.round(this.statistics.totalRevenue), color: '#feca57' },
+      { label: 'Pontoons', value: this.statistics.totalPontoons, color: '#45aaf2' },
+      { label: 'Stockings', value: this.statistics.totalStockings, color: '#a55eea' },
+    ];
+    const max = Math.max(...items.map(i => i.value), 1);
+    return items.map(i => ({ ...i, percent: (i.value / max) * 100 }));
+  }
+
+  // Statistics
+  statistics: SpotStatistics | null = null;
+  loadingStats = false;
+
+  // Fish Stocking
+  stockings: FishStocking[] = [];
+  loadingStockings = false;
+  newStockingSpecies = '';
+  newStockingQuantity: number | null = null;
+  newStockingDate = '';
+  newStockingNotes = '';
+  editingStockingId: number | null = null;
+  editStockingSpecies = '';
+  editStockingQuantity: number | null = null;
+  editStockingDate = '';
+  editStockingNotes = '';
 
   private map: L.Map | null = null;
   private pontoonLayers: Map<number, L.Polygon | L.Rectangle> = new Map();
@@ -63,6 +115,7 @@ export class SpotManager implements OnInit, OnDestroy {
   private drawingMarkers: L.CircleMarker[] = [];
   private editVertexMarkers: L.CircleMarker[] = [];
   private profileViewportPreview: L.Rectangle | null = null;
+  private pendingMapRefreshFrame: number | null = null;
 
   private readonly detailMapHeight = 220;
   private readonly detailPageDesktopMaxWidth = 1100;
@@ -84,7 +137,8 @@ export class SpotManager implements OnInit, OnDestroy {
     private fishingSpotService: FishingSpotService,
     private pontoonService: PontoonService,
     private employeeService: EmployeeService,
-    private authService: AuthService
+    private authService: AuthService,
+    private stockingService: StockingService
   ) {}
 
   ngOnInit(): void {
@@ -111,9 +165,14 @@ export class SpotManager implements OnInit, OnDestroy {
         this.fishSpeciesList = spot.fishSpecies ? JSON.parse(spot.fishSpecies) : [];
 
         setTimeout(() => {
-          this.initMap();
           this.loadPontoons();
           this.loadEmployees();
+          this.loadStatistics();
+          this.loadStockings();
+
+          if (this.shouldShowMap) {
+            this.ensureMapReady();
+          }
         }, 100);
       },
       error: () => {
@@ -124,6 +183,11 @@ export class SpotManager implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.pendingMapRefreshFrame !== null) {
+      cancelAnimationFrame(this.pendingMapRefreshFrame);
+      this.pendingMapRefreshFrame = null;
+    }
+
     this.removeProfileViewportPreview();
     if (this.map) {
       this.map.remove();
@@ -134,8 +198,7 @@ export class SpotManager implements OnInit, OnDestroy {
   @HostListener('window:resize')
   onWindowResize(): void {
     if (!this.map) return;
-    this.map.invalidateSize();
-    this.syncProfileViewportPreview();
+    this.refreshMapLayout();
   }
 
   private loadPontoons(): void {
@@ -149,7 +212,7 @@ export class SpotManager implements OnInit, OnDestroy {
   }
 
   private initMap(): void {
-    if (!this.spot) return;
+    if (!this.spot || this.map) return;
     const el = document.getElementById('manager-map');
     if (!el) return;
 
@@ -192,7 +255,37 @@ export class SpotManager implements OnInit, OnDestroy {
     this.map.on('click', (e: L.LeafletMouseEvent) => this.onMapClick(e));
     this.map.on('move', () => this.syncProfileViewportPreview());
     this.map.on('zoom', () => this.syncProfileViewportPreview());
+    this.renderPontoons();
+    this.refreshMapLayout();
     this.syncProfileViewportPreview();
+  }
+
+  private ensureMapReady(): void {
+    if (!this.map) {
+      this.initMap();
+      return;
+    }
+
+    this.refreshMapLayout();
+  }
+
+  private refreshMapLayout(): void {
+    if (!this.map) return;
+
+    if (this.pendingMapRefreshFrame !== null) {
+      cancelAnimationFrame(this.pendingMapRefreshFrame);
+      this.pendingMapRefreshFrame = null;
+    }
+
+    this.pendingMapRefreshFrame = requestAnimationFrame(() => {
+      this.pendingMapRefreshFrame = requestAnimationFrame(() => {
+        if (!this.map) return;
+
+        this.map.invalidateSize({ pan: false, debounceMoveend: true });
+        this.syncProfileViewportPreview();
+        this.pendingMapRefreshFrame = null;
+      });
+    });
   }
 
   // ---- Rendering ----
@@ -237,8 +330,14 @@ export class SpotManager implements OnInit, OnDestroy {
     this.syncProfileViewportPreview();
   }
 
-  setActiveTab(tab: 'pontoons' | 'settings' | 'extra'): void {
+  setActiveTab(tab: 'dashboard' | 'pontoons' | 'settings' | 'stocking'): void {
     this.activeTab = tab;
+
+    if (this.shouldShowMap) {
+      this.ensureMapReady();
+      return;
+    }
+
     this.syncProfileViewportPreview();
   }
 
@@ -780,26 +879,120 @@ export class SpotManager implements OnInit, OnDestroy {
       fishingSpotId: this.spot.id
     }).subscribe({
       next: () => {
-        this.showToast('Angajat asignat cu succes!', 'success');
+        this.showToast('Employee assigned successfully!', 'success');
         this.selectedEmployeeId = null;
         this.loadEmployees();
       },
       error: () => {
-        this.showToast('Eroare la asignarea angajatului', 'error');
+        this.showToast('Error assigning employee', 'error');
       }
     });
   }
 
   removeSpotEmployee(id: number): void {
-    if (!confirm('Ești sigur că vrei să elimini acest angajat de pe baltă?')) return;
+    if (!confirm('Are you sure you want to remove this employee from the spot?')) return;
     this.employeeService.removeEmployee(id).subscribe({
       next: () => {
-        this.showToast('Angajat eliminat!', 'success');
+        this.showToast('Employee removed!', 'success');
         this.loadEmployees();
       },
       error: () => {
-        this.showToast('Eroare la eliminarea angajatului', 'error');
+        this.showToast('Error removing employee', 'error');
       }
+    });
+  }
+
+  // ---- Statistics ----
+
+  loadStatistics(): void {
+    if (!this.spot) return;
+    this.loadingStats = true;
+    this.stockingService.getStatistics(this.spot.id).subscribe({
+      next: (stats) => {
+        this.statistics = stats;
+        this.loadingStats = false;
+      },
+      error: () => {
+        this.loadingStats = false;
+      }
+    });
+  }
+
+  // ---- Fish Stocking ----
+
+  loadStockings(): void {
+    if (!this.spot) return;
+    this.loadingStockings = true;
+    this.stockingService.getStockings(this.spot.id).subscribe({
+      next: (stockings) => {
+        this.stockings = stockings;
+        this.loadingStockings = false;
+      },
+      error: () => {
+        this.loadingStockings = false;
+      }
+    });
+  }
+
+  addStocking(): void {
+    if (!this.spot || !this.newStockingSpecies.trim() || !this.newStockingQuantity || !this.newStockingDate) return;
+    this.stockingService.createStocking(this.spot.id, {
+      species: this.newStockingSpecies.trim(),
+      quantity: this.newStockingQuantity,
+      stockingDate: this.newStockingDate,
+      notes: this.newStockingNotes.trim() || undefined
+    }).subscribe({
+      next: () => {
+        this.showToast('Stocking added!', 'success');
+        this.newStockingSpecies = '';
+        this.newStockingQuantity = null;
+        this.newStockingDate = '';
+        this.newStockingNotes = '';
+        this.loadStockings();
+        this.loadStatistics();
+      },
+      error: () => this.showToast('Error adding stocking', 'error')
+    });
+  }
+
+  startEditStocking(s: FishStocking): void {
+    this.editingStockingId = s.id;
+    this.editStockingSpecies = s.species;
+    this.editStockingQuantity = s.quantity;
+    this.editStockingDate = s.stockingDate.substring(0, 10);
+    this.editStockingNotes = s.notes || '';
+  }
+
+  cancelEditStocking(): void {
+    this.editingStockingId = null;
+  }
+
+  saveEditStocking(): void {
+    if (!this.spot || !this.editingStockingId) return;
+    this.stockingService.updateStocking(this.spot.id, this.editingStockingId, {
+      species: this.editStockingSpecies.trim(),
+      quantity: this.editStockingQuantity!,
+      stockingDate: this.editStockingDate,
+      notes: this.editStockingNotes.trim() || undefined
+    }).subscribe({
+      next: () => {
+        this.showToast('Stocking updated!', 'success');
+        this.editingStockingId = null;
+        this.loadStockings();
+      },
+      error: () => this.showToast('Error updating stocking', 'error')
+    });
+  }
+
+  deleteStocking(id: number): void {
+    if (!this.spot || !confirm('Delete this stocking record?')) return;
+    this.stockingService.deleteStocking(this.spot.id, id).subscribe({
+      next: () => {
+        this.showToast('Stocking deleted!', 'success');
+        this.loadStockings();
+        this.loadStatistics();
+      },
+      error: () => this.showToast('Error deleting stocking', 'error')
     });
   }
 

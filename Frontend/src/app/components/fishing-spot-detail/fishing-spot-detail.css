@@ -598,6 +598,57 @@
   border-color: rgba(74, 144, 164, 0.35);
 }
 
+/* ---- Stocking Section ---- */
+.stocking-card {
+  margin-top: 0;
+}
+
+.stocking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stocking-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 14px;
+  background: linear-gradient(145deg, rgba(125, 179, 74, 0.06) 0%, rgba(28, 43, 22, 0.2) 100%);
+  border: 1px solid rgba(125, 179, 74, 0.18);
+  border-radius: var(--radius-sm);
+}
+
+.stocking-entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stocking-entry-species {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-moss);
+}
+
+.stocking-entry-qty {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.stocking-entry-date {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.stocking-entry-notes {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 2px;
+}
+
 /* ---- Reviews Section (Redesigned) ---- */
 .reviews-card {
   margin-top: 0;

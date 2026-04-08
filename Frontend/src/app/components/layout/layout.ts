@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { CartService } from '../../services/cart.service';
+import { FishingSpotService } from '../../services/fishing-spot.service';
 import { SiteFooter } from '../site-footer/site-footer';
 import { filter, Subscription } from 'rxjs';
 
@@ -15,18 +16,32 @@ import { filter, Subscription } from 'rxjs';
 export class Layout implements OnInit, OnDestroy {
   isAdmin = false;
   isEmployee = false;
+  isManager = false;
+  managerSpotId: number | null = null;
   mobileMenuOpen = false;
   private navigationSubscription?: Subscription;
 
   constructor(
     private authService: AuthService,
     private router: Router,
-    public cartService: CartService
+    public cartService: CartService,
+    private fishingSpotService: FishingSpotService
   ) {}
 
   ngOnInit(): void {
     this.isAdmin = this.authService.isAdmin();
     this.isEmployee = this.authService.isEmployee();
+    this.isManager = this.authService.isManagerOrAdmin();
+
+    if (this.isManager) {
+      const userId = this.authService.getUserId();
+      this.fishingSpotService.getAll().subscribe(spots => {
+        const mySpot = spots.find(s => s.managerId === userId || s.userId === userId);
+        if (mySpot) {
+          this.managerSpotId = mySpot.id;
+        }
+      });
+    }
 
     // Keep a single, predictable scroll container for routed app pages.
     this.navigationSubscription = this.router.events

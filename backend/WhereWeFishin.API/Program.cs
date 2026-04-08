@@ -179,6 +179,7 @@ builder.Services.AddScoped<IRepository<FishingSession>, Repository<FishingSessio
 builder.Services.AddScoped<IRepository<Review>, Repository<Review>>();
 builder.Services.AddScoped<IRepository<Pontoon>, Repository<Pontoon>>();
 builder.Services.AddScoped<IRepository<SpotEmployee>, Repository<SpotEmployee>>();
+builder.Services.AddScoped<IRepository<FishStocking>, Repository<FishStocking>>();
 builder.Services.AddScoped<ReviewRepository>();
 builder.Services.AddScoped<PontoonRepository>();
 

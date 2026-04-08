@@ -192,11 +192,29 @@
                   </td>
                   <td class="cell-location">{{ spot.latitude.toFixed(4) }}, {{ spot.longitude.toFixed(4) }}</td>
                   <td>
-                    @if (spot.managerName) {
-                      <span class="manager-name">{{ spot.managerName }}</span>
-                    } @else {
-                      <span class="no-manager">No manager</span>
-                    }
+                    <div class="manager-assignment">
+                      @if (spot.managerName) {
+                        <span class="manager-name">{{ spot.managerName }}</span>
+                      } @else {
+                        <span class="no-manager">No manager</span>
+                      }
+
+                      @if (managerOptions.length > 0) {
+                        <select
+                          class="role-select manager-select"
+                          [ngModel]="getSelectedManagerId(spot)"
+                          (ngModelChange)="updateSelectedManager(spot.id, $event)">
+                          <option [ngValue]="null">Select a manager</option>
+                          @for (manager of managerOptions; track manager.id) {
+                            <option [ngValue]="manager.id" [disabled]="!manager.isActive">
+                              {{ getManagerOptionLabel(manager) }}
+                            </option>
+                          }
+                        </select>
+                      } @else {
+                        <span class="manager-helper">Create a manager account first.</span>
+                      }
+                    </div>
                   </td>
                   <td class="cell-price">
                     @if (editingSpotId === spot.id) {
@@ -210,7 +228,8 @@
                         <button class="btn-save-sm" (click)="saveFishingSpotPrice(spot)">Save</button>
                         <button class="btn-cancel-sm" (click)="cancelEditingPrice()">Cancel</button>
                       </div>
-                    } @else {
+                    }
+                    @else {
                       <div class="price-display">
                         <span class="price-value">{{ spot.pricePerHour | number:'1.2-2' }} RON</span>
                         <button class="btn-edit-sm" (click)="startEditingPrice(spot)">Edit</button>
@@ -219,6 +238,12 @@
                   </td>
                   <td class="cell-actions">
                     <div class="action-row">
+                      <button
+                        class="btn-save-sm"
+                        (click)="saveFishingSpotManager(spot)"
+                        [disabled]="!canSaveManager(spot) || savingManagerSpotId === spot.id">
+                        {{ savingManagerSpotId === spot.id ? 'Saving...' : (spot.managerId ? 'Save manager' : 'Assign manager') }}
+                      </button>
                       <button class="btn-danger-sm" (click)="deleteFishingSpot(spot)">Delete</button>
                     </div>
                   </td>
