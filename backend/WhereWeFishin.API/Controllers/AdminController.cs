@@ -42,62 +42,85 @@ public class AdminController : ControllerBase
     [HttpGet("stats")]
     public async Task<ActionResult> GetStats()
     {
-        // User counts by role (active only)
-        var userCounts = await _context.Set<User>()
-            .Where(u => !u.IsDeleted)
-            .GroupBy(u => u.Role)
-            .Select(g => new { Role = g.Key, Count = g.Count() })
-            .ToListAsync();
+        var userStats = (await _context.Users
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .GroupBy(_ => 1)
+            .Select(group => new UserStatsSnapshot
+            {
+                TotalUsers = group.Count(user => !user.IsDeleted),
+                TotalManagers = group.Count(user => !user.IsDeleted && user.Role == UserRole.Manager),
+                TotalAdmins = group.Count(user => !user.IsDeleted && user.Role == UserRole.Admin),
+                DeactivatedUsers = group.Count(user => user.IsDeleted)
+            })
+            .FirstOrDefaultAsync()) ?? new UserStatsSnapshot();
 
-        var totalUsers = userCounts.Sum(x => x.Count);
-        var totalManagers = userCounts.FirstOrDefault(x => x.Role == UserRole.Manager)?.Count ?? 0;
-        var totalAdmins = userCounts.FirstOrDefault(x => x.Role == UserRole.Admin)?.Count ?? 0;
-        var deactivatedUsers = await _context.Set<User>().CountAsync(u => u.IsDeleted);
+        var analysisStats = (await _context.VideoAnalyses
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .GroupBy(_ => 1)
+            .Select(group => new AnalysisStatsSnapshot
+            {
+                TotalAnalyses = group.Count(analysis => !analysis.IsDeleted),
+                CompletedAnalyses = group.Count(analysis => !analysis.IsDeleted && analysis.Status == AnalysisStatus.Completed),
+                FailedAnalyses = group.Count(analysis => !analysis.IsDeleted && analysis.Status == AnalysisStatus.Failed)
+            })
+            .FirstOrDefaultAsync()) ?? new AnalysisStatsSnapshot();
 
-        // Video analysis counts by status
-        var analysisCounts = await _context.Set<VideoAnalysis>()
-            .Where(v => !v.IsDeleted)
-            .GroupBy(v => v.Status)
-            .Select(g => new { Status = g.Key, Count = g.Count() })
-            .ToListAsync();
+        var bookingStats = (await _context.FishingSessions
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .GroupBy(_ => 1)
+            .Select(group => new BookingStatsSnapshot
+            {
+                TotalBookings = group.Count(session => !session.IsDeleted),
+                ConfirmedBookings = group.Count(session => !session.IsDeleted && session.Status == SessionStatus.Confirmed),
+                CancelledBookings = group.Count(session => !session.IsDeleted && session.Status == SessionStatus.Cancelled)
+            })
+            .FirstOrDefaultAsync()) ?? new BookingStatsSnapshot();
 
-        var totalAnalyses = analysisCounts.Sum(x => x.Count);
-        var completedAnalyses = analysisCounts.FirstOrDefault(x => x.Status == "Completed")?.Count ?? 0;
-        var failedAnalyses = analysisCounts.FirstOrDefault(x => x.Status == "Failed")?.Count ?? 0;
-
-        // Session/booking counts by status
-        var sessionCounts = await _context.Set<FishingSession>()
-            .Where(s => !s.IsDeleted)
-            .GroupBy(s => s.Status)
-            .Select(g => new { Status = g.Key, Count = g.Count() })
-            .ToListAsync();
-
-        var totalBookings = sessionCounts.Sum(x => x.Count);
-        var confirmedBookings = sessionCounts.FirstOrDefault(x => x.Status == SessionStatus.Confirmed)?.Count ?? 0;
-        var cancelledBookings = sessionCounts.FirstOrDefault(x => x.Status == SessionStatus.Cancelled)?.Count ?? 0;
-
-        var totalSpots = await _spotRepository.CountAsync();
-        var totalPontoons = await _context.Set<Pontoon>().CountAsync(p => !p.IsDeleted);
-        var totalReviews = await _context.Set<Review>().CountAsync(r => !r.IsDeleted);
-        var totalCatches = await _context.Set<Catch>().CountAsync(c => !c.IsDeleted);
+        var totalSpots = await _context.FishingSpots.AsNoTracking().CountAsync();
+        var totalPontoons = await _context.Pontoons.AsNoTracking().CountAsync();
+        var totalReviews = await _context.Reviews.AsNoTracking().CountAsync();
 
         return Ok(new
         {
-            totalUsers,
-            totalManagers,
-            totalAdmins,
-            deactivatedUsers,
-            totalAnalyses,
-            completedAnalyses,
-            failedAnalyses,
-            totalBookings,
-            confirmedBookings,
-            cancelledBookings,
+            totalUsers = userStats.TotalUsers,
+            totalManagers = userStats.TotalManagers,
+            totalAdmins = userStats.TotalAdmins,
+            deactivatedUsers = userStats.DeactivatedUsers,
+            totalAnalyses = analysisStats.TotalAnalyses,
+            completedAnalyses = analysisStats.CompletedAnalyses,
+            failedAnalyses = analysisStats.FailedAnalyses,
+            totalBookings = bookingStats.TotalBookings,
+            confirmedBookings = bookingStats.ConfirmedBookings,
+            cancelledBookings = bookingStats.CancelledBookings,
             totalSpots,
             totalPontoons,
-            totalReviews,
-            totalCatches
+            totalReviews
         });
+    }
+
+    private sealed class UserStatsSnapshot
+    {
+        public int TotalUsers { get; set; }
+        public int TotalManagers { get; set; }
+        public int TotalAdmins { get; set; }
+        public int DeactivatedUsers { get; set; }
+    }
+
+    private sealed class AnalysisStatsSnapshot
+    {
+        public int TotalAnalyses { get; set; }
+        public int CompletedAnalyses { get; set; }
+        public int FailedAnalyses { get; set; }
+    }
+
+    private sealed class BookingStatsSnapshot
+    {
+        public int TotalBookings { get; set; }
+        public int ConfirmedBookings { get; set; }
+        public int CancelledBookings { get; set; }
     }
 
     [HttpGet("users")]

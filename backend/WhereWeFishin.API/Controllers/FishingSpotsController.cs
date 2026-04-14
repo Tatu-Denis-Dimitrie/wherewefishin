@@ -87,6 +87,9 @@ public class FishingSpotsController : ControllerBase
         var spot = await _spotRepository.GetByIdAsync(id);
         if (spot == null) return NotFound();
 
+        if (!User.CanManageSpot(spot))
+            return Forbid();
+
         spot.Name = updateSpotDto.Name ?? spot.Name;
         spot.Description = updateSpotDto.Description ?? spot.Description;
         spot.Latitude = updateSpotDto.Latitude ?? spot.Latitude;
@@ -118,7 +121,11 @@ public class FishingSpotsController : ControllerBase
     [Authorize(Roles = Roles.AdminOrManager)]
     public async Task<IActionResult> DeleteFishingSpot(int id)
     {
-        if (!await _spotRepository.ExistsAsync(id)) return NotFound();
+        var spot = await _spotRepository.GetByIdAsync(id);
+        if (spot == null) return NotFound();
+
+        if (!User.CanManageSpot(spot))
+            return Forbid();
         
         await _spotRepository.DeleteAsync(id);
         await _cacheStore.EvictByTagAsync("fishingspots", default);
@@ -133,7 +140,7 @@ public class FishingSpotsController : ControllerBase
         if (spot == null) return NotFound();
 
         var userId = User.GetUserId();
-        if (!User.IsInRole(Roles.Admin) && spot.ManagerId != userId && spot.UserId != userId)
+        if (!User.CanManageSpot(spot))
             return Forbid();
 
         var sessions = await _sessionRepository.FindAsync(s => s.FishingSpotId == id);

@@ -45,5 +45,7 @@ public class FishingSpotConfiguration : IEntityTypeConfiguration<FishingSpot>
 
         builder.Property(f => f.DefaultCenterLng)
             .HasPrecision(9, 6);
+
+        builder.HasIndex(f => f.ManagerId);
     }
 }

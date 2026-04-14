@@ -25,6 +25,8 @@
   width: 220px;
   background: var(--bg-surface);
   border-right: 1px solid var(--border-subtle);
+  border-top-right-radius: 24px;
+  border-bottom-right-radius: 24px;
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -32,6 +34,7 @@
   left: 0;
   bottom: 0;
   z-index: 100;
+  overflow: hidden;
 }
 
 .sidebar-brand {
@@ -148,7 +151,7 @@
 /* ── Main content area ── */
 .main-content {
   flex: 1;
-  margin-left: 220px;
+  margin-left: 0;
   min-height: 0;
   height: 100%;
   display: flex;
@@ -159,7 +162,7 @@
   padding-top: var(--safe-area-top);
   padding-right: var(--safe-area-right);
   padding-bottom: 0;
-  padding-left: var(--safe-area-left);
+  padding-left: calc(220px + var(--safe-area-left));
   background:
     radial-gradient(circle at 78% 16%, rgba(125, 179, 74, 0.14) 0%, transparent 30%),
     radial-gradient(circle at 60% 80%, rgba(74, 144, 164, 0.12) 0%, transparent 34%),
@@ -204,12 +207,6 @@
   overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
-}
-
-.main-content app-site-footer {
-  position: relative;
-  z-index: 1;
-  flex-shrink: 0;
 }
 
 @keyframes activeGlassSweep {
@@ -497,8 +494,14 @@
     left: 0;
     right: 0;
     height: calc(var(--mobile-topbar-height) + var(--safe-area-top));
-    background: var(--bg-surface);
-    border-bottom: 1px solid var(--border-subtle);
+    background: rgba(28, 42, 22, 0.22);
+    backdrop-filter: blur(18px) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    box-shadow: 0 1px 0 rgba(125, 179, 74, 0.12), 0 4px 24px rgba(0, 0, 0, 0.18);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
     padding: var(--safe-area-top) calc(16px + var(--safe-area-right)) 0 calc(16px + var(--safe-area-left));
     z-index: 200;
     gap: 12px;
@@ -619,13 +622,19 @@
     color: var(--text-primary);
   }
 
-  /* Main content: no left margin, but push down for top bar */
+  /* Main content: no top padding — page backgrounds fill behind the glass header.
+     Direct child component roots get the push-down so content stays accessible. */
   .main-content {
     margin-left: 0;
-    padding-top: calc(var(--mobile-topbar-height) + var(--safe-area-top));
+    padding-left: var(--safe-area-left);
+    padding-top: 0;
     width: 100%;
     max-width: 100vw;
     overflow: hidden;
+  }
+
+  .main-content > * {
+    padding-top: calc(var(--mobile-topbar-height) + var(--safe-area-top));
   }
 
   .mf-3,

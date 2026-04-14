@@ -43,13 +43,10 @@ public class PontoonsController : ControllerBase
     [Authorize(Roles = Roles.AdminOrManager)]
     public async Task<ActionResult<PontoonDto>> CreatePontoon(CreatePontoonDto createPontoonDto)
     {
-        var userId = User.GetUserId();
-        if (userId == null) return Unauthorized();
-
         var spot = await _spotRepository.GetByIdAsync(createPontoonDto.FishingSpotId);
         if (spot == null) return NotFound("Fishing spot not found");
 
-        if (!User.IsInRole(Roles.Admin) && spot.ManagerId != userId && spot.UserId != userId)
+        if (!User.CanManageSpot(spot))
             return Forbid("You don't have permission to add pontoons to this fishing spot");
 
         var pontoon = new Pontoon
@@ -72,16 +69,13 @@ public class PontoonsController : ControllerBase
     [Authorize(Roles = Roles.AdminOrManager)]
     public async Task<IActionResult> UpdatePontoon(int id, UpdatePontoonDto updatePontoonDto)
     {
-        var userId = User.GetUserId();
-        if (userId == null) return Unauthorized();
-
         var pontoon = await _pontoonRepository.GetByIdAsync(id);
         if (pontoon == null) return NotFound();
 
         var spot = await _spotRepository.GetByIdAsync(pontoon.FishingSpotId);
         if (spot == null) return NotFound("Fishing spot not found");
 
-        if (!User.IsInRole(Roles.Admin) && spot.ManagerId != userId && spot.UserId != userId)
+        if (!User.CanManageSpot(spot))
             return Forbid("You don't have permission to edit pontoons on this fishing spot");
 
         if (updatePontoonDto.Name != null)
@@ -107,16 +101,13 @@ public class PontoonsController : ControllerBase
     [Authorize(Roles = Roles.AdminOrManager)]
     public async Task<IActionResult> DeletePontoon(int id)
     {
-        var userId = User.GetUserId();
-        if (userId == null) return Unauthorized();
-
         var pontoon = await _pontoonRepository.GetByIdAsync(id);
         if (pontoon == null) return NotFound();
 
         var spot = await _spotRepository.GetByIdAsync(pontoon.FishingSpotId);
         if (spot == null) return NotFound("Fishing spot not found");
 
-        if (!User.IsInRole(Roles.Admin) && spot.ManagerId != userId && spot.UserId != userId)
+        if (!User.CanManageSpot(spot))
             return Forbid("You don't have permission to delete pontoons from this fishing spot");
 
         await _pontoonRepository.DeleteAsync(id);

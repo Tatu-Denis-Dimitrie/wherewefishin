@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace WhereWeFishin.Core.DTOs;
 
 public class BookingDto
@@ -18,15 +20,19 @@ public class BookingDto
 
 public class CreateBookingDto
 {
+    [Range(1, int.MaxValue)]
     public int FishingSpotId { get; set; }
     public int? PontoonId { get; set; }
     public DateTime StartDate { get; set; }
+
+    [Range(1, 8760)]
     public int DurationHours { get; set; }
     public string? PaymentIntentId { get; set; }
 }
 
 public class UpdateBookingStatusDto
 {
+    [Required]
     public string Status { get; set; } = string.Empty;
 }
 

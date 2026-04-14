@@ -141,18 +141,23 @@
 
   /* Mobile header */
   .page-header {
-    flex-direction: column;
-    gap: 14px;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
     width: 100%;
+  }
+  .btn-back {
+    flex-shrink: 0;
   }
   .header-title {
+    flex: 1;
     flex-direction: column;
     align-items: flex-start;
-    gap: 8px;
-    width: 100%;
+    gap: 6px;
+    min-width: 0;
   }
   .header-title h1 {
-    font-size: 20px;
+    font-size: 18px;
     word-break: break-word;
   }
 

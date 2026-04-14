@@ -52,6 +52,7 @@ export class SpotManager implements OnInit, OnDestroy {
 
   // Spot details editing
   editDescription = '';
+  editPrice: number = 0;
   fishSpeciesInput = '';
   fishSpeciesList: string[] = [];
 
@@ -89,7 +90,6 @@ export class SpotManager implements OnInit, OnDestroy {
       { label: 'Bookings', value: this.statistics.totalBookings, color: '#8cc45c' },
       { label: 'Active', value: this.statistics.activeBookings, color: '#4ecdc4' },
       { label: 'Cancelled', value: this.statistics.cancelledBookings, color: '#ff6b6b' },
-      { label: 'Revenue', value: Math.round(this.statistics.totalRevenue), color: '#feca57' },
       { label: 'Pontoons', value: this.statistics.totalPontoons, color: '#45aaf2' },
       { label: 'Stockings', value: this.statistics.totalStockings, color: '#a55eea' },
     ];
@@ -250,6 +250,7 @@ export class SpotManager implements OnInit, OnDestroy {
         }
         
         this.editDescription = spot.description || '';
+        this.editPrice = spot.pricePerHour ?? 0;
         this.fishSpeciesList = spot.fishSpecies ? JSON.parse(spot.fishSpecies) : [];
 
         setTimeout(() => {
@@ -414,6 +415,29 @@ export class SpotManager implements OnInit, OnDestroy {
 
     if (this.shouldShowMap) {
       this.ensureMapReady();
+
+      if (this.spot) {
+        const centerLat = this.spot.defaultCenterLat ?? this.spot.latitude;
+        const centerLng = this.spot.defaultCenterLng ?? this.spot.longitude;
+        const zoom = this.spot.defaultZoom ?? 18;
+
+        // Cancel any rAF scheduled by refreshMapLayout so we own the re-center
+        if (this.pendingMapRefreshFrame !== null) {
+          cancelAnimationFrame(this.pendingMapRefreshFrame);
+          this.pendingMapRefreshFrame = null;
+        }
+
+        // Double rAF ensures the container is fully laid out before we act
+        this.pendingMapRefreshFrame = requestAnimationFrame(() => {
+          this.pendingMapRefreshFrame = requestAnimationFrame(() => {
+            this.pendingMapRefreshFrame = null;
+            if (!this.map) return;
+            this.map.invalidateSize({ pan: false });
+            this.map.setView([centerLat, centerLng], zoom, { animate: false });
+            this.syncProfileViewportPreview();
+          });
+        });
+      }
       return;
     }
 
@@ -448,7 +472,7 @@ export class SpotManager implements OnInit, OnDestroy {
       }
     }
 
-    this.profileViewportPreview.bringToFront();
+    this.profileViewportPreview!.bringToFront();
   }
 
   private removeProfileViewportPreview(): void {
@@ -978,6 +1002,19 @@ export class SpotManager implements OnInit, OnDestroy {
         this.showToast('Description saved!', 'success');
       },
       error: () => this.showToast('Error saving description', 'error')
+    });
+  }
+
+  savePrice(): void {
+    if (!this.spot) return;
+    this.fishingSpotService.update(this.spot.id, {
+      pricePerHour: this.editPrice
+    }).subscribe({
+      next: () => {
+        this.spot!.pricePerHour = this.editPrice;
+        this.showToast('Price saved!', 'success');
+      },
+      error: () => this.showToast('Error saving price', 'error')
     });
   }
 

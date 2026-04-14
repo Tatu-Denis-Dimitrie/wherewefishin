@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Configuration;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
+using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
 
 namespace WhereWeFishin.Core.Services;
@@ -30,7 +31,7 @@ public class FishRecognitionService : IFishRecognitionService
             UserId = userId,
             FileName = fileName,
             VideoUrl = $"uploads/{fileName}",
-            Status = "Processing",
+            Status = AnalysisStatus.Processing,
             AnalyzedAt = DateTime.UtcNow
         };
 
@@ -73,7 +74,7 @@ public class FishRecognitionService : IFishRecognitionService
 
             analysis.FishCountsJson = JsonSerializer.Serialize(results.FishCounts);
             analysis.DetectionsJson = JsonSerializer.Serialize(results.Detections);
-            analysis.Status = "Completed";
+            analysis.Status = AnalysisStatus.Completed;
             await _videoRepository.UpdateAsync(analysis);
 
             return new AnalysisResultDto { Success = true, Analysis = MapToDto(analysis, results) };
@@ -89,7 +90,7 @@ public class FishRecognitionService : IFishRecognitionService
 
     private async Task<AnalysisResultDto> FailAnalysis(VideoAnalysis analysis, string error)
     {
-        analysis.Status = "Failed";
+        analysis.Status = AnalysisStatus.Failed;
         analysis.ErrorMessage = error;
         try { await _videoRepository.UpdateAsync(analysis); } catch { /* best-effort */ }
         return new AnalysisResultDto { Success = false, Error = error };
@@ -164,7 +165,7 @@ public class FishRecognitionService : IFishRecognitionService
             FishCounts = results.FishCounts,
             Detections = detections,
             AnalyzedAt = entity.AnalyzedAt,
-            Status = entity.Status,
+            Status = entity.Status.ToString(),
             ErrorMessage = entity.ErrorMessage,
             CreatedAt = entity.CreatedAt
         };

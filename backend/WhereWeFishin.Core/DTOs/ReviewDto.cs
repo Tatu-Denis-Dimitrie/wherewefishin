@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace WhereWeFishin.Core.DTOs;
 
 public class ReviewDto
@@ -14,13 +16,22 @@ public class ReviewDto
 
 public class CreateReviewDto
 {
+    [Range(1, int.MaxValue)]
     public int FishingSpotId { get; set; }
+
+    [Required]
+    [Range(1, 5)]
     public int Rating { get; set; }
+
+    [MaxLength(1000)]
     public string? Comment { get; set; }
 }
 
 public class UpdateReviewDto
 {
+    [Range(1, 5)]
     public int? Rating { get; set; }
+
+    [MaxLength(1000)]
     public string? Comment { get; set; }
 }

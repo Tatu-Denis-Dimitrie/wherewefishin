@@ -44,8 +44,7 @@ public class StockingsController : ControllerBase
         var spot = await _spotRepository.GetByIdAsync(spotId);
         if (spot == null) return NotFound("Fishing spot not found");
 
-        var userId = User.GetUserId();
-        if (!User.IsInRole(Roles.Admin) && spot.ManagerId != userId && spot.UserId != userId)
+        if (!User.CanManageSpot(spot))
             return Forbid();
 
         var stocking = new FishStocking
@@ -72,8 +71,7 @@ public class StockingsController : ControllerBase
         var spot = await _spotRepository.GetByIdAsync(spotId);
         if (spot == null) return NotFound();
 
-        var userId = User.GetUserId();
-        if (!User.IsInRole(Roles.Admin) && spot.ManagerId != userId && spot.UserId != userId)
+        if (!User.CanManageSpot(spot))
             return Forbid();
 
         if (dto.StockingDate.HasValue) stocking.StockingDate = dto.StockingDate.Value;
@@ -96,8 +94,7 @@ public class StockingsController : ControllerBase
         var spot = await _spotRepository.GetByIdAsync(spotId);
         if (spot == null) return NotFound();
 
-        var userId = User.GetUserId();
-        if (!User.IsInRole(Roles.Admin) && spot.ManagerId != userId && spot.UserId != userId)
+        if (!User.CanManageSpot(spot))
             return Forbid();
 
         await _stockingRepository.DeleteAsync(id);

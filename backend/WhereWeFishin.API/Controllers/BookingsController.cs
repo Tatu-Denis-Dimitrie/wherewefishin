@@ -412,7 +412,7 @@ public class BookingsController : ControllerBase
                                      s.PontoonId.HasValue ? pontoonMap.GetValueOrDefault(s.PontoonId.Value) : null));
     }
 
-    private static BookingDto MapToDto(FishingSession session, string spotName, string? pontoonName = null) => new()
+    private BookingDto MapToDto(FishingSession session, string spotName, string? pontoonName = null) => new()
     {
         Id = session.Id,
         UserId = session.UserId,
@@ -424,7 +424,7 @@ public class BookingsController : ControllerBase
         DurationHours = session.DurationHours,
         TotalPrice = session.TotalPrice,
         Status = session.Status.ToString(),
-        VerificationToken = session.VerificationToken,
+        VerificationToken = User.IsInRole(Roles.Admin) ? session.VerificationToken : null,
         CreatedAt = session.CreatedAt
     };
 }

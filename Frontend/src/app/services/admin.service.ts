@@ -20,7 +20,6 @@ export interface AdminStats {
   totalSpots: number;
   totalPontoons: number;
   totalReviews: number;
-  totalCatches: number;
 }
 
 export interface UpdateFishingSpot {

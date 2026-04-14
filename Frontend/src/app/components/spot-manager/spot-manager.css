@@ -1,13 +1,20 @@
 @import 'leaflet/dist/leaflet.css';
 
+:host {
+  display: flex;
+  flex: 1 0 auto;
+  min-height: 100%;
+}
+
 /* ---- Page Shell ---- */
 .manager-page {
   position: relative;
   margin: 0;
   padding: 0;
-  min-height: calc(100vh - 80px);
+  min-height: 100%;
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 /* ---- Toast ---- */
@@ -54,25 +61,30 @@
 
 /* ---- Main Layout ---- */
 .manager-layout {
-  display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-  min-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
   flex: 1;
 }
 
 /* ---- Sidebar ---- */
 .manager-page .sidebar {
+  position: fixed;
+  top: var(--safe-area-top);
+  bottom: 0;
+  left: 200px;   /* 20px tucked behind main sidebar (220px - 20px) */
+  width: 280px;  /* 20px hidden + 260px visible */
+  z-index: 98;   /* below main sidebar z-index:100 */
+  overflow-y: auto;
+  background: linear-gradient(180deg, rgba(18, 28, 14, 0.97) 0%, rgba(10, 16, 8, 0.99) 100%);
+  border-right: 1px solid rgba(232, 224, 208, 0.1);
+}
+
+.manager-page .sidebar-inner {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 24px 16px;
-  background: linear-gradient(180deg, rgba(18, 28, 14, 0.97) 0%, rgba(10, 16, 8, 0.99) 100%);
-  border-right: 1px solid rgba(232, 224, 208, 0.1);
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-  flex-shrink: 0;
+  padding: 24px 16px 24px 36px; /* 36px = 20px hidden + 16px visual spacing */
 }
 
 .manager-page .sidebar-back {
@@ -174,14 +186,15 @@
   transition: opacity 0.18s ease, color 0.18s ease;
 }
 
-.manager-page .nav-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-secondary);
-  border-color: rgba(232, 224, 208, 0.08);
-}
-
-.manager-page .nav-btn:hover svg {
-  opacity: 0.85;
+@media (hover: hover) and (pointer: fine) {
+  .manager-page .nav-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border-color: rgba(232, 224, 208, 0.08);
+  }
+  .manager-page .nav-btn:hover svg {
+    opacity: 0.85;
+  }
 }
 
 .manager-page .nav-btn.active {
@@ -224,10 +237,12 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 24px;
-  padding: 28px;
+  /* 260px = visible part of fixed sidebar (280px width − 20px tucked behind main sidebar) */
+  padding: 28px 28px 28px calc(260px + 28px);
   align-items: start;
   align-content: start;
   min-height: 0;
+  flex: 1;
 }
 
 .manager-page .manager-layout.has-map .content-area {
@@ -1006,19 +1021,32 @@
 
 @media (max-width: 820px) {
   .manager-layout {
-    grid-template-columns: 1fr;
+    flex-direction: column;
   }
 
   .manager-page .sidebar {
     position: static;
+    left: auto;
+    width: auto;
+    top: auto;
+    bottom: auto;
+    z-index: auto;
     height: auto;
+    overflow-y: visible;
+    border-right: none;
+    border-bottom: 1px solid rgba(232, 224, 208, 0.1);
+    border-bottom-left-radius: 16px;
+    border-bottom-right-radius: 16px;
+  }
+
+  .manager-page .sidebar-inner {
+    position: static;
+    display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
     gap: 12px;
     padding: 16px;
-    border-right: none;
-    border-bottom: 1px solid rgba(232, 224, 208, 0.1);
   }
 
   .manager-page .sidebar-back {
@@ -1029,6 +1057,11 @@
     margin-bottom: 0;
     flex: 1;
     min-width: 120px;
+  }
+
+  .manager-page .sidebar-spot-switcher {
+    width: 100%;
+    margin-bottom: 0;
   }
 
   .manager-page .sidebar-nav {

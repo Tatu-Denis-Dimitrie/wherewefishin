@@ -111,7 +111,8 @@ export class Admin implements OnInit {
       next: () => {
         user.role = newRole;
         this.successMessage = `${user.username} is now ${newRole}`;
-        this.loadData();
+        this.adminService.clearStatsCache();
+        this.adminService.getStats().subscribe(s => this.stats = s);
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: () => {
@@ -131,8 +132,10 @@ export class Admin implements OnInit {
 
     this.adminService.deleteUser(user.id).subscribe({
       next: () => {
+        this.users = this.users.filter(u => u.id !== user.id);
         this.successMessage = `User "${user.username}" deleted`;
-        this.loadData();
+        this.adminService.clearStatsCache();
+        this.adminService.getStats().subscribe(s => this.stats = s);
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: () => {
@@ -243,8 +246,10 @@ export class Admin implements OnInit {
 
     this.adminService.deleteFishingSpot(spot.id).subscribe({
       next: () => {
+        this.fishingSpots = this.fishingSpots.filter(s => s.id !== spot.id);
         this.successMessage = `Fishing spot "${spot.name}" deleted`;
-        this.loadData();
+        this.adminService.clearStatsCache();
+        this.adminService.getStats().subscribe(s => this.stats = s);
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: () => {

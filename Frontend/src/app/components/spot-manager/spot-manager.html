@@ -28,53 +28,55 @@
 
       <!-- Sidebar — always visible -->
       <aside class="sidebar">
-        <button class="btn-back sidebar-back" (click)="goBack()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-          Back to spot profile
-        </button>
+        <div class="sidebar-inner">
+          <button class="btn-back sidebar-back" (click)="goBack()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to spot profile
+          </button>
 
-        <div class="sidebar-spot-info">
-          <h1 class="sidebar-spot-name">{{ spot.name }}</h1>
-          <p class="sidebar-spot-meta">{{ spot.pricePerHour }} RON/h · {{ pontoons.length }} pontoons</p>
-        </div>
-
-        @if (managedSpots.length > 1) {
-          <div class="sidebar-spot-switcher">
-            <label class="sidebar-spot-switcher-label" for="managed-spot-select">Manage another lake</label>
-            <select
-              id="managed-spot-select"
-              class="sidebar-spot-select"
-              [ngModel]="selectedManagedSpotId"
-              (ngModelChange)="changeManagedSpot($event)">
-              @for (managedSpot of managedSpots; track managedSpot.id) {
-                <option [value]="managedSpot.id">{{ managedSpot.name }}</option>
-              }
-            </select>
-            <p class="sidebar-spot-switcher-hint">{{ managedSpots.length }} lakes available for management</p>
+          <div class="sidebar-spot-info">
+            <h1 class="sidebar-spot-name">{{ spot.name }}</h1>
+            <p class="sidebar-spot-meta">{{ spot.pricePerHour }} RON/h · {{ pontoons.length }} pontoons</p>
           </div>
-        }
 
-        <nav class="sidebar-nav">
-          <button class="nav-btn" [class.active]="activeTab === 'dashboard'" (click)="setActiveTab('dashboard')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-            Dashboard
-          </button>
+          @if (managedSpots.length > 1) {
+            <div class="sidebar-spot-switcher">
+              <label class="sidebar-spot-switcher-label" for="managed-spot-select">Manage another lake</label>
+              <select
+                id="managed-spot-select"
+                class="sidebar-spot-select"
+                [ngModel]="selectedManagedSpotId"
+                (ngModelChange)="changeManagedSpot($event)">
+                @for (managedSpot of managedSpots; track managedSpot.id) {
+                  <option [value]="managedSpot.id">{{ managedSpot.name }}</option>
+                }
+              </select>
+              <p class="sidebar-spot-switcher-hint">{{ managedSpots.length }} lakes available for management</p>
+            </div>
+          }
 
-          <button class="nav-btn" [class.active]="activeTab === 'pontoons'" (click)="setActiveTab('pontoons')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/></svg>
-            Pontoons
-          </button>
+          <nav class="sidebar-nav">
+            <button class="nav-btn" [class.active]="activeTab === 'dashboard'" (click)="setActiveTab('dashboard')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              Dashboard
+            </button>
 
-          <button class="nav-btn" [class.active]="activeTab === 'stocking'" (click)="setActiveTab('stocking')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 16s1-4 5-4 5 4 9 4 5-4 5-4"/><path d="M2 12s1-4 5-4 5 4 9 4 5-4 5-4"/></svg>
-            Stocking
-          </button>
+            <button class="nav-btn" [class.active]="activeTab === 'pontoons'" (click)="setActiveTab('pontoons')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/></svg>
+              Pontoons
+            </button>
 
-          <button class="nav-btn" [class.active]="activeTab === 'settings'" (click)="setActiveTab('settings')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            Settings
-          </button>
-        </nav>
+            <button class="nav-btn" [class.active]="activeTab === 'stocking'" (click)="setActiveTab('stocking')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 16s1-4 5-4 5 4 9 4 5-4 5-4"/><path d="M2 12s1-4 5-4 5 4 9 4 5-4 5-4"/></svg>
+              Stocking
+            </button>
+
+            <button class="nav-btn" [class.active]="activeTab === 'settings'" (click)="setActiveTab('settings')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              Settings
+            </button>
+          </nav>
+        </div>
       </aside>
 
       <!-- Content area -->
@@ -442,9 +444,7 @@
             <p class="help-text">
               Position and zoom the map as you want users to see it, then click "Save Current View".
             </p>
-            <p class="map-preview-note">
-              The dashed frame on the map shows the area visible in the profile page map card.
-            </p>
+
             <div class="map-view-actions">
               <button class="btn-save" (click)="saveMapView()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
@@ -469,6 +469,21 @@
             </div>
             <div class="map-view-actions">
               <button class="btn-save" (click)="saveDescription()">Save Description</button>
+            </div>
+          </div>
+
+          <!-- Price -->
+          <div class="control-card">
+            <h3 class="card-title">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Price per Hour
+            </h3>
+            <div class="field">
+              <label>Price (RON / h) — set 0 for free</label>
+              <input type="number" [(ngModel)]="editPrice" min="0" step="1" placeholder="e.g.: 50">
+            </div>
+            <div class="map-view-actions">
+              <button class="btn-save" (click)="savePrice()">Save Price</button>
             </div>
           </div>
 
@@ -559,15 +574,7 @@
 
         <!-- Map (shared, hidden when not needed) -->
         <div class="map-wrapper" [class.is-hidden]="!shouldShowMap">
-          @if (activeTab === 'settings') {
-            <div class="map-preview-badge">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <path d="M8 8h8v8H8z" stroke-dasharray="3 2"/>
-              </svg>
-              Profile Map Preview
-            </div>
-          }
+
           <div id="manager-map" class="manager-map"></div>
         </div>
       </div>

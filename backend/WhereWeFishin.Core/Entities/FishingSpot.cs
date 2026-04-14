@@ -20,7 +20,6 @@ public class FishingSpot : BaseEntity
 
     public User User { get; set; } = null!;
     public User? Manager { get; set; }
-    public ICollection<Catch> Catches { get; set; } = new List<Catch>();
     public ICollection<FishingSession> Sessions { get; set; } = new List<FishingSession>();
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
     public ICollection<Pontoon> Pontoons { get; set; } = new List<Pontoon>();

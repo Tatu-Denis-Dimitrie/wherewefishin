@@ -42,8 +42,7 @@ public class EmployeesController : ControllerBase
 
         if (!User.IsInRole(Roles.Admin))
         {
-            var userId = User.GetUserId();
-            if (spot.ManagerId != userId && spot.UserId != userId)
+            if (!User.CanManageSpot(spot))
                 return Forbid();
         }
 
@@ -80,8 +79,7 @@ public class EmployeesController : ControllerBase
 
         if (!User.IsInRole(Roles.Admin))
         {
-            var userId = User.GetUserId();
-            if (spot.ManagerId != userId && spot.UserId != userId)
+            if (!User.CanManageSpot(spot))
                 return Forbid();
         }
 
@@ -126,8 +124,7 @@ public class EmployeesController : ControllerBase
         if (!User.IsInRole(Roles.Admin))
         {
             var spot = await _spotRepository.GetByIdAsync(assignment.FishingSpotId);
-            var userId = User.GetUserId();
-            if (spot?.ManagerId != userId && spot?.UserId != userId)
+            if (spot == null || !User.CanManageSpot(spot))
                 return Forbid();
         }
 
@@ -188,18 +185,18 @@ public class EmployeesController : ControllerBase
 
         var session = await _sessionRepository.GetByIdAsync(dto.BookingId);
         if (session == null)
-            return Ok(new QrVerificationResultDto { Valid = false, Message = "Rezervarea nu a fost găsită." });
+            return Ok(new QrVerificationResultDto { Valid = false, Message = "Booking not found." });
 
         if (string.IsNullOrWhiteSpace(session.VerificationToken) ||
             !string.Equals(session.VerificationToken, dto.VerificationToken, StringComparison.Ordinal))
-            return Ok(new QrVerificationResultDto { Valid = false, Message = "Codul QR este invalid." });
+            return Ok(new QrVerificationResultDto { Valid = false, Message = "Invalid QR code." });
 
         if (User.IsInRole(Roles.Employee))
         {
             var assignments = await _spotEmployeeRepository.FindAsync(
                 e => e.UserId == userId.Value && e.FishingSpotId == session.FishingSpotId);
             if (!assignments.Any())
-                return Ok(new QrVerificationResultDto { Valid = false, Message = "Nu ești asignat acestei bălți." });
+                return Ok(new QrVerificationResultDto { Valid = false, Message = "You are not assigned to this spot." });
         }
 
         var spot = await _spotRepository.GetByIdAsync(session.FishingSpotId);
@@ -217,13 +214,13 @@ public class EmployeesController : ControllerBase
 
         string message;
         if (isCancelled)
-            message = "Rezervarea a fost anulată.";
+            message = "Booking was cancelled.";
         else if (isExpired)
-            message = "Sesiunea de pescuit a expirat.";
+            message = "Fishing session has expired.";
         else if (!isActive)
-            message = $"Sesiunea nu a început încă. Începe la: {session.StartDate:dd.MM.yyyy HH:mm} UTC.";
+            message = $"Session has not started yet. Starts at: {session.StartDate:dd.MM.yyyy HH:mm} UTC.";
         else
-            message = "Rezervare validă! Sesiunea de pescuit este activă.";
+            message = "Valid booking! Fishing session is active.";
 
         return Ok(new QrVerificationResultDto
         {

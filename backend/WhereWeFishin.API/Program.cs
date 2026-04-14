@@ -1,8 +1,10 @@
 using System.IO.Compression;
 using System.Net;
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.Server.IIS;
 using Microsoft.EntityFrameworkCore;
@@ -170,10 +172,20 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("AuthEndpoints", opt =>
+    {
+        opt.PermitLimit = 10;
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.QueueLimit = 0;
+    });
+});
+
 // Register Repositories
 builder.Services.AddScoped<IRepository<User>, Repository<User>>();
 builder.Services.AddScoped<IRepository<FishingSpot>, FishingSpotRepository>();
-builder.Services.AddScoped<IRepository<Catch>, Repository<Catch>>();
 builder.Services.AddScoped<IRepository<VideoAnalysis>, Repository<VideoAnalysis>>();
 builder.Services.AddScoped<IRepository<FishingSession>, Repository<FishingSession>>();
 builder.Services.AddScoped<IRepository<Review>, Repository<Review>>();
@@ -208,6 +220,21 @@ builder.Services.AddHttpClient();
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+
+// Security headers
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    if (!context.Request.IsHttps == false)
+    {
+        context.Response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
+    }
+    await next();
+});
+
+app.UseRateLimiter();
 
 await app.InitializeDatabaseAsync();
 
@@ -256,7 +283,7 @@ app.UseStaticFiles(new StaticFileOptions
     {
         ctx.Context.Response.Headers["Accept-Ranges"] = "bytes";
         
-        ctx.Context.Response.Headers["Cache-Control"] = "public, max-age=3600";
+        ctx.Context.Response.Headers["Cache-Control"] = "private, max-age=3600";
     }
 });
 

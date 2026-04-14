@@ -12,6 +12,8 @@ import { BookingService } from '../../services/booking.service';
 import { Booking } from '../../models/booking.model';
 import { UserService } from '../../services/user.service';
 import { User } from '../../models/user.model';
+import { RoutingService } from '../../services/routing.service';
+import { GeocodingService } from '../../services/geocoding.service';
 import * as L from 'leaflet';
 
 interface NearbySpot {
@@ -116,6 +118,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     private bookingService: BookingService,
     private router: Router,
     private userService: UserService,
+    private routingService: RoutingService,
+    private geocodingService: GeocodingService,
     private cdr: ChangeDetectorRef,
     private zone: NgZone
   ) {}
@@ -268,19 +272,6 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.map.addLayer(this.markersLayer);
   }
 
-  private loadSpots(): void {
-    this.fishingSpotService.getAll().subscribe({
-      next: (spots) => {
-        this.spots = spots.map(s => this.enrichSpotWithSpecies(s));
-        this.fishSpeciesOptions = Array.from(new Set(this.spots.flatMap(s => s.parsedFishSpecies))).sort((a, b) => a.localeCompare(b));
-        if (this.selectedFishSpecies !== 'all' && !this.fishSpeciesOptions.includes(this.selectedFishSpecies)) {
-          this.selectedFishSpecies = 'all';
-        }
-        this.applyFishFilter();
-      },
-      error: () => this.showToast('Failed to load fishing spots', 'error')
-    });
-  }
 
   private renderMarkers(): void {
     if (!this.markersLayer) return;  // map not yet initialized (cache sync emit in ngOnInit)
@@ -348,29 +339,12 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
   showRouteOnMap(spot: FishingSpot): void {
     const drawRoute = (origin: L.LatLng) => {
-      const url =
-        `https://router.project-osrm.org/route/v1/driving/` +
-        `${origin.lng},${origin.lat};${spot.longitude},${spot.latitude}` +
-        `?overview=full&geometries=geojson`;
-
-      fetch(url)
-        .then(r => r.json())
-        .then(data => {
-          if (data.code !== 'Ok' || !data.routes?.length) {
-            this.showToast('Could not calculate route', 'error');
-            return;
-          }
-          const route = data.routes[0];
-          const distKm = (route.distance / 1000).toFixed(1);
-          const durationMin = Math.round(route.duration / 60);
-          const durationText = durationMin >= 60
-            ? `${Math.floor(durationMin / 60)}h ${durationMin % 60}min`
-            : `${durationMin} min`;
-
+      this.routingService.getRoute(origin.lng, origin.lat, spot.longitude, spot.latitude).subscribe({
+        next: (result) => {
           // Remove existing route
           if (this.routeLayer) this.map.removeLayer(this.routeLayer);
 
-          this.routeLayer = L.geoJSON(route.geometry, {
+          this.routeLayer = L.geoJSON(result.geometry as any, {
             style: {
               color: '#3b82f6',
               weight: 5,
@@ -381,14 +355,15 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
           }).addTo(this.map);
 
           this.routeInfo = {
-            distance: `${distKm} km`,
-            duration: durationText,
+            distance: `${result.distanceKm} km`,
+            duration: result.durationText,
             spotName: spot.name
           };
 
           this.map.fitBounds(this.routeLayer.getBounds(), { padding: [50, 50] });
-        })
-        .catch(() => this.showToast('Error calculating route', 'error'));
+        },
+        error: () => this.showToast('Error calculating route', 'error')
+      });
     };
 
     if (this.userLatLng) {
@@ -510,7 +485,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         this.showToast('Fishing spot added!', 'success');
         this.adminService.clearStatsCache();
         this.cancelAddSpot();
-        this.loadSpots();
+        this.loadDashboardData();
       },
       error: () => this.showToast('Failed to create spot', 'error')
     });
@@ -541,7 +516,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       next: () => {
         this.showToast(`"${spot.name}" deleted`, 'success');
         this.adminService.clearStatsCache();
-        this.loadSpots();
+        this.loadDashboardData();
       },
       error: () => this.showToast('Failed to delete spot', 'error')
     });
@@ -764,12 +739,11 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
     this.userLocationMarker.on('click', () => {
       this.userLocationMarker!.openPopup();
-      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latlng.lat}&lon=${latlng.lng}&format=json&accept-language=ro`)
-        .then(r => r.json())
-        .then((data: { display_name?: string; address?: Record<string, string> }) => {
-          const a = data.address ?? {};
+      this.geocodingService.reverseGeocode(latlng.lat, latlng.lng).subscribe({
+        next: (result) => {
+          const a = result.address ?? {};
           const place = [a['road'], a['suburb'], a['city'] ?? a['town'] ?? a['village'], a['county']]
-            .filter(Boolean).join(', ') || data.display_name || `${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
+            .filter(Boolean).join(', ') || result.displayName;
           this.userLocationMarker!.setPopupContent(
             `<div style="font-family:inherit;min-width:160px">
               <b style="font-size:13px;color:#1e293b">Locația ta</b><br>
@@ -777,15 +751,16 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
               <span style="font-size:11px;color:#64748b;margin-top:3px;display:block">Acuratețe GPS: <b>${accuracyText}</b></span>
             </div>`
           );
-        })
-        .catch(() => {
+        },
+        error: () => {
           this.userLocationMarker!.setPopupContent(
             `<div style="font-family:inherit">
               <b style="font-size:13px;color:#1e293b">Locația ta</b><br>
               <span style="font-size:11px;color:#64748b">Acuratețe GPS: <b>${accuracyText}</b></span>
             </div>`
           );
-        });
+        }
+      });
     });
 
     this.rebuildClosestSpots();

@@ -37,7 +37,6 @@
         <ul class="auth-side-points" aria-label="Platform highlights">
           <li>Live availability on spots</li>
           <li>Fast booking in seconds</li>
-          <li>Catch history and profile stats</li>
         </ul>
       </div>
     </aside>
@@ -55,10 +54,12 @@
       </div>
 
       <div class="auth-main-content">
-        <router-outlet></router-outlet>
-      </div>
+        <div class="auth-main-body">
+          <router-outlet></router-outlet>
+        </div>
 
-      <app-site-footer class="auth-page-footer"></app-site-footer>
+        <app-site-footer class="auth-page-footer"></app-site-footer>
+      </div>
     </section>
   </div>
 </div>

@@ -17,6 +17,7 @@ export class Layout implements OnInit, OnDestroy {
   isAdmin = false;
   isEmployee = false;
   isManager = false;
+  isSpotManagerRoute = false;
   managerSpotId: number | null = null;
   mobileMenuOpen = false;
   private navigationSubscription?: Subscription;
@@ -32,6 +33,7 @@ export class Layout implements OnInit, OnDestroy {
     this.isAdmin = this.authService.isAdmin();
     this.isEmployee = this.authService.isEmployee();
     this.isManager = this.authService.isManagerOrAdmin();
+    this.updateRouteState(this.router.url);
 
     if (this.isManager) {
       const userId = this.authService.getUserId();
@@ -46,7 +48,8 @@ export class Layout implements OnInit, OnDestroy {
     // Keep a single, predictable scroll container for routed app pages.
     this.navigationSubscription = this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe(() => {
+      .subscribe((event) => {
+        this.updateRouteState(event.urlAfterRedirects);
         this.closeMobileMenu();
         this.resetPageScroll();
       });
@@ -75,5 +78,9 @@ export class Layout implements OnInit, OnDestroy {
         content.scrollTop = 0;
       }
     });
+  }
+
+  private updateRouteState(url: string): void {
+    this.isSpotManagerRoute = /^\/spots\/[^/]+\/manage(?:$|[?#/])/.test(url);
   }
 }

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace WhereWeFishin.Core.DTOs;
 
 public class PontoonDto
@@ -16,12 +18,18 @@ public class PontoonDto
 
 public class CreatePontoonDto
 {
+    [Range(1, int.MaxValue)]
     public int FishingSpotId { get; set; }
+
+    [Required]
+    [MaxLength(100)]
     public string Name { get; set; } = string.Empty;
     public double SouthWestLat { get; set; }
     public double SouthWestLng { get; set; }
     public double NorthEastLat { get; set; }
     public double NorthEastLng { get; set; }
+
+    [MaxLength(20)]
     public string? Color { get; set; }
     public string? Coordinates { get; set; }
 }

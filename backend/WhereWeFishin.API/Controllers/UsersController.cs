@@ -10,6 +10,7 @@ namespace WhereWeFishin.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class UsersController : ControllerBase
 {
     private readonly IRepository<User> _userRepository;
@@ -22,6 +23,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = Roles.Admin)]
     public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
     {
         var users = await _userRepository.GetAllAsync();
@@ -29,6 +31,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("managers")]
+    [Authorize(Roles = Roles.AdminOrManager)]
     public async Task<ActionResult<IEnumerable<UserDto>>> GetManagers()
     {
         var managers = await _userRepository.FindAsync(u => u.Role == UserRole.Manager);
@@ -38,6 +41,10 @@ public class UsersController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<UserDto>> GetUser(int id)
     {
+        var callerId = User.GetUserId();
+        if (callerId != id && !User.IsInRole(Roles.Admin))
+            return Forbid();
+
         var user = await _userRepository.GetByIdAsync(id);
         return user == null ? NotFound() : Ok(MapToDto(user));
     }
@@ -45,6 +52,10 @@ public class UsersController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateUser(int id, UpdateUserDto updateUserDto)
     {
+        var callerId = User.GetUserId();
+        if (callerId != id && !User.IsInRole(Roles.Admin))
+            return Forbid();
+
         var user = await _userRepository.GetByIdAsync(id);
         if (user == null) return NotFound();
 
@@ -57,13 +68,12 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost("{id}/change-password")]
-    [Authorize]
     public async Task<IActionResult> ChangePassword(int id, [FromBody] ChangePasswordRequest request)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
         var callerId = User.GetUserId();
-        if (callerId != id && !User.IsInRole("Admin"))
+        if (callerId != id && !User.IsInRole(Roles.Admin))
             return Forbid();
 
         var success = await _authService.ChangePasswordAsync(id, request);
@@ -73,6 +83,10 @@ public class UsersController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteUser(int id)
     {
+        var callerId = User.GetUserId();
+        if (callerId != id && !User.IsInRole(Roles.Admin))
+            return Forbid();
+
         if (!await _userRepository.ExistsAsync(id)) return NotFound();
         
         await _userRepository.DeleteAsync(id);

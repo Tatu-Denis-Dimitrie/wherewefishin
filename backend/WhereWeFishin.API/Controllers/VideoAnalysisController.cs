@@ -107,7 +107,7 @@ public class VideoAnalysisController : ControllerBase
 
     [HttpGet("user/{userId}")]
     [Authorize]
-    public async Task<ActionResult<IEnumerable<VideoAnalysisDto>>> GetUserAnalyses(int userId)
+    public async Task<ActionResult<IEnumerable<VideoAnalysisSummaryDto>>> GetUserAnalyses(int userId)
     {
         var currentUserId = User.GetUserId();
         if (currentUserId == null)
@@ -119,7 +119,7 @@ public class VideoAnalysisController : ControllerBase
         var userAnalyses = await _videoRepository.FindAsync(a => a.UserId == userId);
         var sorted = userAnalyses
             .OrderByDescending(a => a.CreatedAt)
-            .Select(a => MapToDto(a, includeDetections: false));
+            .Select(MapToSummaryDto);
 
         return Ok(sorted);
     }
@@ -311,7 +311,36 @@ public class VideoAnalysisController : ControllerBase
             FishCounts = fishCounts,
             Detections = detections,
             AnalyzedAt = entity.AnalyzedAt,
-            Status = entity.Status,
+            Status = entity.Status.ToString(),
+            ErrorMessage = entity.ErrorMessage,
+            CreatedAt = entity.CreatedAt
+        };
+    }
+
+    private VideoAnalysisSummaryDto MapToSummaryDto(VideoAnalysis entity)
+    {
+        string videoUrl = entity.VideoUrl;
+        if (!string.IsNullOrEmpty(videoUrl) && !videoUrl.StartsWith("http"))
+        {
+            var request = HttpContext.Request;
+            var baseUrl = $"{request.Scheme}://{request.Host}";
+            videoUrl = $"{baseUrl}/{videoUrl}";
+        }
+
+        return new VideoAnalysisSummaryDto
+        {
+            Id = entity.Id,
+            UserId = entity.UserId,
+            FileName = entity.FileName,
+            VideoUrl = videoUrl,
+            ProcessedVideoUrl = entity.ProcessedVideoUrl,
+            Duration = entity.Duration,
+            TotalDetections = entity.TotalDetections,
+            TotalUniqueFish = entity.TotalDetections,
+            DominantFishType = entity.DominantFishType,
+            DominantFishCount = entity.DominantFishCount,
+            AnalyzedAt = entity.AnalyzedAt,
+            Status = entity.Status.ToString(),
             ErrorMessage = entity.ErrorMessage,
             CreatedAt = entity.CreatedAt
         };

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { shareReplay, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface Pontoon {
@@ -42,11 +43,28 @@ export interface UpdatePontoon {
 })
 export class PontoonService {
   private apiUrl = `${environment.apiBaseUrl}/api/pontoons`;
+  private spotCache = new Map<number, Observable<Pontoon[]>>();
 
   constructor(private http: HttpClient) {}
 
   getSpotPontoons(fishingSpotId: number): Observable<Pontoon[]> {
-    return this.http.get<Pontoon[]>(`${this.apiUrl}/spot/${fishingSpotId}`);
+    if (!this.spotCache.has(fishingSpotId)) {
+      this.spotCache.set(
+        fishingSpotId,
+        this.http.get<Pontoon[]>(`${this.apiUrl}/spot/${fishingSpotId}`).pipe(
+          shareReplay({ bufferSize: 1, refCount: true })
+        )
+      );
+    }
+    return this.spotCache.get(fishingSpotId)!;
+  }
+
+  clearCache(fishingSpotId?: number): void {
+    if (fishingSpotId != null) {
+      this.spotCache.delete(fishingSpotId);
+    } else {
+      this.spotCache.clear();
+    }
   }
 
   getPontoon(id: number): Observable<Pontoon> {
@@ -54,14 +72,20 @@ export class PontoonService {
   }
 
   createPontoon(pontoon: CreatePontoon): Observable<Pontoon> {
-    return this.http.post<Pontoon>(this.apiUrl, pontoon);
+    return this.http.post<Pontoon>(this.apiUrl, pontoon).pipe(
+      tap(() => this.clearCache(pontoon.fishingSpotId))
+    );
   }
 
   updatePontoon(id: number, pontoon: UpdatePontoon): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/${id}`, pontoon);
+    return this.http.put<void>(`${this.apiUrl}/${id}`, pontoon).pipe(
+      tap(() => this.clearCache())
+    );
   }
 
   deletePontoon(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      tap(() => this.clearCache())
+    );
   }
 }

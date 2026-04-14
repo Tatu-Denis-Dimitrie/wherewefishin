@@ -12,8 +12,8 @@ using WhereWeFishin.Database.Context;
 namespace WhereWeFishin.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260306170639_HardDeleteCatchCascade")]
-    partial class HardDeleteCatchCascade
+    [Migration("20260414173449_RemoveCatches")]
+    partial class RemoveCatches
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,7 @@ namespace WhereWeFishin.Database.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("WhereWeFishin.Core.Entities.Catch", b =>
+            modelBuilder.Entity("WhereWeFishin.Core.Entities.FishStocking", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -33,51 +33,38 @@ namespace WhereWeFishin.Database.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CaughtAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("FishSpecies")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("FishingSpotId")
                         .HasColumnType("int");
 
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<double?>("Length")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("float(8)");
-
                     b.Property<string>("Notes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Species")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("StockingDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<double?>("Weight")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("float(8)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("FishingSpotId");
 
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Catches");
+                    b.ToTable("FishStockings");
                 });
 
             modelBuilder.Entity("WhereWeFishin.Core.Entities.FishingSession", b =>
@@ -100,6 +87,9 @@ namespace WhereWeFishin.Database.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("PontoonId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
@@ -118,9 +108,17 @@ namespace WhereWeFishin.Database.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
+                    b.Property<string>("VerificationToken")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("FishingSpotId");
+
+                    b.HasIndex("PontoonId");
+
+                    b.HasIndex("Status");
 
                     b.HasIndex("UserId");
 
@@ -138,9 +136,23 @@ namespace WhereWeFishin.Database.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<double?>("DefaultCenterLat")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("float(9)");
+
+                    b.Property<double?>("DefaultCenterLng")
+                        .HasPrecision(9, 6)
+                        .HasColumnType("float(9)");
+
+                    b.Property<int?>("DefaultZoom")
+                        .HasColumnType("int");
+
                     b.Property<string>("Description")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("FishSpecies")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
@@ -185,6 +197,137 @@ namespace WhereWeFishin.Database.Migrations
                     b.ToTable("FishingSpots");
                 });
 
+            modelBuilder.Entity("WhereWeFishin.Core.Entities.Pontoon", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Color")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Coordinates")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FishingSpotId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<double>("NorthEastLat")
+                        .HasPrecision(18, 15)
+                        .HasColumnType("float(18)");
+
+                    b.Property<double>("NorthEastLng")
+                        .HasPrecision(18, 15)
+                        .HasColumnType("float(18)");
+
+                    b.Property<double>("SouthWestLat")
+                        .HasPrecision(18, 15)
+                        .HasColumnType("float(18)");
+
+                    b.Property<double>("SouthWestLng")
+                        .HasPrecision(18, 15)
+                        .HasColumnType("float(18)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FishingSpotId");
+
+                    b.ToTable("Pontoons");
+                });
+
+            modelBuilder.Entity("WhereWeFishin.Core.Entities.Review", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FishingSpotId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FishingSpotId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "FishingSpotId")
+                        .IsUnique();
+
+                    b.ToTable("Reviews");
+                });
+
+            modelBuilder.Entity("WhereWeFishin.Core.Entities.SpotEmployee", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FishingSpotId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FishingSpotId");
+
+                    b.HasIndex("UserId", "FishingSpotId")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("SpotEmployees");
+                });
+
             modelBuilder.Entity("WhereWeFishin.Core.Entities.User", b =>
                 {
                     b.Property<int>("Id")
@@ -215,6 +358,12 @@ namespace WhereWeFishin.Database.Migrations
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PasswordResetCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("PasswordResetCodeExpiry")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("ProfilePictureUrl")
                         .HasColumnType("nvarchar(max)");
@@ -329,23 +478,15 @@ namespace WhereWeFishin.Database.Migrations
                     b.ToTable("VideoAnalyses");
                 });
 
-            modelBuilder.Entity("WhereWeFishin.Core.Entities.Catch", b =>
+            modelBuilder.Entity("WhereWeFishin.Core.Entities.FishStocking", b =>
                 {
                     b.HasOne("WhereWeFishin.Core.Entities.FishingSpot", "FishingSpot")
-                        .WithMany("Catches")
+                        .WithMany("FishStockings")
                         .HasForeignKey("FishingSpotId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WhereWeFishin.Core.Entities.User", "User")
-                        .WithMany("Catches")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("FishingSpot");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("WhereWeFishin.Core.Entities.FishingSession", b =>
@@ -356,6 +497,10 @@ namespace WhereWeFishin.Database.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("WhereWeFishin.Core.Entities.Pontoon", "Pontoon")
+                        .WithMany()
+                        .HasForeignKey("PontoonId");
+
                     b.HasOne("WhereWeFishin.Core.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -363,6 +508,8 @@ namespace WhereWeFishin.Database.Migrations
                         .IsRequired();
 
                     b.Navigation("FishingSpot");
+
+                    b.Navigation("Pontoon");
 
                     b.Navigation("User");
                 });
@@ -384,6 +531,55 @@ namespace WhereWeFishin.Database.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("WhereWeFishin.Core.Entities.Pontoon", b =>
+                {
+                    b.HasOne("WhereWeFishin.Core.Entities.FishingSpot", "FishingSpot")
+                        .WithMany("Pontoons")
+                        .HasForeignKey("FishingSpotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FishingSpot");
+                });
+
+            modelBuilder.Entity("WhereWeFishin.Core.Entities.Review", b =>
+                {
+                    b.HasOne("WhereWeFishin.Core.Entities.FishingSpot", "FishingSpot")
+                        .WithMany("Reviews")
+                        .HasForeignKey("FishingSpotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WhereWeFishin.Core.Entities.User", "User")
+                        .WithMany("Reviews")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("FishingSpot");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("WhereWeFishin.Core.Entities.SpotEmployee", b =>
+                {
+                    b.HasOne("WhereWeFishin.Core.Entities.FishingSpot", "FishingSpot")
+                        .WithMany("SpotEmployees")
+                        .HasForeignKey("FishingSpotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WhereWeFishin.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FishingSpot");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("WhereWeFishin.Core.Entities.VideoAnalysis", b =>
                 {
                     b.HasOne("WhereWeFishin.Core.Entities.User", "User")
@@ -397,16 +593,22 @@ namespace WhereWeFishin.Database.Migrations
 
             modelBuilder.Entity("WhereWeFishin.Core.Entities.FishingSpot", b =>
                 {
-                    b.Navigation("Catches");
+                    b.Navigation("FishStockings");
+
+                    b.Navigation("Pontoons");
+
+                    b.Navigation("Reviews");
 
                     b.Navigation("Sessions");
+
+                    b.Navigation("SpotEmployees");
                 });
 
             modelBuilder.Entity("WhereWeFishin.Core.Entities.User", b =>
                 {
-                    b.Navigation("Catches");
-
                     b.Navigation("FishingSpots");
+
+                    b.Navigation("Reviews");
                 });
 #pragma warning restore 612, 618
         }

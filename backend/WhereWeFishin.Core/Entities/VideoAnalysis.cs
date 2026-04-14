@@ -1,3 +1,5 @@
+using WhereWeFishin.Core.Enums;
+
 namespace WhereWeFishin.Core.Entities;
 
 public class VideoAnalysis : BaseEntity
@@ -21,6 +23,6 @@ public class VideoAnalysis : BaseEntity
     
     public DateTime AnalyzedAt { get; set; }
     
-    public string Status { get; set; } = "Pending";
+    public AnalysisStatus Status { get; set; } = AnalysisStatus.Pending;
     public string? ErrorMessage { get; set; }
 }

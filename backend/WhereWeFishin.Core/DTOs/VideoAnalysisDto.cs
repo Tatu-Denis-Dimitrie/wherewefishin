@@ -1,5 +1,23 @@
 namespace WhereWeFishin.Core.DTOs;
 
+public class VideoAnalysisSummaryDto
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public string FileName { get; set; } = string.Empty;
+    public string VideoUrl { get; set; } = string.Empty;
+    public string? ProcessedVideoUrl { get; set; }
+    public double Duration { get; set; }
+    public int TotalDetections { get; set; }
+    public int? TotalUniqueFish { get; set; }
+    public string? DominantFishType { get; set; }
+    public int DominantFishCount { get; set; }
+    public DateTime AnalyzedAt { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string? ErrorMessage { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
 public class VideoAnalysisDto
 {
     public int Id { get; set; }

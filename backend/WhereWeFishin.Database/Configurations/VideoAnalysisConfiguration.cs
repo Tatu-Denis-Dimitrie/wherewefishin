@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using WhereWeFishin.Core.Entities;
+using WhereWeFishin.Core.Enums;
 
 namespace WhereWeFishin.Database.Configurations;
 
@@ -23,7 +24,10 @@ public class VideoAnalysisConfiguration : IEntityTypeConfiguration<VideoAnalysis
 
         builder.Property(v => v.Status)
             .IsRequired()
-            .HasMaxLength(50);
+            .HasMaxLength(50)
+            .HasConversion(
+                v => v.ToString(),
+                v => Enum.Parse<AnalysisStatus>(v));
 
         builder.Property(v => v.DominantFishType)
             .HasMaxLength(100);

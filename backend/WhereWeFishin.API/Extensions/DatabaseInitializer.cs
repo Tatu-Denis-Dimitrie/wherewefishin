@@ -36,10 +36,6 @@ public static class DatabaseInitializer
                 logger.LogInformation("Added {Count} fishing spots", fishingSpots.Count);
 
                 var spotIds = fishingSpots.Select(f => f.Id).ToList();
-                var catches = WhereWeFishin.Database.MockData.SeedData.GetCatches(userIds, spotIds);
-                await context.Catches.AddRangeAsync(catches);
-                await context.SaveChangesAsync();
-                logger.LogInformation("Added {Count} catches", catches.Count);
 
                 logger.LogInformation("Seeding completed! TEST ACCOUNTS:");
                 logger.LogInformation("  Admin: admin / admin123");

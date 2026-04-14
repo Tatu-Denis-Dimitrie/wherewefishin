@@ -22,61 +22,6 @@ namespace WhereWeFishin.Database.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("WhereWeFishin.Core.Entities.Catch", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CaughtAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("FishSpecies")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("FishingSpotId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<double?>("Length")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("float(8)");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<double?>("Weight")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("float(8)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FishingSpotId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Catches");
-                });
-
             modelBuilder.Entity("WhereWeFishin.Core.Entities.FishStocking", b =>
                 {
                     b.Property<int>("Id")
@@ -530,25 +475,6 @@ namespace WhereWeFishin.Database.Migrations
                     b.ToTable("VideoAnalyses");
                 });
 
-            modelBuilder.Entity("WhereWeFishin.Core.Entities.Catch", b =>
-                {
-                    b.HasOne("WhereWeFishin.Core.Entities.FishingSpot", "FishingSpot")
-                        .WithMany("Catches")
-                        .HasForeignKey("FishingSpotId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("WhereWeFishin.Core.Entities.User", "User")
-                        .WithMany("Catches")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("FishingSpot");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("WhereWeFishin.Core.Entities.FishStocking", b =>
                 {
                     b.HasOne("WhereWeFishin.Core.Entities.FishingSpot", "FishingSpot")
@@ -664,8 +590,6 @@ namespace WhereWeFishin.Database.Migrations
 
             modelBuilder.Entity("WhereWeFishin.Core.Entities.FishingSpot", b =>
                 {
-                    b.Navigation("Catches");
-
                     b.Navigation("FishStockings");
 
                     b.Navigation("Pontoons");
@@ -679,8 +603,6 @@ namespace WhereWeFishin.Database.Migrations
 
             modelBuilder.Entity("WhereWeFishin.Core.Entities.User", b =>
                 {
-                    b.Navigation("Catches");
-
                     b.Navigation("FishingSpots");
 
                     b.Navigation("Reviews");

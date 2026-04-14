@@ -2,7 +2,6 @@ import { Component, OnInit, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { FishingSpotService } from '../../services/fishing-spot.service';
 import { FishingSpot } from '../../models/fishing-spot.model';
 import { CartService } from '../../services/cart.service';
@@ -13,7 +12,6 @@ import { StockingService } from '../../services/stocking.service';
 import { BookedPeriod } from '../../models/booking.model';
 import { FishStocking } from '../../models/stocking.model';
 import { AuthService } from '../../services/auth.service';
-import { environment } from '../../../environments/environment';
 import * as L from 'leaflet';
 
 @Component({
@@ -72,7 +70,6 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private http: HttpClient,
     private fishingSpotService: FishingSpotService,
     public cartService: CartService,
     private reviewService: ReviewService,
@@ -98,7 +95,7 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
         this.loading = false;
         this.loadReviews(id);
         this.loadPontoons(id);
-        this.loadFishSpecies(id);
+        this.loadFishSpecies();
         this.loadStockings(id);
         setTimeout(() => this.initMap(), 100);
       },
@@ -223,25 +220,8 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
     });
   }
 
-  private loadFishSpecies(spotId: number): void {
-    // Start with manually managed species from spot
-    const managedSpecies: string[] = this.spot?.fishSpecies ? JSON.parse(this.spot.fishSpecies) : [];
-    
-    this.http.get<string[]>(`${environment.apiBaseUrl}/api/catches/spot/${spotId}/species`).subscribe({
-      next: (catchSpecies) => {
-        // Combine both, deduplicate (case-insensitive)
-        const seen = new Set(managedSpecies.map(s => s.toLowerCase()));
-        const combined = [...managedSpecies];
-        for (const s of catchSpecies) {
-          if (!seen.has(s.toLowerCase())) {
-            seen.add(s.toLowerCase());
-            combined.push(s);
-          }
-        }
-        this.fishSpecies = combined;
-      },
-      error: () => this.fishSpecies = managedSpecies
-    });
+  private loadFishSpecies(): void {
+    this.fishSpecies = this.spot?.fishSpecies ? JSON.parse(this.spot.fishSpecies) : [];
   }
 
   private loadStockings(spotId: number): void {

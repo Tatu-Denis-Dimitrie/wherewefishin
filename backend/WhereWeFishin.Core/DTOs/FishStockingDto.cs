@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace WhereWeFishin.Core.DTOs;
 
 public class FishStockingDto
@@ -14,15 +16,28 @@ public class FishStockingDto
 public class CreateFishStockingDto
 {
     public DateTime StockingDate { get; set; }
+
+    [Required]
+    [MaxLength(100)]
     public string Species { get; set; } = string.Empty;
+
+    [Range(1, 1_000_000)]
     public int Quantity { get; set; }
+
+    [MaxLength(500)]
     public string? Notes { get; set; }
 }
 
 public class UpdateFishStockingDto
 {
     public DateTime? StockingDate { get; set; }
+
+    [MaxLength(100)]
     public string? Species { get; set; }
+
+    [Range(1, 1_000_000)]
     public int? Quantity { get; set; }
+
+    [MaxLength(500)]
     public string? Notes { get; set; }
 }
