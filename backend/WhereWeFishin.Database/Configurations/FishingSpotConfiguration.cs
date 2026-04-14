@@ -45,10 +45,5 @@ public class FishingSpotConfiguration : IEntityTypeConfiguration<FishingSpot>
 
         builder.Property(f => f.DefaultCenterLng)
             .HasPrecision(9, 6);
-
-        builder.HasMany(f => f.Catches)
-            .WithOne(c => c.FishingSpot)
-            .HasForeignKey(c => c.FishingSpotId)
-            .OnDelete(DeleteBehavior.Cascade);
     }
 }

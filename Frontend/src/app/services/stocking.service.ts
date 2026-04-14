@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { FishStocking, CreateFishStocking, SpotStatistics } from '../models/stocking.model';
+import { FishStocking, CreateFishStocking } from '../models/stocking.model';
+import { SpotStatistics } from '../models/fishing-spot.model';
 
 @Injectable({
   providedIn: 'root'

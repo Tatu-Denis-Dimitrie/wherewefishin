@@ -59,8 +59,6 @@ public class AuthService : IAuthService
             FirstName = request.FirstName,
             LastName = request.LastName,
             Role = UserRole.User,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
         };
 
         await _userRepository.AddAsync(user);
@@ -99,7 +97,6 @@ public class AuthService : IAuthService
 
         user.PasswordResetCode = code;
         user.PasswordResetCodeExpiry = DateTime.UtcNow.AddMinutes(15);
-        user.UpdatedAt = DateTime.UtcNow;
         await _userRepository.UpdateAsync(user);
 
         try
@@ -133,7 +130,6 @@ public class AuthService : IAuthService
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         user.PasswordResetCode = null;
         user.PasswordResetCodeExpiry = null;
-        user.UpdatedAt = DateTime.UtcNow;
         await _userRepository.UpdateAsync(user);
 
         return true;
@@ -158,7 +154,7 @@ public class AuthService : IAuthService
             issuer: _configuration["Jwt:Issuer"],
             audience: _configuration["Jwt:Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(double.Parse(_configuration["Jwt:ExpirationHours"] ?? "24")),
+            expires: DateTime.UtcNow.AddHours(GetExpirationHours()),
             signingCredentials: credentials
         );
 
@@ -174,7 +170,6 @@ public class AuthService : IAuthService
             return false;
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
-        user.UpdatedAt = DateTime.UtcNow;
         await _userRepository.UpdateAsync(user);
         return true;
     }
@@ -182,8 +177,7 @@ public class AuthService : IAuthService
     private AuthResponse BuildAuthResponse(User user)
     {
         var token = GenerateJwtToken(user.Id, user.Username, user.Email, user.Role.ToString());
-        var expiresAt = DateTime.UtcNow.AddHours(
-            double.Parse(_configuration["Jwt:ExpirationHours"] ?? "24"));
+        var expiresAt = DateTime.UtcNow.AddHours(GetExpirationHours());
 
         return new AuthResponse
         {
@@ -196,5 +190,10 @@ public class AuthService : IAuthService
             FirstName = user.FirstName,
             LastName = user.LastName
         };
+    }
+
+    private double GetExpirationHours()
+    {
+        return double.TryParse(_configuration["Jwt:ExpirationHours"], out var hours) ? hours : 24;
     }
 }

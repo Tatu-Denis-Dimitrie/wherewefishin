@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { AdminService, AdminStats } from '../../services/admin.service';
 import { User } from '../../models/user.model';
-import { FishingSpot } from '../../services/fishing-spot.service';
+import { FishingSpot } from '../../models/fishing-spot.model';
 
 @Component({
   selector: 'app-admin',

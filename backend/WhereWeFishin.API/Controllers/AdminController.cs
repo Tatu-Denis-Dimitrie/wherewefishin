@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Enums;
+using WhereWeFishin.Core.Extensions;
 using WhereWeFishin.Core.Interfaces;
 using WhereWeFishin.Database.Context;
 
@@ -18,6 +20,7 @@ public class AdminController : ControllerBase
     private readonly IRepository<VideoAnalysis> _videoRepository;
     private readonly IRepository<FishingSpot> _spotRepository;
     private readonly IRepository<FishingSession> _sessionRepository;
+    private readonly IOutputCacheStore _cacheStore;
     private readonly ApplicationDbContext _context;
 
     public AdminController(
@@ -25,12 +28,14 @@ public class AdminController : ControllerBase
         IRepository<VideoAnalysis> videoRepository,
         IRepository<FishingSpot> spotRepository,
         IRepository<FishingSession> sessionRepository,
+        IOutputCacheStore cacheStore,
         ApplicationDbContext context)
     {
         _userRepository = userRepository;
         _videoRepository = videoRepository;
         _spotRepository = spotRepository;
         _sessionRepository = sessionRepository;
+        _cacheStore = cacheStore;
         _context = context;
     }
 
@@ -121,7 +126,6 @@ public class AdminController : ControllerBase
         if (user.Role == UserRole.Admin) return BadRequest(new { message = "Cannot disable admin users" });
 
         user.IsDeleted = !dto.Enable;
-        user.UpdatedAt = DateTime.UtcNow;
         await _userRepository.UpdateAsync(user);
 
         return Ok(new { message = dto.Enable ? "User enabled" : "User disabled", userId = id });
@@ -137,7 +141,6 @@ public class AdminController : ControllerBase
             return BadRequest(new { message = "Invalid role. Valid: User, Employee, Manager, Admin" });
 
         user.Role = newRole;
-        user.UpdatedAt = DateTime.UtcNow;
         await _userRepository.UpdateAsync(user);
 
         return Ok(new { message = $"Role updated to {newRole}", userId = id });
@@ -177,10 +180,12 @@ public class AdminController : ControllerBase
             UserId = s.UserId,
             ManagerId = s.ManagerId,
             ManagerName = s.Manager != null
-                ? $"{s.Manager.FirstName} {s.Manager.LastName}".Trim().Length > 0
-                    ? $"{s.Manager.FirstName} {s.Manager.LastName}".Trim()
-                    : s.Manager.Username
+                ? UserExtensions.GetDisplayName(s.Manager.FirstName, s.Manager.LastName, s.Manager.Username)
                 : null,
+            DefaultZoom = s.DefaultZoom,
+            DefaultCenterLat = s.DefaultCenterLat,
+            DefaultCenterLng = s.DefaultCenterLng,
+            FishSpecies = s.FishSpecies,
             CreatedAt = s.CreatedAt
         }));
     }
@@ -198,9 +203,23 @@ public class AdminController : ControllerBase
         if (dto.ImageUrl != null) spot.ImageUrl = dto.ImageUrl;
         if (dto.PricePerHour.HasValue) spot.PricePerHour = dto.PricePerHour.Value;
         if (dto.ManagerId.HasValue) spot.ManagerId = dto.ManagerId.Value;
+        else if (dto.ClearManager) spot.ManagerId = null;
+        if (dto.ResetDefaultMapView)
+        {
+            spot.DefaultZoom = null;
+            spot.DefaultCenterLat = null;
+            spot.DefaultCenterLng = null;
+        }
+        else
+        {
+            if (dto.DefaultZoom.HasValue) spot.DefaultZoom = dto.DefaultZoom;
+            if (dto.DefaultCenterLat.HasValue) spot.DefaultCenterLat = dto.DefaultCenterLat;
+            if (dto.DefaultCenterLng.HasValue) spot.DefaultCenterLng = dto.DefaultCenterLng;
+        }
+        if (dto.FishSpecies != null) spot.FishSpecies = dto.FishSpecies;
 
-        spot.UpdatedAt = DateTime.UtcNow;
         await _spotRepository.UpdateAsync(spot);
+        await _cacheStore.EvictByTagAsync("fishingspots", default);
 
         return Ok(new { message = "Fishing spot updated successfully", spotId = id });
     }
@@ -212,6 +231,7 @@ public class AdminController : ControllerBase
         if (spot == null) return NotFound();
 
         await _spotRepository.DeleteAsync(id);
+        await _cacheStore.EvictByTagAsync("fishingspots", default);
         return NoContent();
     }
 }

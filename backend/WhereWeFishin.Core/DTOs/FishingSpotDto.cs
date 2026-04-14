@@ -27,7 +27,6 @@ public class CreateFishingSpotDto
     public double Longitude { get; set; }
     public string? ImageUrl { get; set; }
     public decimal PricePerHour { get; set; } = 0;
-    public int UserId { get; set; }
     public int? ManagerId { get; set; }
 }
 
@@ -40,9 +39,23 @@ public class UpdateFishingSpotDto
     public string? ImageUrl { get; set; }
     public decimal? PricePerHour { get; set; }
     public int? ManagerId { get; set; }
+    public bool ClearManager { get; set; }
     public int? DefaultZoom { get; set; }
     public double? DefaultCenterLat { get; set; }
     public double? DefaultCenterLng { get; set; }
     public bool ResetDefaultMapView { get; set; }
     public string? FishSpecies { get; set; }
+}
+
+public class SpotStatisticsDto
+{
+    public int TotalBookings { get; set; }
+    public int ActiveBookings { get; set; }
+    public int CancelledBookings { get; set; }
+    public decimal TotalRevenue { get; set; }
+    public int TotalReviews { get; set; }
+    public double? AverageRating { get; set; }
+    public int TotalPontoons { get; set; }
+    public int TotalEmployees { get; set; }
+    public int TotalStockings { get; set; }
 }

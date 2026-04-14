@@ -19,7 +19,7 @@
   @if (!loading && notFound) {
     <div class="state-center">
       <p class="not-found-msg">Fishing spot not found.</p>
-      <button class="btn-back" (click)="goBack()">Go Back</button>
+      <button class="btn-back" (click)="goBack()">Back to profile</button>
     </div>
   }
 
@@ -30,13 +30,29 @@
       <aside class="sidebar">
         <button class="btn-back sidebar-back" (click)="goBack()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-          Back
+          Back to spot profile
         </button>
 
         <div class="sidebar-spot-info">
           <h1 class="sidebar-spot-name">{{ spot.name }}</h1>
           <p class="sidebar-spot-meta">{{ spot.pricePerHour }} RON/h · {{ pontoons.length }} pontoons</p>
         </div>
+
+        @if (managedSpots.length > 1) {
+          <div class="sidebar-spot-switcher">
+            <label class="sidebar-spot-switcher-label" for="managed-spot-select">Manage another lake</label>
+            <select
+              id="managed-spot-select"
+              class="sidebar-spot-select"
+              [ngModel]="selectedManagedSpotId"
+              (ngModelChange)="changeManagedSpot($event)">
+              @for (managedSpot of managedSpots; track managedSpot.id) {
+                <option [value]="managedSpot.id">{{ managedSpot.name }}</option>
+              }
+            </select>
+            <p class="sidebar-spot-switcher-hint">{{ managedSpots.length }} lakes available for management</p>
+          </div>
+        }
 
         <nav class="sidebar-nav">
           <button class="nav-btn" [class.active]="activeTab === 'dashboard'" (click)="setActiveTab('dashboard')">

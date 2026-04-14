@@ -1,11 +1,6 @@
-namespace WhereWeFishin.Core.Entities;
+using WhereWeFishin.Core.Enums;
 
-public enum SessionStatus
-{
-    Pending,
-    Confirmed,
-    Cancelled
-}
+namespace WhereWeFishin.Core.Entities;
 
 public class FishingSession : BaseEntity
 {

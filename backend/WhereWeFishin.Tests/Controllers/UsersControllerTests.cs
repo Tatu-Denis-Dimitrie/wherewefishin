@@ -10,12 +10,14 @@ namespace WhereWeFishin.Tests.Controllers;
 public class UsersControllerTests
 {
     private readonly IRepository<User> _userRepository;
+    private readonly IAuthService _authService;
     private readonly UsersController _controller;
 
     public UsersControllerTests()
     {
         _userRepository = Substitute.For<IRepository<User>>();
-        _controller = new UsersController(_userRepository);
+        _authService = Substitute.For<IAuthService>();
+        _controller = new UsersController(_userRepository, _authService);
     }
 
     [Fact]

@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { shareReplay } from 'rxjs/operators';
 import { User } from '../models/user.model';
-import { FishingSpot } from './fishing-spot.service';
+import { FishingSpot } from '../models/fishing-spot.model';
 import { environment } from '../../environments/environment';
 
 export interface AdminStats {

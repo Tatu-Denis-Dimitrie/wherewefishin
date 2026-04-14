@@ -3,34 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { shareReplay, tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-
-export interface FishingSpot {
-  id: number;
-  name: string;
-  description?: string;
-  latitude: number;
-  longitude: number;
-  imageUrl?: string;
-  pricePerHour: number;
-  userId: number;
-  managerId?: number;
-  managerName?: string;
-  defaultZoom?: number;
-  defaultCenterLat?: number;
-  defaultCenterLng?: number;
-  fishSpecies?: string;
-  createdAt: Date;
-}
-
-export interface CreateFishingSpot {
-  name: string;
-  description?: string;
-  latitude: number;
-  longitude: number;
-  pricePerHour?: number;
-  userId: number;
-  managerId?: number;
-}
+import { FishingSpot, CreateFishingSpot, UpdateFishingSpot } from '../models/fishing-spot.model';
 
 @Injectable({
   providedIn: 'root'
@@ -50,7 +23,7 @@ export class FishingSpotService {
     return this.allCache$;
   }
 
-  private clearCache(): void {
+  clearCache(): void {
     this.allCache$ = null;
   }
 
@@ -62,7 +35,7 @@ export class FishingSpotService {
     return this.http.post<FishingSpot>(this.apiUrl, spot).pipe(tap(() => this.clearCache()));
   }
 
-  update(id: number, spot: Partial<FishingSpot>): Observable<void> {
+  update(id: number, spot: UpdateFishingSpot): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}`, spot).pipe(tap(() => this.clearCache()));
   }
 

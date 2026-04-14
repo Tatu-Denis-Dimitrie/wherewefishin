@@ -2,14 +2,17 @@ import { Component, HostListener, OnDestroy, OnInit, ViewEncapsulation } from '@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FishingSpotService, FishingSpot } from '../../services/fishing-spot.service';
+import { Subscription } from 'rxjs';
+import { FishingSpotService } from '../../services/fishing-spot.service';
+import { FishingSpot } from '../../models/fishing-spot.model';
 import { PontoonService, Pontoon, CreatePontoon } from '../../services/pontoon.service';
 import { EmployeeService } from '../../services/employee.service';
 import { AuthService } from '../../services/auth.service';
 import { StockingService } from '../../services/stocking.service';
 import { SpotEmployee } from '../../models/employee.model';
 import { User } from '../../models/user.model';
-import { FishStocking, SpotStatistics } from '../../models/stocking.model';
+import { FishStocking } from '../../models/stocking.model';
+import { SpotStatistics } from '../../models/fishing-spot.model';
 import * as L from 'leaflet';
 
 @Component({
@@ -21,6 +24,8 @@ import * as L from 'leaflet';
 })
 export class SpotManager implements OnInit, OnDestroy {
   spot: FishingSpot | null = null;
+  managedSpots: FishingSpot[] = [];
+  selectedManagedSpotId: number | null = null;
   pontoons: Pontoon[] = [];
   loading = true;
   notFound = false;
@@ -114,8 +119,10 @@ export class SpotManager implements OnInit, OnDestroy {
   private drawingPolygon: L.Polygon | null = null;
   private drawingMarkers: L.CircleMarker[] = [];
   private editVertexMarkers: L.CircleMarker[] = [];
+  private touchListeners: { el: HTMLElement; type: string; fn: EventListener }[] = [];
   private profileViewportPreview: L.Rectangle | null = null;
   private pendingMapRefreshFrame: number | null = null;
+  private routeParamSubscription: Subscription | null = null;
 
   private readonly detailMapHeight = 220;
   private readonly detailPageDesktopMaxWidth = 1100;
@@ -149,10 +156,91 @@ export class SpotManager implements OnInit, OnDestroy {
       return;
     }
 
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+    this.loadManagedSpots();
+
+    this.routeParamSubscription = this.route.paramMap.subscribe(params => {
+      const id = Number(params.get('id'));
+      if (!Number.isFinite(id) || id <= 0) {
+        this.loading = false;
+        this.notFound = true;
+        return;
+      }
+
+      this.loadSpot(id);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.routeParamSubscription?.unsubscribe();
+    this.routeParamSubscription = null;
+
+    if (this.pendingMapRefreshFrame !== null) {
+      cancelAnimationFrame(this.pendingMapRefreshFrame);
+      this.pendingMapRefreshFrame = null;
+    }
+
+    for (const listener of this.touchListeners) {
+      listener.el.removeEventListener(listener.type, listener.fn);
+    }
+    this.touchListeners = [];
+
+    this.removeProfileViewportPreview();
+    if (this.map) {
+      this.map.remove();
+      this.map = null;
+    }
+  }
+
+  private loadManagedSpots(): void {
+    const userId = this.authService.getUserId();
+    const isAdmin = this.authService.isAdmin();
+    if (!isAdmin && !userId) return;
+
+    this.fishingSpotService.getAll().subscribe({
+      next: (spots) => {
+        this.managedSpots = spots
+          .filter(spot => isAdmin || spot.managerId === userId || spot.userId === userId)
+          .sort((left, right) => left.name.localeCompare(right.name));
+
+        if (this.spot) {
+          this.selectedManagedSpotId = this.spot.id;
+        }
+      }
+    });
+  }
+
+  private resetSpotState(): void {
+    this.cancelEdit();
+    this.isDrawingMode = false;
+    this.drawingPoints = [];
+    this.clearDrawingPreview();
+    this.pontoons = [];
+    this.statistics = null;
+    this.stockings = [];
+    this.spotEmployees = [];
+    this.availableEmployees = [];
+    this.loadingEmployees = false;
+    this.loadingStats = false;
+    this.loadingStockings = false;
+
+    if (this.map) {
+      this.map.remove();
+      this.map = null;
+    }
+
+    this.pontoonLayers.clear();
+    this.profileViewportPreview = null;
+  }
+
+  private loadSpot(id: number): void {
+    this.loading = true;
+    this.notFound = false;
+    this.resetSpotState();
+
     this.fishingSpotService.getById(id).subscribe({
       next: (spot) => {
         this.spot = spot;
+        this.selectedManagedSpotId = spot.id;
         this.loading = false;
         
         const userId = this.authService.getUserId();
@@ -176,23 +264,11 @@ export class SpotManager implements OnInit, OnDestroy {
         }, 100);
       },
       error: () => {
+        this.spot = null;
         this.loading = false;
         this.notFound = true;
       }
     });
-  }
-
-  ngOnDestroy(): void {
-    if (this.pendingMapRefreshFrame !== null) {
-      cancelAnimationFrame(this.pendingMapRefreshFrame);
-      this.pendingMapRefreshFrame = null;
-    }
-
-    this.removeProfileViewportPreview();
-    if (this.map) {
-      this.map.remove();
-      this.map = null;
-    }
   }
 
   @HostListener('window:resize')
@@ -323,7 +399,10 @@ export class SpotManager implements OnInit, OnDestroy {
       }
 
       layer.bindTooltip(pontoon.name, { permanent: false, direction: 'center' });
-      layer.on('click', () => this.selectPontoon(pontoon));
+      layer.on('click', (e: L.LeafletMouseEvent) => {
+        L.DomEvent.stopPropagation(e);
+        this.selectPontoon(pontoon);
+      });
       this.pontoonLayers.set(pontoon.id, layer);
     });
 
@@ -418,8 +497,7 @@ export class SpotManager implements OnInit, OnDestroy {
 
   toggleDrawingMode(): void {
     this.isDrawingMode = !this.isDrawingMode;
-    this.editingPontoonId = null;
-    this.clearEditVertexMarkers();
+    this.cancelEdit();
 
     if (this.isDrawingMode) {
       if (this.map) {
@@ -440,7 +518,18 @@ export class SpotManager implements OnInit, OnDestroy {
   }
 
   private onMapClick(e: L.LeafletMouseEvent): void {
-    if (!this.isDrawingMode || !this.map) return;
+    if (!this.map) return;
+
+    if (!this.isDrawingMode) {
+      if (this.editingPontoonId !== null) {
+        if (this.isLatLngWithinSelectedPontoon(e.latlng)) {
+          return;
+        }
+
+        this.cancelEdit();
+      }
+      return;
+    }
 
     const clickLatLng = e.latlng;
 
@@ -609,6 +698,10 @@ export class SpotManager implements OnInit, OnDestroy {
   private makeVertexDraggable(marker: L.CircleMarker, index: number, pontoon: Pontoon): void {
     let dragging = false;
 
+    marker.on('click', (e: L.LeafletMouseEvent) => {
+      L.DomEvent.stopPropagation(e);
+    });
+
     marker.on('mousedown', (e: L.LeafletMouseEvent) => {
       L.DomEvent.stopPropagation(e);
       (e as any).originalEvent?.preventDefault();
@@ -642,7 +735,7 @@ export class SpotManager implements OnInit, OnDestroy {
       this.map!.dragging.disable();
     });
 
-    this.map!.getContainer().addEventListener('touchmove', (te: TouchEvent) => {
+    const touchMoveHandler = (te: TouchEvent) => {
       if (!dragging) return;
       te.preventDefault();
       const touch = te.touches[0];
@@ -654,14 +747,22 @@ export class SpotManager implements OnInit, OnDestroy {
       const latLng = this.map!.containerPointToLatLng(containerPoint);
       marker.setLatLng(latLng);
       this.updatePolygonFromVertices(pontoon);
-    }, { passive: false });
+    };
 
-    this.map!.getContainer().addEventListener('touchend', () => {
+    const touchEndHandler = () => {
       if (!dragging) return;
       dragging = false;
       this.map!.dragging.enable();
       this.saveVertexPositions(pontoon);
-    });
+    };
+
+    const container = this.map!.getContainer();
+    container.addEventListener('touchmove', touchMoveHandler, { passive: false });
+    container.addEventListener('touchend', touchEndHandler);
+    this.touchListeners.push(
+      { el: container, type: 'touchmove', fn: touchMoveHandler as EventListener },
+      { el: container, type: 'touchend', fn: touchEndHandler as EventListener }
+    );
   }
 
   private updatePolygonFromVertices(pontoon: Pontoon): void {
@@ -704,6 +805,70 @@ export class SpotManager implements OnInit, OnDestroy {
   private clearEditVertexMarkers(): void {
     this.editVertexMarkers.forEach(m => m.remove());
     this.editVertexMarkers = [];
+    for (const listener of this.touchListeners) {
+      listener.el.removeEventListener(listener.type, listener.fn);
+    }
+    this.touchListeners = [];
+  }
+
+  private isLatLngWithinSelectedPontoon(latLng: L.LatLng): boolean {
+    if (!this.map || this.editingPontoonId === null) return false;
+
+    const layer = this.pontoonLayers.get(this.editingPontoonId);
+    if (!layer) return false;
+
+    if (layer instanceof L.Rectangle) {
+      return layer.getBounds().contains(latLng);
+    }
+
+    if (!(layer instanceof L.Polygon)) {
+      return false;
+    }
+
+    const rawLatLngs = layer.getLatLngs();
+    const polygonPoints = Array.isArray(rawLatLngs[0])
+      ? rawLatLngs[0] as L.LatLng[]
+      : rawLatLngs as L.LatLng[];
+
+    return this.isLatLngOnPolygonEdge(latLng, polygonPoints) || this.isLatLngInPolygon(latLng, polygonPoints);
+  }
+
+  private isLatLngOnPolygonEdge(latLng: L.LatLng, polygonPoints: L.LatLng[]): boolean {
+    if (!this.map || polygonPoints.length < 2) return false;
+
+    const target = this.map.latLngToContainerPoint(latLng);
+    for (let index = 0; index < polygonPoints.length; index++) {
+      const start = this.map.latLngToContainerPoint(polygonPoints[index]);
+      const end = this.map.latLngToContainerPoint(polygonPoints[(index + 1) % polygonPoints.length]);
+      if (L.LineUtil.pointToSegmentDistance(target, start, end) <= 8) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  private isLatLngInPolygon(latLng: L.LatLng, polygonPoints: L.LatLng[]): boolean {
+    if (polygonPoints.length < 3) return false;
+
+    let isInside = false;
+    const targetLat = latLng.lat;
+    const targetLng = latLng.lng;
+
+    for (let index = 0, previousIndex = polygonPoints.length - 1; index < polygonPoints.length; previousIndex = index++) {
+      const currentPoint = polygonPoints[index];
+      const previousPoint = polygonPoints[previousIndex];
+
+      const intersects = ((currentPoint.lat > targetLat) !== (previousPoint.lat > targetLat))
+        && (targetLng < ((previousPoint.lng - currentPoint.lng) * (targetLat - currentPoint.lat))
+          / ((previousPoint.lat - currentPoint.lat) || Number.EPSILON) + currentPoint.lng);
+
+      if (intersects) {
+        isInside = !isInside;
+      }
+    }
+
+    return isInside;
   }
 
   updatePontoon(): void {
@@ -788,7 +953,7 @@ export class SpotManager implements OnInit, OnDestroy {
     
     this.fishingSpotService.update(this.spot.id, {
       resetDefaultMapView: true
-    } as any).subscribe({
+    }).subscribe({
       next: () => {
         this.spot!.defaultZoom = undefined;
         this.spot!.defaultCenterLat = undefined;
@@ -838,7 +1003,7 @@ export class SpotManager implements OnInit, OnDestroy {
     const json = JSON.stringify(this.fishSpeciesList);
     this.fishingSpotService.update(this.spot.id, {
       fishSpecies: json
-    } as any).subscribe({
+    }).subscribe({
       next: () => {
         this.spot!.fishSpecies = json;
         this.showToast('Fish species updated!', 'success');
@@ -848,7 +1013,22 @@ export class SpotManager implements OnInit, OnDestroy {
   }
 
   goBack(): void {
+    if (this.spot) {
+      this.router.navigate(['/spots', this.spot.id]);
+      return;
+    }
+
     this.router.navigate(['/profile']);
+  }
+
+  changeManagedSpot(spotId: number | string | null): void {
+    const nextSpotId = Number(spotId);
+    if (!Number.isFinite(nextSpotId) || !nextSpotId || nextSpotId === this.spot?.id) {
+      this.selectedManagedSpotId = this.spot?.id ?? null;
+      return;
+    }
+
+    this.router.navigate(['/spots', nextSpotId, 'manage']);
   }
 
   // ---- Employee Management ----

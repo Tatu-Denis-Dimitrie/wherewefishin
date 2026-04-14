@@ -5,6 +5,7 @@ using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Enums;
+using WhereWeFishin.Core.Extensions;
 using WhereWeFishin.Core.Interfaces;
 
 namespace WhereWeFishin.API.Controllers;
@@ -59,6 +60,9 @@ public class FishingSpotsController : ControllerBase
     [Authorize(Roles = Roles.AdminOrManager)]
     public async Task<ActionResult<FishingSpotDto>> CreateFishingSpot(CreateFishingSpotDto createSpotDto)
     {
+        var userId = User.GetUserId();
+        if (userId == null) return Unauthorized();
+
         var spot = new FishingSpot
         {
             Name = createSpotDto.Name,
@@ -67,7 +71,7 @@ public class FishingSpotsController : ControllerBase
             Longitude = createSpotDto.Longitude,
             ImageUrl = createSpotDto.ImageUrl,
             PricePerHour = createSpotDto.PricePerHour,
-            UserId = createSpotDto.UserId,
+            UserId = userId.Value,
             ManagerId = createSpotDto.ManagerId
         };
 
@@ -90,7 +94,7 @@ public class FishingSpotsController : ControllerBase
         spot.ImageUrl = updateSpotDto.ImageUrl ?? spot.ImageUrl;
         spot.PricePerHour = updateSpotDto.PricePerHour ?? spot.PricePerHour;
         if (updateSpotDto.ManagerId.HasValue) spot.ManagerId = updateSpotDto.ManagerId;
-        else if (updateSpotDto.ManagerId == null && updateSpotDto.Name != null) spot.ManagerId = null;
+        else if (updateSpotDto.ClearManager) spot.ManagerId = null;
         if (updateSpotDto.ResetDefaultMapView)
         {
             spot.DefaultZoom = null;
@@ -166,9 +170,7 @@ public class FishingSpotsController : ControllerBase
         UserId = spot.UserId,
         ManagerId = spot.ManagerId,
         ManagerName = spot.Manager != null
-            ? $"{spot.Manager.FirstName} {spot.Manager.LastName}".Trim().Length > 0
-                ? $"{spot.Manager.FirstName} {spot.Manager.LastName}".Trim()
-                : spot.Manager.Username
+            ? UserExtensions.GetDisplayName(spot.Manager.FirstName, spot.Manager.LastName, spot.Manager.Username)
             : null,
         DefaultZoom = spot.DefaultZoom,
         DefaultCenterLat = spot.DefaultCenterLat,

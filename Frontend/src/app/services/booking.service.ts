@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { shareReplay, tap } from 'rxjs/operators';
 import {
@@ -55,9 +55,9 @@ export class BookingService {
   }
 
   getBookedPeriods(pontoonId?: number, spotId?: number): Observable<BookedPeriod[]> {
-    const params: string[] = [];
-    if (pontoonId) params.push(`pontoonId=${pontoonId}`);
-    else if (spotId) params.push(`spotId=${spotId}`);
-    return this.http.get<BookedPeriod[]>(`${this.apiUrl}/booked-periods?${params.join('&')}`);
+    let params = new HttpParams();
+    if (pontoonId) params = params.set('pontoonId', pontoonId.toString());
+    else if (spotId) params = params.set('spotId', spotId.toString());
+    return this.http.get<BookedPeriod[]>(`${this.apiUrl}/booked-periods`, { params });
   }
 }

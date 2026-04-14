@@ -44,7 +44,6 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
 
     public virtual async Task<T> AddAsync(T entity, CancellationToken cancellationToken = default)
     {
-        entity.CreatedAt = DateTime.UtcNow;
         await _dbSet.AddAsync(entity, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
         return entity;
@@ -52,7 +51,6 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
 
     public virtual async Task UpdateAsync(T entity, CancellationToken cancellationToken = default)
     {
-        entity.UpdatedAt = DateTime.UtcNow;
         _dbSet.Update(entity);
         await _context.SaveChangesAsync(cancellationToken);
     }
@@ -63,7 +61,6 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
         if (entity != null)
         {
             entity.IsDeleted = true;
-            entity.UpdatedAt = DateTime.UtcNow;
             await UpdateAsync(entity, cancellationToken);
         }
     }

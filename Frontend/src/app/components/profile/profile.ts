@@ -2,10 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { VideoAnalysisService } from '../../services/video-analysis.service';
-import { FishingSpotService, FishingSpot } from '../../services/fishing-spot.service';
+import { FishingSpotService } from '../../services/fishing-spot.service';
+import { FishingSpot } from '../../models/fishing-spot.model';
 import { AdminService, AdminStats } from '../../services/admin.service';
 import { BookingService } from '../../services/booking.service';
 import { User, UpdateUser } from '../../models/user.model';
@@ -99,40 +102,41 @@ export class Profile implements OnInit {
 
     this.loadingStats = true;
 
-    // Load user's video analyses (for all roles)
-    this.videoAnalysisService.getUserAnalyses(userId).subscribe({
-      next: (analyses) => {
+    const sources: Record<string, any> = {
+      analyses: this.videoAnalysisService.getUserAnalyses(userId).pipe(catchError(() => of([] as VideoAnalysis[])))
+    };
+
+    if (this.authService.isManagerOrAdmin()) {
+      sources['spots'] = this.fishingSpotService.getAll().pipe(catchError(() => of([] as FishingSpot[])));
+    }
+
+    if (this.authService.isAdmin()) {
+      sources['adminStats'] = this.adminService.getStats().pipe(catchError(() => of(null)));
+    }
+
+    forkJoin(sources).subscribe({
+      next: (results: any) => {
+        const analyses = results['analyses'] as VideoAnalysis[];
         this.userAnalysesCount = analyses.length;
-        this.userCompletedCount = analyses.filter(a => a.status === 'Completed').length;
+        this.userCompletedCount = analyses.filter((a: VideoAnalysis) => a.status === 'Completed').length;
         this.recentAnalyses = analyses.slice(0, 3);
+
+        if (results['spots']) {
+          const spots = results['spots'] as FishingSpot[];
+          this.userSpots = spots.filter(s => s.managerId === userId || s.userId === userId);
+          this.userSpotsCount = this.userSpots.length;
+        }
+
+        if (results['adminStats'] !== undefined) {
+          this.adminStats = results['adminStats'];
+        }
+
         this.loadingStats = false;
       },
       error: () => {
         this.loadingStats = false;
       }
     });
-
-    // Load fishing spots for Manager and Admin
-    if (this.authService.isManagerOrAdmin()) {
-      this.fishingSpotService.getAll().subscribe({
-        next: (spots) => {
-          // Filter spots where user is manager or owner
-          this.userSpots = spots.filter(s => s.managerId === userId || s.userId === userId);
-          this.userSpotsCount = this.userSpots.length;
-        },
-        error: () => {}
-      });
-    }
-
-    // Load admin stats for Admin only
-    if (this.authService.isAdmin()) {
-      this.adminService.getStats().subscribe({
-        next: (stats) => {
-          this.adminStats = stats;
-        },
-        error: () => {}
-      });
-    }
   }
 
   loadUserProfile(): void {
@@ -153,10 +157,9 @@ export class Profile implements OnInit {
         };
         this.loading = false;
       },
-      error: (err) => {
+      error: () => {
         this.error = 'Failed to load profile';
         this.loading = false;
-        console.error('Error loading profile:', err);
       }
     });
   }
@@ -198,10 +201,9 @@ export class Profile implements OnInit {
           this.successMessage = '';
         }, 3000);
       },
-      error: (err) => {
+      error: () => {
         this.error = 'Failed to update profile';
         this.loading = false;
-        console.error('Error updating profile:', err);
       }
     });
   }

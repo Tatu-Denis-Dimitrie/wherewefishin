@@ -20,7 +20,9 @@ public class SpotEmployeeConfiguration : IEntityTypeConfiguration<SpotEmployee>
             .HasForeignKey(e => e.FishingSpotId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(e => new { e.UserId, e.FishingSpotId }).IsUnique();
+        builder.HasIndex(e => new { e.UserId, e.FishingSpotId })
+            .IsUnique()
+            .HasFilter("[IsDeleted] = 0");
         builder.HasIndex(e => e.FishingSpotId);
     }
 }

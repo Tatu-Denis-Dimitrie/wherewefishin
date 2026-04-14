@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
-import { FishingSpotService, FishingSpot, CreateFishingSpot } from '../../services/fishing-spot.service';
+import { FishingSpotService } from '../../services/fishing-spot.service';
+import { FishingSpot, CreateFishingSpot } from '../../models/fishing-spot.model';
 import { AdminService, AdminStats } from '../../services/admin.service';
 import { VideoAnalysisService } from '../../services/video-analysis.service';
 import { BookingService } from '../../services/booking.service';
@@ -501,7 +502,6 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       latitude: this.newSpotLat,
       longitude: this.newSpotLng,
       pricePerHour: this.newSpotPrice,
-      userId: userId,
       managerId: this.newSpotManagerId ?? undefined
     };
 
