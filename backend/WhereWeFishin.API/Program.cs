@@ -175,11 +175,16 @@ builder.Services.AddCors(options =>
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-    options.AddFixedWindowLimiter("AuthEndpoints", opt =>
+    options.AddPolicy<string>("AuthEndpoints", context =>
     {
-        opt.PermitLimit = 10;
-        opt.Window = TimeSpan.FromMinutes(1);
-        opt.QueueLimit = 0;
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: GetAuthRateLimitPartitionKey(context),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            });
     });
 });
 
@@ -323,3 +328,19 @@ app.Use(async (context, next) =>
 app.MapControllers();
 
 app.Run();
+
+static string GetAuthRateLimitPartitionKey(HttpContext context)
+{
+    var remoteIp = context.Connection.RemoteIpAddress;
+    if (remoteIp == null)
+    {
+        return "unknown";
+    }
+
+    if (remoteIp.IsIPv4MappedToIPv6)
+    {
+        remoteIp = remoteIp.MapToIPv4();
+    }
+
+    return remoteIp.ToString();
+}

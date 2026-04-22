@@ -25,6 +25,8 @@ export class App implements OnInit {
 
     this.swUpdate.unrecoverable.subscribe(() => this.clearCachesAndReload());
 
+    this.swUpdate.checkForUpdate().catch(() => {});
+
     // Verifică actualizări la fiecare 30 minute
     setInterval(() => this.swUpdate.checkForUpdate().catch(() => {}), 30 * 60 * 1000);
   }

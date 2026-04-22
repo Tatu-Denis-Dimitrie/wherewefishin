@@ -1,17 +1,17 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
-import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+const INTERNAL_API_PREFIXES = ['/api', 'api/'];
+
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
-  const router = inject(Router);
   const token = authService.getToken();
 
   // Only attach JWT to requests going to our own API
-  const isOwnApi = req.url.startsWith(environment.apiBaseUrl) || req.url.startsWith(environment.pythonServiceUrl);
+  const isOwnApi = isInternalApiRequest(req.url);
 
   let request = req;
   if (token && isOwnApi) {
@@ -36,3 +36,32 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     })
   );
 };
+
+function isInternalApiRequest(url: string): boolean {
+  const configuredBaseUrls = [environment.apiBaseUrl, environment.pythonServiceUrl]
+    .map(baseUrl => baseUrl.trim())
+    .filter((baseUrl): baseUrl is string => baseUrl.length > 0);
+
+  if (configuredBaseUrls.some(baseUrl => url.startsWith(baseUrl))) {
+    return true;
+  }
+
+  if (isRelativeUrl(url)) {
+    return INTERNAL_API_PREFIXES.some(prefix => url.startsWith(prefix));
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.origin !== window.location.origin) {
+      return false;
+    }
+
+    return INTERNAL_API_PREFIXES.some(prefix => parsedUrl.pathname.startsWith(`/${prefix.replace(/^\//, '')}`));
+  } catch {
+    return false;
+  }
+}
+
+function isRelativeUrl(url: string): boolean {
+  return !/^[a-z][a-z0-9+.-]*:\/\//i.test(url) && !url.startsWith('//');
+}

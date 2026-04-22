@@ -1,10 +1,11 @@
 :host {
   display: block;
+  width: 100%;
   color: var(--text-primary);
 }
 
 .page-shell {
-  max-width: 1240px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: 24px 24px 40px;
 }
@@ -13,22 +14,24 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
+  box-sizing: border-box;
+  width: calc(100% + 24px);
   gap: 20px;
   padding: 26px 28px;
-  margin-bottom: 18px;
+  margin: 0 -12px 18px;
   border-radius: 28px;
   border: 1px solid rgba(232, 224, 208, 0.18);
   background:
-    radial-gradient(circle at top right, rgba(125, 179, 74, 0.18) 0%, transparent 28%),
-    radial-gradient(circle at left center, rgba(74, 144, 164, 0.14) 0%, transparent 24%),
-    linear-gradient(145deg, rgba(236, 233, 220, 0.12) 0%, rgba(39, 58, 31, 0.4) 50%, rgba(18, 28, 15, 0.58) 100%);
+    radial-gradient(circle at top right, rgba(125, 179, 74, 0.12) 0%, transparent 30%),
+    radial-gradient(circle at left center, rgba(232, 224, 208, 0.08) 0%, transparent 26%),
+    linear-gradient(155deg, rgba(236, 233, 220, 0.12) 0%, rgba(34, 51, 27, 0.28) 52%, rgba(16, 25, 13, 0.44) 100%);
   box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(16px) saturate(125%);
   -webkit-backdrop-filter: blur(16px) saturate(125%);
 }
 
 .hero-copy {
-  max-width: 700px;
+  max-width: 640px;
 }
 
 .hero-eyebrow {
@@ -223,6 +226,7 @@
 .table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  padding-bottom: 6px;
 }
 
 .users-table {
@@ -537,6 +541,11 @@
   .section-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .hero-panel {
+    width: 100%;
+    margin: 0 0 18px;
   }
 
   .hero-summary,

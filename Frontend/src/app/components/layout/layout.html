@@ -1,6 +1,6 @@
 <div class="app-shell">
   <!-- Mobile top bar -->
-  <header class="mobile-topbar">
+  <header class="mobile-topbar" [class.admin-route-topbar]="isAdminRoute">
     <button class="hamburger-btn" (click)="toggleMobileMenu()" aria-label="Open menu">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <line x1="3" y1="6" x2="21" y2="6"/>
@@ -155,9 +155,9 @@
       <span class="main-firefly mf-8"></span>
     </div>
 
-    <section class="page-content">
+    <section class="page-content" [class.admin-route]="isAdminRoute">
       <router-outlet />
-      <app-site-footer></app-site-footer>
+      <app-site-footer [class.non-sticky-footer]="isAdminRoute"></app-site-footer>
     </section>
   </main>
 </div>

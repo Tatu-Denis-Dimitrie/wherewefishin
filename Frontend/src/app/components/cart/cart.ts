@@ -85,10 +85,12 @@ export class Cart implements OnInit, OnDestroy {
   paymentConfigurationLoaded = false;
 
   private stripe: Stripe | null = null;
+  private stripePromise: Promise<Stripe | null> | null = null;
   private stripeElements: StripeElements | null = null;
   private cardElement: StripeCardElement | null = null;
   private cardMountElement?: ElementRef<HTMLDivElement>;
   private mountCardTimer?: ReturnType<typeof setTimeout>;
+  private mountCardPromise: Promise<void> | null = null;
 
   constructor(
     public cartService: CartService,
@@ -117,6 +119,10 @@ export class Cart implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.mountCardTimer || this.mountCardPromise) {
+      return;
+    }
+
     this.mountCardTimer = setTimeout(() => {
       this.mountCardTimer = undefined;
       void this.mountCardElement();
@@ -124,6 +130,20 @@ export class Cart implements OnInit, OnDestroy {
   }
 
   private async mountCardElement(): Promise<void> {
+    if (this.mountCardPromise) {
+      return this.mountCardPromise;
+    }
+
+    this.mountCardPromise = this.mountCardElementInternal();
+
+    try {
+      await this.mountCardPromise;
+    } finally {
+      this.mountCardPromise = null;
+    }
+  }
+
+  private async mountCardElementInternal(): Promise<void> {
     if (!this.stripeRequired) {
       this.stripeReady = true;
       this.stripeError = '';
@@ -144,9 +164,7 @@ export class Cart implements OnInit, OnDestroy {
     this.stripeError = '';
 
     try {
-      if (!this.stripe) {
-        this.stripe = await loadStripe(environment.stripePublishableKey);
-      }
+      this.stripe = await this.getStripe();
 
       if (!this.stripe) {
         this.stripeReady = false;
@@ -174,6 +192,27 @@ export class Cart implements OnInit, OnDestroy {
     } catch {
       this.stripeReady = false;
       this.stripeError = 'Could not load Stripe payment form.';
+    }
+  }
+
+  private async getStripe(): Promise<Stripe | null> {
+    if (this.stripe) {
+      return this.stripe;
+    }
+
+    if (!this.stripePromise) {
+      this.stripePromise = loadStripe(environment.stripePublishableKey);
+    }
+
+    try {
+      this.stripe = await this.stripePromise;
+      if (!this.stripe) {
+        this.stripePromise = null;
+      }
+      return this.stripe;
+    } catch {
+      this.stripePromise = null;
+      throw new Error('Could not initialize Stripe.');
     }
   }
 

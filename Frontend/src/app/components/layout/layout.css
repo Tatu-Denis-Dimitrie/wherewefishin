@@ -209,6 +209,20 @@
   flex-direction: column;
 }
 
+.page-content.admin-route {
+  scrollbar-gutter: stable both-edges;
+  display: block;
+}
+
+.page-content > app-site-footer.non-sticky-footer {
+  margin-top: 0 !important;
+}
+
+.page-content.admin-route > app-site-footer.non-sticky-footer {
+  display: block;
+  margin-top: 20px !important;
+}
+
 @keyframes activeGlassSweep {
   0% {
     transform: translateX(-120%);
@@ -490,10 +504,10 @@
     align-items: center;
     justify-content: space-between;
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: calc(var(--mobile-topbar-height) + var(--safe-area-top));
+    top: calc(6px + var(--safe-area-top));
+    left: calc(8px + var(--safe-area-left));
+    right: calc(12px + var(--safe-area-right));
+    height: var(--mobile-topbar-height);
     background: rgba(28, 42, 22, 0.22);
     backdrop-filter: blur(18px) saturate(1.4);
     -webkit-backdrop-filter: blur(18px) saturate(1.4);
@@ -502,10 +516,17 @@
     border-top-right-radius: 20px;
     border-bottom-left-radius: 18px;
     border-bottom-right-radius: 18px;
-    padding: var(--safe-area-top) calc(16px + var(--safe-area-right)) 0 calc(16px + var(--safe-area-left));
+    padding: 0 16px;
     z-index: 200;
     gap: 12px;
     box-sizing: border-box;
+  }
+
+  .mobile-topbar.admin-route-topbar {
+    background: linear-gradient(135deg, rgba(42, 64, 31, 0.28) 0%, rgba(18, 31, 14, 0.18) 100%);
+    backdrop-filter: blur(20px) saturate(1.35);
+    -webkit-backdrop-filter: blur(20px) saturate(1.35);
+    box-shadow: 0 1px 0 rgba(232, 224, 208, 0.12), 0 8px 28px rgba(0, 0, 0, 0.22);
   }
 
   .mobile-brand {
@@ -586,8 +607,11 @@
     transition: transform 0.25s ease;
     z-index: 160;
     width: 280px;
-    top: calc(var(--mobile-topbar-height) + var(--safe-area-top));
-    left: var(--safe-area-left);
+    top: 0;
+    left: 0;
+    padding-top: calc(var(--mobile-topbar-height) + var(--safe-area-top) + 8px);
+    background: linear-gradient(180deg, rgba(31, 49, 22, 0.98) 0%, rgba(21, 34, 16, 0.98) 100%);
+    box-shadow: 22px 0 40px rgba(0, 0, 0, 0.28);
   }
 
   .sidebar-brand {
@@ -595,7 +619,7 @@
   }
 
   .sidebar-nav {
-    padding-top: 14px;
+    padding-top: 6px;
   }
 
   .sidebar.mobile-open {
@@ -634,7 +658,7 @@
   }
 
   .main-content > * {
-    padding-top: calc(var(--mobile-topbar-height) + var(--safe-area-top));
+    padding-top: calc(var(--mobile-topbar-height) + var(--safe-area-top) + 12px);
   }
 
   .mf-3,

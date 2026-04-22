@@ -17,6 +17,7 @@ export class Layout implements OnInit, OnDestroy {
   isAdmin = false;
   isEmployee = false;
   isManager = false;
+  isAdminRoute = false;
   isSpotManagerRoute = false;
   managerSpotId: number | null = null;
   mobileMenuOpen = false;
@@ -81,6 +82,7 @@ export class Layout implements OnInit, OnDestroy {
   }
 
   private updateRouteState(url: string): void {
+    this.isAdminRoute = /^\/admin(?:$|[?#/])/.test(url);
     this.isSpotManagerRoute = /^\/spots\/[^/]+\/manage(?:$|[?#/])/.test(url);
   }
 }
