@@ -13,7 +13,7 @@ namespace WhereWeFishin.Tests.Integration;
 
 public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
 {
-    private readonly InMemoryDatabaseRoot _databaseRoot = new();
+    private static readonly InMemoryDatabaseRoot SharedDatabaseRoot = new();
     private readonly string _databaseName = $"wherewefishin-integration-{Guid.NewGuid():N}";
 
     public ApiWebApplicationFactory()
@@ -51,7 +51,7 @@ public sealed class ApiWebApplicationFactory : WebApplicationFactory<Program>
 
             services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseInMemoryDatabase(_databaseName, _databaseRoot);
+                options.UseInMemoryDatabase(_databaseName, SharedDatabaseRoot);
             });
 
             services.AddScoped<IEmailService, NoOpEmailService>();
