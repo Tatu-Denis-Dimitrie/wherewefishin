@@ -12,9 +12,18 @@ public static class DatabaseInitializer
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         try
         {
-            logger.LogInformation("Applying database migrations...");
-            await context.Database.MigrateAsync();
-            logger.LogInformation("Database migrations applied successfully.");
+            if (app.Environment.IsEnvironment("IntegrationTesting"))
+            {
+                logger.LogInformation("Creating integration test database schema...");
+                await context.Database.EnsureCreatedAsync();
+                logger.LogInformation("Integration test database schema created successfully.");
+            }
+            else
+            {
+                logger.LogInformation("Applying database migrations...");
+                await context.Database.MigrateAsync();
+                logger.LogInformation("Database migrations applied successfully.");
+            }
 
             if (context.Users.Any())
             {

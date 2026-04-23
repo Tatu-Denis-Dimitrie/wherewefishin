@@ -344,3 +344,5 @@ static string GetAuthRateLimitPartitionKey(HttpContext context)
 
     return remoteIp.ToString();
 }
+
+public partial class Program;
