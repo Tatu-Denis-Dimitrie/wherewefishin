@@ -7,6 +7,7 @@ using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
+using WhereWeFishin.Tests.TestHelpers;
 
 namespace WhereWeFishin.Tests.Controllers;
 
@@ -62,6 +63,20 @@ public class AuthControllerTests
 
         // Assert
         Assert.IsType<UnauthorizedObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task Login_WithInvalidModelState_ReturnsBadRequest()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError(nameof(LoginRequest.Password), "Password is required");
+
+        // Act
+        var result = await _controller.Login(new LoginRequest());
+
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result.Result);
+        await _authService.DidNotReceive().LoginAsync(Arg.Any<LoginRequest>());
     }
 
 
@@ -140,24 +155,30 @@ public class AuthControllerTests
         Assert.Equal(500, statusResult.StatusCode);
     }
 
+    [Fact]
+    public async Task Register_WithInvalidModelState_ReturnsBadRequest()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError(nameof(RegisterRequest.Email), "Invalid email");
+
+        // Act
+        var result = await _controller.Register(new RegisterRequest());
+
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result.Result);
+        await _authService.DidNotReceive().UserExistsAsync(Arg.Any<string>(), Arg.Any<string>());
+    }
+
 
     [Fact]
     public void VerifyToken_WithAuthenticatedUser_ReturnsOkWithUserInfo()
     {
         // Arrange
-        var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, "42"),
-            new Claim(ClaimTypes.Name, "verifieduser"),
-            new Claim(ClaimTypes.Email, "verified@test.com")
-        };
-        var identity = new ClaimsIdentity(claims, "Bearer");
-        var claimsPrincipal = new ClaimsPrincipal(identity);
-
-        _controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
-        };
+        ControllerContextFactory.SetAuthenticatedUser(
+            _controller,
+            userId: 42,
+            username: "verifieduser",
+            email: "verified@test.com");
 
         // Act
         var result = _controller.VerifyToken();
@@ -165,5 +186,87 @@ public class AuthControllerTests
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.NotNull(okResult.Value);
+    }
+
+    [Fact]
+    public async Task ForgotPassword_WithValidRequest_ReturnsOk()
+    {
+        // Arrange
+        var request = new ForgotPasswordRequest { Email = "user@test.com" };
+        _authService.ForgotPasswordAsync(request).Returns(true);
+
+        // Act
+        var result = await _controller.ForgotPassword(request);
+
+        // Assert
+        Assert.IsType<OkObjectResult>(result);
+        await _authService.Received(1).ForgotPasswordAsync(request);
+    }
+
+    [Fact]
+    public async Task ForgotPassword_WithInvalidModelState_ReturnsBadRequest()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError(nameof(ForgotPasswordRequest.Email), "Email is required");
+
+        // Act
+        var result = await _controller.ForgotPassword(new ForgotPasswordRequest());
+
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result);
+        await _authService.DidNotReceive().ForgotPasswordAsync(Arg.Any<ForgotPasswordRequest>());
+    }
+
+    [Fact]
+    public async Task ResetPassword_WithValidRequest_ReturnsOk()
+    {
+        // Arrange
+        var request = new ResetPasswordRequest
+        {
+            Email = "user@test.com",
+            Code = "123456",
+            NewPassword = "newpassword123"
+        };
+        _authService.ResetPasswordAsync(request).Returns(true);
+
+        // Act
+        var result = await _controller.ResetPassword(request);
+
+        // Assert
+        Assert.IsType<OkObjectResult>(result);
+        await _authService.Received(1).ResetPasswordAsync(request);
+    }
+
+    [Fact]
+    public async Task ResetPassword_WithInvalidModelState_ReturnsBadRequest()
+    {
+        // Arrange
+        _controller.ModelState.AddModelError(nameof(ResetPasswordRequest.Code), "Code is required");
+
+        // Act
+        var result = await _controller.ResetPassword(new ResetPasswordRequest());
+
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result);
+        await _authService.DidNotReceive().ResetPasswordAsync(Arg.Any<ResetPasswordRequest>());
+    }
+
+    [Fact]
+    public async Task ResetPassword_WhenServiceReturnsFalse_ReturnsBadRequest()
+    {
+        // Arrange
+        var request = new ResetPasswordRequest
+        {
+            Email = "user@test.com",
+            Code = "123456",
+            NewPassword = "newpassword123"
+        };
+        _authService.ResetPasswordAsync(request).Returns(false);
+
+        // Act
+        var result = await _controller.ResetPassword(request);
+
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result);
     }
 }

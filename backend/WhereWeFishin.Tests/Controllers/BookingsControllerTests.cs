@@ -10,6 +10,7 @@ using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
+using WhereWeFishin.Tests.TestHelpers;
 
 namespace WhereWeFishin.Tests.Controllers;
 
@@ -58,28 +59,30 @@ public class BookingsControllerTests
         SetupUser(userId: 1, role: Roles.User);
     }
 
-    private void SetupUser(int userId, string role = Roles.User)
+    private BookingsController CreateController(IConfiguration? configuration = null)
     {
-        var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-            new Claim(ClaimTypes.Name, $"testuser{userId}"),
-            new Claim(ClaimTypes.Email, $"testuser{userId}@mail.com"),
-            new Claim(ClaimTypes.Role, role)
-        };
-        var identity = new ClaimsIdentity(claims, "Bearer");
-        var user = new ClaimsPrincipal(identity);
+        var controller = new BookingsController(
+            _sessionRepository,
+            _spotRepository,
+            _pontoonRepository,
+            _userRepository,
+            _emailService,
+            _logger,
+            configuration ?? _configuration);
 
-        _controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext { User = user }
-        };
+        controller.ControllerContext = _controller.ControllerContext;
+        return controller;
     }
 
-    private static FishingSpot CreateSpot(int id = 1, decimal pricePerHour = 10m) => new()
+    private void SetupUser(int userId, string role = Roles.User)
+    {
+        ControllerContextFactory.SetAuthenticatedUser(_controller, userId, role);
+    }
+
+    private static FishingSpot CreateSpot(int id = 1, decimal pricePerHour = 10m, string name = "Test Spot") => new()
     {
         Id = id,
-        Name = "Test Spot",
+        Name = name,
         Latitude = 45.0,
         Longitude = 25.0,
         PricePerHour = pricePerHour,
@@ -96,6 +99,102 @@ public class BookingsControllerTests
         TotalPrice = 240m,
         Status = SessionStatus.Confirmed
     };
+
+    private static User CreateUser(int id = 1, string email = "testuser1@mail.com", string? firstName = null) => new()
+    {
+        Id = id,
+        Username = $"testuser{id}",
+        Email = email,
+        FirstName = firstName,
+        PasswordHash = "hash123"
+    };
+
+
+    [Fact]
+    public async Task GetMyBookings_WhenUnauthenticated_ReturnsUnauthorized()
+    {
+        // Arrange
+        ControllerContextFactory.SetAnonymousUser(_controller);
+
+        // Act
+        var result = await _controller.GetMyBookings();
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(result.Result);
+    }
+
+    [Fact]
+    public void GetPaymentConfiguration_WhenStripeIsDisabled_ReturnsStripeDisabled()
+    {
+        // Act
+        var result = _controller.GetPaymentConfiguration();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var configuration = Assert.IsType<PaymentConfigurationDto>(okResult.Value);
+        Assert.False(configuration.StripeEnabled);
+    }
+
+    [Fact]
+    public void GetPaymentConfiguration_WhenStripeIsEnabled_ReturnsStripeEnabled()
+    {
+        // Arrange
+        var stripeConfig = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Stripe:SecretKey"] = "sk_test_dummy"
+            })
+            .Build();
+        var stripeController = CreateController(stripeConfig);
+
+        // Act
+        var result = stripeController.GetPaymentConfiguration();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var configuration = Assert.IsType<PaymentConfigurationDto>(okResult.Value);
+        Assert.True(configuration.StripeEnabled);
+    }
+
+    [Fact]
+    public async Task GetAllBookings_AsAdmin_ReturnsMappedBookingsWithVerificationToken()
+    {
+        // Arrange
+        SetupUser(userId: 99, role: Roles.Admin);
+        var firstSession = CreateSession(id: 1, userId: 1, spotId: 1);
+        firstSession.CreatedAt = DateTime.UtcNow.AddMinutes(-15);
+        firstSession.VerificationToken = "token-1";
+
+        var secondSession = CreateSession(id: 2, userId: 2, spotId: 2);
+        secondSession.PontoonId = 5;
+        secondSession.CreatedAt = DateTime.UtcNow;
+        secondSession.VerificationToken = "token-2";
+
+        _sessionRepository.GetAllAsync(Arg.Any<CancellationToken>())
+            .Returns(new[] { firstSession, secondSession });
+        _spotRepository.UseInMemoryStore(new[]
+        {
+            CreateSpot(id: 1, name: "River Spot"),
+            CreateSpot(id: 2, name: "Lake Spot")
+        });
+        _pontoonRepository.UseInMemoryStore(new[]
+        {
+            CreatePontoon(id: 5, spotId: 2)
+        });
+
+        // Act
+        var result = await _controller.GetAllBookings();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var bookings = Assert.IsAssignableFrom<IEnumerable<BookingDto>>(okResult.Value).ToList();
+        Assert.Equal(2, bookings.Count);
+        Assert.Equal(2, bookings[0].Id);
+        Assert.Equal("Lake Spot", bookings[0].FishingSpotName);
+        Assert.Equal("Pontoon 5", bookings[0].PontoonName);
+        Assert.Equal("token-2", bookings[0].VerificationToken);
+        Assert.Equal("River Spot", bookings[1].FishingSpotName);
+    }
 
 
     [Fact]
@@ -132,6 +231,24 @@ public class BookingsControllerTests
             24,
             240m,
             Arg.Any<int>());
+    }
+
+    [Fact]
+    public async Task CreateBooking_WhenUnauthenticated_ReturnsUnauthorized()
+    {
+        // Arrange
+        ControllerContextFactory.SetAnonymousUser(_controller);
+
+        // Act
+        var result = await _controller.CreateBooking(new CreateBookingDto
+        {
+            FishingSpotId = 1,
+            StartDate = DateTime.UtcNow.AddDays(1),
+            DurationHours = 24
+        });
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(result.Result);
     }
 
     [Fact]
@@ -296,16 +413,7 @@ public class BookingsControllerTests
             })
             .Build();
 
-        var stripeController = new BookingsController(
-            _sessionRepository,
-            _spotRepository,
-            _pontoonRepository,
-            _userRepository,
-            _emailService,
-            _logger,
-            stripeConfig);
-
-        stripeController.ControllerContext = _controller.ControllerContext;
+        var stripeController = CreateController(stripeConfig);
 
         var spot = CreateSpot(1, pricePerHour: 10m);
         _spotRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(spot);
@@ -322,6 +430,161 @@ public class BookingsControllerTests
 
         // Act
         var result = await stripeController.CreateBooking(dto);
+
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task CreateBooking_WhenClaimEmailIsMissing_FallsBackToUserRepository()
+    {
+        // Arrange
+        ControllerContextFactory.SetAuthenticatedUser(_controller, userId: 1, email: string.Empty);
+        var spot = CreateSpot(1, pricePerHour: 10m);
+        var user = CreateUser(id: 1, email: "fallback@test.com", firstName: "Matei");
+
+        _spotRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(spot);
+        _sessionRepository.AddAsync(Arg.Any<FishingSession>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo => callInfo.Arg<FishingSession>());
+        _userRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(user);
+
+        // Act
+        var result = await _controller.CreateBooking(new CreateBookingDto
+        {
+            FishingSpotId = 1,
+            StartDate = DateTime.UtcNow.AddDays(1),
+            DurationHours = 24
+        });
+
+        // Assert
+        Assert.IsType<CreatedAtActionResult>(result.Result);
+        await _emailService.Received(1).SendBookingConfirmationEmailAsync(
+            "fallback@test.com",
+            "Matei",
+            "Test Spot",
+            Arg.Any<DateTime>(),
+            24,
+            240m,
+            Arg.Any<int>());
+    }
+
+    [Fact]
+    public async Task CreateBooking_WhenSpotAlreadyBookedWithoutPontoon_ReturnsConflict()
+    {
+        // Arrange
+        var spot = CreateSpot(1, pricePerHour: 10m);
+        var start = DateTime.UtcNow.AddDays(1);
+        var existingSession = CreateSession(id: 10, userId: 2, spotId: 1);
+        existingSession.StartDate = start;
+        existingSession.DurationHours = 24;
+        existingSession.PontoonId = null;
+
+        _spotRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(spot);
+        _sessionRepository.FindAsync(Arg.Any<Expression<Func<FishingSession, bool>>>(), Arg.Any<CancellationToken>())
+            .Returns(new[] { existingSession });
+
+        // Act
+        var result = await _controller.CreateBooking(new CreateBookingDto
+        {
+            FishingSpotId = 1,
+            StartDate = start,
+            DurationHours = 24
+        });
+
+        // Assert
+        Assert.IsType<ConflictObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task CreateBooking_WhenOnlyCancelledOverlapExists_ReturnsCreated()
+    {
+        // Arrange
+        var spot = CreateSpot(1, pricePerHour: 10m);
+        var start = DateTime.UtcNow.AddDays(1);
+        var cancelledSession = CreateSession(id: 15, userId: 3, spotId: 1);
+        cancelledSession.StartDate = start;
+        cancelledSession.DurationHours = 24;
+        cancelledSession.Status = SessionStatus.Cancelled;
+
+        _spotRepository.UseInMemoryStore(new[] { spot });
+        _sessionRepository.UseInMemoryStore(new[] { cancelledSession });
+
+        // Act
+        var result = await _controller.CreateBooking(new CreateBookingDto
+        {
+            FishingSpotId = 1,
+            StartDate = start,
+            DurationHours = 24
+        });
+
+        // Assert
+        Assert.IsType<CreatedAtActionResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task CreatePaymentIntent_WhenUnauthenticated_ReturnsUnauthorized()
+    {
+        // Arrange
+        var stripeConfig = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Stripe:SecretKey"] = "sk_test_dummy"
+            })
+            .Build();
+        var stripeController = CreateController(stripeConfig);
+        ControllerContextFactory.SetAnonymousUser(stripeController);
+
+        // Act
+        var result = await stripeController.CreatePaymentIntent(new CreatePaymentIntentDto
+        {
+            FishingSpotId = 1,
+            StartDate = DateTime.UtcNow.AddDays(1),
+            DurationHours = 24
+        });
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task CreatePaymentIntent_WhenStripeIsDisabled_ReturnsServiceUnavailable()
+    {
+        // Act
+        var result = await _controller.CreatePaymentIntent(new CreatePaymentIntentDto
+        {
+            FishingSpotId = 1,
+            StartDate = DateTime.UtcNow.AddDays(1),
+            DurationHours = 24
+        });
+
+        // Assert
+        var statusResult = Assert.IsType<ObjectResult>(result.Result);
+        Assert.Equal(StatusCodes.Status503ServiceUnavailable, statusResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreatePaymentIntent_WhenTotalPriceIsZero_ReturnsBadRequest()
+    {
+        // Arrange
+        var stripeConfig = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Stripe:SecretKey"] = "sk_test_dummy"
+            })
+            .Build();
+        var stripeController = CreateController(stripeConfig);
+        var spot = CreateSpot(1, pricePerHour: 0m);
+
+        _spotRepository.UseInMemoryStore(new[] { spot });
+        _sessionRepository.UseInMemoryStore<FishingSession>([]);
+
+        // Act
+        var result = await stripeController.CreatePaymentIntent(new CreatePaymentIntentDto
+        {
+            FishingSpotId = 1,
+            StartDate = DateTime.UtcNow.AddDays(1),
+            DurationHours = 24
+        });
 
         // Assert
         Assert.IsType<BadRequestObjectResult>(result.Result);
@@ -348,6 +611,164 @@ public class BookingsControllerTests
         Assert.Single(bookings);
     }
 
+    [Fact]
+    public async Task GetMyBookings_WhenSpotLookupFails_UsesUnknownSpotName()
+    {
+        // Arrange
+        var session = CreateSession(id: 1, userId: 1, spotId: 99);
+        session.VerificationToken = "hidden-token";
+        _sessionRepository.FindAsync(Arg.Any<Expression<Func<FishingSession, bool>>>(), Arg.Any<CancellationToken>())
+            .Returns(new[] { session });
+        _spotRepository.UseInMemoryStore<FishingSpot>([]);
+
+        // Act
+        var result = await _controller.GetMyBookings();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var booking = Assert.Single(Assert.IsAssignableFrom<IEnumerable<BookingDto>>(okResult.Value));
+        Assert.Equal("Unknown", booking.FishingSpotName);
+        Assert.Null(booking.VerificationToken);
+    }
+
+    [Fact]
+    public async Task GetBookedPeriods_WhenBothFiltersAreMissing_ReturnsBadRequest()
+    {
+        // Act
+        var result = await _controller.GetBookedPeriods(null, null);
+
+        // Assert
+        Assert.IsType<BadRequestObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task GetBookedPeriods_WithSpotId_ReturnsOnlyFutureSpotPeriodsOrdered()
+    {
+        // Arrange
+        var now = DateTime.UtcNow;
+        _sessionRepository.UseInMemoryStore(new[]
+        {
+            new FishingSession
+            {
+                Id = 1,
+                UserId = 1,
+                FishingSpotId = 1,
+                StartDate = now.AddHours(4),
+                DurationHours = 2,
+                Status = SessionStatus.Confirmed
+            },
+            new FishingSession
+            {
+                Id = 2,
+                UserId = 1,
+                FishingSpotId = 1,
+                StartDate = now.AddHours(1),
+                DurationHours = 2,
+                Status = SessionStatus.Pending
+            },
+            new FishingSession
+            {
+                Id = 3,
+                UserId = 1,
+                FishingSpotId = 1,
+                StartDate = now.AddHours(-5),
+                DurationHours = 1,
+                Status = SessionStatus.Confirmed
+            },
+            new FishingSession
+            {
+                Id = 4,
+                UserId = 1,
+                FishingSpotId = 1,
+                StartDate = now.AddHours(6),
+                DurationHours = 2,
+                Status = SessionStatus.Cancelled
+            },
+            new FishingSession
+            {
+                Id = 5,
+                UserId = 1,
+                FishingSpotId = 1,
+                PontoonId = 11,
+                StartDate = now.AddHours(3),
+                DurationHours = 2,
+                Status = SessionStatus.Confirmed
+            }
+        });
+
+        // Act
+        var result = await _controller.GetBookedPeriods(null, 1);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var periods = Assert.IsAssignableFrom<IEnumerable<BookedPeriodDto>>(okResult.Value).ToList();
+        Assert.Equal(2, periods.Count);
+        Assert.True(periods[0].StartDate < periods[1].StartDate);
+        Assert.Equal(now.AddHours(1), periods[0].StartDate, TimeSpan.FromSeconds(1));
+        Assert.Equal(now.AddHours(4), periods[1].StartDate, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public async Task GetBookedPeriods_WithPontoonId_ReturnsOnlyFuturePontoonPeriodsOrdered()
+    {
+        // Arrange
+        var now = DateTime.UtcNow;
+        _sessionRepository.UseInMemoryStore(new[]
+        {
+            new FishingSession
+            {
+                Id = 1,
+                UserId = 1,
+                FishingSpotId = 1,
+                PontoonId = 7,
+                StartDate = now.AddHours(5),
+                DurationHours = 2,
+                Status = SessionStatus.Confirmed
+            },
+            new FishingSession
+            {
+                Id = 2,
+                UserId = 1,
+                FishingSpotId = 1,
+                PontoonId = 7,
+                StartDate = now.AddHours(2),
+                DurationHours = 2,
+                Status = SessionStatus.Pending
+            },
+            new FishingSession
+            {
+                Id = 3,
+                UserId = 1,
+                FishingSpotId = 1,
+                PontoonId = 7,
+                StartDate = now.AddHours(-6),
+                DurationHours = 1,
+                Status = SessionStatus.Confirmed
+            },
+            new FishingSession
+            {
+                Id = 4,
+                UserId = 1,
+                FishingSpotId = 1,
+                PontoonId = 8,
+                StartDate = now.AddHours(3),
+                DurationHours = 1,
+                Status = SessionStatus.Confirmed
+            }
+        });
+
+        // Act
+        var result = await _controller.GetBookedPeriods(7, null);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var periods = Assert.IsAssignableFrom<IEnumerable<BookedPeriodDto>>(okResult.Value).ToList();
+        Assert.Equal(2, periods.Count);
+        Assert.True(periods[0].StartDate < periods[1].StartDate);
+        Assert.Equal(now.AddHours(2), periods[0].StartDate, TimeSpan.FromSeconds(1));
+        Assert.Equal(now.AddHours(5), periods[1].StartDate, TimeSpan.FromSeconds(1));
+    }
+
 
     [Fact]
     public async Task GetBooking_WhenOwner_ReturnsBooking()
@@ -365,6 +786,57 @@ public class BookingsControllerTests
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var booking = Assert.IsType<BookingDto>(okResult.Value);
         Assert.Equal(1, booking.Id);
+    }
+
+    [Fact]
+    public async Task GetBooking_WhenUnauthenticated_ReturnsUnauthorized()
+    {
+        // Arrange
+        ControllerContextFactory.SetAnonymousUser(_controller);
+
+        // Act
+        var result = await _controller.GetBooking(1);
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task GetBooking_WhenSpotIsMissing_UsesUnknownAndHidesVerificationToken()
+    {
+        // Arrange
+        var session = CreateSession(1, userId: 1, spotId: 99);
+        session.VerificationToken = "hidden-token";
+        _sessionRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(session);
+        _spotRepository.GetByIdAsync(99, Arg.Any<CancellationToken>()).Returns((FishingSpot?)null);
+
+        // Act
+        var result = await _controller.GetBooking(1);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var booking = Assert.IsType<BookingDto>(okResult.Value);
+        Assert.Equal("Unknown", booking.FishingSpotName);
+        Assert.Null(booking.VerificationToken);
+    }
+
+    [Fact]
+    public async Task GetBooking_AsAdmin_IncludesVerificationToken()
+    {
+        // Arrange
+        SetupUser(userId: 99, role: Roles.Admin);
+        var session = CreateSession(1, userId: 2, spotId: 1);
+        session.VerificationToken = "visible-token";
+        _sessionRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(session);
+        _spotRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(CreateSpot(1));
+
+        // Act
+        var result = await _controller.GetBooking(1);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var booking = Assert.IsType<BookingDto>(okResult.Value);
+        Assert.Equal("visible-token", booking.VerificationToken);
     }
 
     [Fact]
@@ -427,6 +899,19 @@ public class BookingsControllerTests
         await _sessionRepository.Received(1).UpdateAsync(
             Arg.Is<FishingSession>(s => s.Status == SessionStatus.Cancelled),
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CancelBooking_WhenUnauthenticated_ReturnsUnauthorized()
+    {
+        // Arrange
+        ControllerContextFactory.SetAnonymousUser(_controller);
+
+        // Act
+        var result = await _controller.CancelBooking(1);
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(result);
     }
 
     [Fact]

@@ -33,8 +33,10 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse?> LoginAsync(LoginRequest request)
     {
+        var normalizedUsernameOrEmail = NormalizeLookupValue(request.UsernameOrEmail);
         var users = await _userRepository.FindAsync(u =>
-            u.Username == request.UsernameOrEmail || u.Email == request.UsernameOrEmail);
+            u.Username.ToLower() == normalizedUsernameOrEmail ||
+            u.Email.ToLower() == normalizedUsernameOrEmail);
         var user = users.FirstOrDefault();
 
         if (user == null)
@@ -77,14 +79,18 @@ public class AuthService : IAuthService
 
     public async Task<bool> UserExistsAsync(string username, string email)
     {
+        var normalizedUsername = NormalizeLookupValue(username);
+        var normalizedEmail = NormalizeLookupValue(email);
         var users = await _userRepository.FindAsync(u =>
-            u.Username == username || u.Email == email);
+            u.Username.ToLower() == normalizedUsername ||
+            u.Email.ToLower() == normalizedEmail);
         return users.Any();
     }
 
     public async Task<bool> ForgotPasswordAsync(ForgotPasswordRequest request)
     {
-        var users = await _userRepository.FindAsync(u => u.Email == request.Email);
+        var normalizedEmail = NormalizeLookupValue(request.Email);
+        var users = await _userRepository.FindAsync(u => u.Email.ToLower() == normalizedEmail);
         var user = users.FirstOrDefault();
 
         if (user == null)
@@ -113,7 +119,8 @@ public class AuthService : IAuthService
 
     public async Task<bool> ResetPasswordAsync(ResetPasswordRequest request)
     {
-        var users = await _userRepository.FindAsync(u => u.Email == request.Email);
+        var normalizedEmail = NormalizeLookupValue(request.Email);
+        var users = await _userRepository.FindAsync(u => u.Email.ToLower() == normalizedEmail);
         var user = users.FirstOrDefault();
 
         if (user == null)
@@ -196,4 +203,6 @@ public class AuthService : IAuthService
     {
         return double.TryParse(_configuration["Jwt:ExpirationHours"], out var hours) ? hours : 24;
     }
+
+    private static string NormalizeLookupValue(string value) => value.Trim().ToLowerInvariant();
 }
