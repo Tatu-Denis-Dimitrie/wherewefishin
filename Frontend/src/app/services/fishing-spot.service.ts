@@ -11,6 +11,7 @@ import { FishingSpot, CreateFishingSpot, UpdateFishingSpot } from '../models/fis
 export class FishingSpotService {
   private apiUrl = `${environment.apiBaseUrl}/api/fishingspots`;
   private allCache$: Observable<FishingSpot[]> | null = null;
+  private managedCache$: Observable<FishingSpot[]> | null = null;
 
   constructor(private http: HttpClient) {}
 
@@ -23,8 +24,19 @@ export class FishingSpotService {
     return this.allCache$;
   }
 
+  getManaged(): Observable<FishingSpot[]> {
+    if (!this.managedCache$) {
+      this.managedCache$ = this.http.get<FishingSpot[]>(`${this.apiUrl}/managed`).pipe(
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
+    }
+
+    return this.managedCache$;
+  }
+
   clearCache(): void {
     this.allCache$ = null;
+    this.managedCache$ = null;
   }
 
   getById(id: number): Observable<FishingSpot> {

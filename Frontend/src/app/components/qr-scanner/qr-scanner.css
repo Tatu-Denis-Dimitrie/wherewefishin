@@ -19,7 +19,7 @@
   letter-spacing: -0.02em;
 }
 
-.page-title svg {
+.page-title app-icon {
   color: var(--accent-moss);
   flex-shrink: 0;
 }
@@ -45,7 +45,7 @@
   background: rgba(212, 168, 75, 0.08);
 }
 
-.info-card.warning svg {
+.info-card.warning app-icon {
   color: var(--color-warning);
   flex-shrink: 0;
 }
@@ -94,7 +94,7 @@
   background: rgba(27, 40, 21, 0.8);
 }
 
-.scanner-placeholder svg {
+.scanner-placeholder app-icon {
   color: var(--accent-moss);
   opacity: 0.7;
 }
@@ -269,8 +269,9 @@
   background: rgba(196, 68, 45, 0.08);
 }
 
-.result-card.error svg {
+.result-card.error app-icon {
   color: var(--color-error);
+  display: inline-flex;
   margin-bottom: 8px;
 }
 
@@ -279,15 +280,16 @@
   margin-bottom: 4px;
 }
 
-.result-icon svg {
+.result-icon app-icon {
+  display: inline-flex;
   margin-bottom: 8px;
 }
 
-.result-card.valid .result-icon svg {
+.result-card.valid .result-icon app-icon {
   color: var(--color-success);
 }
 
-.result-card.invalid .result-icon svg {
+.result-card.invalid .result-icon app-icon {
   color: var(--color-error);
 }
 

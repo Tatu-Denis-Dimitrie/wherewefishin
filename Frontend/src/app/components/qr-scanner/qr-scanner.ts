@@ -3,10 +3,11 @@ import { CommonModule } from '@angular/common';
 import { Html5Qrcode } from 'html5-qrcode';
 import { EmployeeService } from '../../services/employee.service';
 import { QrVerificationResult, SpotEmployee } from '../../models/employee.model';
+import { AppIcon } from '../../shared/icons/app-icon';
 
 @Component({
   selector: 'app-qr-scanner',
-  imports: [CommonModule],
+  imports: [CommonModule, AppIcon],
   templateUrl: './qr-scanner.html',
   styleUrl: './qr-scanner.css'
 })

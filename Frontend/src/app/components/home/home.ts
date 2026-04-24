@@ -2,7 +2,7 @@ import { Component, OnInit, AfterViewInit, OnDestroy, HostListener, ChangeDetect
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
+import { catchError, forkJoin, of } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { FishingSpotService } from '../../services/fishing-spot.service';
 import { FishingSpot, CreateFishingSpot } from '../../models/fishing-spot.model';
@@ -14,6 +14,16 @@ import { UserService } from '../../services/user.service';
 import { User } from '../../models/user.model';
 import { RoutingService } from '../../services/routing.service';
 import { GeocodingService } from '../../services/geocoding.service';
+import { AppIcon } from '../../shared/icons/app-icon';
+import { AppIconName } from '../../shared/icons/app-icon.registry';
+import {
+  buildFallbackUserLocationPopup,
+  buildHomeSpotPopupContent,
+  buildPendingUserLocationPopup,
+  buildResolvedUserLocationPopup,
+  createHomeSpotIcon,
+  createHomeUserLocationIcon
+} from './home-map.helpers';
 import * as L from 'leaflet';
 
 interface NearbySpot {
@@ -26,9 +36,19 @@ interface HomeSpot extends FishingSpot {
   parsedFishSpecies: string[];
 }
 
+type HomeStatIcon = Extract<AppIconName, 'bookings' | 'success' | 'error' | 'users' | 'deactivated' | 'spots' | 'pontoons' | 'analyses' | 'visited'>;
+
+interface HomeStatCard {
+  key: string;
+  value: number;
+  label: string;
+  icon: HomeStatIcon;
+  iconClass: string;
+}
+
 @Component({
   selector: 'app-home',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AppIcon],
   templateUrl: './home.html',
   styleUrl: './home.css',
   encapsulation: ViewEncapsulation.None
@@ -36,7 +56,8 @@ interface HomeSpot extends FishingSpot {
 export class Home implements OnInit, AfterViewInit, OnDestroy {
   private map!: L.Map;
   private markersLayer!: L.LayerGroup;
-  private markerSpotMap = new Map<L.Marker, HomeSpot>();
+  private readonly mapClickHandler = (event: L.LeafletMouseEvent) => this.onMapClick(event);
+  private readonly spotIcon = createHomeSpotIcon();
   private readonly spotSpeciesByName: Record<string, string[]> = {
     'snagov lake': ['Carp', 'Pike', 'Perch'],
     'lacul snagov': ['Carp', 'Pike', 'Perch'],
@@ -87,6 +108,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   userVisitedLakesCount = 0;
   loadingStats = true;
   loadingLatestSession = true;
+  statCards: HomeStatCard[] = [];
   selectedSessionView: 'future' | 'past' = 'future';
   latestPurchasedSession: Booking | null = null;
   latestFutureSession: Booking | null = null;
@@ -125,12 +147,9 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    if (!this.authService.isLoggedIn()) {
-      this.router.navigate(['/login']);
-      return;
-    }
     this.canEdit = this.authService.isManagerOrAdmin();
     this.currentRole = this.authService.getRole() || 'User';
+    this.refreshStatCards();
     this.loadDashboardData();
   }
 
@@ -156,14 +175,21 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     if (!userId) {
       this.loadingStats = false;
       this.loadingLatestSession = false;
+      this.refreshStatCards();
       return;
     }
 
     forkJoin({
       spots:    this.fishingSpotService.getAll(),
-      analyses: this.videoAnalysisService.getUserAnalyses(userId),
-      bookings: this.isUser() ? this.bookingService.getMyBookings() : of([] as Booking[]),
-      stats:    this.isAdmin() ? this.adminService.getStats() : of(null)
+      analyses: this.videoAnalysisService.getUserAnalyses(userId).pipe(
+        catchError(() => of([]))
+      ),
+      bookings: this.isUser()
+        ? this.bookingService.getMyBookings().pipe(catchError(() => of([] as Booking[])))
+        : of([] as Booking[]),
+      stats: this.isAdmin()
+        ? this.adminService.getStats().pipe(catchError(() => of(null)))
+        : of(null)
     }).subscribe({
       next: ({ spots, analyses, bookings, stats }) => {
         // Spots — shared with map (replaces separate loadSpots call)
@@ -186,7 +212,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         this.userCompletedCount = analyses.filter(a => a.status === 'Completed').length;
 
         // Bookings (regular users)
-        if (this.isUser() && bookings.length > 0) {
+        if (this.isUser()) {
           const active = bookings.filter(b => b.status?.toLowerCase() !== 'cancelled');
           this.userBookingsCount = active.length;
           this.userVisitedLakesCount = new Set(active.map(b => b.fishingSpotId)).size;
@@ -205,45 +231,23 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
         this.loadingStats = false;
         this.loadingLatestSession = false;
+        this.refreshStatCards();
       },
       error: () => {
+        this.showToast('Failed to load fishing spots', 'error');
         this.loadingStats = false;
         this.loadingLatestSession = false;
+        this.refreshStatCards();
       }
     });
   }
 
   ngOnDestroy(): void {
-    if (this.map) this.map.remove();
+    if (this.map) {
+      this.map.off('click', this.mapClickHandler);
+      this.map.remove();
+    }
   }
-
-  private createSpotIcon(): L.DivIcon {
-    const fillColor = '#4a7c30';
-    return L.divIcon({
-      className: '',
-      html: `
-        <div style="filter:drop-shadow(0 3px 6px rgba(0,0,0,0.45))">
-          <svg xmlns="http://www.w3.org/2000/svg" width="34" height="46" viewBox="0 0 34 46">
-            <path d="M17 0C7.611 0 0 7.611 0 17c0 11.046 17 29 17 29S34 28.046 34 17C34 7.611 26.389 0 17 0z"
-              fill="${fillColor}"/>
-            <circle cx="17" cy="16" r="9.5" fill="white" opacity="0.15"/>
-            <circle cx="17" cy="16" r="8" fill="white"/>
-            <g transform="translate(17,16)">
-              <path d="M-5.5 0 C-3.5 -3.5 1 -5 4 0 C1 5 -3.5 3.5 -5.5 0Z"
-                fill="${fillColor}" stroke="${fillColor}" stroke-width="0.5"/>
-              <path d="M-7.5 -1.5 L-5.5 0 L-7.5 1.5Z"
-                fill="${fillColor}"/>
-              <circle cx="2" cy="-0.8" r="1.1" fill="white"/>
-              <circle cx="2" cy="-0.8" r="0.5" fill="${fillColor}"/>
-            </g>
-          </svg>
-        </div>`,
-      iconSize: [34, 46],
-      iconAnchor: [17, 46],
-      popupAnchor: [0, -48]
-    });
-  }
-
   private initMap(): void {
     // Fix Leaflet default marker icon path (broken by bundlers in production)
     delete (L.Icon.Default.prototype as any).options.iconUrl;
@@ -270,18 +274,18 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
     this.markersLayer = new L.LayerGroup();
     this.map.addLayer(this.markersLayer);
+    this.map.on('click', this.mapClickHandler);
   }
 
 
   private renderMarkers(): void {
     if (!this.markersLayer) return;  // map not yet initialized (cache sync emit in ngOnInit)
     this.markersLayer.clearLayers();
-    this.markerSpotMap.clear();
 
     this.visibleSpots.forEach(spot => {
       const marker = L.marker([spot.latitude, spot.longitude], {
-        icon: this.createSpotIcon()
-      }).bindPopup(this.buildPopupContent(spot), {
+        icon: this.spotIcon
+      }).bindPopup(buildHomeSpotPopupContent(spot), {
         maxWidth: 220,
         autoPanPaddingTopLeft: [16, 96],
         autoPanPaddingBottomRight: [16, 16]
@@ -305,36 +309,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         }
       });
 
-      this.markerSpotMap.set(marker, spot);
       this.markersLayer.addLayer(marker);
     });
-  }
-
-  private buildPopupContent(spot: HomeSpot): string {
-    const priceHtml = spot.pricePerHour > 0
-      ? `<div style="display:flex;align-items:center;gap:6px;margin:6px 0 2px">
-           <span style="background:#4a7c3022;color:#4a7c30;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #4a7c3044">${spot.pricePerHour} RON / h</span>
-         </div>`
-      : '';
-    const fishHtml = spot.parsedFishSpecies.length > 0
-      ? `<div style="color:#93c5fd;font-size:11px;margin-bottom:6px;line-height:1.35">Fish: ${spot.parsedFishSpecies.join(', ')}</div>`
-      : '';
-
-    const pontoonSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;margin-bottom:1px"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M7 7V5a2 2 0 0 1 4 0v2M13 7V5a2 2 0 0 1 4 0v2"/><line x1="12" y1="12" x2="12" y2="12.01"/></svg>`;
-    const navSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;margin-bottom:1px"><polyline points="3 11 22 2 13 21 11 13 3 11"/></svg>`;
-
-    let html = `<div style="min-width:195px;font-family:inherit">`;
-    html += `<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:3px">${spot.name}</div>`;
-    if (spot.description) {
-      html += `<div style="color:#64748b;font-size:12px;margin-bottom:4px;line-height:1.4">${spot.description}</div>`;
-    }
-    html += priceHtml;
-    html += fishHtml;
-    html += `<div style="color:#94a3b8;font-size:10px;margin-bottom:10px">${spot.latitude.toFixed(5)}, ${spot.longitude.toFixed(5)}</div>`;
-    html += `<button class="popup-book-btn" style="display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;background:#4a7c30;color:#fff;border:none;transition:filter .15s;">${pontoonSvg}Book Pontoon</button>`;
-    html += `<button class="popup-route-btn" style="display:flex;align-items:center;justify-content:center;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;margin-top:6px;background:#1e3a5f;color:#60a5fa;border:1px solid #2563eb55;transition:all .15s">${navSvg}Route on map</button>`;
-    html += `</div>`;
-    return html;
   }
 
   showRouteOnMap(spot: FishingSpot): void {
@@ -433,7 +409,6 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
     if (this.isAddMode) {
       this.map.getContainer().style.cursor = 'crosshair';
-      this.map.once('click', (e: L.LeafletMouseEvent) => this.onMapClick(e));
       // Lazy-load managers only when the add-spot form is actually opened
       if (this.managers.length === 0) {
         this.userService.getManagers().subscribe({
@@ -648,6 +623,42 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.sessionQrBookingId = null;
   }
 
+  private refreshStatCards(): void {
+    if (this.isAdmin()) {
+      this.statCards = [
+        { key: 'total-bookings', value: this.stats?.totalBookings ?? 0, label: 'Total Bookings', icon: 'bookings', iconClass: 'bookings-icon' },
+        { key: 'confirmed-bookings', value: this.stats?.confirmedBookings ?? 0, label: 'Confirmed', icon: 'success', iconClass: 'success-icon' },
+        { key: 'cancelled-bookings', value: this.stats?.cancelledBookings ?? 0, label: 'Cancelled', icon: 'error', iconClass: 'error-icon' },
+        { key: 'total-users', value: this.stats?.totalUsers ?? 0, label: 'Active Users', icon: 'users', iconClass: 'users-icon' },
+        { key: 'deactivated-users', value: this.stats?.deactivatedUsers ?? 0, label: 'Deactivated', icon: 'deactivated', iconClass: 'deactivated-icon' },
+        { key: 'total-spots', value: this.stats?.totalSpots ?? 0, label: 'Fishing Spots', icon: 'spots', iconClass: 'spots-icon' },
+        { key: 'total-pontoons', value: this.stats?.totalPontoons ?? 0, label: 'Pontoons', icon: 'pontoons', iconClass: 'pontoons-icon' },
+        { key: 'total-analyses', value: this.stats?.totalAnalyses ?? 0, label: 'AI Analyses', icon: 'analyses', iconClass: 'analyses-icon' }
+      ];
+      return;
+    }
+
+    const personalCards: HomeStatCard[] = [
+      { key: 'my-analyses', value: this.userAnalysesCount, label: 'My Analyses', icon: 'analyses', iconClass: 'analyses-icon' },
+      { key: 'completed-analyses', value: this.userCompletedCount, label: 'Completed', icon: 'success', iconClass: 'success-icon' }
+    ];
+
+    if (this.isUser()) {
+      personalCards.push(
+        { key: 'my-bookings', value: this.userBookingsCount, label: 'My Bookings', icon: 'bookings', iconClass: 'bookings-icon' },
+        { key: 'visited-lakes', value: this.userVisitedLakesCount, label: 'Visited Lakes', icon: 'visited', iconClass: 'visited-icon' }
+      );
+    }
+
+    if (this.isManager()) {
+      personalCards.push(
+        { key: 'my-spots', value: this.userSpotsCount, label: 'My Spots', icon: 'spots', iconClass: 'spots-icon' }
+      );
+    }
+
+    this.statCards = personalCards;
+  }
+
   private enrichSpotWithSpecies(spot: FishingSpot): HomeSpot {
     // Use managed fish species from the spot if available
     if (spot.fishSpecies) {
@@ -701,40 +712,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     }).addTo(this.map);
 
     // Punct animat cu DivIcon — stiluri inline pentru a evita probleme CSS
-    const icon = L.divIcon({
-      className: '',
-      html: `
-        <div style="position:relative;width:18px;height:18px;overflow:visible">
-          <div style="
-            position:absolute;width:44px;height:44px;
-            background:rgba(66,133,244,0.22);border-radius:50%;
-            top:50%;left:50%;
-            transform:translate(-50%,-50%) scale(0.3);
-            animation:userLocPulse 2.2s ease-out infinite;
-            pointer-events:none;
-          "></div>
-          <div style="
-            position:absolute;width:18px;height:18px;
-            background:#4285f4;border:3px solid #fff;border-radius:50%;
-            box-shadow:0 2px 10px rgba(66,133,244,0.6);
-            top:0;left:0;cursor:pointer;
-            transition:transform 0.15s ease;
-          "></div>
-        </div>`,
-      iconSize: [18, 18],
-      iconAnchor: [9, 9],
-      popupAnchor: [0, -14]
-    });
+    const icon = createHomeUserLocationIcon();
 
     this.userLocationMarker = L.marker(latlng, { icon, zIndexOffset: 1000 })
-      .bindPopup(
-        `<div style="font-family:inherit;min-width:160px">
-          <b style="font-size:13px;color:#1e293b">Locația ta</b><br>
-          <span style="font-size:11px;color:#64748b">Acuratețe GPS: <b>${accuracyText}</b></span><br>
-          <span style="font-size:11px;color:#94a3b8">Se caută adresa...</span>
-        </div>`,
-        { maxWidth: 240 }
-      )
+      .bindPopup(buildPendingUserLocationPopup(accuracyText), { maxWidth: 240 })
       .addTo(this.map);
 
     this.userLocationMarker.on('click', () => {
@@ -744,21 +725,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
           const a = result.address ?? {};
           const place = [a['road'], a['suburb'], a['city'] ?? a['town'] ?? a['village'], a['county']]
             .filter(Boolean).join(', ') || result.displayName;
-          this.userLocationMarker!.setPopupContent(
-            `<div style="font-family:inherit;min-width:160px">
-              <b style="font-size:13px;color:#1e293b">Locația ta</b><br>
-              <span style="font-size:12px;color:#334155">${place}</span><br>
-              <span style="font-size:11px;color:#64748b;margin-top:3px;display:block">Acuratețe GPS: <b>${accuracyText}</b></span>
-            </div>`
-          );
+          this.userLocationMarker!.setPopupContent(buildResolvedUserLocationPopup(place, accuracyText));
         },
         error: () => {
-          this.userLocationMarker!.setPopupContent(
-            `<div style="font-family:inherit">
-              <b style="font-size:13px;color:#1e293b">Locația ta</b><br>
-              <span style="font-size:11px;color:#64748b">Acuratețe GPS: <b>${accuracyText}</b></span>
-            </div>`
-          );
+          this.userLocationMarker!.setPopupContent(buildFallbackUserLocationPopup(accuracyText));
         }
       });
     });

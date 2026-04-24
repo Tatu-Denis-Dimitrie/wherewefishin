@@ -24,11 +24,7 @@
         (drop)="onDrop($event)"
       >
         <div class="drop-content" *ngIf="!selectedFile">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
+          <app-icon name="upload" [size]="40"></app-icon>
           <p class="drop-title">Drop your video here</p>
           <p class="drop-hint">or click to browse &mdash; MP4, AVI, MOV, MKV up to 150 MB</p>
           <input type="file" id="videoFile" (change)="onFileSelected($event)" accept="video/mp4,video/avi,video/x-msvideo,video/quicktime,video/x-matroska,.mp4,.avi,.mov,.mkv" hidden />
@@ -42,10 +38,7 @@
             <span class="file-size">{{ (selectedFile.size / 1024 / 1024).toFixed(1) }} MB</span>
           </div>
           <button class="btn-outline btn-clear" (click)="clearSelection()" [disabled]="uploading">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+            <app-icon name="close" [size]="16"></app-icon>
             Choose different file
           </button>
         </div>
@@ -92,24 +85,7 @@
           <!-- Processing state -->
           <div class="card-processing-media" *ngIf="a.status.toLowerCase() === 'processing'">
             <div class="processing-animation">
-              <svg class="processing-fish-icon" width="52" height="52" viewBox="0 0 512 512" fill="none" stroke="currentColor">
-                <path
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="32"
-                  stroke-linejoin="round"
-                  d="M240,152c-50.71,12.21-94.15,52.31-120.3,73.43a261.14,261.14,0,0,0-23.81-19.58C59.53,179.29,16,176,16,176s11.37,51.53,41.36,79.83C27.37,284.14,16,335.67,16,335.67s43.53-3.29,79.89-29.85a259.18,259.18,0,0,0,23.61-19.41C145.6,307.55,189.24,347.75,240,360l-16,56c39.43-6.67,78.86-35.51,94.72-48.25C448,362,496,279,496,256c0-22-48-106-176.89-111.73C303.52,131.78,263.76,102.72,224,96Z"
-                />
-                <circle cx="416" cy="239.99" r="16" fill="currentColor" stroke="none"/>
-                <path
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="32"
-                  stroke-linecap="round"
-                  stroke-miterlimit="20"
-                  d="M378.37,356a199.22,199.22,0,0,1,0-200"
-                />
-              </svg>
+              <app-icon name="brand-fish" [size]="52" svgClass="processing-fish-icon"></app-icon>
               <div class="processing-pulse"></div>
             </div>
             <div class="processing-bar-wrap">
@@ -162,12 +138,7 @@
 
   <!-- Empty state -->
   <div class="empty-state" *ngIf="!loading && !analyses.length">
-    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10z"/>
-      <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-      <line x1="9" y1="9" x2="9.01" y2="9"/>
-      <line x1="15" y1="9" x2="15.01" y2="9"/>
-    </svg>
+    <app-icon name="smile" [size]="48"></app-icon>
     <p>No analyses yet. Upload a video to get started!</p>
   </div>
 

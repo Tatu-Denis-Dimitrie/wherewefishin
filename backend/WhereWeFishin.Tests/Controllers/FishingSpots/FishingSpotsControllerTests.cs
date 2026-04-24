@@ -102,6 +102,53 @@ public class FishingSpotsControllerTests
         Assert.Empty(returnedSpots);
     }
 
+    [Fact]
+    public async Task GetManagedFishingSpots_AsManager_ReturnsOnlyManagedSpots()
+    {
+        // Arrange
+        ControllerContextFactory.SetAuthenticatedUser(_controller, 7, Roles.Manager);
+        var managerSpot = CreateSpot(1, "North Lake");
+        managerSpot.ManagerId = 7;
+        var ownerSpot = CreateSpot(2, "South Lake");
+        ownerSpot.UserId = 7;
+        var spots = new List<FishingSpot>
+        {
+            managerSpot,
+            ownerSpot,
+        };
+        _spotRepository
+            .FindAsync(Arg.Any<System.Linq.Expressions.Expression<Func<FishingSpot, bool>>>(), Arg.Any<CancellationToken>())
+            .Returns(spots);
+
+        // Act
+        var result = await _controller.GetManagedFishingSpots();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var returnedSpots = Assert.IsAssignableFrom<IEnumerable<FishingSpotDto>>(okResult.Value).ToList();
+        Assert.Equal(2, returnedSpots.Count);
+        await _spotRepository.Received(1)
+            .FindAsync(Arg.Any<System.Linq.Expressions.Expression<Func<FishingSpot, bool>>>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetManagedFishingSpots_AsAdmin_ReturnsAllSpots()
+    {
+        // Arrange
+        ControllerContextFactory.SetAuthenticatedUser(_controller, 3, Roles.Admin);
+        var spots = new List<FishingSpot> { CreateSpot(1, "River"), CreateSpot(2, "Lake") };
+        _spotRepository.GetAllAsync(Arg.Any<CancellationToken>()).Returns(spots);
+
+        // Act
+        var result = await _controller.GetManagedFishingSpots();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var returnedSpots = Assert.IsAssignableFrom<IEnumerable<FishingSpotDto>>(okResult.Value);
+        Assert.Equal(2, returnedSpots.Count());
+        await _spotRepository.Received(1).GetAllAsync(Arg.Any<CancellationToken>());
+    }
+
 
     [Fact]
     public async Task GetFishingSpot_WithValidId_ReturnsSpot()

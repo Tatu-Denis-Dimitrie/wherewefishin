@@ -5,10 +5,11 @@ import { VideoAnalysisService } from '../../services/video-analysis.service';
 import { AuthService } from '../../services/auth.service';
 import { VideoAnalysis } from '../../models/video-analysis.model';
 import { environment } from '../../../environments/environment';
+import { AppIcon } from '../../shared/icons/app-icon';
 
 @Component({
   selector: 'app-fish-recognition',
-  imports: [CommonModule],
+  imports: [CommonModule, AppIcon],
   templateUrl: './fish-recognition.html',
   styleUrl: './fish-recognition.css'
 })

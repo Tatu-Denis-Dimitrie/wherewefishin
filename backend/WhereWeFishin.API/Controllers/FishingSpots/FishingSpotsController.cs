@@ -48,6 +48,27 @@ public class FishingSpotsController : ControllerBase
         return Ok(spots.Select(MapToDto));
     }
 
+    [HttpGet("managed")]
+    [Authorize(Roles = Roles.AdminOrManager)]
+    public async Task<ActionResult<IEnumerable<FishingSpotDto>>> GetManagedFishingSpots()
+    {
+        IEnumerable<FishingSpot> spots;
+
+        if (User.IsInRole(Roles.Admin))
+        {
+            spots = await _spotRepository.GetAllAsync();
+        }
+        else
+        {
+            var userId = User.GetUserId();
+            if (userId == null) return Unauthorized();
+
+            spots = await _spotRepository.FindAsync(spot => spot.ManagerId == userId.Value || spot.UserId == userId.Value);
+        }
+
+        return Ok(spots.Select(MapToDto));
+    }
+
     [HttpGet("{id}")]
     [OutputCache(PolicyName = "MediumCache", Tags = ["fishingspots"])]
     public async Task<ActionResult<FishingSpotDto>> GetFishingSpot(int id)

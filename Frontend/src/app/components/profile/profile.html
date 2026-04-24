@@ -44,19 +44,11 @@
               <p class="header-handle">&#64;{{ user.username }}</p>
               <div class="header-meta">
                 <span class="meta-chip">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                    <polyline points="22,6 12,13 2,6"/>
-                  </svg>
+                  <app-icon name="email" [size]="13"></app-icon>
                   {{ user.email }}
                 </span>
                 <span class="meta-chip">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/>
-                    <line x1="8" y1="2" x2="8" y2="6"/>
-                    <line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
+                  <app-icon name="bookings" [size]="13"></app-icon>
                   Since {{ formatDate(user.createdAt) }}
                 </span>
               </div>
@@ -84,47 +76,30 @@
       <!-- ════════════ TAB BAR ════════════ -->
       <nav class="tab-bar">
         <button class="tab-btn" [class.tab-active]="activeTab === 'overview'" (click)="setTab('overview')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-          </svg>
+          <app-icon name="dashboard" [size]="16"></app-icon>
           <span class="tab-label">Overview</span>
         </button>
         <button class="tab-btn" [class.tab-active]="activeTab === 'bookings'" (click)="setTab('bookings')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/>
-            <line x1="8" y1="2" x2="8" y2="6"/>
-            <line x1="3" y1="10" x2="21" y2="10"/>
-          </svg>
+          <app-icon name="bookings" [size]="16"></app-icon>
           <span class="tab-label">Bookings</span>
           @if (userBookingsCount > 0) {
             <span class="tab-badge">{{ userBookingsCount }}</span>
           }
         </button>
         <button class="tab-btn" [class.tab-active]="activeTab === 'settings'" (click)="setTab('settings')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
+          <app-icon name="settings" [size]="16"></app-icon>
           <span class="tab-label">Settings</span>
         </button>
 
         <div class="tab-bar-right">
           @if (isAdmin()) {
             <a routerLink="/admin" class="tab-btn tab-admin">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
+              <app-icon name="shield" [size]="16"></app-icon>
               <span class="tab-label">Admin</span>
             </a>
           }
           <button class="tab-btn tab-logout" (click)="logout()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
+            <app-icon name="logout" [size]="16"></app-icon>
             <span class="tab-label">Sign Out</span>
           </button>
         </div>
@@ -141,10 +116,7 @@
             <div class="stat-cards">
               <div class="stat-card">
                 <div class="stat-icon-wrap sicon-blue">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="23 7 16 12 23 17 23 7"/>
-                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-                  </svg>
+                  <app-icon name="analyses" [size]="20"></app-icon>
                 </div>
                 <div class="stat-text">
                   <div class="stat-num">{{ userAnalysesCount }}</div>
@@ -154,10 +126,7 @@
 
               <div class="stat-card">
                 <div class="stat-icon-wrap sicon-green">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
-                  </svg>
+                  <app-icon name="success" [size]="20"></app-icon>
                 </div>
                 <div class="stat-text">
                   <div class="stat-num">{{ userCompletedCount }}</div>
@@ -167,12 +136,7 @@
 
               <div class="stat-card">
                 <div class="stat-icon-wrap sicon-purple">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/>
-                    <line x1="8" y1="2" x2="8" y2="6"/>
-                    <line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
+                  <app-icon name="bookings" [size]="20"></app-icon>
                 </div>
                 <div class="stat-text">
                   <div class="stat-num">{{ userBookingsCount }}</div>
@@ -183,10 +147,7 @@
               @if (isManager() || isAdmin()) {
                 <div class="stat-card">
                   <div class="stat-icon-wrap sicon-moss">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                      <circle cx="12" cy="10" r="3"/>
-                    </svg>
+                    <app-icon name="spots" [size]="20"></app-icon>
                   </div>
                   <div class="stat-text">
                     <div class="stat-num">{{ userSpotsCount }}</div>
@@ -198,12 +159,7 @@
               @if (isAdmin() && adminStats) {
                 <div class="stat-card">
                   <div class="stat-icon-wrap sicon-amber">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                      <circle cx="9" cy="7" r="4"/>
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                    </svg>
+                    <app-icon name="users" [size]="20"></app-icon>
                   </div>
                   <div class="stat-text">
                     <div class="stat-num">{{ adminStats.totalUsers }}</div>
@@ -226,10 +182,7 @@
                     @for (analysis of recentAnalyses; track analysis.id) {
                       <div class="list-item">
                         <div class="item-icon iicon-blue">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polygon points="23 7 16 12 23 17 23 7"/>
-                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-                          </svg>
+                          <app-icon name="analyses" [size]="14"></app-icon>
                         </div>
                         <div class="item-body">
                           <div class="item-name">{{ analysis.fileName }}</div>
@@ -255,10 +208,7 @@
                     @for (spot of userSpots; track spot.id) {
                       <div class="list-item">
                         <div class="item-icon iicon-moss">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                            <circle cx="12" cy="10" r="3"/>
-                          </svg>
+                          <app-icon name="spots" [size]="14"></app-icon>
                         </div>
                         <div class="item-body">
                           <div class="item-name">{{ spot.name }}</div>
@@ -304,10 +254,7 @@
                 <div class="quick-actions">
                   <a routerLink="/home" class="qa-card">
                     <div class="qa-icon qaicon-moss">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                        <circle cx="12" cy="10" r="3"/>
-                      </svg>
+                      <app-icon name="spots" [size]="20"></app-icon>
                     </div>
                     <div class="qa-text">
                       <div class="qa-title">Browse Fishing Spots</div>
@@ -316,10 +263,7 @@
                   </a>
                   <a routerLink="/fish-recognition" class="qa-card">
                     <div class="qa-icon qaicon-blue">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="23 7 16 12 23 17 23 7"/>
-                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-                      </svg>
+                      <app-icon name="analyses" [size]="20"></app-icon>
                     </div>
                     <div class="qa-text">
                       <div class="qa-title">Analyse a Video</div>
@@ -328,12 +272,7 @@
                   </a>
                   <a routerLink="/my-bookings" class="qa-card">
                     <div class="qa-icon qaicon-purple">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                        <line x1="16" y1="2" x2="16" y2="6"/>
-                        <line x1="8" y1="2" x2="8" y2="6"/>
-                        <line x1="3" y1="10" x2="21" y2="10"/>
-                      </svg>
+                      <app-icon name="bookings" [size]="20"></app-icon>
                     </div>
                     <div class="qa-text">
                       <div class="qa-title">My Bookings</div>
@@ -359,12 +298,7 @@
             } @else if (recentBookings.length === 0) {
               <div class="empty-state">
                 <div class="empty-icon">
-                  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                    <line x1="16" y1="2" x2="16" y2="6"/>
-                    <line x1="8" y1="2" x2="8" y2="6"/>
-                    <line x1="3" y1="10" x2="21" y2="10"/>
-                  </svg>
+                  <app-icon name="bookings" [size]="44" [strokeWidth]="1.3"></app-icon>
                 </div>
                 <p class="empty-title">No bookings yet</p>
                 <p class="empty-sub">Explore fishing spots and make your first reservation.</p>
@@ -415,10 +349,7 @@
                   </div>
                   @if (!isEditing) {
                     <button class="btn-edit-inline" (click)="toggleEdit()">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                      </svg>
+                      <app-icon name="edit" [size]="13"></app-icon>
                       Edit
                     </button>
                   }
@@ -481,10 +412,7 @@
                 <div class="security-list">
                   <div class="security-row">
                     <div class="security-icon-wrap sec-neutral">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                      </svg>
+                      <app-icon name="lock" [size]="15"></app-icon>
                     </div>
                     <div class="security-info">
                       <div class="security-title">Password</div>
@@ -494,9 +422,7 @@
                   </div>
                   <div class="security-row">
                     <div class="security-icon-wrap sec-ok">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                      </svg>
+                      <app-icon name="shield" [size]="15"></app-icon>
                     </div>
                     <div class="security-info">
                       <div class="security-title">Account Status</div>
@@ -522,10 +448,7 @@
         <div class="modal-head">
           <h3>Change Password</h3>
           <button class="modal-close-btn" (click)="closeChangePassword()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
+            <app-icon name="close" [size]="16" [strokeWidth]="2.5"></app-icon>
           </button>
         </div>
         <div class="modal-body">

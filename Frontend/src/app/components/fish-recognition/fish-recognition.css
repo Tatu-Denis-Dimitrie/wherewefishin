@@ -75,7 +75,7 @@
   border-color: var(--accent-moss);
   background: rgba(125,179,74,.05);
 }
-.drop-content svg { color: var(--accent-moss); margin-bottom: .75rem; }
+.drop-content app-icon { color: var(--accent-moss); margin-bottom: .75rem; display: inline-flex; }
 .drop-title { font-size: 1.05rem; font-weight: 600; color: var(--text-heading); margin-bottom: .3rem; }
 .drop-hint { font-size: .82rem; color: var(--text-muted); margin-bottom: 1rem; }
 
@@ -105,7 +105,7 @@
   padding: .5rem 1rem;
   font-size: .85rem;
 }
-.btn-clear svg { width: 16px; height: 16px; }
+.btn-clear app-icon { width: 16px; height: 16px; display: inline-flex; }
 
 /* Progress */
 .progress-wrap {
@@ -250,7 +250,7 @@
   text-align: center; padding: 3rem 1rem;
   color: var(--text-muted);
 }
-.empty-state svg { margin-bottom: .75rem; opacity: .5; }
+.empty-state app-icon { margin-bottom: .75rem; opacity: .5; display: inline-flex; }
 .empty-state p { font-size: .95rem; }
 
 .loading-spinner { display: flex; justify-content: center; padding: 3rem; }

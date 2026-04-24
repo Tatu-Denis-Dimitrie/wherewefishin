@@ -14,12 +14,13 @@ import { BookingService } from '../../services/booking.service';
 import { User, UpdateUser } from '../../models/user.model';
 import { Booking } from '../../models/booking.model';
 import { VideoAnalysis } from '../../models/video-analysis.model';
+import { AppIcon } from '../../shared/icons/app-icon';
 
 type ProfileTab = 'overview' | 'bookings' | 'settings';
 
 @Component({
   selector: 'app-profile',
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, AppIcon],
   templateUrl: './profile.html',
   styleUrl: './profile.css'
 })

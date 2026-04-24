@@ -13,11 +13,12 @@ import { SpotEmployee } from '../../models/employee.model';
 import { User } from '../../models/user.model';
 import { FishStocking } from '../../models/stocking.model';
 import { SpotStatistics } from '../../models/fishing-spot.model';
+import { AppIcon } from '../../shared/icons/app-icon';
 import * as L from 'leaflet';
 
 @Component({
   selector: 'app-spot-manager',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, AppIcon],
   templateUrl: './spot-manager.html',
   styleUrl: './spot-manager.css',
   encapsulation: ViewEncapsulation.None
@@ -192,14 +193,9 @@ export class SpotManager implements OnInit, OnDestroy {
   }
 
   private loadManagedSpots(): void {
-    const userId = this.authService.getUserId();
-    const isAdmin = this.authService.isAdmin();
-    if (!isAdmin && !userId) return;
-
-    this.fishingSpotService.getAll().subscribe({
+    this.fishingSpotService.getManaged().subscribe({
       next: (spots) => {
         this.managedSpots = spots
-          .filter(spot => isAdmin || spot.managerId === userId || spot.userId === userId)
           .sort((left, right) => left.name.localeCompare(right.name));
 
         if (this.spot) {

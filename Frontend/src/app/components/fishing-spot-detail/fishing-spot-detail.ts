@@ -12,11 +12,12 @@ import { StockingService } from '../../services/stocking.service';
 import { BookedPeriod } from '../../models/booking.model';
 import { FishStocking } from '../../models/stocking.model';
 import { AuthService } from '../../services/auth.service';
+import { AppIcon } from '../../shared/icons/app-icon';
 import * as L from 'leaflet';
 
 @Component({
   selector: 'app-fishing-spot-detail',
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, AppIcon],
   templateUrl: './fishing-spot-detail.html',
   styleUrl: './fishing-spot-detail.css',
   encapsulation: ViewEncapsulation.None

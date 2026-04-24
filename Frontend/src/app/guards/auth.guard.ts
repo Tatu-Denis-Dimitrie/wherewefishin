@@ -29,8 +29,7 @@ export const managerGuard: CanActivateFn = () => {
 export const employeeGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
-  const role = authService.getRole();
-  if (role === 'Employee' || role === 'Manager' || role === 'Admin') return true;
+  if (authService.isEmployee()) return true;
   router.navigate(['/home']);
   return false;
 };
