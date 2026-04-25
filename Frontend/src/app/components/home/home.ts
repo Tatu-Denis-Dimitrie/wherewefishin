@@ -14,6 +14,8 @@ import { UserService } from '../../services/user.service';
 import { User } from '../../models/user.model';
 import { RoutingService } from '../../services/routing.service';
 import { GeocodingService } from '../../services/geocoding.service';
+import { AdminHomeOverview, ManagerApplication } from '../../models/manager-application.model';
+import { ManagerApplicationService } from '../../services/manager-application.service';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { AppIconName } from '../../shared/icons/app-icon.registry';
 import {
@@ -36,7 +38,7 @@ interface HomeSpot extends FishingSpot {
   parsedFishSpecies: string[];
 }
 
-type HomeStatIcon = Extract<AppIconName, 'bookings' | 'success' | 'error' | 'users' | 'deactivated' | 'spots' | 'pontoons' | 'analyses' | 'visited'>;
+type HomeStatIcon = Extract<AppIconName, 'admin' | 'bookings' | 'success' | 'error' | 'users' | 'deactivated' | 'spots' | 'pontoons' | 'analyses' | 'visited'>;
 
 interface HomeStatCard {
   key: string;
@@ -76,6 +78,9 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   ];
   private userLocationMarker: L.Marker | null = null;
   private userLocationCircle: L.Circle | null = null;
+  private pendingApplicationMap: L.Map | null = null;
+  private pendingApplicationMapMarker: L.Marker | null = null;
+  private pendingApplicationMapTimer: number | null = null;
   private userLatLng: L.LatLng | null = null;
   private routeLayer: L.GeoJSON | null = null;
   private readonly userLocationStorageKey = 'wherewefishin.user-location.v1';
@@ -95,10 +100,12 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   showMessage = '';
   messageType: 'success' | 'error' = 'success';
   canEdit = false;
+  canAddSpots = false;
   mapExpanded = false;
   
   // Dashboard data - Admin stats
   stats: AdminStats | null = null;
+  adminHomeOverview: AdminHomeOverview | null = null;
   
   // User/Manager specific data
   userAnalysesCount = 0;
@@ -117,6 +124,8 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   isSessionQrVisible = false;
   isSessionQrLoading = false;
   private sessionQrBookingId: number | null = null;
+  processingApplicationId: number | null = null;
+  selectedPendingApplication: ManagerApplication | null = null;
   
   // Role helpers
   currentRole: string = '';
@@ -142,12 +151,14 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     private userService: UserService,
     private routingService: RoutingService,
     private geocodingService: GeocodingService,
+    private managerApplicationService: ManagerApplicationService,
     private cdr: ChangeDetectorRef,
     private zone: NgZone
   ) {}
 
   ngOnInit(): void {
     this.canEdit = this.authService.isManagerOrAdmin();
+    this.canAddSpots = this.authService.isAdmin();
     this.currentRole = this.authService.getRole() || 'User';
     this.refreshStatCards();
     this.loadDashboardData();
@@ -187,11 +198,11 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       bookings: this.isUser()
         ? this.bookingService.getMyBookings().pipe(catchError(() => of([] as Booking[])))
         : of([] as Booking[]),
-      stats: this.isAdmin()
-        ? this.adminService.getStats().pipe(catchError(() => of(null)))
+      adminHome: this.isAdmin()
+        ? this.adminService.getHomeOverview().pipe(catchError(() => of(null)))
         : of(null)
     }).subscribe({
-      next: ({ spots, analyses, bookings, stats }) => {
+      next: ({ spots, analyses, bookings, adminHome }) => {
         // Spots — shared with map (replaces separate loadSpots call)
         this.spots = spots.map(s => this.enrichSpotWithSpecies(s));
         this.fishSpeciesOptions = Array.from(
@@ -226,8 +237,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
           this.updateSelectedSession();
         }
 
-        // Admin system stats
-        if (stats) this.stats = stats;
+        // Admin home overview
+        if (adminHome) {
+          this.adminHomeOverview = adminHome;
+        }
 
         this.loadingStats = false;
         this.loadingLatestSession = false;
@@ -243,6 +256,13 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.pendingApplicationMapTimer !== null) {
+      window.clearTimeout(this.pendingApplicationMapTimer);
+      this.pendingApplicationMapTimer = null;
+    }
+
+    this.destroyPendingApplicationMap();
+
     if (this.map) {
       this.map.off('click', this.mapClickHandler);
       this.map.remove();
@@ -266,7 +286,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       maxZoom: 20
     });
 
-    L.tileLayer('https://mt1.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
+    L.tileLayer('https://{s}.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
       attribution: '&copy; <a href="https://maps.google.com">Google Maps</a>',
       maxZoom: 20,
       subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
@@ -403,7 +423,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   }
 
   toggleAddMode(): void {
-    if (!this.canEdit) return;
+    if (!this.canAddSpots) return;
     this.isAddMode = !this.isAddMode;
     this.isDeleteMode = false;
 
@@ -459,6 +479,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       next: () => {
         this.showToast('Fishing spot added!', 'success');
         this.adminService.clearStatsCache();
+        this.adminService.clearHomeOverviewCache();
         this.cancelAddSpot();
         this.loadDashboardData();
       },
@@ -491,6 +512,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       next: () => {
         this.showToast(`"${spot.name}" deleted`, 'success');
         this.adminService.clearStatsCache();
+        this.adminService.clearHomeOverviewCache();
         this.loadDashboardData();
       },
       error: () => this.showToast('Failed to delete spot', 'error')
@@ -588,6 +610,37 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     }).format(parsed);
   }
 
+  formatDate(dateValue: string): string {
+    const parsed = new Date(dateValue);
+    if (Number.isNaN(parsed.getTime())) {
+      return '-';
+    }
+
+    return new Intl.DateTimeFormat('en-US', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(parsed);
+  }
+
+  formatApplicationFishSpecies(fishSpecies?: string): string[] {
+    if (!fishSpecies) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(fishSpecies) as string[];
+      return Array.isArray(parsed)
+        ? parsed.map(species => species.trim()).filter(Boolean)
+        : [];
+    } catch {
+      return fishSpecies
+        .split(/[\n,]/)
+        .map(species => species.trim())
+        .filter(Boolean);
+    }
+  }
+
   getBookingStatusClass(status: string): string {
     const normalized = status.toLowerCase();
     if (normalized === 'cancelled') return 'booking-status-cancelled';
@@ -612,6 +665,71 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.router.navigate(['/spots', spotId]);
   }
 
+  get pendingApplications(): ManagerApplication[] {
+    return this.adminHomeOverview?.pendingApplications ?? [];
+  }
+
+  viewPendingApplication(application: ManagerApplication): void {
+    this.selectedPendingApplication = application;
+    this.cdr.detectChanges();
+    this.queuePendingApplicationMapInitialization();
+  }
+
+  closePendingApplicationModal(): void {
+    this.selectedPendingApplication = null;
+    this.destroyPendingApplicationMap();
+  }
+
+  focusPendingApplication(application: ManagerApplication): void {
+    this.viewPendingApplication(application);
+  }
+
+  approveManagerApplication(application: ManagerApplication): void {
+    if (this.processingApplicationId !== null) return;
+
+    this.processingApplicationId = application.id;
+    this.managerApplicationService.approve(application.id).subscribe({
+      next: () => {
+        if (this.selectedPendingApplication?.id === application.id) {
+          this.closePendingApplicationModal();
+        }
+        this.processingApplicationId = null;
+        this.showToast(`The application for ${application.lakeName} was approved.`, 'success');
+        this.adminService.clearHomeOverviewCache();
+        this.fishingSpotService.clearCache();
+        this.loadDashboardData();
+      },
+      error: (response) => {
+        this.processingApplicationId = null;
+        this.showToast(response.error?.message ?? 'Could not approve the application.', 'error');
+      }
+    });
+  }
+
+  rejectManagerApplication(application: ManagerApplication): void {
+    if (this.processingApplicationId !== null) return;
+
+    const reason = window.prompt(`Rejection reason for ${application.lakeName}:`);
+    if (!reason?.trim()) return;
+
+    this.processingApplicationId = application.id;
+    this.managerApplicationService.reject(application.id, { reason: reason.trim() }).subscribe({
+      next: () => {
+        if (this.selectedPendingApplication?.id === application.id) {
+          this.closePendingApplicationModal();
+        }
+        this.processingApplicationId = null;
+        this.showToast(`The application for ${application.lakeName} was rejected.`, 'success');
+        this.adminService.clearHomeOverviewCache();
+        this.loadDashboardData();
+      },
+      error: (response) => {
+        this.processingApplicationId = null;
+        this.showToast(response.error?.message ?? 'Could not reject the application.', 'error');
+      }
+    });
+  }
+
   private updateSelectedSession(): void {
     this.latestPurchasedSession = this.selectedSessionView === 'future'
       ? this.latestFutureSession
@@ -626,14 +744,62 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   private refreshStatCards(): void {
     if (this.isAdmin()) {
       this.statCards = [
-        { key: 'total-bookings', value: this.stats?.totalBookings ?? 0, label: 'Total Bookings', icon: 'bookings', iconClass: 'bookings-icon' },
-        { key: 'confirmed-bookings', value: this.stats?.confirmedBookings ?? 0, label: 'Confirmed', icon: 'success', iconClass: 'success-icon' },
-        { key: 'cancelled-bookings', value: this.stats?.cancelledBookings ?? 0, label: 'Cancelled', icon: 'error', iconClass: 'error-icon' },
-        { key: 'total-users', value: this.stats?.totalUsers ?? 0, label: 'Active Users', icon: 'users', iconClass: 'users-icon' },
-        { key: 'deactivated-users', value: this.stats?.deactivatedUsers ?? 0, label: 'Deactivated', icon: 'deactivated', iconClass: 'deactivated-icon' },
-        { key: 'total-spots', value: this.stats?.totalSpots ?? 0, label: 'Fishing Spots', icon: 'spots', iconClass: 'spots-icon' },
-        { key: 'total-pontoons', value: this.stats?.totalPontoons ?? 0, label: 'Pontoons', icon: 'pontoons', iconClass: 'pontoons-icon' },
-        { key: 'total-analyses', value: this.stats?.totalAnalyses ?? 0, label: 'AI Analyses', icon: 'analyses', iconClass: 'analyses-icon' }
+        {
+          key: 'active-users',
+          value: this.adminHomeOverview?.activeUsers ?? 0,
+          label: 'Active Users',
+          icon: 'users',
+          iconClass: 'users-icon'
+        },
+        {
+          key: 'deactivated-users',
+          value: this.adminHomeOverview?.deactivatedUsers ?? 0,
+          label: 'Deactivated Users',
+          icon: 'deactivated',
+          iconClass: 'deactivated-icon'
+        },
+        {
+          key: 'total-spots',
+          value: this.adminHomeOverview?.totalSpots ?? 0,
+          label: 'Fishing Spots',
+          icon: 'spots',
+          iconClass: 'spots-icon'
+        },
+        {
+          key: 'spots-without-manager',
+          value: this.adminHomeOverview?.spotsWithoutManager ?? 0,
+          label: 'Spots without Manager',
+          icon: 'spots',
+          iconClass: 'warning-icon'
+        },
+        {
+          key: 'pending-manager-applications',
+          value: this.adminHomeOverview?.pendingManagerApplications ?? 0,
+          label: 'Pending Applications',
+          icon: 'admin',
+          iconClass: 'processing-icon'
+        },
+        {
+          key: 'rejected-applications',
+          value: this.adminHomeOverview?.rejectedManagerApplications ?? 0,
+          label: 'Rejected Applications',
+          icon: 'admin',
+          iconClass: 'error-icon'
+        },
+        {
+          key: 'failed-analyses',
+          value: this.adminHomeOverview?.failedVideoAnalyses ?? 0,
+          label: 'Failed Analyses',
+          icon: 'analyses',
+          iconClass: 'error-icon'
+        },
+        {
+          key: 'cancelled-bookings',
+          value: this.adminHomeOverview?.cancelledBookings ?? 0,
+          label: 'Cancelled Bookings',
+          icon: 'bookings',
+          iconClass: 'cancelled-icon'
+        }
       ];
       return;
     }
@@ -657,6 +823,56 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.statCards = personalCards;
+  }
+
+  private queuePendingApplicationMapInitialization(): void {
+    if (this.pendingApplicationMapTimer !== null) {
+      window.clearTimeout(this.pendingApplicationMapTimer);
+    }
+
+    this.pendingApplicationMapTimer = window.setTimeout(() => {
+      this.pendingApplicationMapTimer = null;
+      this.initPendingApplicationMap();
+    }, 60);
+  }
+
+  private initPendingApplicationMap(): void {
+    if (!this.selectedPendingApplication) return;
+
+    const mapContainer = document.getElementById('pending-application-map');
+    if (!mapContainer) return;
+
+    this.destroyPendingApplicationMap();
+
+    const latLng: [number, number] = [
+      this.selectedPendingApplication.latitude,
+      this.selectedPendingApplication.longitude
+    ];
+
+    this.pendingApplicationMap = L.map(mapContainer, {
+      center: latLng,
+      zoom: 10,
+      zoomControl: true,
+      maxZoom: 19
+    });
+
+    L.tileLayer('https://{s}.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}', {
+      attribution: '&copy; <a href="https://maps.google.com">Google Maps</a>',
+      maxZoom: 20,
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+    }).addTo(this.pendingApplicationMap);
+
+    this.pendingApplicationMapMarker = L.marker(latLng).addTo(this.pendingApplicationMap);
+    this.pendingApplicationMap.setView(latLng, 10, { animate: false });
+    window.setTimeout(() => this.pendingApplicationMap?.invalidateSize(), 120);
+  }
+
+  private destroyPendingApplicationMap(): void {
+    if (!this.pendingApplicationMap) return;
+
+    this.pendingApplicationMap.remove();
+    this.pendingApplicationMap = null;
+    this.pendingApplicationMapMarker = null;
   }
 
   private enrichSpotWithSpecies(spot: FishingSpot): HomeSpot {

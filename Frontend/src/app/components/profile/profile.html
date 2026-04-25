@@ -92,6 +92,12 @@
         </button>
 
         <div class="tab-bar-right">
+          @if (!isAdmin() && !isManager()) {
+            <a routerLink="/manager-application" class="tab-btn tab-become-manager" title="Apply to become a manager">
+              <app-icon name="manage" [size]="16"></app-icon>
+              <span class="tab-label">Become Manager</span>
+            </a>
+          }
           @if (isAdmin()) {
             <a routerLink="/admin" class="tab-btn tab-admin">
               <app-icon name="shield" [size]="16"></app-icon>
@@ -277,6 +283,15 @@
                     <div class="qa-text">
                       <div class="qa-title">My Bookings</div>
                       <div class="qa-sub">View all your reservations</div>
+                    </div>
+                  </a>
+                  <a routerLink="/manager-application" class="qa-card">
+                    <div class="qa-icon qaicon-amber">
+                      <app-icon name="manage" [size]="20"></app-icon>
+                    </div>
+                    <div class="qa-text">
+                      <div class="qa-title">Become a Manager</div>
+                      <div class="qa-sub">Propose a lake to manage</div>
                     </div>
                   </a>
                 </div>

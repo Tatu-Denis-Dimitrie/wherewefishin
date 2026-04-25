@@ -35,9 +35,9 @@ public class FishingSpotsControllerTests
             _pontoonRepository, _employeeRepository, _stockingRepository, _cacheStore);
     }
 
-    private void SetUser(int userId)
+    private void SetUser(int userId, string role = Roles.User)
     {
-        ControllerContextFactory.SetAuthenticatedUser(_controller, userId);
+        ControllerContextFactory.SetAuthenticatedUser(_controller, userId, role);
     }
 
     private static FishingSpot CreateSpot(int id = 1, string name = "Lake Spot") => new()
@@ -211,7 +211,7 @@ public class FishingSpotsControllerTests
     public async Task CreateFishingSpot_WithValidData_ReturnsCreated()
     {
         // Arrange
-        SetUser(1);
+        SetUser(1, Roles.Admin);
         var createDto = new CreateFishingSpotDto
         {
             Name = "New Spot",
@@ -238,7 +238,7 @@ public class FishingSpotsControllerTests
     public async Task CreateFishingSpot_CallsAddAsync()
     {
         // Arrange
-        SetUser(1);
+        SetUser(1, Roles.Admin);
         var createDto = new CreateFishingSpotDto { Name = "Spot", Latitude = 1, Longitude = 1 };
         _spotRepository.AddAsync(Arg.Any<FishingSpot>(), Arg.Any<CancellationToken>())
             .Returns(callInfo => callInfo.Arg<FishingSpot>());
@@ -273,7 +273,7 @@ public class FishingSpotsControllerTests
     public async Task CreateFishingSpot_EvictsCacheAndMapsManager()
     {
         // Arrange
-        SetUser(7);
+        SetUser(7, Roles.Admin);
         _spotRepository.AddAsync(Arg.Any<FishingSpot>(), Arg.Any<CancellationToken>())
             .Returns(callInfo => callInfo.Arg<FishingSpot>());
 
@@ -295,6 +295,25 @@ public class FishingSpotsControllerTests
         Assert.Equal(7, returnedSpot.UserId);
         Assert.Equal(3, returnedSpot.ManagerId);
         await _cacheStore.Received(1).EvictByTagAsync("fishingspots", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CreateFishingSpot_WhenUserIsNotAdmin_ReturnsForbid()
+    {
+        // Arrange
+        SetUser(7, Roles.Manager);
+
+        // Act
+        var result = await _controller.CreateFishingSpot(new CreateFishingSpotDto
+        {
+            Name = "Blocked Spot",
+            Latitude = 44.1,
+            Longitude = 26.1
+        });
+
+        // Assert
+        Assert.IsType<ForbidResult>(result.Result);
+        await _spotRepository.DidNotReceive().AddAsync(Arg.Any<FishingSpot>(), Arg.Any<CancellationToken>());
     }
 
 

@@ -186,8 +186,9 @@
   flex-shrink: 0;
   margin-left: auto;
 }
-.tab-admin:hover  { color: #6bc4de !important; }
-.tab-logout:hover { color: var(--color-error) !important; }
+.tab-admin:hover        { color: #6bc4de !important; }
+.tab-logout:hover       { color: var(--color-error) !important; }
+.tab-become-manager:hover { color: var(--accent-moss-light) !important; }
 
 /* ──────────────────────────────────
    MAIN CONTENT
@@ -254,15 +255,23 @@
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
 }
 .content-card-head {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
   padding: .9rem 1.1rem .7rem;
   border-bottom: 1px solid rgba(232,224,208,.1);
 }
-.content-card-head h3 { font-size: .95rem; font-weight: 600; color: var(--text-heading); margin: 0; }
+.content-card-head h3 { font-size: .95rem; font-weight: 600; color: var(--text-heading); margin: 0; flex: 1 1 220px; min-width: 0; }
 .link-see-all {
-  font-size: .78rem; color: var(--accent-moss); text-decoration: none; opacity: .85;
+  font-size: .78rem; color: var(--accent-moss); text-decoration: none; opacity: .85; white-space: nowrap;
 }
 .link-see-all:hover { opacity: 1; text-decoration: underline; }
+
+.card-copy {
+  margin: 0;
+  padding: .95rem 1.1rem 1.05rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
 
 /* Item list */
 .item-list { padding: .4rem 0; }

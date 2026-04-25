@@ -1,0 +1,330 @@
+<div class="ma-page">
+
+  <!-- ══ Status bar when application already exists ═══════════════════════ -->
+  @if (!loading && latestApplication) {
+    <div class="ma-status-bar" [class.status-pending]="isPending" [class.status-rejected]="isRejected" [class.status-approved]="isApproved">
+      <div class="ma-status-inner">
+        <span class="ma-status-dot"></span>
+        <span class="ma-status-text">
+          @if (isPending) { Application for <strong>{{ latestApplication.lakeName }}</strong> is pending review }
+          @else if (isRejected) { Application for <strong>{{ latestApplication.lakeName }}</strong> was rejected }
+          @else if (isApproved) { Application for <strong>{{ latestApplication.lakeName }}</strong> was approved }
+        </span>
+        @if (isRejected && latestApplication.rejectionReason) {
+          <span class="ma-status-reason">„{{ latestApplication.rejectionReason }}"</span>
+        }
+        @if (isApproved) {
+          <button class="ma-new-btn" (click)="startNew()">Propose a new lake →</button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ══ Global feedback ═══════════════════════════════════════════════════ -->
+  @if (globalError || successMessage) {
+    <div class="ma-feedback" [class.ma-fb-error]="!!globalError" [class.ma-fb-success]="!!successMessage">
+      {{ globalError || successMessage }}
+    </div>
+  }
+
+  <!-- ══ Main wizard card ══════════════════════════════════════════════════ -->
+  @if (!loading) {
+    <div class="ma-card">
+
+      <!-- ── Card header ─────────────────────────────────────────────────── -->
+      <div class="ma-card-head">
+        <div class="ma-head-left">
+          <a routerLink="/profile" class="ma-back-link">← Back</a>
+          <div>
+            <p class="ma-eyebrow">Manager Workflow</p>
+            <h1 class="ma-title">{{ pageTitle }}</h1>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Step rail ───────────────────────────────────────────────────── -->
+      <div class="ma-steps-rail">
+        @for (step of steps; track step; let i = $index) {
+          <button
+            class="ma-step-btn"
+            [class.active]="currentStep === step"
+            [class.done]="stepIndex > i"
+            (click)="goToStep(step)"
+            [disabled]="isReadOnly && step !== currentStep">
+            <span class="ma-step-number">
+              @if (stepIndex > i) { ✓ } @else { {{ i + 1 }} }
+            </span>
+            <span class="ma-step-label">{{ stepLabels[step] }}</span>
+          </button>
+          @if (i < steps.length - 1) {
+            <span class="ma-step-sep" [class.sep-done]="stepIndex > i"></span>
+          }
+        }
+      </div>
+
+      <!-- ── Step error ──────────────────────────────────────────────────── -->
+      @if (stepError) {
+        <div class="ma-step-error">{{ stepError }}</div>
+      }
+
+      <!-- ══ STEP 1 — Lake Details ═════════════════════════════════════════ -->
+      @if (currentStep === 'lake') {
+        <div class="ma-step-body" @.disabled>
+          <div class="ma-step-intro">
+            <p>Fill in the basic details of the lake you want to manage.</p>
+          </div>
+
+          <div class="ma-fields">
+            <label class="ma-field ma-field-full">
+              <span class="ma-label">Lake name <em>*</em></span>
+              <input
+                class="ma-input"
+                type="text"
+                [(ngModel)]="form.lakeName"
+                [disabled]="isReadOnly"
+                placeholder="e.g. Green Lake">
+            </label>
+
+            <label class="ma-field ma-field-full">
+              <span class="ma-label">Short description</span>
+              <textarea
+                class="ma-input"
+                [(ngModel)]="form.description"
+                [disabled]="isReadOnly"
+                rows="3"
+                placeholder="What makes this lake special? Surface area, access, facilities…"></textarea>
+            </label>
+
+            <label class="ma-field">
+              <span class="ma-label">Proposed price / hour (RON)</span>
+              <input
+                class="ma-input"
+                type="number"
+                [(ngModel)]="form.proposedPricePerHour"
+                [disabled]="isReadOnly"
+                min="0" step="1"
+                placeholder="0 = free access">
+            </label>
+
+            <label class="ma-field">
+              <span class="ma-label">Contact phone <em>*</em></span>
+              <input
+                class="ma-input"
+                type="tel"
+                [ngModel]="form.contactPhone"
+                (ngModelChange)="onPhoneChange($event)"
+                [disabled]="isReadOnly"
+                maxlength="10"
+                inputmode="numeric"
+                placeholder="07XXXXXXXX">
+            </label>
+
+            <div class="ma-field ma-field-full">
+              <span class="ma-label">Fish species</span>
+              <div class="ma-species-row">
+                <input
+                  class="ma-input"
+                  type="text"
+                  [(ngModel)]="form.fishSpeciesInput"
+                  [disabled]="isReadOnly"
+                  (keydown.enter)="onSpeciesEnter($event)"
+                  placeholder="e.g. Carp">
+                <button
+                  type="button"
+                  class="ma-add-btn"
+                  (click)="addSpecies()"
+                  [disabled]="isReadOnly || !form.fishSpeciesInput.trim()">
+                  Add
+                </button>
+              </div>
+              @if (form.fishSpecies.length > 0) {
+                <div class="ma-chips">
+                  @for (sp of form.fishSpecies; track sp) {
+                    <span class="ma-chip">
+                      {{ sp }}
+                      @if (!isReadOnly) {
+                        <button type="button" class="ma-chip-del" (click)="removeSpecies(sp)" aria-label="Remove">×</button>
+                      }
+                    </span>
+                  }
+                </div>
+              }
+              <small class="ma-hint">Add each species individually.</small>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ══ STEP 2 — Location ═════════════════════════════════════════════ -->
+      @if (currentStep === 'location') {
+        <div class="ma-step-body ma-step-map-body">
+          <div class="ma-step-intro">
+            <p>Click on the map to place the marker at the centre of the lake. The address is resolved automatically.</p>
+          </div>
+
+          <div class="ma-map-wrap">
+            <div id="wizard-map" class="ma-map"></div>
+            @if (isPending) {
+              <div class="ma-map-lock">
+                <span>🔒 Location is locked while the application is under review.</span>
+              </div>
+            }
+          </div>
+
+          <div class="ma-location-row">
+            <div class="ma-coord-chip">
+              <span class="ma-coord-label">LAT</span>
+              <span class="ma-coord-val">{{ form.latitude != null ? (form.latitude | number:'1.5-6') : '–' }}</span>
+            </div>
+            <div class="ma-coord-chip">
+              <span class="ma-coord-label">LNG</span>
+              <span class="ma-coord-val">{{ form.longitude != null ? (form.longitude | number:'1.5-6') : '–' }}</span>
+            </div>
+            <div class="ma-addr-box">
+              @if (resolvingLocation) {
+                <span class="ma-resolving">Resolving address…</span>
+              } @else {
+                <span class="ma-addr-text">{{ form.locationLabel || 'Select a position on the map.' }}</span>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ══ STEP 3 — Motivation ═══════════════════════════════════════════ -->
+      @if (currentStep === 'motivation') {
+        <div class="ma-step-body">
+          <div class="ma-step-intro">
+            <p>Explain why you want to manage this lake and what your legal or administrative basis is.</p>
+          </div>
+
+          <div class="ma-fields">
+            <label class="ma-field ma-field-full">
+              <span class="ma-label">Motivation / Experience <em>*</em></span>
+              <textarea
+                class="ma-input"
+                [(ngModel)]="form.motivation"
+                [disabled]="isReadOnly"
+                rows="6"
+                placeholder="Describe your relevant experience, why you chose this lake, your management plans…"></textarea>
+            </label>
+
+            <label class="ma-field ma-field-full">
+              <span class="ma-label">Administrative basis <em>*</em></span>
+              <textarea
+                class="ma-input"
+                [(ngModel)]="form.administrationBasis"
+                [disabled]="isReadOnly"
+                rows="4"
+                placeholder="State whether you are the owner, administrator, concessionaire, or other legal basis."></textarea>
+            </label>
+          </div>
+        </div>
+      }
+
+      <!-- ══ STEP 4 — Review & Submit ══════════════════════════════════════ -->
+      @if (currentStep === 'review') {
+        <div class="ma-step-body">
+          <div class="ma-step-intro">
+            <p>Review all the information you provided. You can go back to any step to make changes.</p>
+          </div>
+
+          <div class="ma-review-grid">
+            <!-- Lake block -->
+            <div class="ma-review-block">
+              <div class="ma-review-block-head">
+                <span class="ma-review-icon">🎣</span>
+                <span class="ma-review-block-title">Lake Details</span>
+                <button class="ma-review-edit" (click)="goToStep('lake')">Edit</button>
+              </div>
+              <div class="ma-review-rows">
+                <div class="ma-review-row"><span>Name</span><strong>{{ form.lakeName || '–' }}</strong></div>
+                <div class="ma-review-row"><span>Price / hour</span><strong>{{ form.proposedPricePerHour || 0 | number:'1.0-2' }} RON</strong></div>
+                <div class="ma-review-row"><span>Phone</span><strong>{{ form.contactPhone || '–' }}</strong></div>
+                @if (form.description) {
+                  <div class="ma-review-row ma-review-row-block"><span>Description</span><strong>{{ form.description }}</strong></div>
+                }
+                @if (form.fishSpecies.length > 0) {
+                  <div class="ma-review-row ma-review-row-block">
+                    <span>Species</span>
+                    <div class="ma-chips ma-chips-sm">
+                      @for (sp of form.fishSpecies; track sp) {
+                        <span class="ma-chip">{{ sp }}</span>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Location block -->
+            <div class="ma-review-block">
+              <div class="ma-review-block-head">
+                <span class="ma-review-icon">📍</span>
+                <span class="ma-review-block-title">Location</span>
+                <button class="ma-review-edit" (click)="goToStep('location')">Edit</button>
+              </div>
+              <div class="ma-review-rows">
+                <div class="ma-review-row">
+                  <span>Coordinates</span>
+                  <strong>{{ form.latitude | number:'1.5-6' }}, {{ form.longitude | number:'1.5-6' }}</strong>
+                </div>
+                @if (form.locationLabel) {
+                  <div class="ma-review-row ma-review-row-block"><span>Estimated address</span><strong>{{ form.locationLabel }}</strong></div>
+                }
+              </div>
+            </div>
+
+            <!-- Motivation block -->
+            <div class="ma-review-block ma-review-block-full">
+              <div class="ma-review-block-head">
+                <span class="ma-review-icon">📝</span>
+                <span class="ma-review-block-title">Motivation & Administrative basis</span>
+                <button class="ma-review-edit" (click)="goToStep('motivation')">Edit</button>
+              </div>
+              <div class="ma-review-rows">
+                <div class="ma-review-row ma-review-row-block"><span>Motivation</span><strong>{{ form.motivation }}</strong></div>
+                <div class="ma-review-row ma-review-row-block"><span>Administrative basis</span><strong>{{ form.administrationBasis }}</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Submit actions -->
+          @if (!isPending) {
+            <div class="ma-submit-row">
+              <button class="ma-submit-btn" (click)="submit()" [disabled]="saving">
+                {{ submitLabel }}
+              </button>
+              @if (isRejected) {
+                <button class="ma-resubmit-btn" (click)="saveAndResubmit()" [disabled]="saving">
+                  {{ resubmitLabel }}
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="ma-pending-notice">
+              Your application is under review — editing is disabled until the admin responds.
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ── Step navigation ─────────────────────────────────────────────── -->
+      @if (currentStep !== 'review') {
+        <div class="ma-nav">
+          <button class="ma-nav-back" (click)="prevStep()" [disabled]="isFirstStep">← Back</button>
+          <button class="ma-nav-next" (click)="nextStep()" [disabled]="isReadOnly && currentStep !== 'lake'">
+            @if (currentStep === 'motivation') { Review → } @else { Next → }
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  @if (loading) {
+    <div class="ma-loading">
+      <div class="ma-loading-spinner"></div>
+      <span>Loading application data…</span>
+    </div>
+  }
+</div>

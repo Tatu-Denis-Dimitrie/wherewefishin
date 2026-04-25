@@ -5,7 +5,7 @@
     </div>
   }
 
-  @if (canEdit && isAddMode) {
+  @if (canAddSpots && isAddMode) {
     <div class="hint-bar">
       <app-icon name="info" [size]="16"></app-icon>
       Click on the map to place a new fishing spot
@@ -39,8 +39,34 @@
             </div>
           }
         </div>
+        @if (isAdmin()) {
+          <div class="admin-request-panel">
+            <div class="admin-request-header">
+              <h4 class="subsection-title">Pending Requests</h4>
+              <span class="admin-request-count">{{ pendingApplications.length }}</span>
+            </div>
+            @if (pendingApplications.length === 0) {
+              <div class="admin-request-empty">No pending requests at the moment.</div>
+            } @else {
+              <div class="admin-request-list">
+                @for (application of pendingApplications; track application.id) {
+                  <article class="admin-request-card">
+                    <div class="arc-row1">
+                      <span class="admin-request-title">{{ application.lakeName }}</span>
+                      <button class="admin-request-focus" (click)="viewPendingApplication(application)">View</button>
+                    </div>
+                    <div class="arc-row2">
+                      <span class="admin-request-meta">{{ application.applicantDisplayName }}</span>
+                      <span class="admin-request-meta">{{ formatDate(application.createdAt) }}</span>
+                    </div>
+                  </article>
+                }
+              </div>
+            }
+          </div>
+        }
       }
-      
+
       @if (isUser()) {
         <div class="latest-session">
           <div class="latest-session-header">
@@ -187,33 +213,37 @@
           </select>
         </div>
 
-        @if (canEdit) {
+        @if (canAddSpots || canEdit) {
           <div class="map-editor-controls">
-            <button
-              (click)="toggleAddMode()"
-              class="btn-action map-admin-btn btn-add"
-              [class.active]="isAddMode"
-              [title]="isAddMode ? 'Cancel add mode' : 'Add fishing spot'"
-              aria-label="Add fishing spot">
-              @if (isAddMode) {
-                <app-icon name="close" [size]="18"></app-icon>
-              } @else {
-                <app-icon name="plus" [size]="18"></app-icon>
-              }
-            </button>
+            @if (canAddSpots) {
+              <button
+                (click)="toggleAddMode()"
+                class="btn-action map-admin-btn btn-add"
+                [class.active]="isAddMode"
+                [title]="isAddMode ? 'Cancel add mode' : 'Add fishing spot'"
+                aria-label="Add fishing spot">
+                @if (isAddMode) {
+                  <app-icon name="close" [size]="18"></app-icon>
+                } @else {
+                  <app-icon name="plus" [size]="18"></app-icon>
+                }
+              </button>
+            }
 
-            <button
-              (click)="toggleDeleteMode()"
-              class="btn-action map-admin-btn btn-delete"
-              [class.active]="isDeleteMode"
-              [title]="isDeleteMode ? 'Cancel delete mode' : 'Delete fishing spot'"
-              aria-label="Delete fishing spot">
-              @if (isDeleteMode) {
-                <app-icon name="close" [size]="18"></app-icon>
-              } @else {
-                <app-icon name="trash" [size]="18"></app-icon>
-              }
-            </button>
+            @if (canEdit) {
+              <button
+                (click)="toggleDeleteMode()"
+                class="btn-action map-admin-btn btn-delete"
+                [class.active]="isDeleteMode"
+                [title]="isDeleteMode ? 'Cancel delete mode' : 'Delete fishing spot'"
+                aria-label="Delete fishing spot">
+                @if (isDeleteMode) {
+                  <app-icon name="close" [size]="18"></app-icon>
+                } @else {
+                  <app-icon name="trash" [size]="18"></app-icon>
+                }
+              </button>
+            }
           </div>
         }
 
@@ -293,6 +323,74 @@
         <div class="form-actions">
           <button (click)="cancelAddSpot()" class="btn-cancel">Cancel</button>
           <button (click)="confirmAddSpot()" class="btn-confirm" [disabled]="!newSpotName.trim()">Add Spot</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (selectedPendingApplication) {
+    <div class="request-modal-overlay" (click)="closePendingApplicationModal()">
+      <div class="request-modal" (click)="$event.stopPropagation()">
+        <div class="request-modal-head">
+          <h3>{{ selectedPendingApplication.lakeName }}</h3>
+          <button class="request-modal-close" (click)="closePendingApplicationModal()">Close</button>
+        </div>
+
+        <div class="request-modal-content">
+          <div class="request-modal-details">
+            <div class="detail-row"><strong>Applicant:</strong> {{ selectedPendingApplication.applicantDisplayName }}</div>
+            <div class="detail-row"><strong>Created:</strong> {{ formatDate(selectedPendingApplication.createdAt) }}</div>
+            <div class="detail-row"><strong>Phone:</strong> {{ selectedPendingApplication.contactPhone }}</div>
+            <div class="detail-row"><strong>Price:</strong> {{ selectedPendingApplication.proposedPricePerHour | number:'1.0-2' }} RON / hour</div>
+            <div class="detail-row"><strong>Location:</strong> {{ selectedPendingApplication.locationLabel || (selectedPendingApplication.latitude.toFixed(5) + ', ' + selectedPendingApplication.longitude.toFixed(5)) }}</div>
+
+            @if (selectedPendingApplication.description) {
+              <div class="detail-block">
+                <strong>Description</strong>
+                <p>{{ selectedPendingApplication.description }}</p>
+              </div>
+            }
+
+            @if (formatApplicationFishSpecies(selectedPendingApplication.fishSpecies).length > 0) {
+              <div class="detail-block">
+                <strong>Fish Species</strong>
+                <div class="detail-chip-list">
+                  @for (species of formatApplicationFishSpecies(selectedPendingApplication.fishSpecies); track species) {
+                    <span class="detail-chip">{{ species }}</span>
+                  }
+                </div>
+              </div>
+            }
+
+            <div class="detail-block">
+              <strong>Motivation</strong>
+              <p>{{ selectedPendingApplication.motivation }}</p>
+            </div>
+
+            <div class="detail-block">
+              <strong>Administration Basis</strong>
+              <p>{{ selectedPendingApplication.administrationBasis }}</p>
+            </div>
+          </div>
+
+          <div class="request-modal-map-panel">
+            <div id="pending-application-map" class="request-modal-map"></div>
+          </div>
+        </div>
+
+        <div class="request-modal-actions">
+          <button
+            class="admin-request-btn approve"
+            (click)="approveManagerApplication(selectedPendingApplication)"
+            [disabled]="processingApplicationId === selectedPendingApplication.id">
+            {{ processingApplicationId === selectedPendingApplication.id ? 'Processing...' : 'Approve' }}
+          </button>
+          <button
+            class="admin-request-btn reject"
+            (click)="rejectManagerApplication(selectedPendingApplication)"
+            [disabled]="processingApplicationId === selectedPendingApplication.id">
+            Reject
+          </button>
         </div>
       </div>
     </div>

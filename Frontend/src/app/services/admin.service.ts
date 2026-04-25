@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { shareReplay } from 'rxjs/operators';
 import { User } from '../models/user.model';
 import { FishingSpot } from '../models/fishing-spot.model';
+import { AdminHomeOverview } from '../models/manager-application.model';
 import { environment } from '../../environments/environment';
 
 export interface AdminStats {
@@ -38,6 +39,7 @@ export interface UpdateFishingSpot {
 export class AdminService {
   private apiUrl = `${environment.apiBaseUrl}/api/admin`;
   private statsCache$: Observable<AdminStats> | null = null;
+  private homeOverviewCache$: Observable<AdminHomeOverview> | null = null;
 
   constructor(private http: HttpClient) {}
 
@@ -52,6 +54,21 @@ export class AdminService {
 
   clearStatsCache(): void {
     this.statsCache$ = null;
+    this.homeOverviewCache$ = null;
+  }
+
+  clearHomeOverviewCache(): void {
+    this.homeOverviewCache$ = null;
+  }
+
+  getHomeOverview(): Observable<AdminHomeOverview> {
+    if (!this.homeOverviewCache$) {
+      this.homeOverviewCache$ = this.http.get<AdminHomeOverview>(`${this.apiUrl}/home-overview`).pipe(
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
+    }
+
+    return this.homeOverviewCache$;
   }
 
   getUsers(): Observable<User[]> {

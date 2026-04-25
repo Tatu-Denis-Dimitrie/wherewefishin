@@ -39,6 +39,65 @@ public class AdminController : ControllerBase
         _context = context;
     }
 
+    [HttpGet("home-overview")]
+    public async Task<ActionResult<AdminHomeOverviewDto>> GetHomeOverview()
+    {
+        var activeUsers = await _context.Users.AsNoTracking().CountAsync();
+        var deactivatedUsers = await _context.Users.IgnoreQueryFilters().AsNoTracking().CountAsync(user => user.IsDeleted);
+        var totalSpots = await _context.FishingSpots.AsNoTracking().CountAsync();
+        var spotsWithoutManager = await _context.FishingSpots.AsNoTracking().CountAsync(s => s.ManagerId == null);
+        var rejectedApplications = await _context.ManagerApplications.AsNoTracking().CountAsync(a => a.Status == ManagerApplicationStatus.Rejected);
+        var failedAnalyses = await _context.VideoAnalyses.AsNoTracking().CountAsync(a => a.Status == AnalysisStatus.Failed);
+        var cancelledBookings = await _context.FishingSessions.AsNoTracking().CountAsync(s => s.Status == SessionStatus.Cancelled);
+
+        var pendingApplications = await _context.ManagerApplications
+            .AsNoTracking()
+            .Include(application => application.ApplicantUser)
+            .Where(application => application.Status == ManagerApplicationStatus.Pending)
+            .OrderBy(application => application.CreatedAt)
+            .Select(application => new ManagerApplicationDto
+            {
+                Id = application.Id,
+                ApplicantUserId = application.ApplicantUserId,
+                ApplicantUsername = application.ApplicantUser.Username,
+                ApplicantDisplayName = UserExtensions.GetDisplayName(
+                    application.ApplicantUser.FirstName,
+                    application.ApplicantUser.LastName,
+                    application.ApplicantUser.Username),
+                LakeName = application.LakeName,
+                Description = application.Description,
+                Latitude = application.Latitude,
+                Longitude = application.Longitude,
+                LocationLabel = application.LocationLabel,
+                ProposedPricePerHour = application.ProposedPricePerHour,
+                FishSpecies = application.FishSpecies,
+                ContactPhone = application.ContactPhone,
+                Motivation = application.Motivation,
+                AdministrationBasis = application.AdministrationBasis,
+                Status = application.Status.ToString(),
+                RejectionReason = application.RejectionReason,
+                ReviewedAt = application.ReviewedAt,
+                ReviewedByAdminId = application.ReviewedByAdminId,
+                ApprovedFishingSpotId = application.ApprovedFishingSpotId,
+                CreatedAt = application.CreatedAt,
+                UpdatedAt = application.UpdatedAt
+            })
+            .ToListAsync();
+
+        return Ok(new AdminHomeOverviewDto
+        {
+            ActiveUsers = activeUsers,
+            DeactivatedUsers = deactivatedUsers,
+            TotalSpots = totalSpots,
+            SpotsWithoutManager = spotsWithoutManager,
+            PendingManagerApplications = pendingApplications.Count,
+            RejectedManagerApplications = rejectedApplications,
+            FailedVideoAnalyses = failedAnalyses,
+            CancelledBookings = cancelledBookings,
+            PendingApplications = pendingApplications
+        });
+    }
+
     [HttpGet("stats")]
     public async Task<ActionResult> GetStats()
     {

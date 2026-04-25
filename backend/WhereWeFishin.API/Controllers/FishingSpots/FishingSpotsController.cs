@@ -78,11 +78,12 @@ public class FishingSpotsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = Roles.AdminOrManager)]
+    [Authorize(Roles = Roles.Admin)]
     public async Task<ActionResult<FishingSpotDto>> CreateFishingSpot(CreateFishingSpotDto createSpotDto)
     {
         var userId = User.GetUserId();
         if (userId == null) return Unauthorized();
+        if (!User.IsInRole(Roles.Admin)) return Forbid();
 
         var spot = new FishingSpot
         {

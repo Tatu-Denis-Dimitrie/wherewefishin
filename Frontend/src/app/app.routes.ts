@@ -18,6 +18,7 @@ export const routes: Routes = [
     children: [
       { path: 'home', loadComponent: () => import('./components/home/home').then(m => m.Home) },
       { path: 'profile', loadComponent: () => import('./components/profile/profile').then(m => m.Profile) },
+      { path: 'manager-application', loadComponent: () => import('./components/manager-application/manager-application').then(m => m.ManagerApplicationPage) },
       { path: 'fish-recognition', loadComponent: () => import('./components/fish-recognition/fish-recognition').then(m => m.FishRecognition) },
       { path: 'admin', loadComponent: () => import('./components/admin/admin').then(m => m.Admin), canActivate: [adminGuard] },
       { path: 'cart', loadComponent: () => import('./components/cart/cart').then(m => m.Cart) },
