@@ -45,3 +45,42 @@ export interface SupportedFishResponse {
   fishTypes: string[];
   total: number;
 }
+
+export interface ClassProbability {
+  fishType: string;
+  confidence: number;
+}
+
+export interface ImageDetection {
+  fishType: string;
+  confidence: number;
+  bbox: BoundingBox;
+  classProbabilities?: ClassProbability[];
+}
+
+export interface ImageAnalysisResult {
+  success: boolean;
+  id?: number;
+  userId?: number;
+  fileName?: string;
+  detections?: ImageDetection[];
+  dominantDetection?: ImageDetection;
+  processedImageUrl?: string;
+  totalDetections: number;
+  analyzedAt?: Date;
+  createdAt?: Date;
+  error?: string;
+}
+
+export interface ImageAnalysisSummary {
+  id: number;
+  userId: number;
+  fileName: string;
+  processedImageUrl?: string;
+  totalDetections: number;
+  dominantFishType?: string;
+  dominantConfidence: number;
+  detections?: ImageDetection[];
+  analyzedAt: Date;
+  createdAt: Date;
+}

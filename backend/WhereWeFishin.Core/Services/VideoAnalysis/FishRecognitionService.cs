@@ -12,15 +12,19 @@ public class FishRecognitionService : IFishRecognitionService
 {
     private readonly HttpClient _httpClient;
     private readonly IRepository<VideoAnalysis> _videoRepository;
+    private readonly IRepository<ImageAnalysis> _imageRepository;
     private readonly string _pythonServiceUrl;
+    private static readonly JsonSerializerOptions _jsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     public FishRecognitionService(
         HttpClient httpClient,
         IRepository<VideoAnalysis> videoRepository,
+        IRepository<ImageAnalysis> imageRepository,
         IConfiguration configuration)
     {
         _httpClient = httpClient;
         _videoRepository = videoRepository;
+        _imageRepository = imageRepository;
         _pythonServiceUrl = configuration["FishRecognitionService:Url"] ?? "http://localhost:5001";
     }
 
@@ -53,8 +57,7 @@ public class FishRecognitionService : IFishRecognitionService
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();
-            var pythonResult = JsonSerializer.Deserialize<PythonAnalysisResponse>(responseContent, 
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var pythonResult = JsonSerializer.Deserialize<PythonAnalysisResponse>(responseContent, _jsonOptions);
 
             if (pythonResult?.Success != true || pythonResult.Results == null)
                 return await FailAnalysis(analysis, "Invalid response from Python service");
@@ -117,8 +120,7 @@ public class FishRecognitionService : IFishRecognitionService
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<SupportedFishResponse>(content,
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var result = JsonSerializer.Deserialize<SupportedFishResponse>(content, _jsonOptions);
                 return result?.FishTypes ?? new List<string>();
             }
         }
@@ -222,5 +224,120 @@ public class FishRecognitionService : IFishRecognitionService
     {
         public List<string>? FishTypes { get; set; }
         public int Total { get; set; }
+    }
+
+    // ── Image analysis ───────────────────────────────────────────────────
+
+    public async Task<ImageAnalysisResultDto> AnalyzeImageAsync(Stream imageStream, string fileName, int userId)
+    {
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            var streamContent = new StreamContent(imageStream);
+            var ext = Path.GetExtension(fileName).TrimStart('.').ToLowerInvariant();
+            var contentType = ext switch
+            {
+                "png" => "image/png",
+                "webp" => "image/webp",
+                _ => "image/jpeg"
+            };
+            streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+            content.Add(streamContent, "image", fileName);
+
+            var response = await _httpClient.PostAsync($"{_pythonServiceUrl}/api/analyze-image", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync();
+                return new ImageAnalysisResultDto { Success = false, Error = $"Python service error: {errorBody}" };
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var pythonResult = JsonSerializer.Deserialize<PythonImageAnalysisResponse>(responseContent, _jsonOptions);
+
+            if (pythonResult?.Success != true)
+                return new ImageAnalysisResultDto { Success = false, Error = "Invalid response from Python service" };
+
+            var detections = pythonResult.Detections?.Select(d => new ImageDetectionDto
+            {
+                FishType = d.FishType ?? string.Empty,
+                Confidence = d.Confidence,
+                BBox = new BoundingBoxDto
+                {
+                    X = d.BBox?.X ?? 0,
+                    Y = d.BBox?.Y ?? 0,
+                    Width = d.BBox?.Width ?? 0,
+                    Height = d.BBox?.Height ?? 0
+                },
+                ClassProbabilities = d.ClassProbs?.Select(cp => new ClassProbabilityDto
+                {
+                    FishType = cp.FishType ?? string.Empty,
+                    Confidence = cp.Confidence
+                }).ToList()
+            }).ToList();
+
+            var dominant = detections?.FirstOrDefault();
+
+            var analysis = new ImageAnalysis
+            {
+                UserId = userId,
+                FileName = fileName,
+                ProcessedImageUrl = pythonResult.ProcessedImageUrl,
+                TotalDetections = pythonResult.TotalDetections,
+                DominantFishType = dominant?.FishType,
+                DominantConfidence = dominant?.Confidence ?? 0,
+                DetectionsJson = JsonSerializer.Serialize(detections),
+                AnalyzedAt = DateTime.UtcNow
+            };
+
+            await _imageRepository.AddAsync(analysis);
+
+            return new ImageAnalysisResultDto
+            {
+                Success = true,
+                Id = analysis.Id,
+                UserId = analysis.UserId,
+                FileName = analysis.FileName,
+                Detections = detections,
+                DominantDetection = dominant,
+                ProcessedImageUrl = analysis.ProcessedImageUrl,
+                TotalDetections = analysis.TotalDetections,
+                AnalyzedAt = analysis.AnalyzedAt,
+                CreatedAt = analysis.CreatedAt
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ImageAnalysisResultDto { Success = false, Error = ex.Message };
+        }
+    }
+
+    private class PythonImageAnalysisResponse
+    {
+        public bool Success { get; set; }
+        public List<PythonImageDetection>? Detections { get; set; }
+        public PythonImageDetection? DominantDetection { get; set; }
+
+        [JsonPropertyName("processedImageUrl")]
+        public string? ProcessedImageUrl { get; set; }
+
+        public int TotalDetections { get; set; }
+        public string? Error { get; set; }
+    }
+
+    private class PythonImageDetection
+    {
+        public string? FishType { get; set; }
+        public double Confidence { get; set; }
+        public PythonBBox? BBox { get; set; }
+
+        [JsonPropertyName("classProbs")]
+        public List<PythonClassProbability>? ClassProbs { get; set; }
+    }
+
+    private class PythonClassProbability
+    {
+        public string? FishType { get; set; }
+        public double Confidence { get; set; }
     }
 }

@@ -1,7 +1,8 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, ChangeDetectorRef, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { switchMap } from 'rxjs/operators';
 import * as L from 'leaflet';
 import { AuthService } from '../../services/auth.service';
 import { GeocodingService } from '../../services/geocoding.service';
@@ -220,22 +221,16 @@ export class ManagerApplicationPage implements OnInit, OnDestroy {
     this.saving = true;
     this.globalError = '';
 
-    this.managerApplicationService.update(this.latestApplication.id, payload).subscribe({
-      next: (updated) => {
-        this.managerApplicationService.resubmit(updated.id).subscribe({
-          next: () => {
-            this.successMessage = 'Application resubmitted to admin.';
-            this.saving = false;
-            this.loadApplications();
-          },
-          error: (res) => {
-            this.globalError = res.error?.message ?? 'Could not resubmit.';
-            this.saving = false;
-          }
-        });
+    this.managerApplicationService.update(this.latestApplication.id, payload).pipe(
+      switchMap(updated => this.managerApplicationService.resubmit(updated.id))
+    ).subscribe({
+      next: () => {
+        this.successMessage = 'Application resubmitted to admin.';
+        this.saving = false;
+        this.loadApplications();
       },
       error: (res) => {
-        this.globalError = res.error?.message ?? 'Could not save changes.';
+        this.globalError = res.error?.message ?? 'Could not resubmit.';
         this.saving = false;
       }
     });

@@ -1,5 +1,6 @@
 import os
 import cv2
+import numpy as np
 import subprocess
 from collections import deque
 from datetime import datetime
@@ -16,6 +17,7 @@ UPLOAD_FOLDER = 'uploads'
 OUTPUT_FOLDER = 'outputs'
 MODEL_PATH = 'models/best.pt'
 ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv'}
+ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'webp'}
 
 # ── Video encoding ──────────────────────────────────────────
 USE_FFMPEG_REENCODE = True
@@ -370,6 +372,168 @@ def analyze_video():
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': str(e)}), 500
+
+def _build_class_probs(pred, x1, y1, x2, y2, h_orig, w_orig, detected_class_id, detected_confidence, top_k=8):
+    """
+    Build a class-probability distribution for a detected bounding box.
+
+    Chooses the best anchor among nearby candidates using the detected class
+    logit, then uses that anchor's class scores directly for ranking alternatives.
+    We avoid cross-class softmax here because it tends to flatten low-probability
+    classes and make alternatives look artificially equal.
+    """
+    try:
+        nc = len(model.names)
+        if pred.dim() != 3 or pred.shape[1] < 4 + nc:
+            return []
+
+        # Map detected-box center from original pixels → IMG_SIZE space
+        scale_x = IMG_SIZE / w_orig
+        scale_y = IMG_SIZE / h_orig
+        det_cx = ((x1 + x2) / 2.0) * scale_x
+        det_cy = ((y1 + y2) / 2.0) * scale_y
+
+        # Candidate anchors near this box center.
+        anchor_cx = pred[0, 0, :].float()
+        anchor_cy = pred[0, 1, :].float()
+        dist_sq = (anchor_cx - det_cx) ** 2 + (anchor_cy - det_cy) ** 2
+        cls_logits_all = pred[0, 4:4 + nc, :].float()
+
+        if 0 <= detected_class_id < nc:
+            # Prefer nearby anchors that strongly support the detected class,
+            # not only the geometrically closest anchor.
+            num_anchors = pred.shape[2]
+            k = min(64, num_anchors)
+            nearest_idx = torch.topk(-dist_sq, k).indices
+            detected_logits = cls_logits_all[detected_class_id, nearest_idx]
+            best_local = int(torch.argmax(detected_logits).item())
+            best = int(nearest_idx[best_local].item())
+        else:
+            best = int(dist_sq.argmin().item())
+
+        cls_scores = cls_logits_all[:, best]
+        # Depending on the exact Ultralytics path, scores may already be in [0, 1]
+        # or still be logits. Convert to probabilities only when needed.
+        if float(cls_scores.min()) < 0.0 or float(cls_scores.max()) > 1.0:
+            cls_scores = cls_scores.sigmoid()
+        cls_scores = cls_scores.clamp(0.0, 1.0)
+
+        if not (0 <= detected_class_id < nc):
+            detected_class_id = int(torch.argmax(cls_scores).item())
+
+        sorted_idx = torch.argsort(cls_scores, descending=True).tolist()
+        alt_idx = [i for i in sorted_idx if i != detected_class_id]
+
+        if alt_idx:
+            alt_max = float(cls_scores[alt_idx[0]].item())
+            min_keep = alt_max * 0.15  # keep only meaningful alternatives
+            alt_idx = [i for i in alt_idx if float(cls_scores[i].item()) >= min_keep]
+        alt_idx = alt_idx[:max(0, min(top_k - 1, nc - 1))]
+
+        result = [{
+            'fishType': model.names[int(detected_class_id)],
+            'confidence': float(max(0.0, min(1.0, detected_confidence)))
+        }]
+        for i in alt_idx:
+            result.append({
+                'fishType': model.names[int(i)],
+                'confidence': float(cls_scores[i].item())
+            })
+        return result
+    except Exception as e:
+        print(f"Warning: class prob extraction failed: {e}")
+        return []
+
+
+@app.route('/api/analyze-image', methods=['POST'])
+def analyze_image():
+    if not model:
+        return jsonify({'success': False, 'error': 'Model not loaded'}), 503
+
+    file = request.files.get('image')
+    if not file or file.filename == '':
+        return jsonify({'success': False, 'error': 'No image file provided'}), 400
+
+    ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+    if ext not in ALLOWED_IMAGE_EXTENSIONS:
+        return jsonify({'success': False, 'error': f'Invalid type. Allowed: {", ".join(ALLOWED_IMAGE_EXTENSIONS)}'}), 400
+
+    try:
+        file_bytes = np.frombuffer(file.read(), dtype=np.uint8)
+        frame = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+        if frame is None:
+            return jsonify({'success': False, 'error': 'Cannot decode image'}), 400
+
+        h_orig, w_orig = frame.shape[:2]
+
+        # ── 1. Standard detection (preprocessing + NMS handled by ultralytics) ──
+        results = model.predict(
+            source=frame,
+            verbose=False,
+            imgsz=IMG_SIZE,
+            half=(device == 'cuda' and USE_HALF_PRECISION),
+            conf=TRACK_CONFIDENCE
+        )
+
+        # ── 2. Single raw forward pass on the full image for class-score extraction ──
+        #       (same image, same scale as predict — no crop, no re-inference)
+        img_rs = cv2.resize(frame, (IMG_SIZE, IMG_SIZE))
+        img_t = torch.from_numpy(img_rs[:, :, ::-1].copy()).float() / 255.0
+        img_t = img_t.permute(2, 0, 1).unsqueeze(0).to(device)
+        if USE_HALF_PRECISION and device == 'cuda':
+            img_t = img_t.half()
+        with torch.no_grad():
+            raw = model.model(img_t)
+        pred = (raw[0] if isinstance(raw, (list, tuple)) else raw).float()
+
+        # ── 3. Build detections with mathematically correct class distributions ──
+        frame_out = frame.copy()
+        detections = []
+
+        for result in results:
+            boxes = result.boxes
+            if boxes is None:
+                continue
+            for box in boxes:
+                x1, y1, x2, y2 = map(int, box.xyxy[0].cpu().numpy())
+                confidence = float(box.conf[0])
+                class_id = int(box.cls[0])
+                fish_type = model.names.get(class_id, f"Class_{class_id}")
+
+                class_probs = _build_class_probs(pred, x1, y1, x2, y2, h_orig, w_orig, class_id, confidence)
+                draw_detection(frame_out, x1, y1, x2, y2, fish_type, confidence)
+
+                detections.append({
+                    'fishType': fish_type,
+                    'confidence': round(confidence, 3),
+                    'bbox': {'x': x1, 'y': y1, 'width': x2 - x1, 'height': y2 - y1},
+                    'classProbs': class_probs
+                })
+
+        detections.sort(key=lambda d: d['confidence'], reverse=True)
+        dominant = detections[0] if detections else None
+
+        # ── 4. Save annotated image ──
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        safe_name = secure_filename(file.filename)
+        output_filename = f"img_{timestamp}_{os.path.splitext(safe_name)[0]}.jpg"
+        output_path = os.path.join(OUTPUT_FOLDER, output_filename)
+        cv2.imwrite(output_path, frame_out, [cv2.IMWRITE_JPEG_QUALITY, 90])
+
+        return jsonify({
+            'success': True,
+            'detections': detections,
+            'dominantDetection': dominant,
+            'processedImageUrl': f"outputs/{output_filename}",
+            'totalDetections': len(detections)
+        }), 200
+
+    except Exception as e:
+        print(f"Error analyzing image: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 
 @app.route('/api/delete-output/<path:filename>', methods=['DELETE'])
 def delete_output(filename):

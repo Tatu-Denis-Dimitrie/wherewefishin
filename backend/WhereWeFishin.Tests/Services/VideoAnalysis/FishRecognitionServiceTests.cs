@@ -219,7 +219,8 @@ public class FishRecognitionServiceTests
             .Build();
 
         var httpClient = new HttpClient(handler);
-        return new FishRecognitionService(httpClient, _videoRepository, configuration);
+        var imageRepository = Substitute.For<IRepository<ImageAnalysis>>();
+        return new FishRecognitionService(httpClient, _videoRepository, imageRepository, configuration);
     }
 
     private sealed class StubHttpMessageHandler : HttpMessageHandler

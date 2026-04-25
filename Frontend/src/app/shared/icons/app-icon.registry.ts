@@ -665,6 +665,19 @@ export const APP_ICON_REGISTRY = {
       <line x1="9" y1="9" x2="9.01" y2="9"></line>
       <line x1="15" y1="9" x2="15.01" y2="9"></line>
     `
+  },
+  image: {
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 2,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    body: `
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+      <polyline points="21 15 16 10 5 21"></polyline>
+    `
   }
 } as const satisfies Record<string, AppIconDefinition>;
 

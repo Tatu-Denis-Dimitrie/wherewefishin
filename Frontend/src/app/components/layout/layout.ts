@@ -9,7 +9,7 @@ import { AppIconName } from '../../shared/icons/app-icon.registry';
 import { SiteFooter } from '../site-footer/site-footer';
 import { filter, Subscription } from 'rxjs';
 
-type LayoutNavIcon = Extract<AppIconName, 'map' | 'video' | 'profile' | 'qr' | 'admin' | 'manage' | 'cart' | 'bookings' | 'faq'>;
+type LayoutNavIcon = Extract<AppIconName, 'map' | 'video' | 'image' | 'profile' | 'qr' | 'admin' | 'manage' | 'cart' | 'bookings' | 'faq'>;
 
 interface LayoutNavItem {
   key: string;
@@ -97,6 +97,7 @@ export class Layout implements OnInit, OnDestroy {
     const primaryItems: LayoutNavItem[] = [
       { key: 'home', label: 'Map', route: '/home', icon: 'map', exact: true },
       { key: 'fish-recognition', label: 'Fish Recognition', route: '/fish-recognition', icon: 'video' },
+      { key: 'image-classification', label: 'Image Scan', route: '/image-classification', icon: 'image' },
       { key: 'profile', label: 'Profile', route: '/profile', icon: 'profile' },
       ...(this.isEmployee ? [{ key: 'scan-qr', label: 'Scanare QR', route: '/scan-qr', icon: 'qr' as const }] : []),
       ...(this.isAdmin ? [{ key: 'admin', label: 'Admin', route: '/admin', icon: 'admin' as const }] : []),

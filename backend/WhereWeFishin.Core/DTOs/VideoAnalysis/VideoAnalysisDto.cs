@@ -64,3 +64,46 @@ public class AnalysisResultDto
     public VideoAnalysisDto? Analysis { get; set; }
     public string? Error { get; set; }
 }
+
+public class ClassProbabilityDto
+{
+    public string FishType { get; set; } = string.Empty;
+    public double Confidence { get; set; }
+}
+
+public class ImageDetectionDto
+{
+    public string FishType { get; set; } = string.Empty;
+    public double Confidence { get; set; }
+    public BoundingBoxDto BBox { get; set; } = new();
+    public List<ClassProbabilityDto>? ClassProbabilities { get; set; }
+}
+
+public class ImageAnalysisResultDto
+{
+    public bool Success { get; set; }
+    public int? Id { get; set; }
+    public int? UserId { get; set; }
+    public string? FileName { get; set; }
+    public List<ImageDetectionDto>? Detections { get; set; }
+    public ImageDetectionDto? DominantDetection { get; set; }
+    public string? ProcessedImageUrl { get; set; }
+    public int TotalDetections { get; set; }
+    public DateTime? AnalyzedAt { get; set; }
+    public DateTime? CreatedAt { get; set; }
+    public string? Error { get; set; }
+}
+
+public class ImageAnalysisSummaryDto
+{
+    public int Id { get; set; }
+    public int UserId { get; set; }
+    public string FileName { get; set; } = string.Empty;
+    public string? ProcessedImageUrl { get; set; }
+    public int TotalDetections { get; set; }
+    public string? DominantFishType { get; set; }
+    public double DominantConfidence { get; set; }
+    public List<ImageDetectionDto>? Detections { get; set; }
+    public DateTime AnalyzedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+}

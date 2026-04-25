@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
-using Microsoft.Extensions.Configuration;
 using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
@@ -18,20 +17,17 @@ public class VideoAnalysisController : ControllerBase
     private readonly IRepository<VideoAnalysis> _videoRepository;
     private readonly ILogger<VideoAnalysisController> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly string _fishRecognitionServiceUrl;
 
     public VideoAnalysisController(
         IFishRecognitionService fishRecognitionService,
         IRepository<VideoAnalysis> videoRepository,
         ILogger<VideoAnalysisController> logger,
-        IHttpClientFactory httpClientFactory,
-        IConfiguration configuration)
+        IHttpClientFactory httpClientFactory)
     {
         _fishRecognitionService = fishRecognitionService;
         _videoRepository = videoRepository;
         _logger = logger;
         _httpClientFactory = httpClientFactory;
-        _fishRecognitionServiceUrl = configuration["FishRecognitionService:Url"] ?? "http://localhost:5001";
     }
 
     [HttpPost("upload")]

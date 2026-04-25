@@ -192,6 +192,7 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddScoped<IRepository<User>, Repository<User>>();
 builder.Services.AddScoped<IRepository<FishingSpot>, FishingSpotRepository>();
 builder.Services.AddScoped<IRepository<VideoAnalysis>, Repository<VideoAnalysis>>();
+builder.Services.AddScoped<IRepository<ImageAnalysis>, Repository<ImageAnalysis>>();
 builder.Services.AddScoped<IRepository<FishingSession>, Repository<FishingSession>>();
 builder.Services.AddScoped<IRepository<Review>, Repository<Review>>();
 builder.Services.AddScoped<IRepository<Pontoon>, Repository<Pontoon>>();

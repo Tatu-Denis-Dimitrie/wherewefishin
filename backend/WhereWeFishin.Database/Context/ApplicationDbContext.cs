@@ -12,6 +12,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<User> Users { get; set; }
     public DbSet<FishingSpot> FishingSpots { get; set; }
     public DbSet<VideoAnalysis> VideoAnalyses { get; set; }
+    public DbSet<ImageAnalysis> ImageAnalyses { get; set; }
     public DbSet<FishingSession> FishingSessions { get; set; }
     public DbSet<Review> Reviews { get; set; }
     public DbSet<Pontoon> Pontoons { get; set; }

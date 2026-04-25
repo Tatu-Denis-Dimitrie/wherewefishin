@@ -3,7 +3,6 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using WhereWeFishin.API.Controllers;
@@ -32,19 +31,11 @@ public class VideoAnalysisControllerTests
         _httpClientFactory = Substitute.For<IHttpClientFactory>();
         _analyses = _videoRepository.UseInMemoryStore<VideoAnalysis>();
 
-        var configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["FishRecognitionService:Url"] = "http://localhost:5001"
-            })
-            .Build();
-
         _controller = new VideoAnalysisController(
             _fishRecognitionService,
             _videoRepository,
             _logger,
-            _httpClientFactory,
-            configuration);
+            _httpClientFactory);
 
         SetUser(1);
         _controller.ControllerContext.HttpContext.Request.Scheme = "https";

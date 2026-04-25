@@ -1,0 +1,197 @@
+<div class="page-shell">
+  <!-- Top bar -->
+  <header class="top-bar">
+    <h1>Image Classification</h1>
+    <div class="bar-right">
+      <span class="status-chip" [class.online]="serviceHealthy" [class.offline]="!serviceHealthy">
+        <span class="status-dot"></span>
+        {{ serviceHealthy ? 'Service Online' : 'Service Offline' }}
+      </span>
+    </div>
+  </header>
+
+  <!-- Toast messages -->
+  <div class="toast toast-error" *ngIf="error">{{ error }}</div>
+  <div class="toast toast-success" *ngIf="successMessage">{{ successMessage }}</div>
+
+  <!-- Upload section -->
+  <section class="upload-section">
+    <div class="upload-card">
+      <div
+        class="drop-zone"
+        [class.has-file]="selectedFile"
+        (dragover)="$event.preventDefault()"
+        (drop)="onDrop($event)"
+      >
+        <div class="drop-content" *ngIf="!selectedFile">
+          <app-icon name="image" [size]="40"></app-icon>
+          <p class="drop-title">Drop your image here</p>
+          <p class="drop-hint">or click to browse &mdash; JPG, PNG, WEBP up to 10 MB</p>
+          <input type="file" id="imageFile" (change)="onFileSelected($event)" accept=".jpg,.jpeg,.png,.webp" hidden />
+          <label for="imageFile" class="btn-outline">Choose file</label>
+        </div>
+
+        <div class="preview-content" *ngIf="selectedFile">
+          <img *ngIf="previewUrl" [src]="previewUrl" class="image-preview" alt="Preview" />
+          <div class="preview-info">
+            <span class="file-name">{{ selectedFile.name }}</span>
+            <span class="file-size">{{ (selectedFile.size / 1024 / 1024).toFixed(1) }} MB</span>
+          </div>
+          <button class="btn-outline btn-clear" (click)="clearSelection()" [disabled]="analyzing">
+            <app-icon name="close" [size]="16"></app-icon>
+            Choose different file
+          </button>
+        </div>
+      </div>
+
+      <button
+        class="btn-primary upload-btn"
+        (click)="analyzeImage()"
+        [disabled]="!selectedFile || analyzing || !serviceHealthy"
+      >
+        <span *ngIf="!analyzing">Analyze Image</span>
+        <span *ngIf="analyzing">Analyzing…</span>
+      </button>
+    </div>
+
+    <!-- Supported fish tags -->
+    @if (supportedFish.length) {
+      <div class="fish-tags">
+        <span class="tags-label">Detectable species</span>
+        <div class="tags-list">
+          @for (fish of supportedFish; track fish) {
+            <span class="tag">{{ fish }}</span>
+          }
+        </div>
+      </div>
+    }
+  </section>
+
+  <!-- Current result section -->
+  <section class="result-section" *ngIf="result?.success">
+    <h2>Analysis Result</h2>
+    <div class="result-card">
+      <div class="result-image-wrap" *ngIf="resultImageSrc">
+        <img [src]="resultImageSrc" class="result-image" alt="Annotated result" />
+      </div>
+
+      <div class="result-body">
+        <div class="no-detections" *ngIf="!result!.totalDetections">
+          <app-icon name="brand-fish" [size]="36"></app-icon>
+          <p>No fish detected in this image.</p>
+        </div>
+
+        <!-- Detections with class probabilities -->
+        <div class="detections-list" *ngIf="result!.detections && result!.detections!.length">
+          <div class="detections-header">
+            <span class="detections-title">Detections</span>
+            <span class="badge status-completed">{{ result!.totalDetections }}</span>
+          </div>
+
+          @for (det of result!.detections; track $index) {
+            <div class="detection-item">
+              <div class="detection-main">
+                <span class="det-fish">{{ det.fishType }}</span>
+                <span class="det-conf">{{ getConfidencePercent(det.confidence) }}</span>
+              </div>
+
+              <!-- Class probabilities -->
+              @if (getDisplayClassProbabilities(det).length) {
+                <div class="class-probs">
+                  @for (cp of getDisplayClassProbabilities(det); track cp.fishType) {
+                    <div class="prob-row">
+                      <span class="prob-name">{{ cp.fishType }}</span>
+                      <div class="prob-bar-bg">
+                        <div class="prob-bar-fill" [style.width.%]="probBarWidth(cp)"></div>
+                      </div>
+                      <span class="prob-pct">{{ probPercent(cp) }}</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <button class="btn-outline btn-another" (click)="clearSelection()">
+          Analyze another image
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Analyses history -->
+  <section class="analyses-section" *ngIf="analyses.length">
+    <h2>Your Image Analyses</h2>
+    <div class="analyses-list">
+      @for (a of analyses; track a.id) {
+        <div class="history-entry">
+          <!-- Header row: date + delete -->
+          <div class="history-header">
+            <div class="history-meta">
+              <span class="badge status-completed">{{ a.totalDetections }} detection{{ a.totalDetections !== 1 ? 's' : '' }}</span>
+              <span class="meta-date">{{ formatDate(a.analyzedAt) }}</span>
+            </div>
+            <button class="btn-danger-sm" (click)="deleteAnalysis(a.id)">Delete</button>
+          </div>
+
+          <!-- Same result-card layout as Analysis Result -->
+          <div class="result-card">
+            <div class="result-image-wrap" *ngIf="a.processedImageUrl">
+              <img [src]="getImageUrl(a.processedImageUrl)" class="result-image" alt="Processed image" />
+            </div>
+
+            <div class="result-body">
+              <div class="no-detections" *ngIf="!a.totalDetections">
+                <app-icon name="brand-fish" [size]="36"></app-icon>
+                <p>No fish detected in this image.</p>
+              </div>
+
+              <div class="detections-list" *ngIf="a.detections && a.detections.length">
+                <div class="detections-header">
+                  <span class="detections-title">Detections</span>
+                  <span class="badge status-completed">{{ a.totalDetections }}</span>
+                </div>
+
+                @for (det of a.detections; track $index) {
+                  <div class="detection-item">
+                    <div class="detection-main">
+                      <span class="det-fish">{{ det.fishType }}</span>
+                      <span class="det-conf">{{ getConfidencePercent(det.confidence) }}</span>
+                    </div>
+
+                    @if (getDisplayClassProbabilities(det).length) {
+                      <div class="class-probs">
+                        @for (cp of getDisplayClassProbabilities(det); track cp.fishType) {
+                          <div class="prob-row">
+                            <span class="prob-name">{{ cp.fishType }}</span>
+                            <div class="prob-bar-bg">
+                              <div class="prob-bar-fill" [style.width.%]="probBarWidth(cp)"></div>
+                            </div>
+                            <span class="prob-pct">{{ probPercent(cp) }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Empty state -->
+  <div class="empty-state" *ngIf="!loading && !analyses.length && !result">
+    <app-icon name="image" [size]="48"></app-icon>
+    <p>No image analyses yet. Upload an image to get started!</p>
+  </div>
+
+  <!-- Loading spinner -->
+  <div class="loading-spinner" *ngIf="loading">
+    <div class="spinner"></div>
+  </div>
+</div>
+
