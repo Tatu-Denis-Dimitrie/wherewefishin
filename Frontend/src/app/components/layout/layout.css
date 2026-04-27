@@ -508,8 +508,11 @@
     left: 0;
     right: 0;
     height: calc(var(--mobile-topbar-height) + var(--safe-area-top));
-    background: linear-gradient(180deg, #1f3116 0%, #152210 100%);
-    box-shadow: 0 1px 0 rgba(125, 179, 74, 0.18), 0 10px 24px rgba(0, 0, 0, 0.26);
+    background: linear-gradient(180deg, rgba(20, 31, 16, 0.2) 0%, rgba(20, 31, 16, 0.04) 100%);
+    backdrop-filter: blur(12px) saturate(125%);
+    -webkit-backdrop-filter: blur(12px) saturate(125%);
+    box-shadow: 0 1px 0 rgba(232, 224, 208, 0.08);
+    border-bottom: 1px solid rgba(232, 224, 208, 0.08);
     border-top-left-radius: 0;
     border-top-right-radius: 0;
     border-bottom-left-radius: 20px;

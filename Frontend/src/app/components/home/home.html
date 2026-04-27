@@ -16,13 +16,7 @@
   <div class="dashboard-grid" [class.admin-layout]="isAdmin()">
     <!-- Statistics Cards -->
     <div class="stats-section">
-      <h3 class="section-title">
-        @if (isAdmin()) {
-          System Statistics
-        } @else {
-          My Statistics
-        }
-      </h3>
+      <h3 class="section-title">{{ getStatsSectionTitle() }}</h3>
       @if (loadingStats) {
         <div class="loading-spinner">Loading...</div>
       } @else {
@@ -33,7 +27,7 @@
                 <app-icon [name]="card.icon" [size]="20"></app-icon>
               </div>
               <div class="stat-content">
-                <div class="stat-value">{{ card.value }}</div>
+                <div class="stat-value" [ngClass]="card.valueClass">{{ card.value }}</div>
                 <div class="stat-label">{{ card.label }}</div>
               </div>
             </div>

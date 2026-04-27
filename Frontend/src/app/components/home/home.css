@@ -353,6 +353,14 @@
   margin-bottom: 4px;
 }
 
+.stat-value.status-healthy {
+  color: var(--color-success);
+}
+
+.stat-value.status-unhealthy {
+  color: var(--color-error);
+}
+
 .stat-label {
   font-size: 13px;
   color: var(--text-muted);

@@ -42,10 +42,11 @@ type HomeStatIcon = Extract<AppIconName, 'admin' | 'bookings' | 'success' | 'err
 
 interface HomeStatCard {
   key: string;
-  value: number;
+  value: string | number;
   label: string;
   icon: HomeStatIcon;
   iconClass: string;
+  valueClass?: string;
 }
 
 @Component({
@@ -116,6 +117,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   loadingStats = true;
   loadingLatestSession = true;
   statCards: HomeStatCard[] = [];
+  imageRecognitionHealthy = false;
+  videoRecognitionHealthy = false;
+  backendHealthy = false;
+  frontendHealthy = typeof navigator === 'undefined' ? true : navigator.onLine;
   selectedSessionView: 'future' | 'past' = 'future';
   latestPurchasedSession: Booking | null = null;
   latestFutureSession: Booking | null = null;
@@ -160,6 +165,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.canEdit = this.authService.isManagerOrAdmin();
     this.canAddSpots = this.authService.isAdmin();
     this.currentRole = this.authService.getRole() || 'User';
+    this.frontendHealthy = typeof navigator === 'undefined' ? true : navigator.onLine;
     this.refreshStatCards();
     this.loadDashboardData();
   }
@@ -182,27 +188,32 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   private loadDashboardData(): void {
     this.loadingStats = true;
     const userId = this.authService.getUserId();
-
-    if (!userId) {
-      this.loadingStats = false;
-      this.loadingLatestSession = false;
-      this.refreshStatCards();
-      return;
-    }
+    const hasAuthenticatedUser = !!userId;
+    const shouldLoadUserBookings = hasAuthenticatedUser && this.isUser();
+    const shouldLoadAdminHome = hasAuthenticatedUser && this.isAdmin();
 
     forkJoin({
-      spots:    this.fishingSpotService.getAll(),
-      analyses: this.videoAnalysisService.getUserAnalyses(userId).pipe(
-        catchError(() => of([]))
+      spots: this.fishingSpotService.getAll().pipe(
+        catchError(() => {
+          this.showToast('Failed to load fishing spots', 'error');
+          return of([] as FishingSpot[]);
+        })
       ),
-      bookings: this.isUser()
+      recognitionHealth: this.videoAnalysisService.checkServiceHealth().pipe(catchError(() => of(null))),
+      backendHealth: this.videoAnalysisService.checkBackendHealth().pipe(catchError(() => of(null))),
+      bookings: shouldLoadUserBookings
         ? this.bookingService.getMyBookings().pipe(catchError(() => of([] as Booking[])))
         : of([] as Booking[]),
-      adminHome: this.isAdmin()
+      adminHome: shouldLoadAdminHome
         ? this.adminService.getHomeOverview().pipe(catchError(() => of(null)))
         : of(null)
     }).subscribe({
-      next: ({ spots, analyses, bookings, adminHome }) => {
+      next: ({ spots, recognitionHealth, backendHealth, bookings, adminHome }) => {
+        this.imageRecognitionHealthy = !!recognitionHealth;
+        this.videoRecognitionHealthy = !!recognitionHealth;
+        this.backendHealthy = !!backendHealth;
+        this.frontendHealthy = typeof navigator === 'undefined' ? true : navigator.onLine;
+
         // Spots — shared with map (replaces separate loadSpots call)
         this.spots = spots.map(s => this.enrichSpotWithSpecies(s));
         this.fishSpeciesOptions = Array.from(
@@ -214,16 +225,14 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         this.applyFishFilter();
 
         // Spot count for manager/admin dashboard card
-        if (this.isManager() || this.isAdmin()) {
+        if ((this.isManager() || this.isAdmin()) && hasAuthenticatedUser) {
           this.userSpotsCount = spots.filter(s => s.userId === userId).length;
+        } else {
+          this.userSpotsCount = 0;
         }
 
-        // Analyses count (all roles)
-        this.userAnalysesCount = analyses.length;
-        this.userCompletedCount = analyses.filter(a => a.status === 'Completed').length;
-
         // Bookings (regular users)
-        if (this.isUser()) {
+        if (shouldLoadUserBookings) {
           const active = bookings.filter(b => b.status?.toLowerCase() !== 'cancelled');
           this.userBookingsCount = active.length;
           this.userVisitedLakesCount = new Set(active.map(b => b.fishingSpotId)).size;
@@ -235,12 +244,16 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
             .filter(b => new Date(b.startDate).getTime() < now)
             .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())[0] ?? null;
           this.updateSelectedSession();
+        } else {
+          this.userBookingsCount = 0;
+          this.userVisitedLakesCount = 0;
+          this.latestFutureSession = null;
+          this.latestPastSession = null;
+          this.updateSelectedSession();
         }
 
         // Admin home overview
-        if (adminHome) {
-          this.adminHomeOverview = adminHome;
-        }
+        this.adminHomeOverview = adminHome;
 
         this.loadingStats = false;
         this.loadingLatestSession = false;
@@ -544,6 +557,13 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     requestAnimationFrame(() => this.map.invalidateSize());
   }
 
+  @HostListener('window:online')
+  @HostListener('window:offline')
+  onConnectivityChange(): void {
+    this.frontendHealthy = typeof navigator === 'undefined' ? true : navigator.onLine;
+    this.refreshStatCards();
+  }
+
   setSessionView(view: 'future' | 'past'): void {
     if (this.selectedSessionView === view) return;
 
@@ -741,37 +761,53 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.sessionQrBookingId = null;
   }
 
+  getStatsSectionTitle(): string {
+    return this.isAdmin() ? 'System Overview' : 'Service Status';
+  }
+
+  private buildServiceStatusCards(): HomeStatCard[] {
+    return [
+      {
+        key: 'image-recognition-status',
+        value: this.imageRecognitionHealthy ? 'Healthy' : 'Offline',
+        label: 'Image Recognition',
+        icon: 'analyses',
+        iconClass: this.imageRecognitionHealthy ? 'success-icon' : 'error-icon',
+        valueClass: this.imageRecognitionHealthy ? 'status-healthy' : 'status-unhealthy'
+      },
+      {
+        key: 'video-recognition-status',
+        value: this.videoRecognitionHealthy ? 'Healthy' : 'Offline',
+        label: 'Video Recognition',
+        icon: 'analyses',
+        iconClass: this.videoRecognitionHealthy ? 'success-icon' : 'error-icon',
+        valueClass: this.videoRecognitionHealthy ? 'status-healthy' : 'status-unhealthy'
+      },
+      {
+        key: 'backend-status',
+        value: this.backendHealthy ? 'Healthy' : 'Offline',
+        label: 'Backend API',
+        icon: 'admin',
+        iconClass: this.backendHealthy ? 'success-icon' : 'error-icon',
+        valueClass: this.backendHealthy ? 'status-healthy' : 'status-unhealthy'
+      },
+      {
+        key: 'frontend-status',
+        value: this.frontendHealthy ? 'Healthy' : 'Offline',
+        label: 'Frontend UI',
+        icon: 'success',
+        iconClass: this.frontendHealthy ? 'success-icon' : 'error-icon',
+        valueClass: this.frontendHealthy ? 'status-healthy' : 'status-unhealthy'
+      }
+    ];
+  }
+
   private refreshStatCards(): void {
+    const statusCards = this.buildServiceStatusCards();
+
     if (this.isAdmin()) {
       this.statCards = [
-        {
-          key: 'active-users',
-          value: this.adminHomeOverview?.activeUsers ?? 0,
-          label: 'Active Users',
-          icon: 'users',
-          iconClass: 'users-icon'
-        },
-        {
-          key: 'deactivated-users',
-          value: this.adminHomeOverview?.deactivatedUsers ?? 0,
-          label: 'Deactivated Users',
-          icon: 'deactivated',
-          iconClass: 'deactivated-icon'
-        },
-        {
-          key: 'total-spots',
-          value: this.adminHomeOverview?.totalSpots ?? 0,
-          label: 'Fishing Spots',
-          icon: 'spots',
-          iconClass: 'spots-icon'
-        },
-        {
-          key: 'spots-without-manager',
-          value: this.adminHomeOverview?.spotsWithoutManager ?? 0,
-          label: 'Spots without Manager',
-          icon: 'spots',
-          iconClass: 'warning-icon'
-        },
+        ...statusCards,
         {
           key: 'pending-manager-applications',
           value: this.adminHomeOverview?.pendingManagerApplications ?? 0,
@@ -803,26 +839,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       ];
       return;
     }
-
-    const personalCards: HomeStatCard[] = [
-      { key: 'my-analyses', value: this.userAnalysesCount, label: 'My Analyses', icon: 'analyses', iconClass: 'analyses-icon' },
-      { key: 'completed-analyses', value: this.userCompletedCount, label: 'Completed', icon: 'success', iconClass: 'success-icon' }
-    ];
-
-    if (this.isUser()) {
-      personalCards.push(
-        { key: 'my-bookings', value: this.userBookingsCount, label: 'My Bookings', icon: 'bookings', iconClass: 'bookings-icon' },
-        { key: 'visited-lakes', value: this.userVisitedLakesCount, label: 'Visited Lakes', icon: 'visited', iconClass: 'visited-icon' }
-      );
-    }
-
-    if (this.isManager()) {
-      personalCards.push(
-        { key: 'my-spots', value: this.userSpotsCount, label: 'My Spots', icon: 'spots', iconClass: 'spots-icon' }
-      );
-    }
-
-    this.statCards = personalCards;
+    this.statCards = statusCards;
   }
 
   private queuePendingApplicationMapInitialization(): void {

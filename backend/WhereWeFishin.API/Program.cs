@@ -297,6 +297,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok("OK"));
+app.MapGet("/api/health", () => Results.Ok("OK"));
 
 app.MapGet("/health/ready", async (ApplicationDbContext db) =>
 {

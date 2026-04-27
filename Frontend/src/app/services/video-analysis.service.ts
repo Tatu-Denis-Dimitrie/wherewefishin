@@ -82,6 +82,10 @@ export class VideoAnalysisService {
     return this.http.get(`${this.apiUrl}/health`);
   }
 
+  checkBackendHealth(): Observable<any> {
+    return this.http.get(`${environment.apiBaseUrl}/api/health`);
+  }
+
   getSupportedFish(): Observable<SupportedFishResponse> {
     if (!this.supportedFishCache$) {
       this.supportedFishCache$ = this.http.get<SupportedFishResponse>(`${this.apiUrl}/supported-fish`).pipe(
