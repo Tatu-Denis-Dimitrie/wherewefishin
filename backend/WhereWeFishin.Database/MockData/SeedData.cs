@@ -154,6 +154,25 @@ public static class SeedData
 
     public static List<FishingSpot> GetFishingSpots(List<int> userIds)
     {
+        FishingSpot CreateSeededSpot(
+            string name,
+            string? description,
+            double latitude,
+            double longitude,
+            int userId,
+            int daysAgo,
+            decimal pricePerHour = 1.0m)
+            => new()
+            {
+                Name = name,
+                Description = description,
+                Latitude = latitude,
+                Longitude = longitude,
+                UserId = userId,
+                CreatedAt = DateTime.UtcNow.AddDays(-daysAgo),
+                PricePerHour = pricePerHour
+            };
+
         return new List<FishingSpot>
         {
             new FishingSpot
@@ -195,7 +214,161 @@ public static class SeedData
                 UserId = userIds[2],
                 CreatedAt = DateTime.UtcNow.AddDays(-15),
                 PricePerHour = 2.0m
-            }
+            },
+            CreateSeededSpot(
+                "Balta Cornu",
+                "Recreational fishing lake in Dolj with a quiet natural setting.",
+                44.2173413,
+                23.293206,
+                userIds[1],
+                22),
+            CreateSeededSpot(
+                "Balta Catrunesti 3",
+                "Private lake with gazebos and nonstop access for sport fishing.",
+                44.5520703,
+                26.4043805,
+                userIds[1],
+                21),
+            CreateSeededSpot(
+                "Balta Durnesti",
+                "Managed fishing lake in Botosani for relaxed sport fishing sessions.",
+                47.7641651,
+                27.0943719,
+                userIds[2],
+                20),
+            CreateSeededSpot(
+                "Balta Lin Lake",
+                "Premium catch-and-release lake near Satu Mare.",
+                47.7484956,
+                22.8429812,
+                userIds[2],
+                19),
+            CreateSeededSpot(
+                "Iaz A' la Miruna",
+                "Peaceful family-friendly lake near Valea Alba.",
+                47.0499733,
+                26.5146037,
+                userIds[0],
+                18),
+            CreateSeededSpot(
+                "Balta Poienita Agrotur",
+                "Private agrotourism lake surrounded by orchards and woodland.",
+                47.6567915,
+                26.8664837,
+                userIds[1],
+                17),
+            CreateSeededSpot(
+                "Iazul Buliga",
+                "Scenic fishing lake reopened for sport anglers in Suceava.",
+                47.8448588,
+                25.9412461,
+                userIds[2],
+                16),
+            CreateSeededSpot(
+                "New Carp Lake",
+                "Carp-focused lake with a quiet setup near Belin.",
+                45.9339961,
+                25.5544336,
+                userIds[0],
+                15),
+            CreateSeededSpot(
+                "Iaz Totoesti",
+                "Village lake in Erbiceni suited for casual fishing trips.",
+                47.253347,
+                27.294812,
+                userIds[1],
+                14),
+            CreateSeededSpot(
+                "Arena Pescarilor",
+                "Organized catch-and-release lake near Sagu.",
+                46.0674036,
+                21.2850525,
+                userIds[2],
+                13),
+            CreateSeededSpot(
+                "Iaz Santa",
+                "Quiet fishing lake near Santa Mare with easy day access.",
+                47.6070308,
+                27.3190196,
+                userIds[0],
+                12),
+            CreateSeededSpot(
+                "Lacul 5 Lazuri",
+                "Catch-and-release lake near Lazuri built for serious fishing sessions.",
+                44.8888045,
+                25.5684123,
+                userIds[1],
+                11),
+            CreateSeededSpot(
+                "ENPI Lake Fishing",
+                "Sport fishing lake near Iasi with a modern setup.",
+                47.2183899,
+                27.5886977,
+                userIds[2],
+                10),
+            CreateSeededSpot(
+                "Balta Nadas",
+                "Well-kept catch-and-release lake in Arad County.",
+                46.213468,
+                21.8928278,
+                userIds[0],
+                9),
+            CreateSeededSpot(
+                "Iaz Brehuiesti",
+                "Fishing lake with solid access and a reputation for larger fish.",
+                47.6829607,
+                26.5246466,
+                userIds[1],
+                8),
+            CreateSeededSpot(
+                "Balta Chiroiu 3",
+                "Large lake in Ialomita with varied depth and long banks.",
+                44.5889391,
+                26.5036798,
+                userIds[2],
+                7),
+            CreateSeededSpot(
+                "Iaz Moimesti",
+                "Nonstop fishing lake near Popricani.",
+                47.2683092,
+                27.5140441,
+                userIds[0],
+                6),
+            CreateSeededSpot(
+                "Iaz Brosteni",
+                "Fishing lake in Botosani known for carp and crucian catches.",
+                47.7576079,
+                27.0960554,
+                userIds[1],
+                5),
+            CreateSeededSpot(
+                "Iaz Romani",
+                "Local fishing lake in Neamt with an easy-access shoreline.",
+                46.7960272,
+                26.6940764,
+                userIds[2],
+                4),
+            CreateSeededSpot(
+                "Iaz Dienet",
+                "Amenity-focused lake with direct car access to the bank.",
+                46.3323911,
+                27.0544831,
+                userIds[0],
+                3),
+            CreateSeededSpot(
+                "Balta Podari Bazin 2",
+                "Sport fishing lake in Calarasi with room for longer sessions.",
+                44.484471,
+                26.6425192,
+                userIds[1],
+                2),
+            CreateSeededSpot(
+                "Iazul Climauti",
+                "Fishing and picnic lake in northern Suceava.",
+                47.9543701,
+                25.9249954,
+                userIds[2],
+                1)
         };
     }
 }

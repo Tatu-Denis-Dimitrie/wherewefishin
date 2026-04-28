@@ -49,7 +49,7 @@ public class AdminIntegrationTests
         Assert.Equal(2, payload.TotalManagers);
         Assert.Equal(1, payload.TotalAdmins);
         Assert.Equal(0, payload.DeactivatedUsers);
-        Assert.Equal(4, payload.TotalSpots);
+        Assert.Equal(26, payload.TotalSpots);
         Assert.Equal(0, payload.TotalBookings);
     }
 
