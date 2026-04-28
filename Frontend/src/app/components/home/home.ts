@@ -128,6 +128,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   sessionQrCode = '';
   isSessionQrVisible = false;
   isSessionQrLoading = false;
+  isSessionQrModalOpen = false;
   private sessionQrBookingId: number | null = null;
   processingApplicationId: number | null = null;
   selectedPendingApplication: ManagerApplication | null = null;
@@ -189,6 +190,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.loadingStats = true;
     const userId = this.authService.getUserId();
     const hasAuthenticatedUser = !!userId;
+    const shouldLoadPersonalOverview = hasAuthenticatedUser && !this.isAdmin();
     const shouldLoadUserBookings = hasAuthenticatedUser && this.isUser();
     const shouldLoadAdminHome = hasAuthenticatedUser && this.isAdmin();
 
@@ -201,6 +203,9 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       ),
       recognitionHealth: this.videoAnalysisService.checkServiceHealth().pipe(catchError(() => of(null))),
       backendHealth: this.videoAnalysisService.checkBackendHealth().pipe(catchError(() => of(null))),
+      analysisOverview: shouldLoadPersonalOverview
+        ? this.videoAnalysisService.getUserAnalysesOverview(userId).pipe(catchError(() => of(null)))
+        : of(null),
       bookings: shouldLoadUserBookings
         ? this.bookingService.getMyBookings().pipe(catchError(() => of([] as Booking[])))
         : of([] as Booking[]),
@@ -208,11 +213,19 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         ? this.adminService.getHomeOverview().pipe(catchError(() => of(null)))
         : of(null)
     }).subscribe({
-      next: ({ spots, recognitionHealth, backendHealth, bookings, adminHome }) => {
+      next: ({ spots, recognitionHealth, backendHealth, analysisOverview, bookings, adminHome }) => {
         this.imageRecognitionHealthy = !!recognitionHealth;
         this.videoRecognitionHealthy = !!recognitionHealth;
         this.backendHealthy = !!backendHealth;
         this.frontendHealthy = typeof navigator === 'undefined' ? true : navigator.onLine;
+
+        if (analysisOverview) {
+          this.userAnalysesCount = analysisOverview.totalItems;
+          this.userCompletedCount = analysisOverview.completedItems;
+        } else {
+          this.userAnalysesCount = 0;
+          this.userCompletedCount = 0;
+        }
 
         // Spots — shared with map (replaces separate loadSpots call)
         this.spots = spots.map(s => this.enrichSpotWithSpecies(s));
@@ -226,7 +239,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
         // Spot count for manager/admin dashboard card
         if ((this.isManager() || this.isAdmin()) && hasAuthenticatedUser) {
-          this.userSpotsCount = spots.filter(s => s.userId === userId).length;
+          this.userSpotsCount = spots.filter(s => s.managerId === userId || s.userId === userId).length;
         } else {
           this.userSpotsCount = 0;
         }
@@ -564,6 +577,13 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.refreshStatCards();
   }
 
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.isSessionQrModalOpen) {
+      this.closeSessionQrModal();
+    }
+  }
   setSessionView(view: 'future' | 'past'): void {
     if (this.selectedSessionView === view) return;
 
@@ -583,6 +603,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
     if (this.isSessionQrVisible) {
       this.isSessionQrVisible = false;
+      this.isSessionQrModalOpen = false;
       return;
     }
 
@@ -613,6 +634,18 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     } finally {
       this.isSessionQrLoading = false;
     }
+  }
+
+  openSessionQrModal(): void {
+    if (!this.isSessionQrVisible || !this.sessionQrCode) {
+      return;
+    }
+
+    this.isSessionQrModalOpen = true;
+  }
+
+  closeSessionQrModal(): void {
+    this.isSessionQrModalOpen = false;
   }
 
   formatBookingDate(dateValue: string): string {
@@ -757,12 +790,17 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
     this.isSessionQrVisible = false;
     this.isSessionQrLoading = false;
+    this.isSessionQrModalOpen = false;
     this.sessionQrCode = '';
     this.sessionQrBookingId = null;
   }
 
   getStatsSectionTitle(): string {
-    return this.isAdmin() ? 'System Overview' : 'Service Status';
+    if (this.isAdmin()) {
+      return 'System Overview';
+    }
+
+    return this.isManager() ? 'Manager Snapshot' : 'Your Activity';
   }
 
   private buildServiceStatusCards(): HomeStatCard[] {
@@ -798,6 +836,72 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         icon: 'success',
         iconClass: this.frontendHealthy ? 'success-icon' : 'error-icon',
         valueClass: this.frontendHealthy ? 'status-healthy' : 'status-unhealthy'
+      }
+    ];
+  }
+
+  private buildUserStatCards(): HomeStatCard[] {
+    return [
+      {
+        key: 'active-bookings',
+        value: this.userBookingsCount,
+        label: 'Active Bookings',
+        icon: 'bookings',
+        iconClass: 'bookings-icon'
+      },
+      {
+        key: 'visited-lakes',
+        value: this.userVisitedLakesCount,
+        label: 'Visited Lakes',
+        icon: 'visited',
+        iconClass: 'visited-icon'
+      },
+      {
+        key: 'analyses-run',
+        value: this.userAnalysesCount,
+        label: 'Analyses Run',
+        icon: 'analyses',
+        iconClass: 'processing-icon'
+      },
+      {
+        key: 'completed-results',
+        value: this.userCompletedCount,
+        label: 'Completed Results',
+        icon: 'success',
+        iconClass: 'success-icon'
+      }
+    ];
+  }
+
+  private buildManagerStatCards(): HomeStatCard[] {
+    return [
+      {
+        key: 'managed-spots',
+        value: this.userSpotsCount,
+        label: 'Managed Spots',
+        icon: 'spots',
+        iconClass: 'spots-icon'
+      },
+      {
+        key: 'personal-analyses',
+        value: this.userAnalysesCount,
+        label: 'Personal Analyses',
+        icon: 'analyses',
+        iconClass: 'processing-icon'
+      },
+      {
+        key: 'completed-results',
+        value: this.userCompletedCount,
+        label: 'Completed Results',
+        icon: 'success',
+        iconClass: 'success-icon'
+      },
+      {
+        key: 'available-spots',
+        value: this.spots.length,
+        label: 'Available Spots',
+        icon: 'visited',
+        iconClass: 'visited-icon'
       }
     ];
   }
@@ -839,7 +943,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       ];
       return;
     }
-    this.statCards = statusCards;
+
+    this.statCards = this.isManager()
+      ? this.buildManagerStatCards()
+      : this.buildUserStatCards();
   }
 
   private queuePendingApplicationMapInitialization(): void {
@@ -933,7 +1040,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       ? `±${Math.round(accuracy)} m`
       : `±${(accuracy / 1000).toFixed(1)} km`;
 
-    // Cerc de acuratețe — se redimensionează automat la zoom
+    // Accuracy circle - automatically resizes with zoom
     this.userLocationCircle = L.circle(latlng, {
       radius: accuracy,
       color: '#4285f4',

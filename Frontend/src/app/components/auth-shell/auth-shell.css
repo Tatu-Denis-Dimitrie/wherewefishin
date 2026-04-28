@@ -21,6 +21,9 @@
   flex: 1;
   min-height: 100%;
   display: flex;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(20, 30, 15, 0.93) 0%, rgba(14, 22, 11, 0.98) 100%);
 }
 
 .auth-side {
@@ -33,6 +36,8 @@
   position: relative;
   overflow: hidden;
   border-right: 1px solid rgba(125, 179, 74, 0.14);
+  border-top-right-radius: 28px;
+  border-bottom-right-radius: 28px;
   background: linear-gradient(165deg, rgba(26, 40, 21, 0.88) 0%, rgba(33, 49, 28, 0.78) 52%, rgba(24, 44, 30, 0.76) 100%);
 }
 
@@ -133,7 +138,7 @@
   min-height: 0;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(20, 30, 15, 0.93) 0%, rgba(14, 22, 11, 0.98) 100%);
+  background: transparent;
 }
 
 .auth-main::before {

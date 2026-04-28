@@ -2,8 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { VideoAnalysisService } from '../../services/video-analysis.service';
@@ -17,6 +15,15 @@ import { VideoAnalysis } from '../../models/video-analysis.model';
 import { AppIcon } from '../../shared/icons/app-icon';
 
 type ProfileTab = 'overview' | 'bookings' | 'settings';
+
+interface ProfileInsight {
+  title: string;
+  subtitle: string;
+  badge: string;
+  badgeClass: string;
+  icon: 'admin' | 'spots' | 'visited';
+  iconClass: string;
+}
 
 @Component({
   selector: 'app-profile',
@@ -51,7 +58,9 @@ export class Profile implements OnInit {
   userSpotsCount = 0;
   userSpots: FishingSpot[] = [];
   adminStats: AdminStats | null = null;
-  loadingStats = false;
+  loadingAnalysisOverview = false;
+  loadingSpots = false;
+  loadingAdminStats = false;
 
   // Bookings
   recentBookings: Booking[] = [];
@@ -101,41 +110,62 @@ export class Profile implements OnInit {
     const userId = this.authService.getUserId();
     if (!userId) return;
 
-    this.loadingStats = true;
-
-    const sources: Record<string, any> = {
-      analyses: this.videoAnalysisService.getUserAnalyses(userId).pipe(catchError(() => of([] as VideoAnalysis[])))
-    };
+    this.loadAnalysisOverview(userId);
 
     if (this.authService.isManagerOrAdmin()) {
-      sources['spots'] = this.fishingSpotService.getAll().pipe(catchError(() => of([] as FishingSpot[])));
+      this.loadManagedSpots(userId);
     }
 
     if (this.authService.isAdmin()) {
-      sources['adminStats'] = this.adminService.getStats().pipe(catchError(() => of(null)));
+      this.loadAdminStats();
     }
+  }
 
-    forkJoin(sources).subscribe({
-      next: (results: any) => {
-        const analyses = results['analyses'] as VideoAnalysis[];
-        this.userAnalysesCount = analyses.length;
-        this.userCompletedCount = analyses.filter((a: VideoAnalysis) => a.status === 'Completed').length;
-        this.recentAnalyses = analyses.slice(0, 3);
+  private loadAnalysisOverview(userId: number): void {
+    this.loadingAnalysisOverview = true;
 
-        if (results['spots']) {
-          const spots = results['spots'] as FishingSpot[];
-          this.userSpots = spots.filter(s => s.managerId === userId || s.userId === userId);
-          this.userSpotsCount = this.userSpots.length;
-        }
-
-        if (results['adminStats'] !== undefined) {
-          this.adminStats = results['adminStats'];
-        }
-
-        this.loadingStats = false;
+    this.videoAnalysisService.getUserAnalysesOverview(userId).subscribe({
+      next: (overview) => {
+        this.userAnalysesCount = overview.totalItems;
+        this.userCompletedCount = overview.completedItems;
+        this.recentAnalyses = overview.recentAnalyses;
+        this.loadingAnalysisOverview = false;
       },
       error: () => {
-        this.loadingStats = false;
+        this.loadingAnalysisOverview = false;
+      }
+    });
+  }
+
+  private loadManagedSpots(userId: number): void {
+    this.loadingSpots = true;
+
+    const request = this.authService.isAdmin()
+      ? this.fishingSpotService.getAll()
+      : this.fishingSpotService.getManaged();
+
+    request.subscribe({
+      next: (spots) => {
+        this.userSpots = spots.filter(spot => spot.managerId === userId || spot.userId === userId);
+        this.userSpotsCount = this.userSpots.length;
+        this.loadingSpots = false;
+      },
+      error: () => {
+        this.loadingSpots = false;
+      }
+    });
+  }
+
+  private loadAdminStats(): void {
+    this.loadingAdminStats = true;
+
+    this.adminService.getStats().subscribe({
+      next: (stats) => {
+        this.adminStats = stats;
+        this.loadingAdminStats = false;
+      },
+      error: () => {
+        this.loadingAdminStats = false;
       }
     });
   }
@@ -232,12 +262,99 @@ export class Profile implements OnInit {
     return this.user.username;
   }
 
+  get profileInsight(): ProfileInsight {
+    if (
+      this.loadingBookings ||
+      this.loadingAnalysisOverview ||
+      (this.isManager() && this.loadingSpots) ||
+      (this.isAdmin() && this.loadingAdminStats)
+    ) {
+      return {
+        title: 'Activity Insight',
+        subtitle: 'Loading a live summary for your account.',
+        badge: 'Syncing',
+        badgeClass: 'badge-neutral',
+        icon: 'visited',
+        iconClass: 'sec-neutral'
+      };
+    }
+
+    const joinedLabel = this.user ? `Member since ${this.formatMonthYear(this.user.createdAt)}.` : '';
+
+    if (this.isAdmin()) {
+      const coverage = [
+        this.formatCountLabel(this.adminStats?.totalUsers ?? 0, 'user account'),
+        this.formatCountLabel(this.adminStats?.totalSpots ?? 0, 'fishing spot'),
+        this.formatCountLabel(this.adminStats?.failedAnalyses ?? 0, 'flagged analysis')
+      ].join(', ');
+
+      return {
+        title: 'Platform Pulse',
+        subtitle: `Monitoring ${coverage} across the platform.`,
+        badge: 'Control Room',
+        badgeClass: 'badge-info',
+        icon: 'admin',
+        iconClass: 'sec-info'
+      };
+    }
+
+    if (this.isManager()) {
+      const subtitle = this.userSpotsCount > 0
+        ? `You currently oversee ${this.formatCountLabel(this.userSpotsCount, 'managed spot')} and have ${this.formatCountLabel(this.userCompletedCount, 'completed analysis')}. ${joinedLabel}`.trim()
+        : `Your manager access is ready. Add your first lake to start building your management footprint. ${joinedLabel}`.trim();
+
+      return {
+        title: 'Lake Steward',
+        subtitle,
+        badge: this.userSpotsCount > 0 ? 'Steward' : 'Ready',
+        badgeClass: this.userSpotsCount > 0 ? 'badge-active' : 'badge-neutral',
+        icon: 'spots',
+        iconClass: this.userSpotsCount > 0 ? 'sec-ok' : 'sec-neutral'
+      };
+    }
+
+    const activityScore = this.userBookingsCount * 3 + this.userCompletedCount * 2 + Math.min(this.userAnalysesCount, 4);
+    let badge = 'Newcomer';
+    let badgeClass = 'badge-neutral';
+    let iconClass = 'sec-neutral';
+
+    if (activityScore >= 12) {
+      badge = 'Dedicated';
+      badgeClass = 'badge-active';
+      iconClass = 'sec-ok';
+    } else if (activityScore >= 6) {
+      badge = 'Explorer';
+      badgeClass = 'badge-info';
+      iconClass = 'sec-info';
+    }
+
+    const subtitle = activityScore === 0
+      ? `Start with a booking or an AI analysis and this space will evolve with your real activity. ${joinedLabel}`.trim()
+      : `Built from ${this.formatCountLabel(this.userBookingsCount, 'active booking')}, ${this.formatCountLabel(this.userCompletedCount, 'completed analysis')}, and ${this.formatCountLabel(this.userAnalysesCount, 'total analysis')}. ${joinedLabel}`.trim();
+
+    return {
+      title: 'Fishing Persona',
+      subtitle,
+      badge,
+      badgeClass,
+      icon: 'visited',
+      iconClass
+    };
+  }
+
   formatDate(date: Date): string {
-    return new Date(date).toLocaleDateString('ro-RO', {
+    return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
     });
+  }
+
+  formatMonthYear(date: Date): string {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'long',
+      year: 'numeric'
+    }).format(new Date(date));
   }
 
   isAdmin(): boolean {
@@ -310,7 +427,7 @@ export class Profile implements OnInit {
   }
 
   formatBookingDate(date: string): string {
-    return new Date(date).toLocaleDateString('ro-RO', { day: 'numeric', month: 'short', year: 'numeric' });
+    return new Date(date).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
   getBookingStatusClass(status: string): string {
@@ -324,6 +441,10 @@ export class Profile implements OnInit {
   }
 
   formatPrice(price: number): string {
-    return price.toLocaleString('ro-RO', { style: 'currency', currency: 'RON', maximumFractionDigits: 0 });
+    return price.toLocaleString('en-US', { style: 'currency', currency: 'RON', maximumFractionDigits: 0 });
+  }
+
+  private formatCountLabel(count: number, singular: string, plural = `${singular}s`): string {
+    return `${count} ${count === 1 ? singular : plural}`;
   }
 }

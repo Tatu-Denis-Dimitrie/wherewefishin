@@ -101,23 +101,23 @@ export function createHomeUserLocationIcon(): L.DivIcon {
 
 export function buildPendingUserLocationPopup(accuracyText: string): string {
   return `<div style="font-family:inherit;min-width:160px">
-    <b style="font-size:13px;color:#1e293b">Locația ta</b><br>
-    <span style="font-size:11px;color:#64748b">Acuratețe GPS: <b>${accuracyText}</b></span><br>
-    <span style="font-size:11px;color:#94a3b8">Se caută adresa...</span>
+    <b style="font-size:13px;color:#1e293b">Your Location</b><br>
+    <span style="font-size:11px;color:#64748b">GPS Accuracy: <b>${accuracyText}</b></span><br>
+    <span style="font-size:11px;color:#94a3b8">Resolving address...</span>
   </div>`;
 }
 
 export function buildResolvedUserLocationPopup(place: string, accuracyText: string): string {
   return `<div style="font-family:inherit;min-width:160px">
-    <b style="font-size:13px;color:#1e293b">Locația ta</b><br>
+    <b style="font-size:13px;color:#1e293b">Your Location</b><br>
     <span style="font-size:12px;color:#334155">${place}</span><br>
-    <span style="font-size:11px;color:#64748b;margin-top:3px;display:block">Acuratețe GPS: <b>${accuracyText}</b></span>
+    <span style="font-size:11px;color:#64748b;margin-top:3px;display:block">GPS Accuracy: <b>${accuracyText}</b></span>
   </div>`;
 }
 
 export function buildFallbackUserLocationPopup(accuracyText: string): string {
   return `<div style="font-family:inherit">
-    <b style="font-size:13px;color:#1e293b">Locația ta</b><br>
-    <span style="font-size:11px;color:#64748b">Acuratețe GPS: <b>${accuracyText}</b></span>
+    <b style="font-size:13px;color:#1e293b">Your Location</b><br>
+    <span style="font-size:11px;color:#64748b">GPS Accuracy: <b>${accuracyText}</b></span>
   </div>`;
 }

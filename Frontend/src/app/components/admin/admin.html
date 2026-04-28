@@ -15,7 +15,7 @@
       </div>
       <div class="hero-chip">
         <span class="hero-chip-label">Spots</span>
-        <strong>{{ fishingSpots.length }}</strong>
+        <strong>{{ totalSpotItems }}</strong>
       </div>
       <div class="hero-chip">
         <span class="hero-chip-label">Bookings</span>
@@ -44,7 +44,7 @@
       </div>
 
       <div class="section-pills">
-        <span class="section-pill">{{ users.length }} loaded</span>
+        <span class="section-pill">Showing {{ userPageStartItem }}-{{ userPageEndItem }} of {{ usersTotalItems }}</span>
         <span class="section-pill section-pill-muted">{{ disabledUsersCount }} disabled</span>
       </div>
     </div>
@@ -76,7 +76,7 @@
             </tr>
           </thead>
           <tbody>
-            @if (users.length === 0) {
+            @if (usersTotalItems === 0) {
               <tr>
                 <td colspan="4" class="empty-table-row">No users available right now.</td>
               </tr>
@@ -130,6 +130,45 @@
           </tbody>
         </table>
       </div>
+
+      @if (usersTotalItems > pageSize) {
+        <nav class="table-pagination" aria-label="Admin users pagination">
+          <button
+            class="pagination-btn"
+            type="button"
+            (click)="changeUsersPage(usersCurrentPage - 1)"
+            [disabled]="!usersHasPreviousPage"
+          >
+            Previous
+          </button>
+
+          <div class="pagination-pages">
+            @for (item of userVisiblePageItems; track item) {
+              @if (isPageNumber(item)) {
+                <button
+                  class="pagination-page"
+                  type="button"
+                  [class.is-active]="item === usersCurrentPage"
+                  (click)="changeUsersPage(item)"
+                >
+                  {{ item }}
+                </button>
+              } @else {
+                <span class="pagination-ellipsis" aria-hidden="true">&hellip;</span>
+              }
+            }
+          </div>
+
+          <button
+            class="pagination-btn"
+            type="button"
+            (click)="changeUsersPage(usersCurrentPage + 1)"
+            [disabled]="!usersHasNextPage"
+          >
+            Next
+          </button>
+        </nav>
+      }
     </div>
   </section>
 
@@ -142,23 +181,23 @@
       </div>
 
       <div class="section-pills">
-        <span class="section-pill">{{ fishingSpots.length }} spots</span>
-        <span class="section-pill section-pill-muted">{{ unmanagedSpotsCount }} unmanaged</span>
+        <span class="section-pill">Showing {{ spotPageStartItem }}-{{ spotPageEndItem }} of {{ totalSpotItems }}</span>
+        <span class="section-pill section-pill-muted">{{ unmanagedSpotsCount }} unmanaged on page</span>
       </div>
     </div>
 
     <div class="panel-card">
       <div class="panel-toolbar">
         <div class="toolbar-metric">
-          <span class="toolbar-label">Managed</span>
+          <span class="toolbar-label">Managed on page</span>
           <strong>{{ managedSpotsCount }}</strong>
         </div>
         <div class="toolbar-metric">
-          <span class="toolbar-label">Unmanaged</span>
+          <span class="toolbar-label">Unmanaged on page</span>
           <strong>{{ unmanagedSpotsCount }}</strong>
         </div>
         <div class="toolbar-metric">
-          <span class="toolbar-label">Avg. price</span>
+          <span class="toolbar-label">Page avg. price</span>
           <strong>{{ averageSpotPrice | number:'1.2-2' }} RON</strong>
         </div>
       </div>
@@ -175,7 +214,7 @@
             </tr>
           </thead>
           <tbody>
-            @if (fishingSpots.length === 0) {
+            @if (spotsTotalItems === 0) {
               <tr>
                 <td colspan="5" class="empty-table-row">No fishing spots available right now.</td>
               </tr>
@@ -253,6 +292,45 @@
           </tbody>
         </table>
       </div>
+
+      @if (spotsTotalItems > pageSize) {
+        <nav class="table-pagination" aria-label="Admin fishing spots pagination">
+          <button
+            class="pagination-btn"
+            type="button"
+            (click)="changeSpotsPage(spotsCurrentPage - 1)"
+            [disabled]="!spotsHasPreviousPage"
+          >
+            Previous
+          </button>
+
+          <div class="pagination-pages">
+            @for (item of spotVisiblePageItems; track item) {
+              @if (isPageNumber(item)) {
+                <button
+                  class="pagination-page"
+                  type="button"
+                  [class.is-active]="item === spotsCurrentPage"
+                  (click)="changeSpotsPage(item)"
+                >
+                  {{ item }}
+                </button>
+              } @else {
+                <span class="pagination-ellipsis" aria-hidden="true">&hellip;</span>
+              }
+            }
+          </div>
+
+          <button
+            class="pagination-btn"
+            type="button"
+            (click)="changeSpotsPage(spotsCurrentPage + 1)"
+            [disabled]="!spotsHasNextPage"
+          >
+            Next
+          </button>
+        </nav>
+      }
     </div>
   </section>
 

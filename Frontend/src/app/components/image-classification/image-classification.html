@@ -122,7 +122,12 @@
 
   <!-- Analyses history -->
   <section class="analyses-section" *ngIf="analyses.length">
-    <h2>Your Image Analyses</h2>
+    <div class="analyses-header">
+      <h2>Your Image Analyses</h2>
+      <span class="analyses-summary">
+        Showing {{ pageStartItem }}-{{ pageEndItem }} of {{ totalItems }} images
+      </span>
+    </div>
     <div class="analyses-list">
       @for (a of analyses; track a.id) {
         <div class="history-entry">
@@ -181,10 +186,49 @@
         </div>
       }
     </div>
+
+    @if (totalItems > pageSize) {
+      <nav class="pagination" aria-label="Image analyses pagination">
+        <button
+          class="pagination-btn"
+          type="button"
+          (click)="changePage(currentPage - 1)"
+          [disabled]="!hasPreviousPage"
+        >
+          Previous
+        </button>
+
+        <div class="pagination-pages">
+          @for (item of visiblePageItems; track item) {
+            @if (isPageNumber(item)) {
+              <button
+                class="pagination-page"
+                type="button"
+                [class.is-active]="item === currentPage"
+                (click)="changePage(item)"
+              >
+                {{ item }}
+              </button>
+            } @else {
+              <span class="pagination-ellipsis" aria-hidden="true">&hellip;</span>
+            }
+          }
+        </div>
+
+        <button
+          class="pagination-btn"
+          type="button"
+          (click)="changePage(currentPage + 1)"
+          [disabled]="!hasNextPage"
+        >
+          Next
+        </button>
+      </nav>
+    }
   </section>
 
   <!-- Empty state -->
-  <div class="empty-state" *ngIf="!loading && !analyses.length && !result">
+  <div class="empty-state" *ngIf="!loading && !totalItems && !result">
     <app-icon name="image" [size]="48"></app-icon>
     <p>No image analyses yet. Upload an image to get started!</p>
   </div>

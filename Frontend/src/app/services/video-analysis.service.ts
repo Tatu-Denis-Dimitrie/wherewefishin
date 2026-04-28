@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { shareReplay, tap } from 'rxjs/operators';
-import { VideoAnalysis, AnalysisResult, SupportedFishResponse, ImageAnalysisResult, ImageAnalysisSummary } from '../models/video-analysis.model';
+import { VideoAnalysis, AnalysisResult, SupportedFishResponse, ImageAnalysisResult, ImageAnalysisSummary, PagedResponse, VideoAnalysisOverview } from '../models/video-analysis.model';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -11,8 +11,9 @@ import { environment } from '../../environments/environment';
 export class VideoAnalysisService {
   private apiUrl = `${environment.apiBaseUrl}/api/videoanalysis`;
   private imageApiUrl = `${environment.apiBaseUrl}/api/imageanalysis`;
-  private userAnalysesCache = new Map<number, Observable<VideoAnalysis[]>>();
-  private userImageAnalysesCache = new Map<number, Observable<ImageAnalysisSummary[]>>();
+  private userAnalysesCache = new Map<string, Observable<PagedResponse<VideoAnalysis>>>();
+  private userAnalysesOverviewCache = new Map<number, Observable<VideoAnalysisOverview>>();
+  private userImageAnalysesCache = new Map<string, Observable<PagedResponse<ImageAnalysisSummary>>>();
   private supportedFishCache$: Observable<SupportedFishResponse> | null = null;
 
   constructor(private http: HttpClient) {}
@@ -26,18 +27,34 @@ export class VideoAnalysisService {
     );
   }
 
-  getUserAnalyses(userId: number): Observable<VideoAnalysis[]> {
-    if (!this.userAnalysesCache.has(userId)) {
-      const req$ = this.http.get<VideoAnalysis[]>(`${this.apiUrl}/user/${userId}`).pipe(
+  getUserAnalyses(userId: number, page = 1, pageSize = 10): Observable<PagedResponse<VideoAnalysis>> {
+    const cacheKey = `${userId}:${page}:${pageSize}`;
+
+    if (!this.userAnalysesCache.has(cacheKey)) {
+      const req$ = this.http.get<PagedResponse<VideoAnalysis>>(
+        `${this.apiUrl}/user/${userId}?page=${page}&pageSize=${pageSize}`
+      ).pipe(
         shareReplay({ bufferSize: 1, refCount: true })
       );
-      this.userAnalysesCache.set(userId, req$);
+      this.userAnalysesCache.set(cacheKey, req$);
     }
-    return this.userAnalysesCache.get(userId)!;
+    return this.userAnalysesCache.get(cacheKey)!;
+  }
+
+  getUserAnalysesOverview(userId: number): Observable<VideoAnalysisOverview> {
+    if (!this.userAnalysesOverviewCache.has(userId)) {
+      const req$ = this.http.get<VideoAnalysisOverview>(`${this.apiUrl}/user/${userId}/overview`).pipe(
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
+      this.userAnalysesOverviewCache.set(userId, req$);
+    }
+
+    return this.userAnalysesOverviewCache.get(userId)!;
   }
 
   clearUserAnalysesCache(): void {
     this.userAnalysesCache.clear();
+    this.userAnalysesOverviewCache.clear();
   }
 
   getAnalysis(id: number): Observable<VideoAnalysis> {
@@ -58,14 +75,18 @@ export class VideoAnalysisService {
     );
   }
 
-  getUserImageAnalyses(userId: number): Observable<ImageAnalysisSummary[]> {
-    if (!this.userImageAnalysesCache.has(userId)) {
-      const req$ = this.http.get<ImageAnalysisSummary[]>(`${this.imageApiUrl}/user/${userId}`).pipe(
+  getUserImageAnalyses(userId: number, page = 1, pageSize = 10): Observable<PagedResponse<ImageAnalysisSummary>> {
+    const cacheKey = `${userId}:${page}:${pageSize}`;
+
+    if (!this.userImageAnalysesCache.has(cacheKey)) {
+      const req$ = this.http.get<PagedResponse<ImageAnalysisSummary>>(
+        `${this.imageApiUrl}/user/${userId}?page=${page}&pageSize=${pageSize}`
+      ).pipe(
         shareReplay({ bufferSize: 1, refCount: true })
       );
-      this.userImageAnalysesCache.set(userId, req$);
+      this.userImageAnalysesCache.set(cacheKey, req$);
     }
-    return this.userImageAnalysesCache.get(userId)!;
+    return this.userImageAnalysesCache.get(cacheKey)!;
   }
 
   clearUserImageAnalysesCache(): void {

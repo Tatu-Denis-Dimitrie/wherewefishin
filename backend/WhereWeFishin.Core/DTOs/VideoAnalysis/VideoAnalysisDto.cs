@@ -1,5 +1,16 @@
 namespace WhereWeFishin.Core.DTOs;
 
+public class PagedResponseDto<T>
+{
+    public IReadOnlyList<T> Items { get; set; } = [];
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalItems { get; set; }
+    public int TotalPages => TotalItems == 0 ? 0 : (int)Math.Ceiling(TotalItems / (double)PageSize);
+    public bool HasPreviousPage => Page > 1;
+    public bool HasNextPage => TotalPages > 0 && Page < TotalPages;
+}
+
 public class VideoAnalysisSummaryDto
 {
     public int Id { get; set; }
@@ -16,6 +27,13 @@ public class VideoAnalysisSummaryDto
     public string Status { get; set; } = string.Empty;
     public string? ErrorMessage { get; set; }
     public DateTime CreatedAt { get; set; }
+}
+
+public class VideoAnalysisOverviewDto
+{
+    public int TotalItems { get; set; }
+    public int CompletedItems { get; set; }
+    public IReadOnlyList<VideoAnalysisSummaryDto> RecentAnalyses { get; set; } = [];
 }
 
 public class VideoAnalysisDto

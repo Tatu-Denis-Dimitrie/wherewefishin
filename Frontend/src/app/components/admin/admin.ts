@@ -2,10 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { catchError } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { AdminService, AdminStats } from '../../services/admin.service';
+import { UserService } from '../../services/user.service';
 import { User } from '../../models/user.model';
 import { FishingSpot } from '../../models/fishing-spot.model';
+import { PagedResponse } from '../../models/video-analysis.model';
+
+type PaginationItem = number | 'ellipsis-left' | 'ellipsis-right';
 
 @Component({
   selector: 'app-admin',
@@ -16,6 +22,7 @@ import { FishingSpot } from '../../models/fishing-spot.model';
 export class Admin implements OnInit {
   stats: AdminStats | null = null;
   users: User[] = [];
+  managers: User[] = [];
   fishingSpots: FishingSpot[] = [];
   loading = true;
   error = '';
@@ -24,6 +31,17 @@ export class Admin implements OnInit {
   editingSpotPrice: number = 0;
   spotManagerSelections: Record<number, number | null> = {};
   savingManagerSpotId: number | null = null;
+  readonly pageSize = 10;
+  usersCurrentPage = 1;
+  usersTotalItems = 0;
+  usersTotalPages = 0;
+  usersHasPreviousPage = false;
+  usersHasNextPage = false;
+  spotsCurrentPage = 1;
+  spotsTotalItems = 0;
+  spotsTotalPages = 0;
+  spotsHasPreviousPage = false;
+  spotsHasNextPage = false;
 
   get activeUsersCount(): number {
     return this.stats?.totalUsers ?? this.users.filter(user => user.isActive).length;
@@ -34,7 +52,11 @@ export class Admin implements OnInit {
   }
 
   get totalAccountsCount(): number {
-    return this.activeUsersCount + this.disabledUsersCount;
+    return this.stats ? this.stats.totalUsers + this.stats.deactivatedUsers : this.usersTotalItems;
+  }
+
+  get totalSpotItems(): number {
+    return this.stats?.totalSpots ?? this.spotsTotalItems;
   }
 
   get managedSpotsCount(): number {
@@ -52,12 +74,33 @@ export class Admin implements OnInit {
   }
 
   get managerOptions(): User[] {
-    return this.users.filter(user => user.role === 'Manager');
+    return this.managers;
+  }
+
+  get userPageStartItem(): number {
+    if (!this.usersTotalItems) return 0;
+    return (this.usersCurrentPage - 1) * this.pageSize + 1;
+  }
+
+  get userPageEndItem(): number {
+    if (!this.users.length) return 0;
+    return this.userPageStartItem + this.users.length - 1;
+  }
+
+  get spotPageStartItem(): number {
+    if (!this.spotsTotalItems) return 0;
+    return (this.spotsCurrentPage - 1) * this.pageSize + 1;
+  }
+
+  get spotPageEndItem(): number {
+    if (!this.fishingSpots.length) return 0;
+    return this.spotPageStartItem + this.fishingSpots.length - 1;
   }
 
   constructor(
     private authService: AuthService,
     private adminService: AdminService,
+    private userService: UserService,
     private router: Router
   ) {}
 
@@ -71,31 +114,81 @@ export class Admin implements OnInit {
 
   loadData(): void {
     this.loading = true;
-    this.adminService.getStats().subscribe({
-      next: (stats) => {
-        this.stats = stats;
-      },
-      error: () => this.error = 'Failed to load stats'
-    });
+    forkJoin({
+      stats: this.adminService.getStats().pipe(
+        catchError(() => {
+          this.error = 'Failed to load stats';
+          return of(null);
+        })
+      ),
+      usersPage: this.adminService.getUsers(this.usersCurrentPage, this.pageSize).pipe(
+        catchError(() => {
+          this.error = 'Failed to load users';
+          return of(null);
+        })
+      ),
+      spotsPage: this.adminService.getFishingSpots(this.spotsCurrentPage, this.pageSize).pipe(
+        catchError(() => {
+          this.error = 'Failed to load fishing spots';
+          return of(null);
+        })
+      ),
+      managers: this.userService.getManagers().pipe(catchError(() => of([] as User[])))
+    }).subscribe(({ stats, usersPage, spotsPage, managers }) => {
+      this.stats = stats;
+      this.managers = managers;
 
-    this.adminService.getUsers().subscribe({
-      next: (users) => {
-        this.users = users;
-        this.loading = false;
+      if (usersPage) {
+        this.applyUsersPage(usersPage);
+      }
+
+      if (spotsPage) {
+        this.applySpotsPage(spotsPage);
+      }
+
+      this.loading = false;
+    });
+  }
+
+  loadUsers(page = this.usersCurrentPage): void {
+    this.adminService.getUsers(page, this.pageSize).subscribe({
+      next: (response) => {
+        if (!response.items.length && response.totalPages > 0 && response.page > response.totalPages) {
+          this.loadUsers(response.totalPages);
+          return;
+        }
+
+        this.applyUsersPage(response);
       },
       error: () => {
         this.error = 'Failed to load users';
-        this.loading = false;
+        setTimeout(() => this.error = '', 3000);
       }
     });
+  }
 
-    this.adminService.getFishingSpots().subscribe({
-      next: (spots) => {
-        this.fishingSpots = spots;
-        this.syncSpotManagerSelections();
+  loadFishingSpots(page = this.spotsCurrentPage): void {
+    this.adminService.getFishingSpots(page, this.pageSize).subscribe({
+      next: (response) => {
+        if (!response.items.length && response.totalPages > 0 && response.page > response.totalPages) {
+          this.loadFishingSpots(response.totalPages);
+          return;
+        }
+
+        this.applySpotsPage(response);
       },
       error: () => {
         this.error = 'Failed to load fishing spots';
+        setTimeout(() => this.error = '', 3000);
+      }
+    });
+  }
+
+  loadManagers(): void {
+    this.userService.clearCache();
+    this.userService.getManagers().subscribe({
+      next: (managers) => {
+        this.managers = managers;
       }
     });
   }
@@ -111,8 +204,8 @@ export class Admin implements OnInit {
       next: () => {
         user.role = newRole;
         this.successMessage = `${user.username} is now ${newRole}`;
-        this.adminService.clearStatsCache();
-        this.adminService.getStats().subscribe(s => this.stats = s);
+        this.refreshStats();
+        this.loadManagers();
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: () => {
@@ -132,10 +225,13 @@ export class Admin implements OnInit {
 
     this.adminService.deleteUser(user.id).subscribe({
       next: () => {
-        this.users = this.users.filter(u => u.id !== user.id);
         this.successMessage = `User "${user.username}" deleted`;
-        this.adminService.clearStatsCache();
-        this.adminService.getStats().subscribe(s => this.stats = s);
+        this.refreshStats();
+        this.loadManagers();
+        const targetPage = this.users.length === 1 && this.usersCurrentPage > 1
+          ? this.usersCurrentPage - 1
+          : this.usersCurrentPage;
+        this.loadUsers(targetPage);
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: () => {
@@ -157,6 +253,8 @@ export class Admin implements OnInit {
       next: () => {
         user.isActive = enable;
         this.successMessage = `User "${user.username}" ${enable ? 'enabled' : 'disabled'}`;
+        this.refreshStats();
+        this.loadManagers();
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: () => {
@@ -246,10 +344,12 @@ export class Admin implements OnInit {
 
     this.adminService.deleteFishingSpot(spot.id).subscribe({
       next: () => {
-        this.fishingSpots = this.fishingSpots.filter(s => s.id !== spot.id);
         this.successMessage = `Fishing spot "${spot.name}" deleted`;
-        this.adminService.clearStatsCache();
-        this.adminService.getStats().subscribe(s => this.stats = s);
+        this.refreshStats();
+        const targetPage = this.fishingSpots.length === 1 && this.spotsCurrentPage > 1
+          ? this.spotsCurrentPage - 1
+          : this.spotsCurrentPage;
+        this.loadFishingSpots(targetPage);
         setTimeout(() => this.successMessage = '', 3000);
       },
       error: () => {
@@ -275,7 +375,7 @@ export class Admin implements OnInit {
   }
 
   private getManagerDisplayName(managerId: number): string {
-    const manager = this.users.find(user => user.id === managerId);
+    const manager = this.managers.find(user => user.id === managerId);
     if (!manager) return 'Assigned manager';
 
     const fullName = `${manager.firstName ?? ''} ${manager.lastName ?? ''}`.trim();
@@ -288,5 +388,88 @@ export class Admin implements OnInit {
       nextSelections[spot.id] = spot.managerId ?? null;
     }
     this.spotManagerSelections = nextSelections;
+  }
+
+  changeUsersPage(page: number): void {
+    const nextPage = Math.min(Math.max(page, 1), Math.max(this.usersTotalPages, 1));
+    if (nextPage === this.usersCurrentPage) {
+      return;
+    }
+
+    this.loadUsers(nextPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  changeSpotsPage(page: number): void {
+    const nextPage = Math.min(Math.max(page, 1), Math.max(this.spotsTotalPages, 1));
+    if (nextPage === this.spotsCurrentPage) {
+      return;
+    }
+
+    this.loadFishingSpots(nextPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  get userVisiblePageItems(): PaginationItem[] {
+    return this.buildVisiblePageItems(this.usersCurrentPage, this.usersTotalPages);
+  }
+
+  get spotVisiblePageItems(): PaginationItem[] {
+    return this.buildVisiblePageItems(this.spotsCurrentPage, this.spotsTotalPages);
+  }
+
+  isPageNumber(item: PaginationItem): item is number {
+    return typeof item === 'number';
+  }
+
+  private buildVisiblePageItems(currentPage: number, totalPages: number): PaginationItem[] {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    const items: PaginationItem[] = [1];
+    const startPage = Math.max(2, currentPage - 1);
+    const endPage = Math.min(totalPages - 1, currentPage + 1);
+
+    if (startPage > 2) {
+      items.push('ellipsis-left');
+    }
+
+    for (let page = startPage; page <= endPage; page++) {
+      items.push(page);
+    }
+
+    if (endPage < totalPages - 1) {
+      items.push('ellipsis-right');
+    }
+
+    items.push(totalPages);
+    return items;
+  }
+
+  private applyUsersPage(response: PagedResponse<User>): void {
+    this.usersCurrentPage = response.page;
+    this.users = response.items;
+    this.usersTotalItems = response.totalItems;
+    this.usersTotalPages = response.totalPages;
+    this.usersHasPreviousPage = response.hasPreviousPage;
+    this.usersHasNextPage = response.hasNextPage;
+  }
+
+  private applySpotsPage(response: PagedResponse<FishingSpot>): void {
+    this.spotsCurrentPage = response.page;
+    this.fishingSpots = response.items;
+    this.spotsTotalItems = response.totalItems;
+    this.spotsTotalPages = response.totalPages;
+    this.spotsHasPreviousPage = response.hasPreviousPage;
+    this.spotsHasNextPage = response.hasNextPage;
+    this.syncSpotManagerSelections();
+  }
+
+  private refreshStats(): void {
+    this.adminService.clearStatsCache();
+    this.adminService.getStats().subscribe(stats => {
+      this.stats = stats;
+    });
   }
 }

@@ -122,7 +122,7 @@
           <div class="card stocking-card">
             <h3 class="card-title">
               <app-icon name="stocking" [size]="15"></app-icon>
-              Populare recentă
+              Recent Stocking
               <span class="fish-count-badge">{{ stockings.length }}</span>
             </h3>
             <div class="stocking-list">
@@ -130,7 +130,7 @@
                 <div class="stocking-entry">
                   <div class="stocking-entry-header">
                     <span class="stocking-entry-species">{{ s.species }}</span>
-                    <span class="stocking-entry-qty">{{ s.quantity }} buc</span>
+                    <span class="stocking-entry-qty">{{ s.quantity }} pcs</span>
                   </div>
                   <span class="stocking-entry-date">{{ s.stockingDate | date:'dd MMM yyyy' }}</span>
                   @if (s.notes) {

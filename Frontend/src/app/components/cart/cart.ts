@@ -459,7 +459,7 @@ export class Cart implements OnInit, OnDestroy {
 
       const overlapping = this.findOverlappingBooking(state.bookedPeriods, rangeStart, rangeEnd);
       if (overlapping) {
-        this.calendarErrors.set(key, `Perioadă ocupată din ${this.formatDateShort(new Date(overlapping.startDate))}`);
+        this.calendarErrors.set(key, `Unavailable from ${this.formatDateShort(new Date(overlapping.startDate))}`);
         return;
       }
 

@@ -769,6 +769,35 @@ public class BookingsControllerTests
         Assert.Equal(now.AddHours(5), periods[1].StartDate, TimeSpan.FromSeconds(1));
     }
 
+    [Fact]
+    public async Task GetBookedPeriods_WhenStoredDatesHaveUnspecifiedKind_ReturnsUtcPeriods()
+    {
+        // Arrange
+        var now = DateTime.UtcNow;
+        _sessionRepository.UseInMemoryStore(new[]
+        {
+            new FishingSession
+            {
+                Id = 1,
+                UserId = 1,
+                FishingSpotId = 1,
+                StartDate = DateTime.SpecifyKind(now.AddHours(4), DateTimeKind.Unspecified),
+                DurationHours = 2,
+                Status = SessionStatus.Confirmed
+            }
+        });
+
+        // Act
+        var result = await _controller.GetBookedPeriods(null, 1);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var periods = Assert.IsAssignableFrom<IEnumerable<BookedPeriodDto>>(okResult.Value).ToList();
+        var period = Assert.Single(periods);
+        Assert.Equal(DateTimeKind.Utc, period.StartDate.Kind);
+        Assert.Equal(DateTimeKind.Utc, period.EndDate.Kind);
+    }
+
 
     [Fact]
     public async Task GetBooking_WhenOwner_ReturnsBooking()
@@ -786,6 +815,26 @@ public class BookingsControllerTests
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var booking = Assert.IsType<BookingDto>(okResult.Value);
         Assert.Equal(1, booking.Id);
+    }
+
+    [Fact]
+    public async Task GetBooking_WhenStoredStartDateHasUnspecifiedKind_ReturnsUtcDate()
+    {
+        // Arrange
+        var expectedUtc = DateTime.UtcNow.AddDays(1);
+        var session = CreateSession(1, userId: 1, spotId: 1);
+        session.StartDate = DateTime.SpecifyKind(expectedUtc, DateTimeKind.Unspecified);
+        _sessionRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(session);
+        _spotRepository.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(CreateSpot(1));
+
+        // Act
+        var result = await _controller.GetBooking(1);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var booking = Assert.IsType<BookingDto>(okResult.Value);
+        Assert.Equal(DateTimeKind.Utc, booking.StartDate.Kind);
+        Assert.Equal(expectedUtc, booking.StartDate, TimeSpan.FromSeconds(1));
     }
 
     [Fact]

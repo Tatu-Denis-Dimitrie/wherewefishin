@@ -103,21 +103,60 @@ public class VideoAnalysisController : ControllerBase
 
     [HttpGet("user/{userId}")]
     [Authorize]
-    public async Task<ActionResult<IEnumerable<VideoAnalysisSummaryDto>>> GetUserAnalyses(int userId)
+    public async Task<ActionResult<PagedResponseDto<VideoAnalysisSummaryDto>>> GetUserAnalyses(
+        int userId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
-        var currentUserId = User.GetUserId();
-        if (currentUserId == null)
-            return Unauthorized();
+        var accessError = ValidateUserAnalysesAccess(userId);
+        if (accessError != null)
+            return accessError;
 
-        if (currentUserId.Value != userId && !User.IsInRole(Roles.Admin))
-            return Forbid();
+        page = Math.Max(page, 1);
+        pageSize = pageSize <= 0 ? 10 : Math.Min(pageSize, 50);
 
         var userAnalyses = await _videoRepository.FindAsync(a => a.UserId == userId);
         var sorted = userAnalyses
             .OrderByDescending(a => a.CreatedAt)
-            .Select(MapToSummaryDto);
+            .Select(MapToSummaryDto)
+            .ToList();
 
-        return Ok(sorted);
+        var totalItems = sorted.Count;
+        var items = sorted
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        return Ok(new PagedResponseDto<VideoAnalysisSummaryDto>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalItems = totalItems
+        });
+    }
+
+    [HttpGet("user/{userId}/overview")]
+    [Authorize]
+    public async Task<ActionResult<VideoAnalysisOverviewDto>> GetUserAnalysesOverview(int userId)
+    {
+        var accessError = ValidateUserAnalysesAccess(userId);
+        if (accessError != null)
+            return accessError;
+
+        var userAnalyses = (await _videoRepository.FindAsync(a => a.UserId == userId))
+            .OrderByDescending(a => a.CreatedAt)
+            .ToList();
+
+        return Ok(new VideoAnalysisOverviewDto
+        {
+            TotalItems = userAnalyses.Count,
+            CompletedItems = userAnalyses.Count(analysis => analysis.Status == AnalysisStatus.Completed),
+            RecentAnalyses = userAnalyses
+                .Take(3)
+                .Select(MapToSummaryDto)
+                .ToList()
+        });
     }
 
     [HttpGet("{id}")]
@@ -340,5 +379,17 @@ public class VideoAnalysisController : ControllerBase
             ErrorMessage = entity.ErrorMessage,
             CreatedAt = entity.CreatedAt
         };
+    }
+
+    private ActionResult? ValidateUserAnalysesAccess(int userId)
+    {
+        var currentUserId = User.GetUserId();
+        if (currentUserId == null)
+            return Unauthorized();
+
+        if (currentUserId.Value != userId && !User.IsInRole(Roles.Admin))
+            return Forbid();
+
+        return null;
     }
 }

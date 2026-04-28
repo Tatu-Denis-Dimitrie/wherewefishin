@@ -117,8 +117,12 @@
               <div class="latest-session-qr loading">Generating QR code...</div>
             } @else if (isSessionQrVisible && sessionQrCode) {
               <div class="latest-session-qr">
-                <img [src]="sessionQrCode" alt="Booking QR Code" class="latest-session-qr-image" />
-                <p class="latest-session-qr-hint">Scan this code at the fishing location.</p>
+                <img
+                  [src]="sessionQrCode"
+                  alt="Booking QR Code"
+                  class="latest-session-qr-image"
+                  (click)="openSessionQrModal()" />
+                <p class="latest-session-qr-hint">Scan this code at the fishing location. Tap the code to enlarge it.</p>
               </div>
             }
           }
@@ -386,6 +390,24 @@
             Reject
           </button>
         </div>
+      </div>
+    </div>
+  }
+
+  @if (isSessionQrModalOpen && sessionQrCode) {
+    <div class="latest-session-qr-modal-backdrop" (click)="closeSessionQrModal()">
+      <div class="latest-session-qr-modal" (click)="$event.stopPropagation()">
+        <div class="latest-session-qr-modal-header">
+          <div class="latest-session-qr-modal-title-group">
+            <span class="latest-session-qr-modal-eyebrow">Booking Access</span>
+            <h3 class="latest-session-qr-modal-title">Scan QR Code</h3>
+          </div>
+          <button class="latest-session-qr-modal-close" type="button" (click)="closeSessionQrModal()" aria-label="Close QR preview">
+            <app-icon name="close" [size]="18" [strokeWidth]="2.5"></app-icon>
+          </button>
+        </div>
+        <img [src]="sessionQrCode" alt="Enlarged booking QR code" class="latest-session-qr-image latest-session-qr-image-modal" />
+        <p class="latest-session-qr-modal-hint">Hold this screen steady and scan from the fishing location.</p>
       </div>
     </div>
   }

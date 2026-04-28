@@ -7,6 +7,8 @@ import { ImageAnalysisResult, ImageAnalysisSummary, ClassProbability, ImageDetec
 import { AppIcon } from '../../shared/icons/app-icon';
 import { environment } from '../../../environments/environment';
 
+type PaginationItem = number | 'ellipsis-left' | 'ellipsis-right';
+
 @Component({
   selector: 'app-image-classification',
   imports: [CommonModule, AppIcon],
@@ -24,6 +26,12 @@ export class ImageClassification implements OnInit, OnDestroy {
   result: ImageAnalysisResult | null = null;
   serviceHealthy = false;
   supportedFish: string[] = [];
+  currentPage = 1;
+  readonly pageSize = 10;
+  totalItems = 0;
+  totalPages = 0;
+  hasPreviousPage = false;
+  hasNextPage = false;
 
   constructor(
     private videoAnalysisService: VideoAnalysisService,
@@ -66,13 +74,26 @@ export class ImageClassification implements OnInit, OnDestroy {
     });
   }
 
-  loadAnalyses(): void {
+  loadAnalyses(page = this.currentPage): void {
     const userId = this.authService.getUserId();
     if (!userId) return;
 
     this.loading = true;
-    this.videoAnalysisService.getUserImageAnalyses(userId).subscribe({
-      next: (data) => { this.analyses = data; this.loading = false; },
+    this.videoAnalysisService.getUserImageAnalyses(userId, page, this.pageSize).subscribe({
+      next: (response) => {
+        if (!response.items.length && response.totalPages > 0 && response.page > response.totalPages) {
+          this.loadAnalyses(response.totalPages);
+          return;
+        }
+
+        this.currentPage = response.page;
+        this.analyses = response.items;
+        this.totalItems = response.totalItems;
+        this.totalPages = response.totalPages;
+        this.hasPreviousPage = response.hasPreviousPage;
+        this.hasNextPage = response.hasNextPage;
+        this.loading = false;
+      },
       error: () => { this.loading = false; }
     });
   }
@@ -147,7 +168,7 @@ export class ImageClassification implements OnInit, OnDestroy {
           this.successMessage = 'Image analyzed successfully!';
           setTimeout(() => { this.successMessage = ''; }, 4000);
           this.videoAnalysisService.clearUserImageAnalysesCache();
-          this.loadAnalyses();
+          this.loadAnalyses(1);
         } else {
           this.error = result.error || 'Analysis failed';
         }
@@ -162,18 +183,89 @@ export class ImageClassification implements OnInit, OnDestroy {
   deleteAnalysis(id: number): void {
     this.videoAnalysisService.deleteImageAnalysis(id).subscribe({
       next: () => {
-        this.analyses = this.analyses.filter(a => a.id !== id);
         this.successMessage = 'Analysis deleted.';
         setTimeout(() => { this.successMessage = ''; }, 3000);
         this.videoAnalysisService.clearUserImageAnalysesCache();
+        const targetPage = this.analyses.length === 1 && this.currentPage > 1
+          ? this.currentPage - 1
+          : this.currentPage;
+        this.loadAnalyses(targetPage);
       },
       error: () => { this.error = 'Failed to delete analysis.'; }
     });
   }
 
-  getImageUrl(processedImageUrl: string): string {
-    const filename = processedImageUrl.replace('outputs/', '');
-    return `${environment.apiBaseUrl}/api/imageanalysis/processed-image/${filename}`;
+  get pageNumbers(): number[] {
+    return Array.from({ length: this.totalPages }, (_, index) => index + 1);
+  }
+
+  get visiblePageItems(): PaginationItem[] {
+    if (this.totalPages <= 5) {
+      return this.pageNumbers;
+    }
+
+    const items: PaginationItem[] = [1];
+    const startPage = Math.max(2, this.currentPage - 1);
+    const endPage = Math.min(this.totalPages - 1, this.currentPage + 1);
+
+    if (startPage > 2) {
+      items.push('ellipsis-left');
+    }
+
+    for (let page = startPage; page <= endPage; page++) {
+      items.push(page);
+    }
+
+    if (endPage < this.totalPages - 1) {
+      items.push('ellipsis-right');
+    }
+
+    items.push(this.totalPages);
+    return items;
+  }
+
+  get pageStartItem(): number {
+    if (!this.totalItems) {
+      return 0;
+    }
+
+    return (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  get pageEndItem(): number {
+    return this.pageStartItem + this.analyses.length - 1;
+  }
+
+  isPageNumber(item: PaginationItem): item is number {
+    return typeof item === 'number';
+  }
+
+  changePage(page: number): void {
+    const nextPage = Math.min(Math.max(page, 1), Math.max(this.totalPages, 1));
+    if (nextPage === this.currentPage) {
+      return;
+    }
+
+    this.loadAnalyses(nextPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  getImageUrl(url: string): string {
+    if (!url) {
+      return '';
+    }
+
+    if (url.startsWith('http')) {
+      return url;
+    }
+
+    const path = url.startsWith('/') ? url : `/${url}`;
+
+    if (path.startsWith('/outputs/')) {
+      return environment.pythonServiceUrl + path;
+    }
+
+    return environment.apiBaseUrl + path;
   }
 
   getConfidencePercent(confidence: number): string {

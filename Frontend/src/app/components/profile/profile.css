@@ -358,6 +358,10 @@
   display: flex; align-items: center; justify-content: center;
   gap: .7rem; padding: 3rem; color: var(--text-muted); font-size: .88rem;
 }
+.card-loader {
+  min-height: 160px;
+  padding: 1.25rem;
+}
 .empty-state {
   display: flex; flex-direction: column; align-items: center;
   justify-content: center; padding: 4rem 2rem; text-align: center; gap: .6rem;
@@ -483,9 +487,10 @@
 }
 .sec-neutral { background: rgba(232,224,208,.1);  color: var(--text-muted); }
 .sec-ok      { background: rgba(92,184,92,.14);   color: #6ede7a; }
+.sec-info    { background: rgba(74,144,220,.16);  color: #5eb5e8; }
 .security-info  { flex: 1; }
 .security-title { font-size: .88rem; font-weight: 500; color: var(--text-primary); }
-.security-sub   { font-size: .76rem; color: var(--text-muted); margin-top: .1rem; }
+.security-sub   { font-size: .76rem; color: var(--text-muted); margin-top: .1rem; line-height: 1.45; }
 
 .btn-ghost-sm {
   padding: .3rem .75rem; background: transparent;
@@ -494,6 +499,23 @@
   cursor: pointer; transition: var(--transition); flex-shrink: 0;
 }
 .btn-ghost-sm:hover { background: rgba(232,224,208,.08); color: var(--text-primary); }
+.security-badge {
+  padding: .22rem .65rem;
+  border-radius: 999px;
+  font-size: .74rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.badge-neutral {
+  background: rgba(232,224,208,.1);
+  color: var(--text-muted);
+  border: 1px solid rgba(232,224,208,.18);
+}
+.badge-info {
+  background: rgba(74,144,220,.16);
+  color: #5eb5e8;
+  border: 1px solid rgba(74,144,220,.25);
+}
 .badge-active {
   padding: .22rem .65rem; background: rgba(92,184,92,.14); color: #6ede7a;
   border: 1px solid rgba(92,184,92,.2); border-radius: 999px;

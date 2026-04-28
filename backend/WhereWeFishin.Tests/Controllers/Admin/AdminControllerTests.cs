@@ -189,10 +189,31 @@ public class AdminControllerTests : IDisposable
         var result = await _controller.GetAllUsers();
 
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var users = Assert.IsAssignableFrom<IEnumerable<UserDto>>(okResult.Value).OrderBy(user => user.Id).ToList();
-        Assert.Equal(2, users.Count);
-        Assert.True(users[0].IsActive);
-        Assert.False(users[1].IsActive);
+        var payload = Assert.IsType<PagedResponseDto<UserDto>>(okResult.Value);
+        Assert.Equal(2, payload.TotalItems);
+        Assert.Equal(1, payload.Page);
+        Assert.Equal(10, payload.PageSize);
+        Assert.Equal(2, payload.Items.Count);
+        Assert.True(payload.Items[0].IsActive);
+        Assert.False(payload.Items[1].IsActive);
+    }
+
+    [Fact]
+    public async Task GetAllUsers_AppliesRequestedPagination()
+    {
+        for (var index = 1; index <= 12; index++)
+        {
+            AddUser(index, UserRole.User);
+        }
+
+        var result = await _controller.GetAllUsers(page: 2, pageSize: 5);
+
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var payload = Assert.IsType<PagedResponseDto<UserDto>>(okResult.Value);
+        Assert.Equal(2, payload.Page);
+        Assert.Equal(5, payload.PageSize);
+        Assert.Equal(12, payload.TotalItems);
+        Assert.Equal([6, 7, 8, 9, 10], payload.Items.Select(user => user.Id).ToArray());
     }
 
     [Fact]
@@ -308,9 +329,28 @@ public class AdminControllerTests : IDisposable
         var result = await _controller.GetAllFishingSpots();
 
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var spots = Assert.IsAssignableFrom<IEnumerable<FishingSpotDto>>(okResult.Value).ToList();
-        Assert.Single(spots);
-        Assert.Equal("First2 Last2", spots[0].ManagerName);
+        var payload = Assert.IsType<PagedResponseDto<FishingSpotDto>>(okResult.Value);
+        Assert.Single(payload.Items);
+        Assert.Equal("First2 Last2", payload.Items[0].ManagerName);
+    }
+
+    [Fact]
+    public async Task GetAllFishingSpots_AppliesRequestedPagination()
+    {
+        AddUser(1, UserRole.User);
+        for (var index = 1; index <= 12; index++)
+        {
+            AddSpot(index, 1);
+        }
+
+        var result = await _controller.GetAllFishingSpots(page: 2, pageSize: 5);
+
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var payload = Assert.IsType<PagedResponseDto<FishingSpotDto>>(okResult.Value);
+        Assert.Equal(2, payload.Page);
+        Assert.Equal(5, payload.PageSize);
+        Assert.Equal(12, payload.TotalItems);
+        Assert.Equal(5, payload.Items.Count);
     }
 
     [Fact]

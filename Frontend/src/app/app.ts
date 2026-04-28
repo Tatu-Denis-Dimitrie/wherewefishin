@@ -27,7 +27,7 @@ export class App implements OnInit {
 
     this.swUpdate.checkForUpdate().catch(() => {});
 
-    // Verifică actualizări la fiecare 30 minute
+    // Check for updates every 30 minutes
     setInterval(() => this.swUpdate.checkForUpdate().catch(() => {}), 30 * 60 * 1000);
   }
 

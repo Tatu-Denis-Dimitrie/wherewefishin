@@ -13,7 +13,7 @@ export class GeocodingService {
 
   constructor(private http: HttpClient) {}
 
-  reverseGeocode(lat: number, lng: number, lang = 'ro'): Observable<ReverseGeocodeResult> {
+  reverseGeocode(lat: number, lng: number, lang = 'en'): Observable<ReverseGeocodeResult> {
     return this.http
       .get<{ display_name?: string; address?: Record<string, string> }>(
         `${this.nominatimUrl}?lat=${lat}&lon=${lng}&format=json&accept-language=${lang}`

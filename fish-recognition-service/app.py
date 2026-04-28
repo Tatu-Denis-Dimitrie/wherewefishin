@@ -348,7 +348,8 @@ def analyze_video():
         unique_filename = f"{timestamp}_{filename}"
         
         video_path = os.path.join(UPLOAD_FOLDER, unique_filename)
-        output_filename = f"processed_{unique_filename}"
+        output_stem = os.path.splitext(unique_filename)[0]
+        output_filename = f"processed_{output_stem}.mp4"
         output_path = os.path.join(OUTPUT_FOLDER, output_filename)
         
         file.save(video_path)

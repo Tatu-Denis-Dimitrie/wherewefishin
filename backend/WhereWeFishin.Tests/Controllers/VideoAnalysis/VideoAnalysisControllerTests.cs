@@ -221,10 +221,61 @@ public class VideoAnalysisControllerTests
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var analyses = Assert.IsAssignableFrom<IEnumerable<VideoAnalysisSummaryDto>>(okResult.Value).ToList();
-        Assert.Equal(2, analyses.Count);
-        Assert.Equal(2, analyses[0].Id);
-        Assert.StartsWith("https://wherewefishin.test/uploads/analysis-2.mp4", analyses[0].VideoUrl);
+        var payload = Assert.IsType<PagedResponseDto<VideoAnalysisSummaryDto>>(okResult.Value);
+        Assert.Equal(2, payload.TotalItems);
+        Assert.Equal(1, payload.Page);
+        Assert.Equal(10, payload.PageSize);
+        Assert.Equal(2, payload.Items.Count);
+        Assert.Equal(2, payload.Items[0].Id);
+        Assert.StartsWith("https://wherewefishin.test/uploads/analysis-2.mp4", payload.Items[0].VideoUrl);
+    }
+
+    [Fact]
+    public async Task GetUserAnalyses_AppliesRequestedPagination()
+    {
+        // Arrange
+        for (var index = 1; index <= 12; index++)
+        {
+            var analysis = CreateAnalysis(index, userId: 1);
+            analysis.CreatedAt = DateTime.UtcNow.AddMinutes(index);
+            _analyses.Add(analysis);
+        }
+
+        // Act
+        var result = await _controller.GetUserAnalyses(1, page: 2, pageSize: 5);
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var payload = Assert.IsType<PagedResponseDto<VideoAnalysisSummaryDto>>(okResult.Value);
+        Assert.Equal(2, payload.Page);
+        Assert.Equal(5, payload.PageSize);
+        Assert.Equal(12, payload.TotalItems);
+        Assert.Equal(3, payload.TotalPages);
+        Assert.True(payload.HasPreviousPage);
+        Assert.True(payload.HasNextPage);
+        Assert.Equal([7, 6, 5, 4, 3], payload.Items.Select(item => item.Id).ToArray());
+    }
+
+    [Fact]
+    public async Task GetUserAnalysesOverview_ReturnsCountsAndMostRecentAnalyses()
+    {
+        var completedOld = CreateAnalysis(1, userId: 1, status: nameof(AnalysisStatus.Completed));
+        completedOld.CreatedAt = DateTime.UtcNow.AddHours(-3);
+        var failedRecent = CreateAnalysis(2, userId: 1, status: nameof(AnalysisStatus.Failed));
+        failedRecent.CreatedAt = DateTime.UtcNow.AddHours(-2);
+        var completedRecent = CreateAnalysis(3, userId: 1, status: nameof(AnalysisStatus.Completed));
+        completedRecent.CreatedAt = DateTime.UtcNow.AddHours(-1);
+        var completedNewest = CreateAnalysis(4, userId: 1, status: nameof(AnalysisStatus.Completed));
+        completedNewest.CreatedAt = DateTime.UtcNow;
+        _analyses.AddRange([completedOld, failedRecent, completedRecent, completedNewest]);
+
+        var result = await _controller.GetUserAnalysesOverview(1);
+
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var payload = Assert.IsType<VideoAnalysisOverviewDto>(okResult.Value);
+        Assert.Equal(4, payload.TotalItems);
+        Assert.Equal(3, payload.CompletedItems);
+        Assert.Equal([4, 3, 2], payload.RecentAnalyses.Select(item => item.Id).ToArray());
     }
 
     [Fact]

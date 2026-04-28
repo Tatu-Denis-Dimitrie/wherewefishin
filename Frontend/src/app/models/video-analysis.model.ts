@@ -41,6 +41,22 @@ export interface AnalysisResult {
   error?: string;
 }
 
+export interface PagedResponse<T> {
+  items: T[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
+export interface VideoAnalysisOverview {
+  totalItems: number;
+  completedItems: number;
+  recentAnalyses: VideoAnalysis[];
+}
+
 export interface SupportedFishResponse {
   fishTypes: string[];
   total: number;

@@ -423,7 +423,7 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
 
       const overlapping = this.findOverlappingBooking(this.bookedPeriods, rangeStart, rangeEnd);
       if (overlapping) {
-        this.calendarError = `Perioadă ocupată din ${this.formatDateShort(new Date(overlapping.startDate))}`;
+        this.calendarError = `Unavailable from ${this.formatDateShort(new Date(overlapping.startDate))}`;
         return;
       }
 

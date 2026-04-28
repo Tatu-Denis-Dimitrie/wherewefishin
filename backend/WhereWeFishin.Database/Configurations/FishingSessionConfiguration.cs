@@ -21,6 +21,13 @@ public class FishingSessionConfiguration : IEntityTypeConfiguration<FishingSessi
             .HasMaxLength(64);
 
         builder.Property(s => s.StartDate)
+            .HasConversion(
+                value => value.Kind == DateTimeKind.Utc
+                    ? value
+                    : value.Kind == DateTimeKind.Local
+                        ? value.ToUniversalTime()
+                        : DateTime.SpecifyKind(value, DateTimeKind.Utc),
+                value => DateTime.SpecifyKind(value, DateTimeKind.Utc))
             .IsRequired();
 
         builder.Property(s => s.DurationHours)

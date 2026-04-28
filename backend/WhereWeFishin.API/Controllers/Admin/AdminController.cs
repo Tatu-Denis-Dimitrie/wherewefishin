@@ -183,21 +183,42 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("users")]
-    public async Task<ActionResult<IEnumerable<UserDto>>> GetAllUsers()
+    public async Task<ActionResult<PagedResponseDto<UserDto>>> GetAllUsers(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
-        var users = await _userRepository.GetAllIncludingDeletedAsync();
-        return Ok(users.Select(u => new UserDto
+        page = Math.Max(page, 1);
+        pageSize = pageSize <= 0 ? 10 : Math.Min(pageSize, 50);
+
+        var users = (await _userRepository.GetAllIncludingDeletedAsync())
+            .OrderBy(user => user.Id)
+            .Select(u => new UserDto
+            {
+                Id = u.Id,
+                Username = u.Username,
+                Email = u.Email,
+                FirstName = u.FirstName,
+                LastName = u.LastName,
+                ProfilePictureUrl = u.ProfilePictureUrl,
+                Role = u.Role.ToString(),
+                CreatedAt = u.CreatedAt,
+                IsActive = !u.IsDeleted
+            })
+            .ToList();
+
+        var totalItems = users.Count;
+        var items = users
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        return Ok(new PagedResponseDto<UserDto>
         {
-            Id = u.Id,
-            Username = u.Username,
-            Email = u.Email,
-            FirstName = u.FirstName,
-            LastName = u.LastName,
-            ProfilePictureUrl = u.ProfilePictureUrl,
-            Role = u.Role.ToString(),
-            CreatedAt = u.CreatedAt,
-            IsActive = !u.IsDeleted
-        }));
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalItems = totalItems
+        });
     }
 
     [HttpPut("users/{id}/status")]
@@ -247,29 +268,50 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("fishing-spots")]
-    public async Task<ActionResult<IEnumerable<FishingSpotDto>>> GetAllFishingSpots()
+    public async Task<ActionResult<PagedResponseDto<FishingSpotDto>>> GetAllFishingSpots(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
-        var spots = await _spotRepository.GetAllAsync();
-        return Ok(spots.Select(s => new FishingSpotDto
+        page = Math.Max(page, 1);
+        pageSize = pageSize <= 0 ? 10 : Math.Min(pageSize, 50);
+
+        var spots = (await _spotRepository.GetAllAsync())
+            .OrderBy(spot => spot.Name)
+            .Select(s => new FishingSpotDto
+            {
+                Id = s.Id,
+                Name = s.Name,
+                Description = s.Description,
+                Latitude = s.Latitude,
+                Longitude = s.Longitude,
+                ImageUrl = s.ImageUrl,
+                PricePerHour = s.PricePerHour,
+                UserId = s.UserId,
+                ManagerId = s.ManagerId,
+                ManagerName = s.Manager != null
+                    ? UserExtensions.GetDisplayName(s.Manager.FirstName, s.Manager.LastName, s.Manager.Username)
+                    : null,
+                DefaultZoom = s.DefaultZoom,
+                DefaultCenterLat = s.DefaultCenterLat,
+                DefaultCenterLng = s.DefaultCenterLng,
+                FishSpecies = s.FishSpecies,
+                CreatedAt = s.CreatedAt
+            })
+            .ToList();
+
+        var totalItems = spots.Count;
+        var items = spots
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        return Ok(new PagedResponseDto<FishingSpotDto>
         {
-            Id = s.Id,
-            Name = s.Name,
-            Description = s.Description,
-            Latitude = s.Latitude,
-            Longitude = s.Longitude,
-            ImageUrl = s.ImageUrl,
-            PricePerHour = s.PricePerHour,
-            UserId = s.UserId,
-            ManagerId = s.ManagerId,
-            ManagerName = s.Manager != null
-                ? UserExtensions.GetDisplayName(s.Manager.FirstName, s.Manager.LastName, s.Manager.Username)
-                : null,
-            DefaultZoom = s.DefaultZoom,
-            DefaultCenterLat = s.DefaultCenterLat,
-            DefaultCenterLng = s.DefaultCenterLng,
-            FishSpecies = s.FishSpecies,
-            CreatedAt = s.CreatedAt
-        }));
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalItems = totalItems
+        });
     }
 
     [HttpPut("fishing-spots/{id}")]

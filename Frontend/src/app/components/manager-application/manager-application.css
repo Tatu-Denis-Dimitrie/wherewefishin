@@ -18,7 +18,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  max-width: 820px;
+  max-width: 1100px;
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
@@ -550,6 +550,59 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ── Responsive ────────────────────────────────────────────────────────── */
+@media (min-width: 1024px) {
+  .ma-page { padding: 36px 32px 56px; gap: 20px; }
+  .ma-card-head { padding: 32px 36px 24px; }
+  .ma-head-left { gap: 20px; }
+  .ma-back-link { font-size: 13px; }
+  .ma-eyebrow { font-size: 12px; }
+  .ma-title { font-size: 30px; }
+
+  .ma-steps-rail { padding: 0 36px; }
+  .ma-step-btn { gap: 10px; padding: 18px 16px; font-size: 14px; }
+  .ma-step-number { width: 28px; height: 28px; font-size: 12px; }
+  .ma-step-label { font-size: 13.5px; }
+  .ma-step-sep { width: 32px; }
+  .ma-step-error { padding: 12px 36px; font-size: 13px; }
+
+  .ma-step-body { padding: 36px 36px 18px; gap: 24px; }
+  .ma-step-intro p { font-size: 15px; max-width: 72ch; }
+  .ma-fields { gap: 20px; }
+  .ma-field { gap: 8px; }
+  .ma-label { font-size: 12.5px; }
+  .ma-input { padding: 13px 15px; font-size: 15px; }
+  .ma-hint { font-size: 12px; }
+  .ma-add-btn { padding: 12px 18px; font-size: 14px; }
+  .ma-chip { padding: 5px 12px; font-size: 13px; }
+
+  .ma-map-wrap { height: 460px; }
+  .ma-map { min-height: 400px; }
+  .ma-map-lock { font-size: 14px; }
+  .ma-coord-chip { padding: 7px 12px; }
+  .ma-coord-val { font-size: 13.5px; }
+  .ma-addr-box { padding: 9px 14px; }
+  .ma-addr-text { font-size: 14px; }
+  .ma-resolving { font-size: 13px; }
+
+  .ma-review-grid { gap: 18px; }
+  .ma-review-block { padding: 20px; gap: 14px; }
+  .ma-review-block-title { font-size: 14px; }
+  .ma-review-edit { font-size: 12px; padding: 5px 10px; }
+  .ma-review-row { font-size: 14px; }
+  .ma-review-row > span { font-size: 12.5px; }
+
+  .ma-submit-btn,
+  .ma-resubmit-btn,
+  .ma-nav-back,
+  .ma-nav-next { font-size: 14px; }
+
+  .ma-submit-btn { padding: 13px 30px; }
+  .ma-resubmit-btn { padding: 13px 26px; }
+  .ma-nav { padding: 18px 36px 28px; }
+  .ma-nav-back { padding: 10px 20px; }
+  .ma-nav-next { padding: 10px 26px; }
+}
+
 @media (max-width: 600px) {
   .ma-page { padding: 16px 12px 32px; }
   .ma-card-head { flex-direction: column; gap: 12px; padding: 18px 16px 14px; }

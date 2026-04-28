@@ -77,7 +77,12 @@
 
   <!-- Analyses section -->
   <section class="analyses-section" *ngIf="analyses.length">
-    <h2>Your Analyses</h2>
+    <div class="analyses-header">
+      <h2>Your Analyses</h2>
+      <span class="analyses-summary">
+        Showing {{ pageStartItem }}-{{ pageEndItem }} of {{ totalItems }} videos
+      </span>
+    </div>
 
     <div class="analyses-grid">
       @for (a of analyses; track a.id) {
@@ -134,10 +139,49 @@
         </div>
       }
     </div>
+
+    @if (totalItems > pageSize) {
+      <nav class="pagination" aria-label="Video analyses pagination">
+        <button
+          class="pagination-btn"
+          type="button"
+          (click)="changePage(currentPage - 1)"
+          [disabled]="!hasPreviousPage"
+        >
+          Previous
+        </button>
+
+        <div class="pagination-pages">
+          @for (item of visiblePageItems; track item) {
+            @if (isPageNumber(item)) {
+              <button
+                class="pagination-page"
+                type="button"
+                [class.is-active]="item === currentPage"
+                (click)="changePage(item)"
+              >
+                {{ item }}
+              </button>
+            } @else {
+              <span class="pagination-ellipsis" aria-hidden="true">&hellip;</span>
+            }
+          }
+        </div>
+
+        <button
+          class="pagination-btn"
+          type="button"
+          (click)="changePage(currentPage + 1)"
+          [disabled]="!hasNextPage"
+        >
+          Next
+        </button>
+      </nav>
+    }
   </section>
 
   <!-- Empty state -->
-  <div class="empty-state" *ngIf="!loading && !analyses.length">
+  <div class="empty-state" *ngIf="!loading && !totalItems">
     <app-icon name="smile" [size]="48"></app-icon>
     <p>No analyses yet. Upload a video to get started!</p>
   </div>

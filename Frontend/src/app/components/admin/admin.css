@@ -229,6 +229,59 @@
   padding-bottom: 6px;
 }
 
+.table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 18px 18px;
+  border-top: 1px solid rgba(232, 224, 208, 0.08);
+}
+
+.pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pagination-btn,
+.pagination-page {
+  min-width: 42px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(232, 224, 208, 0.18);
+  background: rgba(236, 233, 220, 0.04);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled),
+.pagination-page:hover:not(:disabled) {
+  background: rgba(125, 179, 74, 0.12);
+  border-color: rgba(125, 179, 74, 0.34);
+}
+
+.pagination-page.is-active {
+  background: rgba(125, 179, 74, 0.24);
+  border-color: rgba(125, 179, 74, 0.58);
+  color: #dff6d1;
+}
+
+.pagination-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  color: rgba(232, 224, 208, 0.58);
+  font-size: 15px;
+  font-weight: 800;
+}
+
 .users-table {
   width: 100%;
   border-collapse: collapse;
@@ -577,5 +630,31 @@
 
   .users-table {
     min-width: 700px;
+  }
+
+  .table-pagination {
+    gap: 8px;
+    justify-content: space-between;
+  }
+
+  .pagination-btn,
+  .pagination-page {
+    min-width: 38px;
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .pagination-pages {
+    flex: 0 1 auto;
+    max-width: calc(100vw - 10rem);
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .pagination-pages::-webkit-scrollbar {
+    display: none;
   }
 }

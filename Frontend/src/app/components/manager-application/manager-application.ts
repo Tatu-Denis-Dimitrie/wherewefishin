@@ -96,7 +96,8 @@ export class ManagerApplicationPage implements OnInit, OnDestroy {
   get isPending(): boolean { return this.latestApplication?.status === 'Pending'; }
   get isRejected(): boolean { return this.latestApplication?.status === 'Rejected'; }
   get isApproved(): boolean { return this.latestApplication?.status === 'Approved'; }
-  get isReadOnly(): boolean { return this.isPending || this.saving; }
+  get isSubmittedReadOnly(): boolean { return this.isPending || this.isApproved; }
+  get isReadOnly(): boolean { return this.isSubmittedReadOnly || this.saving; }
 
   get pageTitle(): string {
     return this.authService.isManager() ? 'Propose a New Lake' : 'Apply for Manager';
@@ -114,6 +115,15 @@ export class ManagerApplicationPage implements OnInit, OnDestroy {
   // ── navigation ─────────────────────────────────────────────────────────────
 
   goToStep(step: WizardStep): void {
+    if (this.saving) return;
+
+    if (this.isSubmittedReadOnly) {
+      this.stepError = '';
+      this.currentStep = step;
+      if (step === 'location') this.queueMapInit();
+      return;
+    }
+
     const target = this.steps.indexOf(step);
     const current = this.stepIndex;
     if (target > current) {
@@ -127,6 +137,16 @@ export class ManagerApplicationPage implements OnInit, OnDestroy {
   }
 
   nextStep(): void {
+    if (this.saving || this.isLastStep) return;
+
+    if (this.isSubmittedReadOnly) {
+      this.stepError = '';
+      const next = this.steps[this.stepIndex + 1];
+      this.currentStep = next;
+      if (next === 'location') this.queueMapInit();
+      return;
+    }
+
     if (!this.validateStep(this.currentStep)) return;
     this.stepError = '';
     const next = this.steps[this.stepIndex + 1];
@@ -135,7 +155,7 @@ export class ManagerApplicationPage implements OnInit, OnDestroy {
   }
 
   prevStep(): void {
-    if (this.isFirstStep) return;
+    if (this.saving || this.isFirstStep) return;
     this.stepError = '';
     this.currentStep = this.steps[this.stepIndex - 1];
     if (this.currentStep === 'location') this.queueMapInit();
@@ -251,7 +271,7 @@ export class ManagerApplicationPage implements OnInit, OnDestroy {
     if (!d) return '–';
     const parsed = new Date(d);
     if (isNaN(parsed.getTime())) return '–';
-    return new Intl.DateTimeFormat('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(parsed);
+    return new Intl.DateTimeFormat('en-US', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(parsed);
   }
 
   parsedSpecies(raw?: string): string[] {
@@ -353,8 +373,8 @@ export class ManagerApplicationPage implements OnInit, OnDestroy {
 
   private resolveLabel(lat: number, lng: number): void {
     this.resolvingLocation = true;
-    this.form.locationLabel = 'Se rezolvă adresa…';
-    this.geocodingService.reverseGeocode(lat, lng, 'ro').subscribe({
+    this.form.locationLabel = 'Resolving address…';
+    this.geocodingService.reverseGeocode(lat, lng, 'en').subscribe({
       next: (res) => {
         const a = res.address ?? {};
         this.form.locationLabel = [
@@ -398,7 +418,7 @@ export class ManagerApplicationPage implements OnInit, OnDestroy {
 
   private syncFormFromApplication(): void {
     const app = this.latestApplication;
-    if (!app || app.status === 'Approved') { this.form = this.emptyForm(); return; }
+    if (!app) { this.form = this.emptyForm(); return; }
     this.form = {
       lakeName: app.lakeName,
       description: app.description ?? '',

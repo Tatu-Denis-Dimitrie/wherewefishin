@@ -49,13 +49,19 @@ public class BookingsIntegrationTests
         Assert.Equal("Confirmed", createdBooking.Status);
         Assert.Equal(2, createdBooking.DurationHours);
         Assert.True(createdBooking.TotalPrice > 0);
+        Assert.Equal(DateTimeKind.Utc, createdBooking.StartDate.Kind);
+        Assert.Equal(startDate, createdBooking.StartDate, TimeSpan.FromSeconds(1));
 
         var listResponse = await client.GetAsync("/api/bookings");
         Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
 
         var bookings = await listResponse.Content.ReadFromJsonAsync<List<BookingDto>>();
         Assert.NotNull(bookings);
-        Assert.Contains(bookings, booking => booking.Id == createdBooking.Id && booking.FishingSpotName == "Snagov Lake");
+        Assert.Contains(bookings, booking =>
+            booking.Id == createdBooking.Id &&
+            booking.FishingSpotName == "Snagov Lake" &&
+            booking.StartDate.Kind == DateTimeKind.Utc &&
+            booking.StartDate == startDate);
     }
 
     [Fact]

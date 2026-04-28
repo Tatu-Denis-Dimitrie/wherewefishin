@@ -235,6 +235,24 @@
   font-size: 1.15rem; font-weight: 700; color: var(--text-heading); margin-bottom: 1rem;
 }
 
+.analyses-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.analyses-header h2 {
+  margin-bottom: 0;
+}
+
+.analyses-summary {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
 .analyses-list {
   display: flex;
   flex-direction: column;
@@ -272,6 +290,65 @@
 }
 .btn-danger-sm:hover { background: rgba(196,68,45,.12); }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .75rem;
+  margin-top: 1.25rem;
+}
+
+.pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  justify-content: center;
+  min-width: 0;
+}
+
+.pagination-btn,
+.pagination-page {
+  min-width: 42px;
+  padding: .5rem .8rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(232, 224, 208, 0.24);
+  background: rgba(236, 233, 220, 0.08);
+  color: var(--text-primary);
+  font-size: .84rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.pagination-btn:hover:not(:disabled),
+.pagination-page:hover:not(:disabled) {
+  background: rgba(125,179,74,.12);
+  border-color: rgba(125,179,74,.45);
+}
+
+.pagination-page.is-active {
+  background: var(--accent-moss);
+  border-color: var(--accent-moss);
+  color: #fff;
+}
+
+.pagination-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  color: var(--text-muted);
+  font-size: .95rem;
+  font-weight: 700;
+}
+
+.pagination-btn:disabled,
+.pagination-page:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
 /* ── Empty & Loading ── */
 .empty-state {
   text-align: center; padding: 3rem 1rem;
@@ -296,4 +373,30 @@
   .result-card { grid-template-columns: 1fr; }
   .result-image-wrap { border-right: none; border-bottom: 1px solid rgba(232,224,208,.18); }
   .drop-zone { padding: 1.5rem 1rem; }
+  .analyses-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .pagination {
+    gap: .55rem;
+    justify-content: space-between;
+  }
+  .pagination-btn,
+  .pagination-page {
+    min-width: 38px;
+    padding: .5rem .7rem;
+    font-size: .8rem;
+  }
+  .pagination-pages {
+    flex: 0 1 auto;
+    max-width: calc(100vw - 10rem);
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: .2rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .pagination-pages::-webkit-scrollbar {
+    display: none;
+  }
 }

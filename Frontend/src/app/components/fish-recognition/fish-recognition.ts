@@ -7,6 +7,8 @@ import { VideoAnalysis } from '../../models/video-analysis.model';
 import { environment } from '../../../environments/environment';
 import { AppIcon } from '../../shared/icons/app-icon';
 
+type PaginationItem = number | 'ellipsis-left' | 'ellipsis-right';
+
 @Component({
   selector: 'app-fish-recognition',
   imports: [CommonModule, AppIcon],
@@ -24,6 +26,12 @@ export class FishRecognition implements OnInit, OnDestroy {
   uploadProgress = 0;
   serviceHealthy = false;
   supportedFish: string[] = [];
+  currentPage = 1;
+  readonly pageSize = 10;
+  totalItems = 0;
+  totalPages = 0;
+  hasPreviousPage = false;
+  hasNextPage = false;
   private pollingInterval: ReturnType<typeof setInterval> | null = null;
   private progressInterval: ReturnType<typeof setInterval> | null = null;
   private progressStartTime = 0;
@@ -81,14 +89,24 @@ export class FishRecognition implements OnInit, OnDestroy {
     });
   }
 
-  loadAnalyses(): void {
+  loadAnalyses(page = this.currentPage): void {
     const userId = this.authService.getUserId();
     if (!userId) return;
 
     this.loading = true;
-    this.videoAnalysisService.getUserAnalyses(userId).subscribe({
-      next: (analyses) => {
-        this.analyses = analyses;
+    this.videoAnalysisService.getUserAnalyses(userId, page, this.pageSize).subscribe({
+      next: (response) => {
+        if (!response.items.length && response.totalPages > 0 && response.page > response.totalPages) {
+          this.loadAnalyses(response.totalPages);
+          return;
+        }
+
+        this.currentPage = response.page;
+        this.analyses = response.items;
+        this.totalItems = response.totalItems;
+        this.totalPages = response.totalPages;
+        this.hasPreviousPage = response.hasPreviousPage;
+        this.hasNextPage = response.hasNextPage;
         this.loading = false;
         this.checkForProcessingAnalyses();
       },
@@ -115,11 +133,16 @@ export class FishRecognition implements OnInit, OnDestroy {
       this.videoAnalysisService.clearUserAnalysesCache();
       const userId = this.authService.getUserId();
       if (!userId) return;
-      this.videoAnalysisService.getUserAnalyses(userId).subscribe({
-        next: (analyses) => {
+      this.videoAnalysisService.getUserAnalyses(userId, this.currentPage, this.pageSize).subscribe({
+        next: (response) => {
           const wasProcessing = this.analyses.some(a => a.status.toLowerCase() === 'processing');
-          this.analyses = analyses;
-          const stillProcessing = analyses.some(a => a.status.toLowerCase() === 'processing');
+          this.currentPage = response.page;
+          this.analyses = response.items;
+          this.totalItems = response.totalItems;
+          this.totalPages = response.totalPages;
+          this.hasPreviousPage = response.hasPreviousPage;
+          this.hasNextPage = response.hasNextPage;
+          const stillProcessing = response.items.some(a => a.status.toLowerCase() === 'processing');
           if (wasProcessing && !stillProcessing) {
             this.stopPolling();
           }
@@ -201,7 +224,7 @@ export class FishRecognition implements OnInit, OnDestroy {
     // After 3s, reload analyses to pick up the "Processing" record and start polling
     setTimeout(() => {
       this.videoAnalysisService.clearUserAnalysesCache();
-      this.loadAnalyses();
+      this.loadAnalyses(1);
     }, 3000);
 
     this.videoAnalysisService.uploadVideo(this.selectedFile).subscribe({
@@ -220,7 +243,7 @@ export class FishRecognition implements OnInit, OnDestroy {
           if (fileInput) fileInput.value = '';
           
           this.videoAnalysisService.clearUserAnalysesCache();
-          this.loadAnalyses();
+          this.loadAnalyses(1);
           setTimeout(() => {
             this.successMessage = '';
           }, 3000);
@@ -237,7 +260,7 @@ export class FishRecognition implements OnInit, OnDestroy {
         // The backend may have completed even if the HTTP call timed out.
         // Reload analyses to check.
         this.videoAnalysisService.clearUserAnalysesCache();
-        this.loadAnalyses();
+        this.loadAnalyses(1);
       }
     });
   }
@@ -267,7 +290,11 @@ export class FishRecognition implements OnInit, OnDestroy {
     this.videoAnalysisService.deleteAnalysis(id).subscribe({
       next: () => {
         this.successMessage = 'Analysis deleted successfully';
-        this.loadAnalyses();
+        this.videoAnalysisService.clearUserAnalysesCache();
+        const targetPage = this.analyses.length === 1 && this.currentPage > 1
+          ? this.currentPage - 1
+          : this.currentPage;
+        this.loadAnalyses(targetPage);
         setTimeout(() => {
           this.successMessage = '';
         }, 2000);
@@ -277,6 +304,61 @@ export class FishRecognition implements OnInit, OnDestroy {
         console.error('Error deleting analysis:', err);
       }
     });
+  }
+
+  get pageNumbers(): number[] {
+    return Array.from({ length: this.totalPages }, (_, index) => index + 1);
+  }
+
+  get visiblePageItems(): PaginationItem[] {
+    if (this.totalPages <= 5) {
+      return this.pageNumbers;
+    }
+
+    const items: PaginationItem[] = [1];
+    const startPage = Math.max(2, this.currentPage - 1);
+    const endPage = Math.min(this.totalPages - 1, this.currentPage + 1);
+
+    if (startPage > 2) {
+      items.push('ellipsis-left');
+    }
+
+    for (let page = startPage; page <= endPage; page++) {
+      items.push(page);
+    }
+
+    if (endPage < this.totalPages - 1) {
+      items.push('ellipsis-right');
+    }
+
+    items.push(this.totalPages);
+    return items;
+  }
+
+  get pageStartItem(): number {
+    if (!this.totalItems) {
+      return 0;
+    }
+
+    return (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  get pageEndItem(): number {
+    return this.pageStartItem + this.analyses.length - 1;
+  }
+
+  isPageNumber(item: PaginationItem): item is number {
+    return typeof item === 'number';
+  }
+
+  changePage(page: number): void {
+    const nextPage = Math.min(Math.max(page, 1), Math.max(this.totalPages, 1));
+    if (nextPage === this.currentPage) {
+      return;
+    }
+
+    this.loadAnalyses(nextPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   getFishCountsArray(fishCounts?: { [key: string]: number }): Array<{ type: string, count: number }> {
@@ -291,7 +373,7 @@ export class FishRecognition implements OnInit, OnDestroy {
   }
 
   formatDate(date: Date): string {
-    return new Date(date).toLocaleString('ro-RO', {
+    return new Date(date).toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',

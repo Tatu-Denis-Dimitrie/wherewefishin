@@ -63,11 +63,12 @@ public class AdminIntegrationTests
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var users = await response.Content.ReadFromJsonAsync<List<UserDto>>();
-        Assert.NotNull(users);
-        Assert.Equal(10, users.Count);
-        Assert.Contains(users, user => user.Username == "admin" && user.Role == Roles.Admin && user.IsActive);
-        Assert.Contains(users, user => user.Username == "manager1" && user.Role == Roles.Manager);
+        var payload = await response.Content.ReadFromJsonAsync<PagedResponseDto<UserDto>>();
+        Assert.NotNull(payload);
+        Assert.Equal(10, payload!.TotalItems);
+        Assert.Equal(10, payload.Items.Count);
+        Assert.Contains(payload.Items, user => user.Username == "admin" && user.Role == Roles.Admin && user.IsActive);
+        Assert.Contains(payload.Items, user => user.Username == "manager1" && user.Role == Roles.Manager);
     }
 
     [Fact]

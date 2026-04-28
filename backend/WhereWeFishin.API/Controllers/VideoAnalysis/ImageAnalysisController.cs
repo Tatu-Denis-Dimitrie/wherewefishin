@@ -70,7 +70,10 @@ public class ImageAnalysisController : ControllerBase
 
     [HttpGet("user/{userId}")]
     [Authorize]
-    public async Task<ActionResult<List<ImageAnalysisSummaryDto>>> GetUserAnalyses(int userId)
+    public async Task<ActionResult<PagedResponseDto<ImageAnalysisSummaryDto>>> GetUserAnalyses(
+        int userId,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
         var currentUserId = User.GetUserId();
         if (currentUserId == null)
@@ -79,13 +82,28 @@ public class ImageAnalysisController : ControllerBase
         if (currentUserId.Value != userId && !User.IsInRole("Admin"))
             return Forbid();
 
+        page = Math.Max(page, 1);
+        pageSize = pageSize <= 0 ? 10 : Math.Min(pageSize, 50);
+
         var analyses = await _imageRepository.FindAsync(a => a.UserId == userId);
-        var result = analyses
+        var sorted = analyses
             .OrderByDescending(a => a.CreatedAt)
             .Select(MapToSummaryDto)
             .ToList();
 
-        return Ok(result);
+        var totalItems = sorted.Count;
+        var items = sorted
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
+        return Ok(new PagedResponseDto<ImageAnalysisSummaryDto>
+        {
+            Items = items,
+            Page = page,
+            PageSize = pageSize,
+            TotalItems = totalItems
+        });
     }
 
     [HttpGet("{id}")]

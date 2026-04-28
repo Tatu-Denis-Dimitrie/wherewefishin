@@ -57,7 +57,7 @@
         </div>
         <div class="header-stats">
           <div class="hstat">
-            <div class="hstat-value">{{ userAnalysesCount }}</div>
+            <div class="hstat-value">{{ loadingAnalysisOverview ? '...' : userAnalysesCount }}</div>
             <div class="hstat-label">Analyses</div>
           </div>
           <div class="hstat">
@@ -66,7 +66,7 @@
           </div>
           @if (isManager() || isAdmin()) {
             <div class="hstat">
-              <div class="hstat-value">{{ userSpotsCount }}</div>
+              <div class="hstat-value">{{ loadingSpots ? '...' : userSpotsCount }}</div>
               <div class="hstat-label">Spots</div>
             </div>
           }
@@ -125,7 +125,7 @@
                   <app-icon name="analyses" [size]="20"></app-icon>
                 </div>
                 <div class="stat-text">
-                  <div class="stat-num">{{ userAnalysesCount }}</div>
+                  <div class="stat-num">{{ loadingAnalysisOverview ? '...' : userAnalysesCount }}</div>
                   <div class="stat-lbl">Total Analyses</div>
                 </div>
               </div>
@@ -135,7 +135,7 @@
                   <app-icon name="success" [size]="20"></app-icon>
                 </div>
                 <div class="stat-text">
-                  <div class="stat-num">{{ userCompletedCount }}</div>
+                  <div class="stat-num">{{ loadingAnalysisOverview ? '...' : userCompletedCount }}</div>
                   <div class="stat-lbl">Completed</div>
                 </div>
               </div>
@@ -156,19 +156,19 @@
                     <app-icon name="spots" [size]="20"></app-icon>
                   </div>
                   <div class="stat-text">
-                    <div class="stat-num">{{ userSpotsCount }}</div>
+                    <div class="stat-num">{{ loadingSpots ? '...' : userSpotsCount }}</div>
                     <div class="stat-lbl">Spots Managed</div>
                   </div>
                 </div>
               }
 
-              @if (isAdmin() && adminStats) {
+              @if (isAdmin()) {
                 <div class="stat-card">
                   <div class="stat-icon-wrap sicon-amber">
                     <app-icon name="users" [size]="20"></app-icon>
                   </div>
                   <div class="stat-text">
-                    <div class="stat-num">{{ adminStats.totalUsers }}</div>
+                    <div class="stat-num">{{ loadingAdminStats ? '...' : (adminStats?.totalUsers ?? 0) }}</div>
                     <div class="stat-lbl">Total Users</div>
                   </div>
                 </div>
@@ -178,7 +178,14 @@
             <!-- Content cards -->
             <div class="overview-grid">
 
-              @if (recentAnalyses.length > 0) {
+              @if (loadingAnalysisOverview) {
+                <div class="content-card">
+                  <div class="inline-loader card-loader">
+                    <div class="spinner-sm"></div>
+                    <span>Loading analyses…</span>
+                  </div>
+                </div>
+              } @else if (recentAnalyses.length > 0) {
                 <div class="content-card">
                   <div class="content-card-head">
                     <h3>Recent Analyses</h3>
@@ -205,7 +212,14 @@
                 </div>
               }
 
-              @if ((isManager() || isAdmin()) && userSpots.length > 0) {
+              @if ((isManager() || isAdmin()) && loadingSpots) {
+                <div class="content-card">
+                  <div class="inline-loader card-loader">
+                    <div class="spinner-sm"></div>
+                    <span>Loading spots…</span>
+                  </div>
+                </div>
+              } @else if ((isManager() || isAdmin()) && userSpots.length > 0) {
                 <div class="content-card">
                   <div class="content-card-head">
                     <h3>My Fishing Spots</h3>
@@ -232,7 +246,14 @@
                 </div>
               }
 
-              @if (isAdmin() && adminStats) {
+              @if (isAdmin() && loadingAdminStats) {
+                <div class="content-card">
+                  <div class="inline-loader card-loader">
+                    <div class="spinner-sm"></div>
+                    <span>Loading admin overview…</span>
+                  </div>
+                </div>
+              } @else if (isAdmin() && adminStats) {
                 <div class="content-card">
                   <div class="content-card-head">
                     <h3>System Overview</h3>
@@ -256,7 +277,7 @@
               }
 
               <!-- Quick actions when no other content (regular user with no data) -->
-              @if (recentAnalyses.length === 0 && !isManager() && !isAdmin()) {
+              @if (!loadingAnalysisOverview && recentAnalyses.length === 0 && !isManager() && !isAdmin()) {
                 <div class="quick-actions">
                   <a routerLink="/home" class="qa-card">
                     <div class="qa-icon qaicon-moss">
@@ -436,14 +457,14 @@
                     <button class="btn-ghost-sm" (click)="openChangePassword()">Change</button>
                   </div>
                   <div class="security-row">
-                    <div class="security-icon-wrap sec-ok">
-                      <app-icon name="shield" [size]="15"></app-icon>
+                    <div class="security-icon-wrap" [ngClass]="profileInsight.iconClass">
+                      <app-icon [name]="profileInsight.icon" [size]="15"></app-icon>
                     </div>
                     <div class="security-info">
-                      <div class="security-title">Account Status</div>
-                      <div class="security-sub">Your account is active and in good standing</div>
+                      <div class="security-title">{{ profileInsight.title }}</div>
+                      <div class="security-sub">{{ profileInsight.subtitle }}</div>
                     </div>
-                    <span class="badge-active">Active</span>
+                    <span class="security-badge" [ngClass]="profileInsight.badgeClass">{{ profileInsight.badge }}</span>
                   </div>
                 </div>
               </div>

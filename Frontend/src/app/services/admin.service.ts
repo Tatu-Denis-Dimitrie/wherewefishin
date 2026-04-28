@@ -5,6 +5,7 @@ import { shareReplay } from 'rxjs/operators';
 import { User } from '../models/user.model';
 import { FishingSpot } from '../models/fishing-spot.model';
 import { AdminHomeOverview } from '../models/manager-application.model';
+import { PagedResponse } from '../models/video-analysis.model';
 import { environment } from '../../environments/environment';
 
 export interface AdminStats {
@@ -71,8 +72,8 @@ export class AdminService {
     return this.homeOverviewCache$;
   }
 
-  getUsers(): Observable<User[]> {
-    return this.http.get<User[]>(`${this.apiUrl}/users`);
+  getUsers(page = 1, pageSize = 10): Observable<PagedResponse<User>> {
+    return this.http.get<PagedResponse<User>>(`${this.apiUrl}/users?page=${page}&pageSize=${pageSize}`);
   }
 
   updateUserRole(userId: number, role: string): Observable<any> {
@@ -87,8 +88,8 @@ export class AdminService {
     return this.http.delete<void>(`${this.apiUrl}/users/${userId}`);
   }
 
-  getFishingSpots(): Observable<FishingSpot[]> {
-    return this.http.get<FishingSpot[]>(`${this.apiUrl}/fishing-spots`);
+  getFishingSpots(page = 1, pageSize = 10): Observable<PagedResponse<FishingSpot>> {
+    return this.http.get<PagedResponse<FishingSpot>>(`${this.apiUrl}/fishing-spots?page=${page}&pageSize=${pageSize}`);
   }
 
   updateFishingSpot(spotId: number, updates: UpdateFishingSpot): Observable<any> {

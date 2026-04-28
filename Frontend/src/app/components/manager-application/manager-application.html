@@ -50,7 +50,7 @@
             [class.active]="currentStep === step"
             [class.done]="stepIndex > i"
             (click)="goToStep(step)"
-            [disabled]="isReadOnly && step !== currentStep">
+            [disabled]="saving">
             <span class="ma-step-number">
               @if (stepIndex > i) { ✓ } @else { {{ i + 1 }} }
             </span>
@@ -164,9 +164,15 @@
 
           <div class="ma-map-wrap">
             <div id="wizard-map" class="ma-map"></div>
-            @if (isPending) {
+            @if (isReadOnly) {
               <div class="ma-map-lock">
-                <span>🔒 Location is locked while the application is under review.</span>
+                <span>
+                  @if (isApproved) {
+                    Location is locked for approved applications.
+                  } @else {
+                    Location is locked while the application is under review.
+                  }
+                </span>
               </div>
             }
           </div>
@@ -226,16 +232,21 @@
       @if (currentStep === 'review') {
         <div class="ma-step-body">
           <div class="ma-step-intro">
-            <p>Review all the information you provided. You can go back to any step to make changes.</p>
+            <p>
+              @if (isReadOnly) {
+                Review all the information you submitted. You can move through the steps to inspect every section.
+              } @else {
+                Review all the information you provided. You can go back to any step to make changes.
+              }
+            </p>
           </div>
 
           <div class="ma-review-grid">
             <!-- Lake block -->
             <div class="ma-review-block">
               <div class="ma-review-block-head">
-                <span class="ma-review-icon">🎣</span>
                 <span class="ma-review-block-title">Lake Details</span>
-                <button class="ma-review-edit" (click)="goToStep('lake')">Edit</button>
+                <button class="ma-review-edit" (click)="goToStep('lake')">{{ isReadOnly ? 'View' : 'Edit' }}</button>
               </div>
               <div class="ma-review-rows">
                 <div class="ma-review-row"><span>Name</span><strong>{{ form.lakeName || '–' }}</strong></div>
@@ -260,9 +271,8 @@
             <!-- Location block -->
             <div class="ma-review-block">
               <div class="ma-review-block-head">
-                <span class="ma-review-icon">📍</span>
                 <span class="ma-review-block-title">Location</span>
-                <button class="ma-review-edit" (click)="goToStep('location')">Edit</button>
+                <button class="ma-review-edit" (click)="goToStep('location')">{{ isReadOnly ? 'View' : 'Edit' }}</button>
               </div>
               <div class="ma-review-rows">
                 <div class="ma-review-row">
@@ -278,9 +288,8 @@
             <!-- Motivation block -->
             <div class="ma-review-block ma-review-block-full">
               <div class="ma-review-block-head">
-                <span class="ma-review-icon">📝</span>
                 <span class="ma-review-block-title">Motivation & Administrative basis</span>
-                <button class="ma-review-edit" (click)="goToStep('motivation')">Edit</button>
+                <button class="ma-review-edit" (click)="goToStep('motivation')">{{ isReadOnly ? 'View' : 'Edit' }}</button>
               </div>
               <div class="ma-review-rows">
                 <div class="ma-review-row ma-review-row-block"><span>Motivation</span><strong>{{ form.motivation }}</strong></div>
@@ -290,7 +299,7 @@
           </div>
 
           <!-- Submit actions -->
-          @if (!isPending) {
+          @if (!isReadOnly) {
             <div class="ma-submit-row">
               <button class="ma-submit-btn" (click)="submit()" [disabled]="saving">
                 {{ submitLabel }}
@@ -303,7 +312,11 @@
             </div>
           } @else {
             <div class="ma-pending-notice">
-              Your application is under review — editing is disabled until the admin responds.
+              @if (isApproved) {
+                This application was approved. You can review every step, but editing is disabled.
+              } @else {
+                Your application is under review — editing is disabled until the admin responds.
+              }
             </div>
           }
         </div>
@@ -312,8 +325,8 @@
       <!-- ── Step navigation ─────────────────────────────────────────────── -->
       @if (currentStep !== 'review') {
         <div class="ma-nav">
-          <button class="ma-nav-back" (click)="prevStep()" [disabled]="isFirstStep">← Back</button>
-          <button class="ma-nav-next" (click)="nextStep()" [disabled]="isReadOnly && currentStep !== 'lake'">
+          <button class="ma-nav-back" (click)="prevStep()" [disabled]="isFirstStep || saving">← Back</button>
+          <button class="ma-nav-next" (click)="nextStep()" [disabled]="saving || isLastStep">
             @if (currentStep === 'motivation') { Review → } @else { Next → }
           </button>
         </div>
