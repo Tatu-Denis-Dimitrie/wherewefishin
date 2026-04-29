@@ -366,6 +366,10 @@ export class FishRecognition implements OnInit, OnDestroy {
     return Object.entries(fishCounts).map(([type, count]) => ({ type, count }));
   }
 
+  getDominantFishSummary(analysis: VideoAnalysis): string {
+    return analysis.dominantFishType || 'No clear lead';
+  }
+
   formatDuration(seconds: number): string {
     const minutes = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);

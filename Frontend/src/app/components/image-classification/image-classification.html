@@ -32,7 +32,19 @@
         </div>
 
         <div class="preview-content" *ngIf="selectedFile">
-          <img *ngIf="previewUrl" [src]="previewUrl" class="image-preview" alt="Preview" />
+          <div
+            class="preview-image-wrap image-zoomable"
+            *ngIf="previewUrl"
+            tabindex="0"
+            role="button"
+            (click)="openExpandedImage(previewUrl)"
+            (keydown.enter)="openExpandedImage(previewUrl)"
+            (keydown.space)="openExpandedImage(previewUrl); $event.preventDefault()"
+            aria-label="Open image preview"
+          >
+            <img [src]="previewUrl" class="image-preview" alt="Preview" />
+            <span class="image-zoom-hint">Click to enlarge</span>
+          </div>
           <div class="preview-info">
             <span class="file-name">{{ selectedFile.name }}</span>
             <span class="file-size">{{ (selectedFile.size / 1024 / 1024).toFixed(1) }} MB</span>
@@ -71,11 +83,27 @@
   <section class="result-section" *ngIf="result?.success">
     <h2>Analysis Result</h2>
     <div class="result-card">
-      <div class="result-image-wrap" *ngIf="resultImageSrc">
-        <img [src]="resultImageSrc" class="result-image" alt="Annotated result" />
+      <div
+        class="result-image-wrap image-zoomable"
+        *ngIf="resultImageSrc"
+        tabindex="0"
+        role="button"
+        (click)="openExpandedImage(resultImageSrc)"
+        (keydown.enter)="openExpandedImage(resultImageSrc)"
+        (keydown.space)="openExpandedImage(resultImageSrc); $event.preventDefault()"
+        aria-label="Open analyzed image"
+      >
+        <img
+          [src]="resultImageSrc"
+          class="result-image"
+          alt="Annotated result"
+          data-height-key="current"
+          (load)="onCurrentResultImageLoad($event)"
+        />
+        <span class="image-zoom-hint">Click to enlarge</span>
       </div>
 
-      <div class="result-body">
+      <div class="result-body" [ngStyle]="getCurrentResultBodyStyle()">
         <div class="no-detections" *ngIf="!result!.totalDetections">
           <app-icon name="brand-fish" [size]="36"></app-icon>
           <p>No fish detected in this image.</p>
@@ -142,11 +170,27 @@
 
           <!-- Same result-card layout as Analysis Result -->
           <div class="result-card">
-            <div class="result-image-wrap" *ngIf="a.processedImageUrl">
-              <img [src]="getImageUrl(a.processedImageUrl)" class="result-image" alt="Processed image" />
+            <div
+              class="result-image-wrap image-zoomable"
+              *ngIf="a.processedImageUrl"
+              tabindex="0"
+              role="button"
+              (click)="openExpandedImage(getImageUrl(a.processedImageUrl))"
+              (keydown.enter)="openExpandedImage(getImageUrl(a.processedImageUrl))"
+              (keydown.space)="openExpandedImage(getImageUrl(a.processedImageUrl)); $event.preventDefault()"
+              aria-label="Open processed image"
+            >
+              <img
+                [src]="getImageUrl(a.processedImageUrl)"
+                class="result-image"
+                alt="Processed image"
+                [attr.data-height-key]="'history-' + a.id"
+                (load)="onHistoryImageLoad(a.id, $event)"
+              />
+              <span class="image-zoom-hint">Click to enlarge</span>
             </div>
 
-            <div class="result-body">
+            <div class="result-body" [ngStyle]="getAnalysisBodyStyle(a.id)">
               <div class="no-detections" *ngIf="!a.totalDetections">
                 <app-icon name="brand-fish" [size]="36"></app-icon>
                 <p>No fish detected in this image.</p>
@@ -237,5 +281,22 @@
   <div class="loading-spinner" *ngIf="loading">
     <div class="spinner"></div>
   </div>
+
+  @if (expandedImageSrc) {
+    <div class="image-lightbox" (click)="closeExpandedImage()">
+      <button
+        type="button"
+        class="image-lightbox-close"
+        (click)="closeExpandedImage(); $event.stopPropagation()"
+        aria-label="Close image preview"
+      >
+        <app-icon name="close" [size]="18"></app-icon>
+      </button>
+
+      <div class="image-lightbox-frame" (click)="$event.stopPropagation()">
+        <img [src]="expandedImageSrc" class="image-lightbox-image" alt="Enlarged analysis result" />
+      </div>
+    </div>
+  }
 </div>
 

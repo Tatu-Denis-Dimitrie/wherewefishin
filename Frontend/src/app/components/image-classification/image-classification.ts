@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { VideoAnalysisService } from '../../services/video-analysis.service';
@@ -19,6 +19,9 @@ export class ImageClassification implements OnInit, OnDestroy {
   analyses: ImageAnalysisSummary[] = [];
   selectedFile: File | null = null;
   previewUrl: string | null = null;
+  expandedImageSrc: string | null = null;
+  currentResultBodyHeight: number | null = null;
+  analysisBodyHeights: Record<number, number> = {};
   analyzing = false;
   loading = false;
   error = '';
@@ -53,6 +56,16 @@ export class ImageClassification implements OnInit, OnDestroy {
     this.revokePreview();
   }
 
+  @HostListener('document:keydown.escape')
+  onEscapePressed(): void {
+    this.closeExpandedImage();
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.scheduleImageHeightSync();
+  }
+
   private revokePreview(): void {
     if (this.previewUrl) {
       URL.revokeObjectURL(this.previewUrl);
@@ -79,6 +92,7 @@ export class ImageClassification implements OnInit, OnDestroy {
     if (!userId) return;
 
     this.loading = true;
+    this.analysisBodyHeights = {};
     this.videoAnalysisService.getUserImageAnalyses(userId, page, this.pageSize).subscribe({
       next: (response) => {
         if (!response.items.length && response.totalPages > 0 && response.page > response.totalPages) {
@@ -93,6 +107,7 @@ export class ImageClassification implements OnInit, OnDestroy {
         this.hasPreviousPage = response.hasPreviousPage;
         this.hasNextPage = response.hasNextPage;
         this.loading = false;
+        this.scheduleImageHeightSync();
       },
       error: () => { this.loading = false; }
     });
@@ -126,6 +141,7 @@ export class ImageClassification implements OnInit, OnDestroy {
     this.revokePreview();
     this.selectedFile = file;
     this.result = null;
+    this.currentResultBodyHeight = null;
     this.error = '';
     this.previewUrl = URL.createObjectURL(file);
   }
@@ -133,7 +149,9 @@ export class ImageClassification implements OnInit, OnDestroy {
   clearSelection(): void {
     this.selectedFile = null;
     this.result = null;
+    this.currentResultBodyHeight = null;
     this.error = '';
+    this.closeExpandedImage();
     this.revokePreview();
     const input = document.getElementById('imageFile') as HTMLInputElement;
     if (input) input.value = '';
@@ -144,6 +162,18 @@ export class ImageClassification implements OnInit, OnDestroy {
     this.revokePreview();
     const input = document.getElementById('imageFile') as HTMLInputElement;
     if (input) input.value = '';
+  }
+
+  openExpandedImage(imageSrc: string): void {
+    if (!imageSrc) {
+      return;
+    }
+
+    this.expandedImageSrc = imageSrc;
+  }
+
+  closeExpandedImage(): void {
+    this.expandedImageSrc = null;
   }
 
   analyzeImage(): void {
@@ -158,6 +188,7 @@ export class ImageClassification implements OnInit, OnDestroy {
     this.analyzing = true;
     this.error = '';
     this.result = null;
+    this.currentResultBodyHeight = null;
 
     this.videoAnalysisService.analyzeImage(this.selectedFile).subscribe({
       next: (result) => {
@@ -166,6 +197,7 @@ export class ImageClassification implements OnInit, OnDestroy {
           this.result = result;
           this.clearFile();
           this.successMessage = 'Image analyzed successfully!';
+          this.scheduleImageHeightSync();
           setTimeout(() => { this.successMessage = ''; }, 4000);
           this.videoAnalysisService.clearUserImageAnalysesCache();
           this.loadAnalyses(1);
@@ -320,6 +352,65 @@ export class ImageClassification implements OnInit, OnDestroy {
   get resultImageSrc(): string {
     if (!this.result?.processedImageUrl) return '';
     return this.getImageUrl(this.result.processedImageUrl);
+  }
+
+  onCurrentResultImageLoad(event: Event): void {
+    this.currentResultBodyHeight = this.getRenderedImageHeight(event);
+  }
+
+  onHistoryImageLoad(analysisId: number, event: Event): void {
+    this.analysisBodyHeights[analysisId] = this.getRenderedImageHeight(event);
+  }
+
+  getCurrentResultBodyStyle(): Record<string, string> | null {
+    return this.getBodyHeightStyle(this.currentResultBodyHeight);
+  }
+
+  getAnalysisBodyStyle(analysisId: number): Record<string, string> | null {
+    return this.getBodyHeightStyle(this.analysisBodyHeights[analysisId] ?? null);
+  }
+
+  private scheduleImageHeightSync(): void {
+    requestAnimationFrame(() => this.syncVisibleImageHeights());
+  }
+
+  private syncVisibleImageHeights(): void {
+    const images = document.querySelectorAll<HTMLImageElement>('.result-image[data-height-key]');
+
+    for (const image of images) {
+      const key = image.dataset['heightKey'];
+      const height = Math.round(image.getBoundingClientRect().height);
+      if (!key || height <= 0) {
+        continue;
+      }
+
+      if (key === 'current') {
+        this.currentResultBodyHeight = height;
+        continue;
+      }
+
+      if (key.startsWith('history-')) {
+        const id = Number(key.slice('history-'.length));
+        if (!Number.isNaN(id)) {
+          this.analysisBodyHeights[id] = height;
+        }
+      }
+    }
+  }
+
+  private getBodyHeightStyle(height: number | null): Record<string, string> | null {
+    if (!height || typeof window === 'undefined' || window.innerWidth <= 680) {
+      return null;
+    }
+
+    return {
+      height: `${height}px`,
+      maxHeight: `${height}px`
+    };
+  }
+
+  private getRenderedImageHeight(event: Event): number {
+    return Math.round((event.target as HTMLImageElement).getBoundingClientRect().height);
   }
 }
 
