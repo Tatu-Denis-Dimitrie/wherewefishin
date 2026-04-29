@@ -42,13 +42,20 @@ public class AuthController : ControllerBase
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
-        if (await _authService.UserExistsAsync(request.Username, request.Email))
-            return Conflict(new { message = "Username or email already exists" });
+        var conflict = await _authService.GetRegistrationConflictAsync(request.Username, request.Email);
+        if (conflict != RegistrationConflictType.None)
+            return Conflict(new { message = GetRegistrationConflictMessage(conflict) });
 
         var response = await _authService.RegisterAsync(request);
-        return response == null 
-            ? StatusCode(500, new { message = "Registration failed" })
-            : CreatedAtAction(nameof(Register), new { id = response.UserId }, response);
+        if (response == null)
+        {
+            conflict = await _authService.GetRegistrationConflictAsync(request.Username, request.Email);
+            return conflict != RegistrationConflictType.None
+                ? Conflict(new { message = GetRegistrationConflictMessage(conflict) })
+                : StatusCode(500, new { message = "Registration failed" });
+        }
+
+        return CreatedAtAction(nameof(Register), new { id = response.UserId }, response);
     }
 
     [HttpGet("verify")]
@@ -95,5 +102,16 @@ public class AuthController : ControllerBase
         }
 
         return Ok(new { message = "Password has been reset successfully." });
+    }
+
+    private static string GetRegistrationConflictMessage(RegistrationConflictType conflict)
+    {
+        return conflict switch
+        {
+            RegistrationConflictType.Username => "An account with this username already exists.",
+            RegistrationConflictType.Email => "An account with this email already exists.",
+            RegistrationConflictType.UsernameAndEmail => "An account with this username and email already exists.",
+            _ => "Username or email already exists."
+        };
     }
 }

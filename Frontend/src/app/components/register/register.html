@@ -24,6 +24,7 @@
             <div class="field-error" *ngIf="username?.invalid && username?.touched">
               <span *ngIf="username?.errors?.['required']">Username is required</span>
               <span *ngIf="username?.errors?.['minlength']">At least 3 characters</span>
+                <span *ngIf="username?.errors?.['duplicateTaken']">An account with this username already exists</span>
             </div>
           </div>
 
@@ -37,6 +38,7 @@
             <div class="field-error" *ngIf="email?.invalid && email?.touched">
               <span *ngIf="email?.errors?.['required']">Email is required</span>
               <span *ngIf="email?.errors?.['email']">Invalid email</span>
+              <span *ngIf="email?.errors?.['duplicateTaken']">An account with this email already exists</span>
             </div>
           </div>
 

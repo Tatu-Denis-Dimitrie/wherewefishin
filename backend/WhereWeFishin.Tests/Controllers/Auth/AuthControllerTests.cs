@@ -100,7 +100,7 @@ public class AuthControllerTests
             UserId = 5,
             ExpiresAt = DateTime.UtcNow.AddHours(24)
         };
-        _authService.UserExistsAsync(request.Username, request.Email).Returns(false);
+        _authService.GetRegistrationConflictAsync(request.Username, request.Email).Returns(RegistrationConflictType.None);
         _authService.RegisterAsync(request).Returns(authResponse);
 
         // Act
@@ -114,7 +114,7 @@ public class AuthControllerTests
     }
 
     [Fact]
-    public async Task Register_WithExistingUserOrEmail_ReturnsConflict()
+    public async Task Register_WithExistingUsername_ReturnsConflictWithSpecificMessage()
     {
         // Arrange
         var request = new RegisterRequest
@@ -124,13 +124,59 @@ public class AuthControllerTests
             Password = "password123",
             ConfirmPassword = "password123"
         };
-        _authService.UserExistsAsync(request.Username, request.Email).Returns(true);
+        _authService.GetRegistrationConflictAsync(request.Username, request.Email).Returns(RegistrationConflictType.Username);
 
         // Act
         var result = await _controller.Register(request);
 
         // Assert
-        Assert.IsType<ConflictObjectResult>(result.Result);
+        var conflictResult = Assert.IsType<ConflictObjectResult>(result.Result);
+        Assert.Equal("An account with this username already exists.", GetMessage(conflictResult.Value));
+        await _authService.DidNotReceive().RegisterAsync(Arg.Any<RegisterRequest>());
+    }
+
+    [Fact]
+    public async Task Register_WithExistingEmail_ReturnsConflictWithSpecificMessage()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "newuser",
+            Email = "existing@test.com",
+            Password = "password123",
+            ConfirmPassword = "password123"
+        };
+        _authService.GetRegistrationConflictAsync(request.Username, request.Email).Returns(RegistrationConflictType.Email);
+
+        // Act
+        var result = await _controller.Register(request);
+
+        // Assert
+        var conflictResult = Assert.IsType<ConflictObjectResult>(result.Result);
+        Assert.Equal("An account with this email already exists.", GetMessage(conflictResult.Value));
+    }
+
+    [Fact]
+    public async Task Register_WhenDuplicateDetectedAfterServiceFailure_ReturnsConflict()
+    {
+        // Arrange
+        var request = new RegisterRequest
+        {
+            Username = "newuser",
+            Email = "existing@test.com",
+            Password = "password123",
+            ConfirmPassword = "password123"
+        };
+        _authService.GetRegistrationConflictAsync(request.Username, request.Email)
+            .Returns(RegistrationConflictType.None, RegistrationConflictType.Email);
+        _authService.RegisterAsync(request).Returns((AuthResponse?)null);
+
+        // Act
+        var result = await _controller.Register(request);
+
+        // Assert
+        var conflictResult = Assert.IsType<ConflictObjectResult>(result.Result);
+        Assert.Equal("An account with this email already exists.", GetMessage(conflictResult.Value));
     }
 
     [Fact]
@@ -144,7 +190,8 @@ public class AuthControllerTests
             Password = "password123",
             ConfirmPassword = "password123"
         };
-        _authService.UserExistsAsync(request.Username, request.Email).Returns(false);
+        _authService.GetRegistrationConflictAsync(request.Username, request.Email)
+            .Returns(RegistrationConflictType.None, RegistrationConflictType.None);
         _authService.RegisterAsync(request).Returns((AuthResponse?)null);
 
         // Act
@@ -166,7 +213,7 @@ public class AuthControllerTests
 
         // Assert
         Assert.IsType<BadRequestObjectResult>(result.Result);
-        await _authService.DidNotReceive().UserExistsAsync(Arg.Any<string>(), Arg.Any<string>());
+        await _authService.DidNotReceive().GetRegistrationConflictAsync(Arg.Any<string>(), Arg.Any<string>());
     }
 
 
@@ -186,6 +233,11 @@ public class AuthControllerTests
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.NotNull(okResult.Value);
+    }
+
+    private static string? GetMessage(object? payload)
+    {
+        return payload?.GetType().GetProperty("message")?.GetValue(payload)?.ToString();
     }
 
     [Fact]

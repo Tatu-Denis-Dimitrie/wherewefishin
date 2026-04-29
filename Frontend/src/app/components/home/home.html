@@ -36,26 +36,43 @@
         @if (isAdmin()) {
           <div class="admin-request-panel">
             <div class="admin-request-header">
-              <h4 class="subsection-title">Pending Requests</h4>
-              <span class="admin-request-count">{{ pendingApplications.length }}</span>
+              <h4 class="subsection-title admin-request-section-title">Manager Applications</h4>
             </div>
             @if (pendingApplications.length === 0) {
-              <div class="admin-request-empty">No pending requests at the moment.</div>
+              <div class="admin-request-empty">
+                <span class="admin-request-empty-title">No pending applications</span>
+                <p>New submissions will appear here.</p>
+              </div>
             } @else {
               <div class="admin-request-list">
                 @for (application of pendingApplications; track application.id) {
                   <article class="admin-request-card">
                     <div class="arc-row1">
                       <span class="admin-request-title">{{ application.lakeName }}</span>
-                      <button class="admin-request-focus" (click)="viewPendingApplication(application)">View</button>
+                      <button type="button" class="admin-request-focus" (click)="viewPendingApplication(application)">
+                        <app-icon name="eye" [size]="14"></app-icon>
+                        Review
+                      </button>
                     </div>
-                    <div class="arc-row2">
-                      <span class="admin-request-meta">{{ application.applicantDisplayName }}</span>
-                      <span class="admin-request-meta">{{ formatDate(application.createdAt) }}</span>
+                    <div class="admin-request-meta-strip">
+                      <span class="admin-request-meta-pill">
+                        <app-icon name="profile" [size]="13"></app-icon>
+                        {{ application.applicantDisplayName }}
+                      </span>
+                      <span class="admin-request-meta-pill">
+                        <app-icon name="clock" [size]="13"></app-icon>
+                        {{ formatDate(application.createdAt) }}
+                      </span>
                     </div>
                   </article>
                 }
               </div>
+              @if (pendingApplications.length <= 1) {
+                <div class="admin-request-hint">
+                  <span class="admin-request-hint-label">Note</span>
+                  <p>Review each application carefully before granting manager access to a fishing spot.</p>
+                </div>
+              }
             }
           </div>
         }
@@ -330,63 +347,103 @@
     <div class="request-modal-overlay" (click)="closePendingApplicationModal()">
       <div class="request-modal" (click)="$event.stopPropagation()">
         <div class="request-modal-head">
-          <h3>{{ selectedPendingApplication.lakeName }}</h3>
-          <button class="request-modal-close" (click)="closePendingApplicationModal()">Close</button>
+          <div class="request-modal-title-group">
+            <h3>{{ selectedPendingApplication.lakeName }}</h3>
+            <div class="request-modal-meta-row">
+              <span class="request-modal-meta-pill">
+                <app-icon name="profile" [size]="13"></app-icon>
+                {{ selectedPendingApplication.applicantDisplayName }}
+              </span>
+              <span class="request-modal-meta-pill">
+                <app-icon name="clock" [size]="13"></app-icon>
+                {{ formatDate(selectedPendingApplication.createdAt) }}
+              </span>
+            </div>
+          </div>
+          <button type="button" class="request-modal-close" (click)="closePendingApplicationModal()" aria-label="Close manager application review">
+            <app-icon name="close" [size]="16"></app-icon>
+          </button>
         </div>
 
         <div class="request-modal-content">
           <div class="request-modal-details">
-            <div class="detail-row"><strong>Applicant:</strong> {{ selectedPendingApplication.applicantDisplayName }}</div>
-            <div class="detail-row"><strong>Created:</strong> {{ formatDate(selectedPendingApplication.createdAt) }}</div>
-            <div class="detail-row"><strong>Phone:</strong> {{ selectedPendingApplication.contactPhone }}</div>
-            <div class="detail-row"><strong>Price:</strong> {{ selectedPendingApplication.proposedPricePerHour | number:'1.0-2' }} RON / hour</div>
-            <div class="detail-row"><strong>Location:</strong> {{ selectedPendingApplication.locationLabel || (selectedPendingApplication.latitude.toFixed(5) + ', ' + selectedPendingApplication.longitude.toFixed(5)) }}</div>
-
-            @if (selectedPendingApplication.description) {
-              <div class="detail-block">
-                <strong>Description</strong>
-                <p>{{ selectedPendingApplication.description }}</p>
+            <div class="request-modal-facts-grid">
+              <div class="request-modal-fact-card">
+                <span class="request-modal-fact-label">Applicant</span>
+                <strong>{{ selectedPendingApplication.applicantDisplayName }}</strong>
               </div>
-            }
-
-            @if (formatApplicationFishSpecies(selectedPendingApplication.fishSpecies).length > 0) {
-              <div class="detail-block">
-                <strong>Fish Species</strong>
-                <div class="detail-chip-list">
-                  @for (species of formatApplicationFishSpecies(selectedPendingApplication.fishSpecies); track species) {
-                    <span class="detail-chip">{{ species }}</span>
-                  }
-                </div>
+              <div class="request-modal-fact-card">
+                <span class="request-modal-fact-label">Created</span>
+                <strong>{{ formatDate(selectedPendingApplication.createdAt) }}</strong>
               </div>
-            }
-
-            <div class="detail-block">
-              <strong>Motivation</strong>
-              <p>{{ selectedPendingApplication.motivation }}</p>
+              <div class="request-modal-fact-card">
+                <span class="request-modal-fact-label">Phone</span>
+                <strong>{{ selectedPendingApplication.contactPhone }}</strong>
+              </div>
+              <div class="request-modal-fact-card">
+                <span class="request-modal-fact-label">Price</span>
+                <strong>{{ selectedPendingApplication.proposedPricePerHour | number:'1.0-2' }} RON / hour</strong>
+              </div>
+              <div class="request-modal-fact-card wide">
+                <span class="request-modal-fact-label">Location</span>
+                <strong>{{ selectedPendingApplication.locationLabel || (selectedPendingApplication.latitude.toFixed(5) + ', ' + selectedPendingApplication.longitude.toFixed(5)) }}</strong>
+              </div>
+              <div class="request-modal-fact-card wide accent">
+                <span class="request-modal-fact-label">Administration basis</span>
+                <strong>{{ selectedPendingApplication.administrationBasis }}</strong>
+              </div>
             </div>
 
-            <div class="detail-block">
-              <strong>Administration Basis</strong>
-              <p>{{ selectedPendingApplication.administrationBasis }}</p>
+            <div class="request-modal-detail-grid">
+              @if (selectedPendingApplication.description) {
+                <div class="detail-block">
+                  <strong>Description</strong>
+                  <p>{{ selectedPendingApplication.description }}</p>
+                </div>
+              }
+
+              <div class="detail-block">
+                <strong>Motivation</strong>
+                <p>{{ selectedPendingApplication.motivation }}</p>
+              </div>
+
+              @if (formatApplicationFishSpecies(selectedPendingApplication.fishSpecies).length > 0) {
+                <div class="detail-block wide">
+                  <strong>Fish Species</strong>
+                  <div class="detail-chip-list">
+                    @for (species of formatApplicationFishSpecies(selectedPendingApplication.fishSpecies); track species) {
+                      <span class="detail-chip">{{ species }}</span>
+                    }
+                  </div>
+                </div>
+              }
             </div>
           </div>
 
           <div class="request-modal-map-panel">
+            <div class="request-modal-map-head">
+              <span class="request-modal-map-kicker">Location</span>
+              <p>{{ selectedPendingApplication.locationLabel || (selectedPendingApplication.latitude.toFixed(5) + ', ' + selectedPendingApplication.longitude.toFixed(5)) }}</p>
+            </div>
             <div id="pending-application-map" class="request-modal-map"></div>
           </div>
         </div>
 
         <div class="request-modal-actions">
           <button
+            type="button"
             class="admin-request-btn approve"
             (click)="approveManagerApplication(selectedPendingApplication)"
             [disabled]="processingApplicationId === selectedPendingApplication.id">
+            <app-icon name="success" [size]="14"></app-icon>
             {{ processingApplicationId === selectedPendingApplication.id ? 'Processing...' : 'Approve' }}
           </button>
           <button
+            type="button"
             class="admin-request-btn reject"
             (click)="rejectManagerApplication(selectedPendingApplication)"
             [disabled]="processingApplicationId === selectedPendingApplication.id">
+            <app-icon name="error" [size]="14"></app-icon>
             Reject
           </button>
         </div>

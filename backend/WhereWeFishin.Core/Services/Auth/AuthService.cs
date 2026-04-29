@@ -50,7 +50,7 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse?> RegisterAsync(RegisterRequest request)
     {
-        if (await UserExistsAsync(request.Username, request.Email))
+        if (await GetRegistrationConflictAsync(request.Username, request.Email) != RegistrationConflictType.None)
             return null;
 
         var user = new User
@@ -63,7 +63,15 @@ public class AuthService : IAuthService
             Role = UserRole.User,
         };
 
-        await _userRepository.AddAsync(user);
+        try
+        {
+            await _userRepository.AddAsync(user);
+        }
+        catch (Exception ex) when (IsUniqueConstraintViolation(ex))
+        {
+            _logger.LogWarning(ex, "Registration conflict for username {Username} and email {Email}", request.Username, request.Email);
+            return null;
+        }
 
         try
         {
@@ -77,14 +85,31 @@ public class AuthService : IAuthService
         return BuildAuthResponse(user);
     }
 
-    public async Task<bool> UserExistsAsync(string username, string email)
+    public async Task<RegistrationConflictType> GetRegistrationConflictAsync(string username, string email)
     {
         var normalizedUsername = NormalizeLookupValue(username);
         var normalizedEmail = NormalizeLookupValue(email);
         var users = await _userRepository.FindAsync(u =>
             u.Username.ToLower() == normalizedUsername ||
             u.Email.ToLower() == normalizedEmail);
-        return users.Any();
+
+        var usernameExists = users.Any(user =>
+            string.Equals(NormalizeLookupValue(user.Username), normalizedUsername, StringComparison.Ordinal));
+        var emailExists = users.Any(user =>
+            string.Equals(NormalizeLookupValue(user.Email), normalizedEmail, StringComparison.Ordinal));
+
+        return (usernameExists, emailExists) switch
+        {
+            (true, true) => RegistrationConflictType.UsernameAndEmail,
+            (true, false) => RegistrationConflictType.Username,
+            (false, true) => RegistrationConflictType.Email,
+            _ => RegistrationConflictType.None
+        };
+    }
+
+    public async Task<bool> UserExistsAsync(string username, string email)
+    {
+        return await GetRegistrationConflictAsync(username, email) != RegistrationConflictType.None;
     }
 
     public async Task<bool> ForgotPasswordAsync(ForgotPasswordRequest request)
@@ -202,6 +227,15 @@ public class AuthService : IAuthService
     private double GetExpirationHours()
     {
         return double.TryParse(_configuration["Jwt:ExpirationHours"], out var hours) ? hours : 24;
+    }
+
+    private static bool IsUniqueConstraintViolation(Exception exception)
+    {
+        var message = $"{exception.Message} {exception.InnerException?.Message}";
+        return message.Contains("duplicate", StringComparison.OrdinalIgnoreCase) ||
+               message.Contains("unique", StringComparison.OrdinalIgnoreCase) ||
+               message.Contains("IX_Users_Email", StringComparison.OrdinalIgnoreCase) ||
+               message.Contains("IX_Users_Username", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string NormalizeLookupValue(string value) => value.Trim().ToLowerInvariant();

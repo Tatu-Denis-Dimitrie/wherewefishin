@@ -325,6 +325,45 @@ public class AuthServiceTests
         Assert.Null(result);
     }
 
+    [Fact]
+    public async Task GetRegistrationConflictAsync_WithExistingUsername_ReturnsUsername()
+    {
+        // Arrange
+        _users.Add(CreateUser(id: 1, username: "existinguser", email: "existing@test.com"));
+
+        // Act
+        var result = await _authService.GetRegistrationConflictAsync("existinguser", "other@test.com");
+
+        // Assert
+        Assert.Equal(RegistrationConflictType.Username, result);
+    }
+
+    [Fact]
+    public async Task GetRegistrationConflictAsync_WithExistingEmail_ReturnsEmail()
+    {
+        // Arrange
+        _users.Add(CreateUser(id: 1, username: "existinguser", email: "existing@test.com"));
+
+        // Act
+        var result = await _authService.GetRegistrationConflictAsync("otheruser", "existing@test.com");
+
+        // Assert
+        Assert.Equal(RegistrationConflictType.Email, result);
+    }
+
+    [Fact]
+    public async Task GetRegistrationConflictAsync_WithExistingUsernameAndEmail_ReturnsUsernameAndEmail()
+    {
+        // Arrange
+        _users.Add(CreateUser(id: 1, username: "existinguser", email: "existing@test.com"));
+
+        // Act
+        var result = await _authService.GetRegistrationConflictAsync("existinguser", "existing@test.com");
+
+        // Assert
+        Assert.Equal(RegistrationConflictType.UsernameAndEmail, result);
+    }
+
 
     [Fact]
     public async Task UserExistsAsync_WhenUserExists_ReturnsTrue()

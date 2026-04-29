@@ -1,11 +1,14 @@
 using WhereWeFishin.Database.Context;
 using Microsoft.EntityFrameworkCore;
+using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Database.MockData;
 
 namespace WhereWeFishin.API.Extensions;
 
 public static class DatabaseInitializer
 {
+    private sealed record ExistingSeedUser(int Id, string Username, string Email);
+
     public static async Task InitializeDatabaseAsync(this WebApplication app)
     {
         using var scope = app.Services.CreateScope();
@@ -39,6 +42,8 @@ public static class DatabaseInitializer
     {
         var seededUsers = SeedData.GetUsers();
         var seededUsernames = seededUsers.Select(user => user.Username).ToList();
+        var existingSeededUsers = await GetExistingSeedUsersAsync(context, seededUsers);
+        var existingSeededUserIdsByUsername = BuildSeededUserIdsByUsername(existingSeededUsers, seededUsers);
 
         if (await context.Users.AnyAsync())
             {
@@ -49,14 +54,8 @@ public static class DatabaseInitializer
             logger.LogInformation("Database is empty - starting seeding...");
         }
 
-        var existingSeededUsernames = (await context.Users
-            .Where(user => seededUsernames.Contains(user.Username))
-            .Select(user => user.Username)
-            .ToListAsync())
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
         var usersToAdd = seededUsers
-            .Where(user => !existingSeededUsernames.Contains(user.Username))
+            .Where(user => !existingSeededUserIdsByUsername.ContainsKey(user.Username))
             .ToList();
 
         if (usersToAdd.Count > 0)
@@ -64,13 +63,11 @@ public static class DatabaseInitializer
             await context.Users.AddRangeAsync(usersToAdd);
             await context.SaveChangesAsync();
             logger.LogInformation("Added {Count} users", usersToAdd.Count);
+
+            existingSeededUsers = await GetExistingSeedUsersAsync(context, seededUsers);
         }
 
-        var seededUserIdsByUsername = (await context.Users
-            .Where(user => seededUsernames.Contains(user.Username))
-            .Select(user => new { user.Id, user.Username })
-            .ToListAsync())
-            .ToDictionary(user => user.Username, user => user.Id, StringComparer.OrdinalIgnoreCase);
+        var seededUserIdsByUsername = BuildSeededUserIdsByUsername(existingSeededUsers, seededUsers);
 
         var orderedSeededUserIds = seededUsernames
             .Select(username => seededUserIdsByUsername.TryGetValue(username, out var userId)
@@ -108,5 +105,49 @@ public static class DatabaseInitializer
         logger.LogInformation("  Admin: admin / admin123");
         logger.LogInformation("  Manager: manager1, manager2 / manager123");
         logger.LogInformation("  Users: ion_fisher, maria_fisher, etc. / password123");
+    }
+
+    private static async Task<List<ExistingSeedUser>> GetExistingSeedUsersAsync(
+        ApplicationDbContext context,
+        IReadOnlyCollection<User> seededUsers)
+    {
+        var seededUsernames = seededUsers.Select(user => user.Username).ToList();
+        var seededEmails = seededUsers.Select(user => user.Email).ToList();
+
+        return await context.Users
+            .Where(user => seededUsernames.Contains(user.Username) || seededEmails.Contains(user.Email))
+            .Select(user => new ExistingSeedUser(user.Id, user.Username, user.Email))
+            .ToListAsync();
+    }
+
+    private static Dictionary<string, int> BuildSeededUserIdsByUsername(
+        IReadOnlyCollection<ExistingSeedUser> existingUsers,
+        IReadOnlyCollection<User> seededUsers)
+    {
+        var existingUsersByUsername = existingUsers
+            .ToDictionary(user => user.Username, user => user, StringComparer.OrdinalIgnoreCase);
+        var existingUsersByEmail = existingUsers
+            .ToDictionary(user => user.Email, user => user, StringComparer.OrdinalIgnoreCase);
+        var seededUserIdsByUsername = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var seededUser in seededUsers)
+        {
+            existingUsersByUsername.TryGetValue(seededUser.Username, out var usernameMatch);
+            existingUsersByEmail.TryGetValue(seededUser.Email, out var emailMatch);
+
+            if (usernameMatch is not null && emailMatch is not null && usernameMatch.Id != emailMatch.Id)
+            {
+                throw new InvalidOperationException(
+                    $"Seed user '{seededUser.Username}' matches different existing users by username and email.");
+            }
+
+            var matchedUser = usernameMatch ?? emailMatch;
+            if (matchedUser is not null)
+            {
+                seededUserIdsByUsername[seededUser.Username] = matchedUser.Id;
+            }
+        }
+
+        return seededUserIdsByUsername;
     }
 }

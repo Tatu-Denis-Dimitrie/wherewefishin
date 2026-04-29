@@ -71,6 +71,40 @@ public class AuthIntegrationTests : IClassFixture<ApiWebApplicationFactory>
     }
 
     [Fact]
+    public async Task Register_WithDuplicateUsername_ReturnsConflictWithSpecificMessage()
+    {
+        var client = CreateClient();
+        var existingRequest = CreateRegisterRequest(Guid.NewGuid().ToString("N"));
+        var duplicateRequest = CreateRegisterRequest(Guid.NewGuid().ToString("N"));
+        duplicateRequest.Username = existingRequest.Username;
+
+        var firstResponse = await client.PostAsJsonAsync("/api/auth/register", existingRequest);
+        var duplicateResponse = await client.PostAsJsonAsync("/api/auth/register", duplicateRequest);
+        var duplicatePayload = await duplicateResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, duplicateResponse.StatusCode);
+        Assert.Contains("An account with this username already exists.", duplicatePayload);
+    }
+
+    [Fact]
+    public async Task Register_WithDuplicateEmail_ReturnsConflictWithSpecificMessage()
+    {
+        var client = CreateClient();
+        var existingRequest = CreateRegisterRequest(Guid.NewGuid().ToString("N"));
+        var duplicateRequest = CreateRegisterRequest(Guid.NewGuid().ToString("N"));
+        duplicateRequest.Email = existingRequest.Email;
+
+        var firstResponse = await client.PostAsJsonAsync("/api/auth/register", existingRequest);
+        var duplicateResponse = await client.PostAsJsonAsync("/api/auth/register", duplicateRequest);
+        var duplicatePayload = await duplicateResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, duplicateResponse.StatusCode);
+        Assert.Contains("An account with this email already exists.", duplicatePayload);
+    }
+
+    [Fact]
     public async Task Login_AfterRegister_ReturnsJwtToken()
     {
         var client = CreateClient();

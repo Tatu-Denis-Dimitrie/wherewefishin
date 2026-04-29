@@ -80,6 +80,28 @@ public class DatabaseInitializerTests : IDisposable
         Assert.Equal(26, await _context.FishingSpots.CountAsync());
     }
 
+    [Fact]
+    public async Task SeedMissingDataAsync_WhenSeedEmailAlreadyExistsUnderDifferentUsername_ReusesExistingUser()
+    {
+        var existingUserWithSeedEmail = new User
+        {
+            Username = "ion_existing",
+            Email = "ion@email.com",
+            PasswordHash = "hash",
+            Role = UserRole.User
+        };
+
+        _context.Users.Add(existingUserWithSeedEmail);
+        await _context.SaveChangesAsync();
+
+        await DatabaseInitializer.SeedMissingDataAsync(_context, NullLogger.Instance);
+
+        Assert.Equal(10, await _context.Users.CountAsync());
+        Assert.Equal(1, await _context.Users.CountAsync(user => user.Email == "ion@email.com"));
+        Assert.Equal(26, await _context.FishingSpots.CountAsync());
+        Assert.True(await _context.Users.AnyAsync(user => user.Id == existingUserWithSeedEmail.Id));
+    }
+
     public void Dispose()
     {
         _context.Database.EnsureDeleted();
