@@ -160,7 +160,7 @@
   flex-direction: column;
   gap: 20px;
   min-width: 0;
-  overflow-y: auto;
+  overflow: visible;
 }
 
 /* Admin: sidebar = flex column, stats shrink to fit, requests fill rest */
@@ -1411,6 +1411,374 @@
   color: var(--text-primary);
 }
 
+/* ---- Manager Insights ---- */
+.manager-insights {
+  background: linear-gradient(155deg, rgba(236, 233, 220, 0.08) 0%, rgba(36, 53, 31, 0.32) 46%, rgba(18, 30, 15, 0.38) 100%);
+  border: 1px solid rgba(232, 224, 208, 0.24);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.11);
+  backdrop-filter: blur(12px) saturate(125%);
+  -webkit-backdrop-filter: blur(12px) saturate(125%);
+}
+
+.employee-checkpoint-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(125, 179, 74, 0.14);
+  border: 1px solid rgba(125, 179, 74, 0.28);
+  color: var(--accent-moss);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.employee-checkpoint-link:hover {
+  background: rgba(125, 179, 74, 0.22);
+}
+
+.employee-checkpoint-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.employee-checkpoint-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(232, 224, 208, 0.18);
+  background: linear-gradient(150deg, rgba(236, 233, 220, 0.07) 0%, rgba(40, 59, 33, 0.26) 50%, rgba(21, 33, 17, 0.32) 100%);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.employee-checkpoint-card-assigned {
+  min-height: 0;
+  padding: 16px;
+  border-color: rgba(125, 179, 74, 0.24);
+  background:
+    radial-gradient(circle at top right, rgba(125, 179, 74, 0.16), transparent 42%),
+    linear-gradient(150deg, rgba(236, 233, 220, 0.08) 0%, rgba(39, 63, 31, 0.3) 50%, rgba(19, 31, 15, 0.34) 100%);
+}
+
+.employee-checkpoint-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.employee-checkpoint-card-head h5 {
+  margin: 0;
+  color: var(--text-heading);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.employee-checkpoint-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(96, 165, 250, 0.12);
+  border: 1px solid rgba(96, 165, 250, 0.24);
+  color: #93c5fd;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.employee-checkpoint-list {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.employee-checkpoint-empty {
+  width: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  align-self: stretch;
+}
+
+.employee-verification-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  min-width: 0;
+}
+
+.employee-verification-meta span {
+  overflow-wrap: anywhere;
+}
+
+.employee-checkpoint-list-assigned {
+  grid-template-columns: 1fr;
+  align-items: stretch;
+}
+
+.employee-checkpoint-list-recent {
+  grid-template-columns: 1fr;
+}
+
+.employee-spot-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  min-width: 0;
+  gap: 14px;
+  padding: 14px;
+}
+
+.employee-spot-main {
+  display: grid;
+  gap: 8px;
+}
+
+.employee-spot-aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+}
+
+.employee-spot-name {
+  margin-bottom: 0;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.35;
+}
+
+.employee-spot-summary {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.employee-spot-price {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(74, 124, 48, 0.14);
+  border: 1px solid rgba(74, 124, 48, 0.24);
+  color: var(--accent-moss);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.employee-spot-item .manager-spot-link {
+  align-self: flex-start;
+}
+
+.employee-verification-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  min-width: 0;
+  gap: 14px;
+}
+
+.employee-verification-main {
+  display: grid;
+  gap: 6px;
+}
+
+.employee-verification-item .manager-spot-name {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.35;
+}
+
+.employee-verification-item .manager-spot-link {
+  align-self: center;
+}
+
+.manager-insights-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.manager-insights-header .subsection-title {
+  margin: 0 0 6px 0;
+}
+
+.manager-insights-copy {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.manager-insights-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(96, 165, 250, 0.12);
+  border: 1px solid rgba(96, 165, 250, 0.32);
+  color: #93c5fd;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.manager-insights-empty {
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.manager-insights-empty p {
+  margin: 0;
+}
+
+.manager-insights-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.manager-metric-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(232, 224, 208, 0.18);
+  background: linear-gradient(150deg, rgba(236, 233, 220, 0.07) 0%, rgba(40, 59, 33, 0.26) 50%, rgba(21, 33, 17, 0.32) 100%);
+}
+
+.manager-metric-label {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.manager-metric-value {
+  color: var(--text-primary);
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+.manager-species-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.manager-species-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(74, 124, 48, 0.12);
+  border: 1px solid rgba(74, 124, 48, 0.24);
+  color: var(--accent-moss);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.manager-spot-list {
+  display: grid;
+  gap: 10px;
+}
+
+.manager-spot-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(232, 224, 208, 0.18);
+  background: linear-gradient(150deg, rgba(236, 233, 220, 0.07) 0%, rgba(40, 59, 33, 0.26) 50%, rgba(21, 33, 17, 0.32) 100%);
+}
+
+.manager-spot-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.manager-spot-name {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.manager-spot-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.manager-spot-meta span {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(232, 224, 208, 0.18);
+  background: rgba(21, 33, 17, 0.2);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.manager-spot-link {
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  background: rgba(30, 58, 95, 0.22);
+  color: #93c5fd;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+
+.manager-spot-link:hover {
+  background: rgba(30, 58, 95, 0.32);
+  border-color: rgba(96, 165, 250, 0.6);
+}
+
 /* ---- Map Section ---- */
 .map-section {
   display: flex;
@@ -1969,6 +2337,10 @@
     width: 100%;
   }
 
+  .stats-grid .stat-card.stat-card-span-full {
+    grid-column: 1 / -1;
+  }
+
   .admin-layout .stats-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
@@ -2090,6 +2462,51 @@
     padding: 10px;
     flex: none;
     min-width: 0;
+  }
+
+  .manager-insights {
+    padding: 16px;
+  }
+
+  .employee-checkpoint-list-assigned {
+    grid-template-columns: 1fr;
+  }
+
+  .employee-spot-item,
+  .employee-verification-item {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .employee-spot-aside {
+    align-items: stretch;
+  }
+
+  .employee-spot-item .manager-spot-link,
+  .employee-verification-item .manager-spot-link {
+    width: 100%;
+  }
+
+  .manager-insights-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .manager-insights-pill {
+    width: fit-content;
+  }
+
+  .manager-insights-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .manager-spot-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .manager-spot-link {
+    width: 100%;
   }
 
   .request-modal-overlay {
@@ -2270,6 +2687,14 @@
 
   .latest-session {
     padding: 14px;
+  }
+
+  .manager-insights {
+    padding: 14px;
+  }
+
+  .employee-checkpoint-link {
+    width: 100%;
   }
 
   .nearby-locate-btn {

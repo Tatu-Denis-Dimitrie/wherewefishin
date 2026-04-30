@@ -46,5 +46,7 @@ public class FishingSessionConfiguration : IEntityTypeConfiguration<FishingSessi
         builder.HasIndex(s => s.UserId);
         builder.HasIndex(s => s.FishingSpotId);
         builder.HasIndex(s => s.Status);
+        builder.HasIndex(s => s.VerifiedByUserId);
+        builder.HasIndex(s => s.VerifiedAt);
     }
 }

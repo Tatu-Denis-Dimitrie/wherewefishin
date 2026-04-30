@@ -97,6 +97,7 @@ public class UsersControllerTests
         var managers = Assert.IsAssignableFrom<IEnumerable<UserDto>>(okResult.Value).ToList();
         Assert.Equal(2, managers.Count);
         Assert.All(managers, manager => Assert.Equal(Roles.Manager, manager.Role));
+        Assert.All(managers, manager => Assert.True(manager.IsActive));
     }
 
     [Fact]

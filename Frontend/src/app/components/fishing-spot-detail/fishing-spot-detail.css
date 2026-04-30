@@ -365,6 +365,13 @@
   border-radius: var(--radius-sm);
   border: 1px solid rgba(74, 144, 164, 0.2);
 }
+
+.employee-access-note {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0 0 16px;
+}
 .booking-form {
   display: flex;
   flex-direction: column;
@@ -518,6 +525,10 @@
   color: #fff;
   transition: all var(--transition);
   letter-spacing: 0.3px;
+}
+
+.btn-cart-link {
+  text-decoration: none;
 }
 .btn-cart:hover { filter: brightness(1.1); }
 .btn-cart:disabled {

@@ -258,170 +258,183 @@
       <!-- Right: Booking -->
       <div class="booking-col">
         <div class="card booking-card">
-          <h3 class="card-title">
-            <app-icon name="bookings" [size]="15"></app-icon>
-            Book a Session
-          </h3>
+          @if (canUseBookingTools()) {
+            <h3 class="card-title">
+              <app-icon name="bookings" [size]="15"></app-icon>
+              Book a Session
+            </h3>
 
-          @if (spot.pricePerHour === 0) {
-            <p class="free-note">Access to this fishing spot is free.</p>
-          }
-
-          <div class="booking-form">
-            <!-- Pontoon Selection -->
-            @if (pontoons.length > 0) {
-              <div class="form-group">
-                <label>Select Pontoon <span class="required-star">*</span></label>
-                <div class="pontoon-pills">
-                  @for (pontoon of pontoons; track pontoon.id) {
-                    <button
-                      class="pontoon-pill"
-                      [class.active]="selectedPontoonId === pontoon.id"
-                      [style.borderColor]="selectedPontoonId === pontoon.id ? pontoon.color : null"
-                      (click)="selectPontoon(pontoon.id)">
-                      <span class="pontoon-color-dot" [style.backgroundColor]="pontoon.color"></span>
-                      {{ pontoon.name }}
-                    </button>
-                  }
-                </div>
-              </div>
-            } @else {
-              <p class="no-pontoons-note">This fishing spot has no defined pontoons — booking applies to the whole location.</p>
+            @if (spot.pricePerHour === 0) {
+              <p class="free-note">Access to this fishing spot is free.</p>
             }
 
-            <div class="form-group">
-              <label>Select Dates</label>
-              <div class="calendar-widget">
-                <div class="calendar-header">
-                  <button class="cal-nav-btn" (click)="prevMonth()">
-                    <app-icon name="back" [size]="14"></app-icon>
-                  </button>
-                  <span class="cal-month-label">{{ calendarMonthLabel }}</span>
-                  <button class="cal-nav-btn" (click)="nextMonth()">
-                    <app-icon name="forward" [size]="14"></app-icon>
-                  </button>
+            <div class="booking-form">
+              <!-- Pontoon Selection -->
+              @if (pontoons.length > 0) {
+                <div class="form-group">
+                  <label>Select Pontoon <span class="required-star">*</span></label>
+                  <div class="pontoon-pills">
+                    @for (pontoon of pontoons; track pontoon.id) {
+                      <button
+                        class="pontoon-pill"
+                        [class.active]="selectedPontoonId === pontoon.id"
+                        [style.borderColor]="selectedPontoonId === pontoon.id ? pontoon.color : null"
+                        (click)="selectPontoon(pontoon.id)">
+                        <span class="pontoon-color-dot" [style.backgroundColor]="pontoon.color"></span>
+                        {{ pontoon.name }}
+                      </button>
+                    }
+                  </div>
                 </div>
-                <div class="calendar-weekdays">
-                  <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
-                </div>
-                <div class="calendar-grid">
-                  @for (day of calendarDays; track day.date.getTime()) {
-                    <button
-                      class="cal-day"
-                      [class.other-month]="!day.isCurrentMonth"
-                      [class.today]="day.isToday"
-                      [class.booked]="day.isBooked && day.isCurrentMonth"
-                      [class.partially-booked]="day.isPartiallyBooked && day.isCurrentMonth && !day.isBooked"
-                      [class.past]="day.isPast"
-                      [class.selected]="day.isSelected && day.isCurrentMonth"
-                      [class.in-range]="day.isInRange && day.isCurrentMonth && !day.isSelected"
-                      [class.range-start]="day.isRangeStart && day.isCurrentMonth"
-                      [class.range-end]="day.isRangeEnd && day.isCurrentMonth"
-                      [disabled]="day.isPast || !day.isCurrentMonth"
-                      [title]="day.bookedIntervals && day.isCurrentMonth && !day.isPast ? 'Booked: ' + day.bookedIntervals : ''"
-                      (click)="selectCalendarDay(day)">
-                      {{ day.dayNum }}
-                      @if (day.isBooked && day.isCurrentMonth && !day.isPast) {
-                        <span class="booked-dot"></span>
-                      }
-                      @if (day.isPartiallyBooked && day.isCurrentMonth && !day.isBooked && !day.isPast) {
-                        <span class="partial-dot"></span>
-                        <span class="partial-tooltip">{{ day.bookedIntervals }}</span>
-                      }
-                    </button>
-                  }
-                </div>
-                <div class="calendar-legend">
-                  <span class="legend-item">
-                    <span class="legend-dot legend-dot-booked"></span>
-                    Fully booked
-                  </span>
-                  <span class="legend-item">
-                    <span class="legend-dot legend-dot-partial"></span>
-                    Partial
-                  </span>
-                  <span class="legend-item">
-                    <span class="legend-dot legend-dot-available"></span>
-                    Available
-                  </span>
-                </div>
-              </div>
-              @if (calendarError) {
-                <div class="calendar-error">
-                  <app-icon name="info" [size]="13"></app-icon>
-                  {{ calendarError }}
-                </div>
-              }
-              @if (rangeStartDate) {
-                <div class="range-summary">
-                  <app-icon name="bookings" [size]="13"></app-icon>
-                  {{ rangeLabel }}
-                </div>
-              }
-            </div>
-
-            <div class="form-group">
-              <label>Start Time</label>
-              <div class="time-spinner" (wheel)="onTimeWheel($event)">
-                <button class="spinner-btn" (click)="incrementHour()">
-                  <app-icon name="chevron-up" [size]="14"></app-icon>
-                </button>
-                <span class="spinner-value" 
-                      (touchstart)="onTimeTouchStart($event)" 
-                      (touchmove)="onTimeTouchMove($event)" 
-                      (touchend)="onTimeTouchEnd()">{{ formattedHour }}</span>
-                <button class="spinner-btn" (click)="decrementHour()">
-                  <app-icon name="chevron-down" [size]="14"></app-icon>
-                </button>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label>Duration</label>
-              <div class="duration-pills">
-                @for (d of DURATIONS; track d) {
-                  <button
-                    class="duration-pill"
-                    [class.active]="durationHours === d && !isCustomDuration"
-                    (click)="selectDuration(d)">
-                    {{ d }}h
-                  </button>
-                }
-                @if (isCustomDuration) {
-                  <button class="duration-pill active custom-pill">
-                    Custom · {{ durationHours }}h
-                  </button>
-                }
-              </div>
-            </div>
-
-            @if (spot.pricePerHour > 0) {
-              <div class="price-summary">
-                <span class="price-row">
-                  <span>{{ spot.pricePerHour }} RON × {{ durationHours }}h</span>
-                  <strong>{{ totalPrice }} RON</strong>
-                </span>
-              </div>
-            }
-
-            @if (pontoons.length > 0 && !selectedPontoonId) {
-              <p class="pontoon-required-note">
-                <app-icon name="info" [size]="14"></app-icon>
-                Select a pontoon to proceed with booking.
-              </p>
-            }
-
-            <button class="btn-cart" [class.in-cart]="inCart" [disabled]="pontoons.length > 0 && !selectedPontoonId" (click)="addToCart()">
-              @if (inCart) {
-                <app-icon name="check" [size]="16"></app-icon>
-                In Cart — View Cart
               } @else {
-                <app-icon name="cart" [size]="16"></app-icon>
-                Add to Cart
+                <p class="no-pontoons-note">This fishing spot has no defined pontoons — booking applies to the whole location.</p>
               }
-            </button>
 
-          </div>
+              <div class="form-group">
+                <label>Select Dates</label>
+                <div class="calendar-widget">
+                  <div class="calendar-header">
+                    <button class="cal-nav-btn" (click)="prevMonth()">
+                      <app-icon name="back" [size]="14"></app-icon>
+                    </button>
+                    <span class="cal-month-label">{{ calendarMonthLabel }}</span>
+                    <button class="cal-nav-btn" (click)="nextMonth()">
+                      <app-icon name="forward" [size]="14"></app-icon>
+                    </button>
+                  </div>
+                  <div class="calendar-weekdays">
+                    <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+                  </div>
+                  <div class="calendar-grid">
+                    @for (day of calendarDays; track day.date.getTime()) {
+                      <button
+                        class="cal-day"
+                        [class.other-month]="!day.isCurrentMonth"
+                        [class.today]="day.isToday"
+                        [class.booked]="day.isBooked && day.isCurrentMonth"
+                        [class.partially-booked]="day.isPartiallyBooked && day.isCurrentMonth && !day.isBooked"
+                        [class.past]="day.isPast"
+                        [class.selected]="day.isSelected && day.isCurrentMonth"
+                        [class.in-range]="day.isInRange && day.isCurrentMonth && !day.isSelected"
+                        [class.range-start]="day.isRangeStart && day.isCurrentMonth"
+                        [class.range-end]="day.isRangeEnd && day.isCurrentMonth"
+                        [disabled]="day.isPast || !day.isCurrentMonth"
+                        [title]="day.bookedIntervals && day.isCurrentMonth && !day.isPast ? 'Booked: ' + day.bookedIntervals : ''"
+                        (click)="selectCalendarDay(day)">
+                        {{ day.dayNum }}
+                        @if (day.isBooked && day.isCurrentMonth && !day.isPast) {
+                          <span class="booked-dot"></span>
+                        }
+                        @if (day.isPartiallyBooked && day.isCurrentMonth && !day.isBooked && !day.isPast) {
+                          <span class="partial-dot"></span>
+                          <span class="partial-tooltip">{{ day.bookedIntervals }}</span>
+                        }
+                      </button>
+                    }
+                  </div>
+                  <div class="calendar-legend">
+                    <span class="legend-item">
+                      <span class="legend-dot legend-dot-booked"></span>
+                      Fully booked
+                    </span>
+                    <span class="legend-item">
+                      <span class="legend-dot legend-dot-partial"></span>
+                      Partial
+                    </span>
+                    <span class="legend-item">
+                      <span class="legend-dot legend-dot-available"></span>
+                      Available
+                    </span>
+                  </div>
+                </div>
+                @if (calendarError) {
+                  <div class="calendar-error">
+                    <app-icon name="info" [size]="13"></app-icon>
+                    {{ calendarError }}
+                  </div>
+                }
+                @if (rangeStartDate) {
+                  <div class="range-summary">
+                    <app-icon name="bookings" [size]="13"></app-icon>
+                    {{ rangeLabel }}
+                  </div>
+                }
+              </div>
+
+              <div class="form-group">
+                <label>Start Time</label>
+                <div class="time-spinner" (wheel)="onTimeWheel($event)">
+                  <button class="spinner-btn" (click)="incrementHour()">
+                    <app-icon name="chevron-up" [size]="14"></app-icon>
+                  </button>
+                  <span class="spinner-value" 
+                        (touchstart)="onTimeTouchStart($event)" 
+                        (touchmove)="onTimeTouchMove($event)" 
+                        (touchend)="onTimeTouchEnd()">{{ formattedHour }}</span>
+                  <button class="spinner-btn" (click)="decrementHour()">
+                    <app-icon name="chevron-down" [size]="14"></app-icon>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Duration</label>
+                <div class="duration-pills">
+                  @for (d of DURATIONS; track d) {
+                    <button
+                      class="duration-pill"
+                      [class.active]="durationHours === d && !isCustomDuration"
+                      (click)="selectDuration(d)">
+                      {{ d }}h
+                    </button>
+                  }
+                  @if (isCustomDuration) {
+                    <button class="duration-pill active custom-pill">
+                      Custom · {{ durationHours }}h
+                    </button>
+                  }
+                </div>
+              </div>
+
+              @if (spot.pricePerHour > 0) {
+                <div class="price-summary">
+                  <span class="price-row">
+                    <span>{{ spot.pricePerHour }} RON × {{ durationHours }}h</span>
+                    <strong>{{ totalPrice }} RON</strong>
+                  </span>
+                </div>
+              }
+
+              @if (pontoons.length > 0 && !selectedPontoonId) {
+                <p class="pontoon-required-note">
+                  <app-icon name="info" [size]="14"></app-icon>
+                  Select a pontoon to proceed with booking.
+                </p>
+              }
+
+              <button class="btn-cart" [class.in-cart]="inCart" [disabled]="pontoons.length > 0 && !selectedPontoonId" (click)="addToCart()">
+                @if (inCart) {
+                  <app-icon name="check" [size]="16"></app-icon>
+                  In Cart — View Cart
+                } @else {
+                  <app-icon name="cart" [size]="16"></app-icon>
+                  Add to Cart
+                }
+              </button>
+
+            </div>
+          } @else {
+            <h3 class="card-title">
+              <app-icon name="qr" [size]="15"></app-icon>
+              Employee Checkpoint
+            </h3>
+            <p class="free-note">This lake is assigned to your employee account.</p>
+            <p class="employee-access-note">Booking, cart and customer checkout tools are disabled for employees. Use the QR scanner to validate arrivals for this location.</p>
+            <a routerLink="/scan-qr" class="btn-cart btn-cart-link">
+              <app-icon name="qr" [size]="16"></app-icon>
+              Open QR Scanner
+            </a>
+          }
         </div>
       </div>
 

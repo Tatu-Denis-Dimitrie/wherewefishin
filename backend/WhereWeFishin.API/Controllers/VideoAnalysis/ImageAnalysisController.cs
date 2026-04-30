@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
+using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
 
 namespace WhereWeFishin.API.Controllers;
@@ -35,6 +36,10 @@ public class ImageAnalysisController : ControllerBase
     [RequestFormLimits(MultipartBodyLengthLimit = 10 * 1024 * 1024)]
     public async Task<ActionResult<ImageAnalysisResultDto>> AnalyzeImage([FromForm] IFormFile image)
     {
+        var accessError = EnsureRecognitionAccess();
+        if (accessError != null)
+            return accessError;
+
         var userId = User.GetUserId();
         if (userId == null)
             return Unauthorized(new { error = "Invalid token" });
@@ -75,6 +80,10 @@ public class ImageAnalysisController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
     {
+        var accessError = EnsureRecognitionAccess();
+        if (accessError != null)
+            return accessError;
+
         var currentUserId = User.GetUserId();
         if (currentUserId == null)
             return Unauthorized(new { error = "Invalid token" });
@@ -110,6 +119,10 @@ public class ImageAnalysisController : ControllerBase
     [Authorize]
     public async Task<ActionResult<ImageAnalysisResultDto>> GetAnalysis(int id)
     {
+        var accessError = EnsureRecognitionAccess();
+        if (accessError != null)
+            return accessError;
+
         var currentUserId = User.GetUserId();
         if (currentUserId == null)
             return Unauthorized(new { error = "Invalid token" });
@@ -128,6 +141,10 @@ public class ImageAnalysisController : ControllerBase
     [Authorize]
     public async Task<IActionResult> DeleteAnalysis(int id)
     {
+        var accessError = EnsureRecognitionAccess();
+        if (accessError != null)
+            return accessError;
+
         var currentUserId = User.GetUserId();
         if (currentUserId == null)
             return Unauthorized(new { error = "Invalid token" });
@@ -223,6 +240,14 @@ public class ImageAnalysisController : ControllerBase
             AnalyzedAt = entity.AnalyzedAt,
             CreatedAt = entity.CreatedAt
         };
+    }
+
+    private ActionResult? EnsureRecognitionAccess()
+    {
+        if (User.IsInRole(Roles.Employee))
+            return Forbid();
+
+        return null;
     }
 }
 

@@ -41,15 +41,31 @@ public class FishingSpotsController : ControllerBase
     }
 
     [HttpGet]
-    [OutputCache(PolicyName = "MediumCache", Tags = ["fishingspots"])]
+    [OutputCache(NoStore = true)]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<ActionResult<IEnumerable<FishingSpotDto>>> GetFishingSpots()
     {
+        if (HttpContext?.User?.Identity?.IsAuthenticated == true && User.IsInRole(Roles.Employee))
+        {
+            var userId = User.GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var assignments = await _employeeRepository.FindAsync(assignment => assignment.UserId == userId.Value);
+            var assignedSpotIds = assignments.Select(assignment => assignment.FishingSpotId).Distinct().ToHashSet();
+            if (assignedSpotIds.Count == 0)
+                return Ok(Array.Empty<FishingSpotDto>());
+
+            var assignedSpots = await _spotRepository.FindAsync(spot => assignedSpotIds.Contains(spot.Id));
+            return Ok(assignedSpots.Select(MapToDto));
+        }
+
         var spots = await _spotRepository.GetAllAsync();
         return Ok(spots.Select(MapToDto));
     }
 
     [HttpGet("managed")]
     [Authorize(Roles = Roles.AdminOrManager)]
+    [OutputCache(NoStore = true)]
     public async Task<ActionResult<IEnumerable<FishingSpotDto>>> GetManagedFishingSpots()
     {
         IEnumerable<FishingSpot> spots;
@@ -70,11 +86,25 @@ public class FishingSpotsController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [OutputCache(PolicyName = "MediumCache", Tags = ["fishingspots"])]
+    [OutputCache(NoStore = true)]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     public async Task<ActionResult<FishingSpotDto>> GetFishingSpot(int id)
     {
         var spot = await _spotRepository.GetByIdAsync(id);
-        return spot == null ? NotFound() : Ok(MapToDto(spot));
+        if (spot == null)
+            return NotFound();
+
+        if (HttpContext?.User?.Identity?.IsAuthenticated == true && User.IsInRole(Roles.Employee))
+        {
+            var userId = User.GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var assignments = await _employeeRepository.FindAsync(assignment => assignment.UserId == userId.Value && assignment.FishingSpotId == id);
+            if (!assignments.Any())
+                return Forbid();
+        }
+
+        return Ok(MapToDto(spot));
     }
 
     [HttpPost]

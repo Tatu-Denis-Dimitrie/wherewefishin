@@ -38,6 +38,7 @@
                 <span class="role-badge" [ngClass]="{
                   'badge-admin':   user.role === 'Admin',
                   'badge-manager': user.role === 'Manager',
+                  'badge-employee': user.role === 'Employee',
                   'badge-user':    user.role === 'User'
                 }">{{ user.role }}</span>
               </div>
@@ -56,19 +57,34 @@
           </div>
         </div>
         <div class="header-stats">
-          <div class="hstat">
-            <div class="hstat-value">{{ loadingAnalysisOverview ? '...' : userAnalysesCount }}</div>
-            <div class="hstat-label">Analyses</div>
-          </div>
-          <div class="hstat">
-            <div class="hstat-value">{{ userBookingsCount }}</div>
-            <div class="hstat-label">Bookings</div>
-          </div>
-          @if (isManager() || isAdmin()) {
+          @if (isEmployee()) {
+            <div class="hstat">
+              <div class="hstat-value">{{ loadingEmployeeOverview ? '...' : (employeeOverview?.verifiedQrScansCount ?? 0) }}</div>
+              <div class="hstat-label">Verified QR</div>
+            </div>
+            <div class="hstat">
+              <div class="hstat-value">{{ loadingEmployeeOverview ? '...' : (employeeOverview?.verifiedQrScansTodayCount ?? 0) }}</div>
+              <div class="hstat-label">Today</div>
+            </div>
             <div class="hstat">
               <div class="hstat-value">{{ loadingSpots ? '...' : userSpotsCount }}</div>
-              <div class="hstat-label">Spots</div>
+              <div class="hstat-label">Assigned Lakes</div>
             </div>
+          } @else {
+            <div class="hstat">
+              <div class="hstat-value">{{ loadingAnalysisOverview ? '...' : userAnalysesCount }}</div>
+              <div class="hstat-label">Analyses</div>
+            </div>
+            <div class="hstat">
+              <div class="hstat-value">{{ userBookingsCount }}</div>
+              <div class="hstat-label">Bookings</div>
+            </div>
+            @if (isManager() || isAdmin()) {
+              <div class="hstat">
+                <div class="hstat-value">{{ loadingSpots ? '...' : userSpotsCount }}</div>
+                <div class="hstat-label">Spots</div>
+              </div>
+            }
           }
         </div>
       </header>
@@ -79,20 +95,22 @@
           <app-icon name="dashboard" [size]="16"></app-icon>
           <span class="tab-label">Overview</span>
         </button>
-        <button class="tab-btn" [class.tab-active]="activeTab === 'bookings'" (click)="setTab('bookings')">
-          <app-icon name="bookings" [size]="16"></app-icon>
-          <span class="tab-label">Bookings</span>
-          @if (userBookingsCount > 0) {
-            <span class="tab-badge">{{ userBookingsCount }}</span>
-          }
-        </button>
+        @if (!isEmployee()) {
+          <button class="tab-btn" [class.tab-active]="activeTab === 'bookings'" (click)="setTab('bookings')">
+            <app-icon name="bookings" [size]="16"></app-icon>
+            <span class="tab-label">Bookings</span>
+            @if (userBookingsCount > 0) {
+              <span class="tab-badge">{{ userBookingsCount }}</span>
+            }
+          </button>
+        }
         <button class="tab-btn" [class.tab-active]="activeTab === 'settings'" (click)="setTab('settings')">
           <app-icon name="settings" [size]="16"></app-icon>
           <span class="tab-label">Settings</span>
         </button>
 
         <div class="tab-bar-right">
-          @if (!isAdmin() && !isManager()) {
+          @if (!isAdmin() && !isManager() && !isEmployee()) {
             <a routerLink="/manager-application" class="tab-btn tab-become-manager" title="Apply to become a manager">
               <app-icon name="manage" [size]="16"></app-icon>
               <span class="tab-label">Become Manager</span>
@@ -120,164 +138,291 @@
 
             <!-- Stat cards row -->
             <div class="stat-cards">
-              <div class="stat-card">
-                <div class="stat-icon-wrap sicon-blue">
-                  <app-icon name="analyses" [size]="20"></app-icon>
-                </div>
-                <div class="stat-text">
-                  <div class="stat-num">{{ loadingAnalysisOverview ? '...' : userAnalysesCount }}</div>
-                  <div class="stat-lbl">Total Analyses</div>
-                </div>
-              </div>
-
-              <div class="stat-card">
-                <div class="stat-icon-wrap sicon-green">
-                  <app-icon name="success" [size]="20"></app-icon>
-                </div>
-                <div class="stat-text">
-                  <div class="stat-num">{{ loadingAnalysisOverview ? '...' : userCompletedCount }}</div>
-                  <div class="stat-lbl">Completed</div>
-                </div>
-              </div>
-
-              <div class="stat-card">
-                <div class="stat-icon-wrap sicon-purple">
-                  <app-icon name="bookings" [size]="20"></app-icon>
-                </div>
-                <div class="stat-text">
-                  <div class="stat-num">{{ userBookingsCount }}</div>
-                  <div class="stat-lbl">Active Bookings</div>
-                </div>
-              </div>
-
-              @if (isManager() || isAdmin()) {
+              @if (isEmployee()) {
                 <div class="stat-card">
                   <div class="stat-icon-wrap sicon-moss">
                     <app-icon name="spots" [size]="20"></app-icon>
                   </div>
                   <div class="stat-text">
                     <div class="stat-num">{{ loadingSpots ? '...' : userSpotsCount }}</div>
-                    <div class="stat-lbl">Spots Managed</div>
+                    <div class="stat-lbl">Assigned Lakes</div>
                   </div>
                 </div>
-              }
 
-              @if (isAdmin()) {
                 <div class="stat-card">
-                  <div class="stat-icon-wrap sicon-amber">
+                  <div class="stat-icon-wrap sicon-green">
+                    <app-icon name="qr" [size]="20"></app-icon>
+                  </div>
+                  <div class="stat-text">
+                    <div class="stat-num">{{ loadingEmployeeOverview ? '...' : (employeeOverview?.verifiedQrScansCount ?? 0) }}</div>
+                    <div class="stat-lbl">Verified QR Sessions</div>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon-wrap sicon-blue">
                     <app-icon name="users" [size]="20"></app-icon>
                   </div>
                   <div class="stat-text">
-                    <div class="stat-num">{{ loadingAdminStats ? '...' : (adminStats?.totalUsers ?? 0) }}</div>
-                    <div class="stat-lbl">Total Users</div>
+                    <div class="stat-num">{{ loadingEmployeeOverview ? '...' : (employeeOverview?.verifiedGuestsCount ?? 0) }}</div>
+                    <div class="stat-lbl">Anglers Checked In</div>
                   </div>
                 </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon-wrap sicon-purple">
+                    <app-icon name="bookings" [size]="20"></app-icon>
+                  </div>
+                  <div class="stat-text">
+                    <div class="stat-num">{{ loadingEmployeeOverview ? '...' : (employeeOverview?.activeAssignedBookingsCount ?? 0) }}</div>
+                    <div class="stat-lbl">Active Sessions Now</div>
+                  </div>
+                </div>
+              } @else {
+                <div class="stat-card">
+                  <div class="stat-icon-wrap sicon-blue">
+                    <app-icon name="analyses" [size]="20"></app-icon>
+                  </div>
+                  <div class="stat-text">
+                    <div class="stat-num">{{ loadingAnalysisOverview ? '...' : userAnalysesCount }}</div>
+                    <div class="stat-lbl">Total Analyses</div>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon-wrap sicon-green">
+                    <app-icon name="success" [size]="20"></app-icon>
+                  </div>
+                  <div class="stat-text">
+                    <div class="stat-num">{{ loadingAnalysisOverview ? '...' : userCompletedCount }}</div>
+                    <div class="stat-lbl">Completed</div>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon-wrap sicon-purple">
+                    <app-icon name="bookings" [size]="20"></app-icon>
+                  </div>
+                  <div class="stat-text">
+                    <div class="stat-num">{{ userBookingsCount }}</div>
+                    <div class="stat-lbl">Active Bookings</div>
+                  </div>
+                </div>
+
+                @if (isManager() || isAdmin()) {
+                  <div class="stat-card">
+                    <div class="stat-icon-wrap sicon-moss">
+                      <app-icon name="spots" [size]="20"></app-icon>
+                    </div>
+                    <div class="stat-text">
+                      <div class="stat-num">{{ loadingSpots ? '...' : userSpotsCount }}</div>
+                      <div class="stat-lbl">Spots Managed</div>
+                    </div>
+                  </div>
+                }
+
+                @if (isAdmin()) {
+                  <div class="stat-card">
+                    <div class="stat-icon-wrap sicon-amber">
+                      <app-icon name="users" [size]="20"></app-icon>
+                    </div>
+                    <div class="stat-text">
+                      <div class="stat-num">{{ loadingAdminStats ? '...' : (adminStats?.totalUsers ?? 0) }}</div>
+                      <div class="stat-lbl">Total Users</div>
+                    </div>
+                  </div>
+                }
               }
             </div>
 
             <!-- Content cards -->
             <div class="overview-grid">
-
-              @if (loadingAnalysisOverview) {
-                <div class="content-card">
-                  <div class="inline-loader card-loader">
-                    <div class="spinner-sm"></div>
-                    <span>Loading analyses…</span>
-                  </div>
-                </div>
-              } @else if (recentAnalyses.length > 0) {
-                <div class="content-card">
-                  <div class="content-card-head">
-                    <h3>Recent Analyses</h3>
-                    <a routerLink="/analyses" class="link-see-all">See all →</a>
-                  </div>
-                  <div class="item-list">
-                    @for (analysis of recentAnalyses; track analysis.id) {
-                      <div class="list-item">
-                        <div class="item-icon iicon-blue">
-                          <app-icon name="analyses" [size]="14"></app-icon>
-                        </div>
-                        <div class="item-body">
-                          <div class="item-name">{{ analysis.fileName }}</div>
-                          <div class="item-meta">
-                            <span class="badge-mini" [ngClass]="getStatusClass(analysis.status)">{{ analysis.status }}</span>
-                            @if (analysis.status === 'Completed' && analysis.totalDetections) {
-                              <span class="meta-detail">{{ analysis.totalUniqueFish ?? analysis.totalDetections }} fish</span>
-                            }
+              @if (
+                loadingAnalysisOverview ||
+                loadingEmployeeOverview ||
+                recentAnalyses.length > 0 ||
+                recentEmployeeVerifications.length > 0 ||
+                ((isManager() || isAdmin() || isEmployee()) && (loadingSpots || userSpots.length > 0))
+              ) {
+                <div class="overview-primary-grid">
+                  @if (loadingAnalysisOverview) {
+                    <div class="content-card overview-card overview-card-analyses">
+                      <div class="inline-loader card-loader">
+                        <div class="spinner-sm"></div>
+                        <span>Loading analyses…</span>
+                      </div>
+                    </div>
+                  } @else if (!isEmployee() && recentAnalyses.length > 0) {
+                    <div class="content-card overview-card overview-card-analyses">
+                      <div class="content-card-head">
+                        <h3>Recent Analyses</h3>
+                        <a routerLink="/analyses" class="link-see-all">See all →</a>
+                      </div>
+                      <div class="item-list item-list-analyses" [class.item-list-scrollable]="recentAnalyses.length > 6">
+                        @for (analysis of recentAnalyses; track analysis.id) {
+                          <div class="list-item">
+                            <div class="item-icon iicon-blue">
+                              <app-icon name="analyses" [size]="14"></app-icon>
+                            </div>
+                            <div class="item-body">
+                              <div class="item-name">{{ analysis.fileName }}</div>
+                              <div class="item-meta">
+                                <span class="badge-mini" [ngClass]="getStatusClass(analysis.status)">{{ analysis.status }}</span>
+                                @if (analysis.status === 'Completed' && analysis.totalDetections) {
+                                  <span class="meta-detail">{{ analysis.totalUniqueFish ?? analysis.totalDetections }} fish</span>
+                                }
+                              </div>
+                            </div>
                           </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  @if (isEmployee() && loadingEmployeeOverview) {
+                    <div class="content-card overview-card overview-card-analyses">
+                      <div class="inline-loader card-loader">
+                        <div class="spinner-sm"></div>
+                        <span>Loading QR activity…</span>
+                      </div>
+                    </div>
+                  } @else if (isEmployee() && recentEmployeeVerifications.length > 0) {
+                    <div class="content-card overview-card overview-card-analyses">
+                      <div class="content-card-head">
+                        <h3>Recent Verified Sessions</h3>
+                        <a routerLink="/scan-qr" class="link-see-all">Scan QR →</a>
+                      </div>
+                      <div class="item-list item-list-analyses" [class.item-list-scrollable]="recentEmployeeVerifications.length > 6">
+                        @for (verification of recentEmployeeVerifications; track verification.bookingId) {
+                          <div class="list-item">
+                            <div class="item-icon iicon-blue">
+                              <app-icon name="qr" [size]="14"></app-icon>
+                            </div>
+                            <div class="item-body">
+                              <div class="item-name">{{ verification.username }}</div>
+                              <div class="item-meta">
+                                <span class="meta-detail">{{ verification.fishingSpotName }}</span>
+                                <span class="meta-detail">{{ formatBookingDate(verification.verifiedAt) }}</span>
+                              </div>
+                            </div>
+                            <div class="item-actions">
+                              <a [routerLink]="['/spots', verification.fishingSpotId]" class="btn-xs btn-moss">Open</a>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  @if ((isManager() || isAdmin()) && (loadingSpots || userSpots.length > 0)) {
+                    @if (loadingSpots) {
+                      <div class="content-card content-card-spots overview-card overview-card-spots">
+                        <div class="inline-loader card-loader">
+                          <div class="spinner-sm"></div>
+                          <span>Loading spots…</span>
+                        </div>
+                      </div>
+                    } @else if (userSpots.length > 0) {
+                      <div class="content-card content-card-spots overview-card overview-card-spots">
+                        <div class="content-card-head">
+                          <h3>My Fishing Spots</h3>
+                        </div>
+                        <div class="item-list" [class.item-list-scrollable]="userSpots.length > 6">
+                          @for (spot of userSpots; track spot.id) {
+                            <div class="list-item list-item-spot">
+                              <div class="item-icon iicon-moss">
+                                <app-icon name="spots" [size]="14"></app-icon>
+                              </div>
+                              <div class="item-body">
+                                <div class="item-name">{{ spot.name }}</div>
+                                <div class="item-meta">
+                                  <span class="meta-detail coord">{{ spot.latitude.toFixed(4) }}, {{ spot.longitude.toFixed(4) }}</span>
+                                </div>
+                              </div>
+                              <div class="item-actions">
+                                <a [routerLink]="['/spots', spot.id]" class="btn-xs btn-ghost">View</a>
+                                <a [routerLink]="['/spots', spot.id, 'manage']" class="btn-xs btn-moss">Manage</a>
+                              </div>
+                            </div>
+                          }
                         </div>
                       </div>
                     }
-                  </div>
-                </div>
-              }
+                  }
 
-              @if ((isManager() || isAdmin()) && loadingSpots) {
-                <div class="content-card">
-                  <div class="inline-loader card-loader">
-                    <div class="spinner-sm"></div>
-                    <span>Loading spots…</span>
-                  </div>
-                </div>
-              } @else if ((isManager() || isAdmin()) && userSpots.length > 0) {
-                <div class="content-card">
-                  <div class="content-card-head">
-                    <h3>My Fishing Spots</h3>
-                  </div>
-                  <div class="item-list">
-                    @for (spot of userSpots; track spot.id) {
-                      <div class="list-item">
-                        <div class="item-icon iicon-moss">
-                          <app-icon name="spots" [size]="14"></app-icon>
+                  @if (isEmployee() && (loadingSpots || userSpots.length > 0)) {
+                    @if (loadingSpots) {
+                      <div class="content-card content-card-spots overview-card overview-card-spots">
+                        <div class="inline-loader card-loader">
+                          <div class="spinner-sm"></div>
+                          <span>Loading assigned lakes…</span>
                         </div>
-                        <div class="item-body">
-                          <div class="item-name">{{ spot.name }}</div>
-                          <div class="item-meta">
-                            <span class="meta-detail coord">{{ spot.latitude.toFixed(4) }}, {{ spot.longitude.toFixed(4) }}</span>
-                          </div>
+                      </div>
+                    } @else if (userSpots.length > 0) {
+                      <div class="content-card content-card-spots overview-card overview-card-spots">
+                        <div class="content-card-head">
+                          <h3>Assigned Lakes</h3>
                         </div>
-                        <div class="item-actions">
-                          <a [routerLink]="['/spots', spot.id]" class="btn-xs btn-ghost">View</a>
-                          <a [routerLink]="['/spots', spot.id, 'manage']" class="btn-xs btn-moss">Manage</a>
+                        <div class="item-list" [class.item-list-scrollable]="userSpots.length > 6">
+                          @for (spot of userSpots; track spot.id) {
+                            <div class="list-item list-item-spot">
+                              <div class="item-icon iicon-moss">
+                                <app-icon name="spots" [size]="14"></app-icon>
+                              </div>
+                              <div class="item-body">
+                                <div class="item-name">{{ spot.name }}</div>
+                                <div class="item-meta">
+                                  <span class="meta-detail coord">{{ spot.latitude.toFixed(4) }}, {{ spot.longitude.toFixed(4) }}</span>
+                                </div>
+                              </div>
+                              <div class="item-actions">
+                                <a [routerLink]="['/spots', spot.id]" class="btn-xs btn-moss">Open</a>
+                              </div>
+                            </div>
+                          }
                         </div>
                       </div>
                     }
-                  </div>
+                  }
                 </div>
               }
 
               @if (isAdmin() && loadingAdminStats) {
-                <div class="content-card">
-                  <div class="inline-loader card-loader">
-                    <div class="spinner-sm"></div>
-                    <span>Loading admin overview…</span>
+                <div class="overview-secondary-grid">
+                  <div class="content-card overview-card overview-card-system">
+                    <div class="inline-loader card-loader">
+                      <div class="spinner-sm"></div>
+                      <span>Loading admin overview…</span>
+                    </div>
                   </div>
                 </div>
               } @else if (isAdmin() && adminStats) {
-                <div class="content-card">
-                  <div class="content-card-head">
-                    <h3>System Overview</h3>
-                    <a routerLink="/admin" class="link-see-all">Admin panel →</a>
-                  </div>
-                  <div class="admin-stats-grid">
-                    <div class="asstat">
-                      <div class="asstat-label">Users</div>
-                      <div class="asstat-value">{{ adminStats.totalUsers }}</div>
+                <div class="overview-secondary-grid">
+                  <div class="content-card overview-card overview-card-system">
+                    <div class="content-card-head">
+                      <h3>System Overview</h3>
+                      <a routerLink="/admin" class="link-see-all">Admin panel →</a>
                     </div>
-                    <div class="asstat">
-                      <div class="asstat-label">Spots</div>
-                      <div class="asstat-value">{{ adminStats.totalSpots }}</div>
-                    </div>
-                    <div class="asstat">
-                      <div class="asstat-label">Analyses</div>
-                      <div class="asstat-value">{{ adminStats.totalAnalyses }}</div>
+                    <div class="admin-stats-grid">
+                      <div class="asstat">
+                        <div class="asstat-label">Users</div>
+                        <div class="asstat-value">{{ adminStats.totalUsers }}</div>
+                      </div>
+                      <div class="asstat">
+                        <div class="asstat-label">Spots</div>
+                        <div class="asstat-value">{{ adminStats.totalSpots }}</div>
+                      </div>
+                      <div class="asstat">
+                        <div class="asstat-label">Analyses</div>
+                        <div class="asstat-value">{{ adminStats.totalAnalyses }}</div>
+                      </div>
                     </div>
                   </div>
                 </div>
               }
 
               <!-- Quick actions when no other content (regular user with no data) -->
-              @if (!loadingAnalysisOverview && recentAnalyses.length === 0 && !isManager() && !isAdmin()) {
+              @if (!loadingAnalysisOverview && recentAnalyses.length === 0 && !isManager() && !isAdmin() && !isEmployee()) {
                 <div class="quick-actions">
                   <a routerLink="/home" class="qa-card">
                     <div class="qa-icon qaicon-moss">
@@ -318,12 +463,35 @@
                 </div>
               }
 
+              @if (isEmployee() && !loadingEmployeeOverview && recentEmployeeVerifications.length === 0 && !loadingSpots && userSpots.length === 0) {
+                <div class="quick-actions">
+                  <a routerLink="/scan-qr" class="qa-card">
+                    <div class="qa-icon qaicon-blue">
+                      <app-icon name="qr" [size]="20"></app-icon>
+                    </div>
+                    <div class="qa-text">
+                      <div class="qa-title">Open QR Scanner</div>
+                      <div class="qa-sub">Validate arrivals for your assigned lakes</div>
+                    </div>
+                  </a>
+                  <a routerLink="/home" class="qa-card">
+                    <div class="qa-icon qaicon-moss">
+                      <app-icon name="spots" [size]="20"></app-icon>
+                    </div>
+                    <div class="qa-text">
+                      <div class="qa-title">Check Assigned Map</div>
+                      <div class="qa-sub">Your assigned lakes will appear here once they are linked</div>
+                    </div>
+                  </a>
+                </div>
+              }
+
             </div>
           </div>
         }
 
         <!-- ── BOOKINGS TAB ── -->
-        @if (activeTab === 'bookings') {
+        @if (activeTab === 'bookings' && !isEmployee()) {
           <div class="tab-panel">
 
             @if (loadingBookings) {
@@ -349,7 +517,7 @@
                   <span>Total</span>
                   <span>Status</span>
                 </div>
-                @for (booking of recentBookings; track booking.id) {
+                @for (booking of pagedBookings; track booking.id) {
                   <div class="bt-row" [class.bt-cancelled]="booking.status === 'Cancelled'">
                     <div class="bt-spot">
                       <div class="bt-spot-name">{{ booking.fishingSpotName }}</div>
@@ -368,6 +536,45 @@
                   </div>
                 }
               </div>
+
+              @if (bookingsTotalItems > bookingsPageSize) {
+                <nav class="pagination" aria-label="Profile bookings pagination">
+                  <button
+                    class="pagination-btn"
+                    type="button"
+                    (click)="changeBookingsPage(currentBookingsPage - 1)"
+                    [disabled]="!hasPreviousBookingsPage"
+                  >
+                    Previous
+                  </button>
+
+                  <div class="pagination-pages">
+                    @for (item of visibleBookingsPageItems; track item) {
+                      @if (isPageNumber(item)) {
+                        <button
+                          class="pagination-page"
+                          type="button"
+                          [class.is-active]="item === currentBookingsPage"
+                          (click)="changeBookingsPage(item)"
+                        >
+                          {{ item }}
+                        </button>
+                      } @else {
+                        <span class="pagination-ellipsis" aria-hidden="true">&hellip;</span>
+                      }
+                    }
+                  </div>
+
+                  <button
+                    class="pagination-btn"
+                    type="button"
+                    (click)="changeBookingsPage(currentBookingsPage + 1)"
+                    [disabled]="!hasNextBookingsPage"
+                  >
+                    Next
+                  </button>
+                </nav>
+              }
             }
           </div>
         }

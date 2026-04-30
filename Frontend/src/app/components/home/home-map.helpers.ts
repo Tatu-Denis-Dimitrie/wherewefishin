@@ -10,6 +10,10 @@ export interface HomePopupSpotData {
   parsedFishSpecies: string[];
 }
 
+export interface HomePopupOptions {
+  primaryActionLabel?: string;
+}
+
 export function createHomeSpotIcon(fillColor = '#4a7c30'): L.DivIcon {
   return L.divIcon({
     className: '',
@@ -36,7 +40,8 @@ export function createHomeSpotIcon(fillColor = '#4a7c30'): L.DivIcon {
   });
 }
 
-export function buildHomeSpotPopupContent(spot: HomePopupSpotData): string {
+export function buildHomeSpotPopupContent(spot: HomePopupSpotData, options?: HomePopupOptions): string {
+  const primaryActionLabel = options?.primaryActionLabel ?? 'Book Pontoon';
   const priceHtml = spot.pricePerHour > 0
     ? `<div style="display:flex;align-items:center;gap:6px;margin:6px 0 2px">
          <span style="background:#4a7c3022;color:#4a7c30;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #4a7c3044">${spot.pricePerHour} RON / h</span>
@@ -66,7 +71,7 @@ export function buildHomeSpotPopupContent(spot: HomePopupSpotData): string {
   html += priceHtml;
   html += fishHtml;
   html += `<div style="color:#94a3b8;font-size:10px;margin-bottom:10px">${spot.latitude.toFixed(5)}, ${spot.longitude.toFixed(5)}</div>`;
-  html += `<button class="popup-book-btn" style="display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;background:#4a7c30;color:#fff;border:none;transition:filter .15s;">${pontoonSvg}Book Pontoon</button>`;
+  html += `<button class="popup-book-btn" style="display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;background:#4a7c30;color:#fff;border:none;transition:filter .15s;">${pontoonSvg}${primaryActionLabel}</button>`;
   html += `<button class="popup-route-btn" style="display:flex;align-items:center;justify-content:center;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;margin-top:6px;background:#1e3a5f;color:#60a5fa;border:1px solid #2563eb55;transition:all .15s">${navSvg}Route on map</button>`;
   html += `</div>`;
   return html;

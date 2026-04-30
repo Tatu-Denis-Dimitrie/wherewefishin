@@ -227,9 +227,36 @@
 .detection-main {
   display: flex; justify-content: space-between; align-items: center;
   margin-bottom: .5rem;
+  gap: .75rem;
+}
+.detection-primary-inline {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  flex: 1;
+  min-width: 0;
 }
 .det-fish { font-weight: 600; color: var(--text-primary); font-size: .9rem; }
+.detection-primary-inline .det-fish {
+  flex-shrink: 0;
+}
 .det-conf { font-weight: 700; color: var(--accent-moss); font-size: .9rem; }
+
+.primary-prob-bar-bg {
+  flex: 1;
+  min-width: 56px;
+  height: 6px;
+  background: rgba(232,224,208,.12);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.primary-prob-bar-fill {
+  height: 100%;
+  background: var(--accent-moss);
+  border-radius: 999px;
+  transition: width .3s ease;
+}
 
 /* Class probability bars */
 .class-probs { display: flex; flex-direction: column; gap: .3rem; }

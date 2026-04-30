@@ -21,8 +21,8 @@
         <div class="loading-spinner">Loading...</div>
       } @else {
         <div class="stats-grid">
-          @for (card of statCards; track card.key) {
-            <div class="stat-card">
+          @for (card of statCards; track card.key; let last = $last) {
+            <div class="stat-card" [class.stat-card-span-full]="isEmployee() && last && statCards.length % 2 !== 0">
               <div class="stat-icon" [ngClass]="card.iconClass">
                 <app-icon [name]="card.icon" [size]="20"></app-icon>
               </div>
@@ -188,6 +188,140 @@
                     <button class="nearby-action-btn secondary" (click)="openSpotDetails(item.spot.id)">Open</button>
                   </div>
                 </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      @if (isEmployee()) {
+        <div class="manager-insights employee-checkpoint">
+          <div class="manager-insights-header employee-checkpoint-header">
+            <div>
+              <h4 class="subsection-title">QR Checkpoint</h4>
+              <p class="manager-insights-copy">Your assigned lakes and the latest validated arrivals, kept in one operational view.</p>
+            </div>
+            <a routerLink="/scan-qr" class="employee-checkpoint-link">Open QR Scanner</a>
+          </div>
+
+          <div class="employee-checkpoint-grid">
+            <section class="employee-checkpoint-card employee-checkpoint-card-assigned">
+              <div class="employee-checkpoint-card-head">
+                <h5>Assigned lakes</h5>
+                <span class="employee-checkpoint-chip">{{ spots.length }}</span>
+              </div>
+
+              @if (spots.length === 0) {
+                <div class="manager-insights-empty employee-checkpoint-empty">
+                  <p>No lakes are assigned to your account yet. Once an assignment is added, your working map will appear here automatically.</p>
+                </div>
+              } @else {
+                <div class="employee-checkpoint-list employee-checkpoint-list-assigned">
+                  @for (spot of spots.slice(0, 5); track spot.id) {
+                    <article class="manager-spot-item employee-spot-item">
+                      <div class="manager-spot-main employee-spot-main">
+                        <div class="manager-spot-name employee-spot-name">{{ spot.name }}</div>
+                        <div class="employee-spot-summary">
+                          {{ getManagerSpotSpeciesSummary(spot) }}
+                        </div>
+                      </div>
+                      <div class="employee-spot-aside">
+                        <span class="employee-spot-price">{{ spot.pricePerHour | number:'1.2-2' }} RON/h</span>
+                        <button type="button" class="manager-spot-link" (click)="openSpotDetails(spot.id)">
+                          Open Lake
+                        </button>
+                      </div>
+                    </article>
+                  }
+                </div>
+              }
+            </section>
+
+            <section class="employee-checkpoint-card employee-checkpoint-card-recent">
+              <div class="employee-checkpoint-card-head">
+                <h5>Recent verified sessions</h5>
+                <span class="employee-checkpoint-chip">{{ employeeRecentVerifications.length }}</span>
+              </div>
+
+              @if (employeeRecentVerifications.length === 0) {
+                <div class="manager-insights-empty employee-checkpoint-empty">
+                  <p>Your recent QR validations will show up here after the first successful check-in.</p>
+                </div>
+              } @else {
+                <div class="employee-checkpoint-list employee-checkpoint-list-recent">
+                  @for (verification of employeeRecentVerifications; track verification.bookingId) {
+                    <article class="manager-spot-item employee-verification-item">
+                      <div class="manager-spot-main employee-verification-main">
+                        <div class="manager-spot-name">{{ verification.username }}</div>
+                        <div class="employee-verification-meta">
+                          <span>{{ verification.fishingSpotName }}</span>
+                          <span>Verified {{ formatBookingDate(verification.verifiedAt) }}</span>
+                        </div>
+                      </div>
+                      <button type="button" class="manager-spot-link" (click)="openSpotDetails(verification.fishingSpotId)">
+                        Open Lake
+                      </button>
+                    </article>
+                  }
+                </div>
+              }
+            </section>
+          </div>
+        </div>
+      }
+
+      @if (isManager()) {
+        <div class="manager-insights">
+          <div class="manager-insights-header">
+            <div>
+              <h4 class="subsection-title">Lake Briefing</h4>
+              <p class="manager-insights-copy">A quick read on the waters you currently oversee.</p>
+            </div>
+            <span class="manager-insights-pill">{{ managerCoveragePercent }}% catalogue share</span>
+          </div>
+
+          @if (managedSpots.length === 0) {
+            <div class="manager-insights-empty">
+              <p>No managed waters are linked to your account yet. Your lake snapshot will appear here once a spot is assigned.</p>
+            </div>
+          } @else {
+            <div class="manager-insights-metrics">
+              <div class="manager-metric-card">
+                <span class="manager-metric-label">Portfolio lakes</span>
+                <strong class="manager-metric-value">{{ managedSpots.length }}</strong>
+              </div>
+              <div class="manager-metric-card">
+                <span class="manager-metric-label">Species mix</span>
+                <strong class="manager-metric-value">{{ managerSpeciesCoverage }}</strong>
+              </div>
+              <div class="manager-metric-card">
+                <span class="manager-metric-label">Avg. rate</span>
+                <strong class="manager-metric-value">{{ managerAverageSpotPrice | number:'1.2-2' }} RON/h</strong>
+              </div>
+            </div>
+
+            @if (managerSpeciesHighlights.length > 0) {
+              <div class="manager-species-strip">
+                @for (species of managerSpeciesHighlights; track species) {
+                  <span class="manager-species-chip">{{ species }}</span>
+                }
+              </div>
+            }
+
+            <div class="manager-spot-list">
+              @for (spot of featuredManagedSpots; track spot.id) {
+                <article class="manager-spot-item">
+                  <div class="manager-spot-main">
+                    <div class="manager-spot-name">{{ spot.name }}</div>
+                    <div class="manager-spot-meta">
+                      <span>{{ getManagerSpotSpeciesSummary(spot) }}</span>
+                      <span>{{ spot.pricePerHour | number:'1.2-2' }} RON/h</span>
+                    </div>
+                  </div>
+                  <button type="button" class="manager-spot-link" (click)="openSpotDetails(spot.id)">
+                    Open
+                  </button>
+                </article>
               }
             </div>
           }

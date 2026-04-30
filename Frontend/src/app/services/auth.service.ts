@@ -4,6 +4,12 @@ import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { LoginRequest, RegisterRequest, AuthResponse } from '../models/auth.model';
 import { environment } from '../../environments/environment';
+import { FishingSpotService } from './fishing-spot.service';
+import { BookingService } from './booking.service';
+import { UserService } from './user.service';
+import { AdminService } from './admin.service';
+import { VideoAnalysisService } from './video-analysis.service';
+import { EmployeeService } from './employee.service';
 
 export interface ForgotPasswordRequest { email: string; }
 export interface ResetPasswordRequest { email: string; code: string; newPassword: string; }
@@ -20,17 +26,21 @@ export class AuthService {
 
   constructor(
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    private fishingSpotService: FishingSpotService,
+    private bookingService: BookingService,
+    private userService: UserService,
+    private adminService: AdminService,
+    private videoAnalysisService: VideoAnalysisService,
+    private employeeService: EmployeeService
   ) {}
 
   login(credentials: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, credentials)
       .pipe(
         tap(response => {
-          localStorage.setItem(this.tokenKey, response.token);
-          localStorage.setItem(this.userIdKey, response.userId.toString());
-          localStorage.setItem(this.roleKey, response.role);
-          localStorage.setItem(this.usernameKey, response.username);
+          this.clearSessionCaches();
+          this.storeSession(response);
         })
       );
   }
@@ -39,10 +49,8 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/register`, userData)
       .pipe(
         tap(response => {
-          localStorage.setItem(this.tokenKey, response.token);
-          localStorage.setItem(this.userIdKey, response.userId.toString());
-          localStorage.setItem(this.roleKey, response.role);
-          localStorage.setItem(this.usernameKey, response.username);
+          this.clearSessionCaches();
+          this.storeSession(response);
         })
       );
   }
@@ -52,7 +60,25 @@ export class AuthService {
     localStorage.removeItem(this.userIdKey);
     localStorage.removeItem(this.roleKey);
     localStorage.removeItem(this.usernameKey);
+    this.clearSessionCaches();
     this.router.navigate(['/login']);
+  }
+
+  private storeSession(response: AuthResponse): void {
+    localStorage.setItem(this.tokenKey, response.token);
+    localStorage.setItem(this.userIdKey, response.userId.toString());
+    localStorage.setItem(this.roleKey, response.role);
+    localStorage.setItem(this.usernameKey, response.username);
+  }
+
+  private clearSessionCaches(): void {
+    this.fishingSpotService.clearCache();
+    this.bookingService.clearCache();
+    this.userService.clearCache();
+    this.adminService.clearStatsCache();
+    this.videoAnalysisService.clearUserAnalysesCache();
+    this.videoAnalysisService.clearUserImageAnalysesCache();
+    this.employeeService.clearCache();
   }
 
   getToken(): string | null {

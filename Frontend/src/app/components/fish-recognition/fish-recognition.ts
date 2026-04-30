@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { VideoAnalysisService } from '../../services/video-analysis.service';
@@ -15,7 +15,7 @@ type PaginationItem = number | 'ellipsis-left' | 'ellipsis-right';
   templateUrl: './fish-recognition.html',
   styleUrl: './fish-recognition.css'
 })
-export class FishRecognition implements OnInit, OnDestroy {
+export class FishRecognition implements OnInit, AfterViewInit, OnDestroy {
   analyses: VideoAnalysis[] = [];
   selectedFile: File | null = null;
   videoPreviewUrl: string | null = null;
@@ -32,9 +32,12 @@ export class FishRecognition implements OnInit, OnDestroy {
   totalPages = 0;
   hasPreviousPage = false;
   hasNextPage = false;
+  visibleVideoIds = new Set<number>();
+  @ViewChildren('analysisVideoCard') private analysisVideoCards!: QueryList<ElementRef<HTMLElement>>;
   private pollingInterval: ReturnType<typeof setInterval> | null = null;
   private progressInterval: ReturnType<typeof setInterval> | null = null;
   private progressStartTime = 0;
+  private videoObserver: IntersectionObserver | null = null;
 
   constructor(
     private videoAnalysisService: VideoAnalysisService,
@@ -53,10 +56,19 @@ export class FishRecognition implements OnInit, OnDestroy {
     this.loadAnalyses();
   }
 
+  ngAfterViewInit(): void {
+    this.analysisVideoCards.changes.subscribe(() => {
+      this.observeVisibleVideos();
+    });
+
+    this.observeVisibleVideos();
+  }
+
   ngOnDestroy(): void {
     this.cleanupPreviewUrl();
     this.stopPolling();
     this.stopProgress();
+    this.disconnectVideoObserver();
   }
 
   private cleanupPreviewUrl(): void {
@@ -94,6 +106,8 @@ export class FishRecognition implements OnInit, OnDestroy {
     if (!userId) return;
 
     this.loading = true;
+    this.visibleVideoIds = new Set<number>();
+    this.disconnectVideoObserver();
     this.videoAnalysisService.getUserAnalyses(userId, page, this.pageSize).subscribe({
       next: (response) => {
         if (!response.items.length && response.totalPages > 0 && response.page > response.totalPages) {
@@ -108,6 +122,7 @@ export class FishRecognition implements OnInit, OnDestroy {
         this.hasPreviousPage = response.hasPreviousPage;
         this.hasNextPage = response.hasNextPage;
         this.loading = false;
+        queueMicrotask(() => this.observeVisibleVideos());
         this.checkForProcessingAnalyses();
       },
       error: (err) => {
@@ -142,6 +157,8 @@ export class FishRecognition implements OnInit, OnDestroy {
           this.totalPages = response.totalPages;
           this.hasPreviousPage = response.hasPreviousPage;
           this.hasNextPage = response.hasNextPage;
+          this.visibleVideoIds = new Set<number>();
+          queueMicrotask(() => this.observeVisibleVideos());
           const stillProcessing = response.items.some(a => a.status.toLowerCase() === 'processing');
           if (wasProcessing && !stillProcessing) {
             this.stopPolling();
@@ -156,6 +173,52 @@ export class FishRecognition implements OnInit, OnDestroy {
       clearInterval(this.pollingInterval);
       this.pollingInterval = null;
     }
+  }
+
+  private observeVisibleVideos(): void {
+    if (!this.analysisVideoCards) {
+      return;
+    }
+
+    if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') {
+      this.visibleVideoIds = new Set(this.analyses.map(analysis => analysis.id));
+      return;
+    }
+
+    this.disconnectVideoObserver();
+    this.videoObserver = new IntersectionObserver(
+      entries => {
+        const nextVisibleVideoIds = new Set(this.visibleVideoIds);
+
+        for (const entry of entries) {
+          if (!entry.isIntersecting) {
+            continue;
+          }
+
+          const analysisId = Number((entry.target as HTMLElement).dataset['analysisId']);
+          if (!Number.isNaN(analysisId)) {
+            nextVisibleVideoIds.add(analysisId);
+          }
+
+          this.videoObserver?.unobserve(entry.target);
+        }
+
+        this.visibleVideoIds = nextVisibleVideoIds;
+      },
+      {
+        rootMargin: '250px 0px',
+        threshold: 0.15
+      }
+    );
+
+    this.analysisVideoCards.forEach(card => {
+      this.videoObserver?.observe(card.nativeElement);
+    });
+  }
+
+  private disconnectVideoObserver(): void {
+    this.videoObserver?.disconnect();
+    this.videoObserver = null;
   }
 
   onFileSelected(event: Event): void {
@@ -357,8 +420,12 @@ export class FishRecognition implements OnInit, OnDestroy {
       return;
     }
 
+    window.scrollTo({ top: 0, behavior: 'auto' });
     this.loadAnalyses(nextPage);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  isVideoVisible(analysisId: number): boolean {
+    return this.visibleVideoIds.has(analysisId);
   }
 
   getFishCountsArray(fishCounts?: { [key: string]: number }): Array<{ type: string, count: number }> {

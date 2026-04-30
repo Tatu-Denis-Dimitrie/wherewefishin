@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.EntityFrameworkCore;
 using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
+using WhereWeFishin.Database.Context;
 
 namespace WhereWeFishin.API.Controllers;
 
@@ -17,17 +19,20 @@ public class VideoAnalysisController : ControllerBase
     private readonly IRepository<VideoAnalysis> _videoRepository;
     private readonly ILogger<VideoAnalysisController> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ApplicationDbContext _context;
 
     public VideoAnalysisController(
         IFishRecognitionService fishRecognitionService,
         IRepository<VideoAnalysis> videoRepository,
         ILogger<VideoAnalysisController> logger,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        ApplicationDbContext context)
     {
         _fishRecognitionService = fishRecognitionService;
         _videoRepository = videoRepository;
         _logger = logger;
         _httpClientFactory = httpClientFactory;
+        _context = context;
     }
 
     [HttpPost("upload")]
@@ -36,6 +41,10 @@ public class VideoAnalysisController : ControllerBase
     [RequestFormLimits(MultipartBodyLengthLimit = 150 * 1024 * 1024)]
     public async Task<ActionResult<AnalysisResultDto>> UploadVideo([FromForm] IFormFile video)
     {
+        var accessError = EnsureRecognitionAccess();
+        if (accessError != null)
+            return accessError;
+
         var userId = User.GetUserId();
         if (userId == null)
             return Unauthorized(new { error = "Invalid token" });
@@ -108,6 +117,10 @@ public class VideoAnalysisController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
     {
+        var recognitionAccessError = EnsureRecognitionAccess();
+        if (recognitionAccessError != null)
+            return recognitionAccessError;
+
         var accessError = ValidateUserAnalysesAccess(userId);
         if (accessError != null)
             return accessError;
@@ -115,16 +128,52 @@ public class VideoAnalysisController : ControllerBase
         page = Math.Max(page, 1);
         pageSize = pageSize <= 0 ? 10 : Math.Min(pageSize, 50);
 
-        var userAnalyses = await _videoRepository.FindAsync(a => a.UserId == userId);
-        var sorted = userAnalyses
-            .OrderByDescending(a => a.CreatedAt)
-            .Select(MapToSummaryDto)
-            .ToList();
+        var baseUrl = GetRequestBaseUrl();
+        var analysesQuery = _context.VideoAnalyses
+            .AsNoTracking()
+            .Where(analysis => analysis.UserId == userId);
 
-        var totalItems = sorted.Count;
-        var items = sorted
+        var totalItems = await analysesQuery.CountAsync();
+        var pageItems = await analysesQuery
+            .OrderByDescending(analysis => analysis.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .Select(analysis => new
+            {
+                analysis.Id,
+                analysis.UserId,
+                analysis.FileName,
+                analysis.VideoUrl,
+                analysis.ProcessedVideoUrl,
+                analysis.Duration,
+                analysis.TotalDetections,
+                analysis.DominantFishType,
+                analysis.DominantFishCount,
+                analysis.AnalyzedAt,
+                analysis.Status,
+                analysis.ErrorMessage,
+                analysis.CreatedAt
+            })
+            .ToListAsync();
+
+        var items = pageItems
+            .Select(item => NormalizeSummaryVideoUrls(new VideoAnalysisSummaryDto
+            {
+                Id = item.Id,
+                UserId = item.UserId,
+                FileName = item.FileName,
+                VideoUrl = item.VideoUrl,
+                ProcessedVideoUrl = item.ProcessedVideoUrl,
+                Duration = item.Duration,
+                TotalDetections = item.TotalDetections,
+                TotalUniqueFish = item.TotalDetections,
+                DominantFishType = item.DominantFishType,
+                DominantFishCount = item.DominantFishCount,
+                AnalyzedAt = item.AnalyzedAt,
+                Status = item.Status.ToString(),
+                ErrorMessage = item.ErrorMessage,
+                CreatedAt = item.CreatedAt
+            }, baseUrl))
             .ToList();
 
         return Ok(new PagedResponseDto<VideoAnalysisSummaryDto>
@@ -140,20 +189,37 @@ public class VideoAnalysisController : ControllerBase
     [Authorize]
     public async Task<ActionResult<VideoAnalysisOverviewDto>> GetUserAnalysesOverview(int userId)
     {
+        var recognitionAccessError = EnsureRecognitionAccess();
+        if (recognitionAccessError != null)
+            return recognitionAccessError;
+
         var accessError = ValidateUserAnalysesAccess(userId);
         if (accessError != null)
             return accessError;
 
-        var userAnalyses = (await _videoRepository.FindAsync(a => a.UserId == userId))
+        var overviewStats = await _context.VideoAnalyses
+            .AsNoTracking()
+            .Where(analysis => analysis.UserId == userId)
+            .GroupBy(_ => 1)
+            .Select(group => new
+            {
+                TotalItems = group.Count(),
+                CompletedItems = group.Count(analysis => analysis.Status == AnalysisStatus.Completed)
+            })
+            .FirstOrDefaultAsync();
+
+        var recentAnalyses = await _context.VideoAnalyses
+            .AsNoTracking()
+            .Where(analysis => analysis.UserId == userId)
             .OrderByDescending(a => a.CreatedAt)
-            .ToList();
+            .Take(3)
+            .ToListAsync();
 
         return Ok(new VideoAnalysisOverviewDto
         {
-            TotalItems = userAnalyses.Count,
-            CompletedItems = userAnalyses.Count(analysis => analysis.Status == AnalysisStatus.Completed),
-            RecentAnalyses = userAnalyses
-                .Take(3)
+            TotalItems = overviewStats?.TotalItems ?? 0,
+            CompletedItems = overviewStats?.CompletedItems ?? 0,
+            RecentAnalyses = recentAnalyses
                 .Select(MapToSummaryDto)
                 .ToList()
         });
@@ -163,6 +229,10 @@ public class VideoAnalysisController : ControllerBase
     [Authorize]
     public async Task<ActionResult<VideoAnalysisDto>> GetAnalysis(int id)
     {
+        var accessError = EnsureRecognitionAccess();
+        if (accessError != null)
+            return accessError;
+
         var currentUserId = User.GetUserId();
         if (currentUserId == null)
             return Unauthorized();
@@ -183,6 +253,10 @@ public class VideoAnalysisController : ControllerBase
     [Authorize]
     public async Task<IActionResult> DeleteAnalysis(int id)
     {
+        var accessError = EnsureRecognitionAccess();
+        if (accessError != null)
+            return accessError;
+
         var currentUserId = User.GetUserId();
         if (currentUserId == null)
             return Unauthorized();
@@ -354,20 +428,12 @@ public class VideoAnalysisController : ControllerBase
 
     private VideoAnalysisSummaryDto MapToSummaryDto(VideoAnalysis entity)
     {
-        string videoUrl = entity.VideoUrl;
-        if (!string.IsNullOrEmpty(videoUrl) && !videoUrl.StartsWith("http"))
-        {
-            var request = HttpContext.Request;
-            var baseUrl = $"{request.Scheme}://{request.Host}";
-            videoUrl = $"{baseUrl}/{videoUrl}";
-        }
-
         return new VideoAnalysisSummaryDto
         {
             Id = entity.Id,
             UserId = entity.UserId,
             FileName = entity.FileName,
-            VideoUrl = videoUrl,
+            VideoUrl = entity.VideoUrl,
             ProcessedVideoUrl = entity.ProcessedVideoUrl,
             Duration = entity.Duration,
             TotalDetections = entity.TotalDetections,
@@ -381,6 +447,22 @@ public class VideoAnalysisController : ControllerBase
         };
     }
 
+    private VideoAnalysisSummaryDto NormalizeSummaryVideoUrls(VideoAnalysisSummaryDto item, string baseUrl)
+    {
+        if (!string.IsNullOrEmpty(item.VideoUrl) && !item.VideoUrl.StartsWith("http"))
+        {
+            item.VideoUrl = $"{baseUrl}/{item.VideoUrl}";
+        }
+
+        return item;
+    }
+
+    private string GetRequestBaseUrl()
+    {
+        var request = HttpContext.Request;
+        return $"{request.Scheme}://{request.Host}";
+    }
+
     private ActionResult? ValidateUserAnalysesAccess(int userId)
     {
         var currentUserId = User.GetUserId();
@@ -388,6 +470,14 @@ public class VideoAnalysisController : ControllerBase
             return Unauthorized();
 
         if (currentUserId.Value != userId && !User.IsInRole(Roles.Admin))
+            return Forbid();
+
+        return null;
+    }
+
+    private ActionResult? EnsureRecognitionAccess()
+    {
+        if (User.IsInRole(Roles.Employee))
             return Forbid();
 
         return null;

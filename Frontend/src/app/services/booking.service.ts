@@ -6,6 +6,7 @@ import {
   Booking,
   BookedPeriod,
   CreateBookingRequest,
+  ManagerTodaySummary,
   PaymentConfiguration,
   CreatePaymentIntentRequest,
   PaymentIntentResponse
@@ -18,6 +19,7 @@ import { environment } from '../../environments/environment';
 export class BookingService {
   private apiUrl = `${environment.apiBaseUrl}/api/bookings`;
   private myBookingsCache$: Observable<Booking[]> | null = null;
+  private managerTodaySummaryCache$: Observable<ManagerTodaySummary> | null = null;
 
   constructor(private http: HttpClient) {}
 
@@ -30,8 +32,19 @@ export class BookingService {
     return this.myBookingsCache$;
   }
 
+  getManagerTodaySummary(): Observable<ManagerTodaySummary> {
+    if (!this.managerTodaySummaryCache$) {
+      this.managerTodaySummaryCache$ = this.http.get<ManagerTodaySummary>(`${this.apiUrl}/manager/today-summary`).pipe(
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
+    }
+
+    return this.managerTodaySummaryCache$;
+  }
+
   clearCache(): void {
     this.myBookingsCache$ = null;
+    this.managerTodaySummaryCache$ = null;
   }
 
   createBooking(request: CreateBookingRequest): Observable<Booking> {

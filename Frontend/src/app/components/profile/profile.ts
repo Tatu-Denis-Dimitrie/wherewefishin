@@ -6,15 +6,18 @@ import { UserService } from '../../services/user.service';
 import { AuthService } from '../../services/auth.service';
 import { VideoAnalysisService } from '../../services/video-analysis.service';
 import { FishingSpotService } from '../../services/fishing-spot.service';
+import { EmployeeService } from '../../services/employee.service';
 import { FishingSpot } from '../../models/fishing-spot.model';
 import { AdminService, AdminStats } from '../../services/admin.service';
 import { BookingService } from '../../services/booking.service';
 import { User, UpdateUser } from '../../models/user.model';
 import { Booking } from '../../models/booking.model';
 import { VideoAnalysis } from '../../models/video-analysis.model';
+import { EmployeeOverview, EmployeeRecentVerification } from '../../models/employee.model';
 import { AppIcon } from '../../shared/icons/app-icon';
 
 type ProfileTab = 'overview' | 'bookings' | 'settings';
+type PaginationItem = number | 'ellipsis-left' | 'ellipsis-right';
 
 interface ProfileInsight {
   title: string;
@@ -57,21 +60,31 @@ export class Profile implements OnInit {
   recentAnalyses: VideoAnalysis[] = [];
   userSpotsCount = 0;
   userSpots: FishingSpot[] = [];
+  employeeOverview: EmployeeOverview | null = null;
   adminStats: AdminStats | null = null;
   loadingAnalysisOverview = false;
+  loadingEmployeeOverview = false;
   loadingSpots = false;
   loadingAdminStats = false;
 
   // Bookings
   recentBookings: Booking[] = [];
+  pagedBookings: Booking[] = [];
   userBookingsCount = 0;
   loadingBookings = false;
+  currentBookingsPage = 1;
+  readonly bookingsPageSize = 10;
+  bookingsTotalItems = 0;
+  bookingsTotalPages = 0;
+  hasPreviousBookingsPage = false;
+  hasNextBookingsPage = false;
 
   constructor(
     private userService: UserService,
     private authService: AuthService,
     private videoAnalysisService: VideoAnalysisService,
     private fishingSpotService: FishingSpotService,
+    private employeeService: EmployeeService,
     private adminService: AdminService,
     private bookingService: BookingService,
     private router: Router
@@ -85,7 +98,19 @@ export class Profile implements OnInit {
     
     this.loadUserProfile();
     this.loadRoleSpecificData();
-    this.loadBookings();
+
+    if (this.authService.isEmployee()) {
+      this.recentBookings = [];
+      this.pagedBookings = [];
+      this.userBookingsCount = 0;
+      this.loadingBookings = false;
+      this.bookingsTotalItems = 0;
+      this.bookingsTotalPages = 0;
+      this.hasPreviousBookingsPage = false;
+      this.hasNextBookingsPage = false;
+    } else {
+      this.loadBookings();
+    }
   }
 
   setTab(tab: ProfileTab): void {
@@ -99,16 +124,74 @@ export class Profile implements OnInit {
         this.recentBookings = [...bookings].sort((a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
+        this.applyBookingsPagination();
         this.userBookingsCount = bookings.filter(b => b.status !== 'Cancelled').length;
         this.loadingBookings = false;
       },
-      error: () => { this.loadingBookings = false; }
+      error: () => {
+        this.loadingBookings = false;
+        this.recentBookings = [];
+        this.pagedBookings = [];
+        this.bookingsTotalItems = 0;
+        this.bookingsTotalPages = 0;
+        this.hasPreviousBookingsPage = false;
+        this.hasNextBookingsPage = false;
+      }
     });
+  }
+
+  get bookingsPageNumbers(): number[] {
+    return Array.from({ length: this.bookingsTotalPages }, (_, index) => index + 1);
+  }
+
+  get visibleBookingsPageItems(): PaginationItem[] {
+    if (this.bookingsTotalPages <= 5) {
+      return this.bookingsPageNumbers;
+    }
+
+    const items: PaginationItem[] = [1];
+    const startPage = Math.max(2, this.currentBookingsPage - 1);
+    const endPage = Math.min(this.bookingsTotalPages - 1, this.currentBookingsPage + 1);
+
+    if (startPage > 2) {
+      items.push('ellipsis-left');
+    }
+
+    for (let page = startPage; page <= endPage; page++) {
+      items.push(page);
+    }
+
+    if (endPage < this.bookingsTotalPages - 1) {
+      items.push('ellipsis-right');
+    }
+
+    items.push(this.bookingsTotalPages);
+    return items;
+  }
+
+  isPageNumber(item: PaginationItem): item is number {
+    return typeof item === 'number';
+  }
+
+  changeBookingsPage(page: number): void {
+    const nextPage = Math.min(Math.max(page, 1), Math.max(this.bookingsTotalPages, 1));
+    if (nextPage === this.currentBookingsPage) {
+      return;
+    }
+
+    this.applyBookingsPagination(nextPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   loadRoleSpecificData(): void {
     const userId = this.authService.getUserId();
     if (!userId) return;
+
+    if (this.authService.isEmployee()) {
+      this.loadEmployeeOverview();
+      this.loadEmployeeSpots();
+      return;
+    }
 
     this.loadAnalysisOverview(userId);
 
@@ -133,6 +216,38 @@ export class Profile implements OnInit {
       },
       error: () => {
         this.loadingAnalysisOverview = false;
+      }
+    });
+  }
+
+  private loadEmployeeOverview(): void {
+    this.loadingEmployeeOverview = true;
+
+    this.employeeService.getMyOverview().subscribe({
+      next: (overview) => {
+        this.employeeOverview = overview;
+        this.loadingEmployeeOverview = false;
+      },
+      error: () => {
+        this.employeeOverview = null;
+        this.loadingEmployeeOverview = false;
+      }
+    });
+  }
+
+  private loadEmployeeSpots(): void {
+    this.loadingSpots = true;
+
+    this.fishingSpotService.getAll().subscribe({
+      next: (spots) => {
+        this.userSpots = spots;
+        this.userSpotsCount = spots.length;
+        this.loadingSpots = false;
+      },
+      error: () => {
+        this.userSpots = [];
+        this.userSpotsCount = 0;
+        this.loadingSpots = false;
       }
     });
   }
@@ -266,6 +381,8 @@ export class Profile implements OnInit {
     if (
       this.loadingBookings ||
       this.loadingAnalysisOverview ||
+      this.loadingEmployeeOverview ||
+      (this.isEmployee() && this.loadingSpots) ||
       (this.isManager() && this.loadingSpots) ||
       (this.isAdmin() && this.loadingAdminStats)
     ) {
@@ -278,8 +395,24 @@ export class Profile implements OnInit {
         iconClass: 'sec-neutral'
       };
     }
-
     const joinedLabel = this.user ? `Member since ${this.formatMonthYear(this.user.createdAt)}.` : '';
+
+    if (this.isEmployee()) {
+      const verifiedCount = this.employeeOverview?.verifiedQrScansCount ?? 0;
+      const verifiedToday = this.employeeOverview?.verifiedQrScansTodayCount ?? 0;
+      const subtitle = verifiedCount > 0
+        ? `You validated ${this.formatCountLabel(verifiedCount, 'QR session')}, with ${this.formatCountLabel(this.employeeOverview?.verifiedGuestsCount ?? 0, 'angler check-in')} and ${this.formatCountLabel(verifiedToday, 'verification today')}. ${joinedLabel}`.trim()
+        : `You are currently assigned to ${this.formatCountLabel(this.userSpotsCount, 'lake')}. Your QR validation metrics will appear here after the first successful check-in. ${joinedLabel}`.trim();
+
+      return {
+        title: 'Checkpoint Crew',
+        subtitle,
+        badge: verifiedCount > 0 ? 'On Duty' : 'Assigned',
+        badgeClass: verifiedCount > 0 ? 'badge-active' : 'badge-info',
+        icon: 'spots',
+        iconClass: verifiedCount > 0 ? 'sec-ok' : 'sec-info'
+      };
+    }
 
     if (this.isAdmin()) {
       const coverage = [
@@ -369,6 +502,14 @@ export class Profile implements OnInit {
     return this.user?.role === 'User';
   }
 
+  isEmployee(): boolean {
+    return this.user?.role === 'Employee' || this.authService.isEmployee();
+  }
+
+  get recentEmployeeVerifications(): EmployeeRecentVerification[] {
+    return this.employeeOverview?.recentVerifications ?? [];
+  }
+
   getStatusClass(status: string): string {
     switch (status.toLowerCase()) {
       case 'completed': return 'status-completed';
@@ -446,5 +587,18 @@ export class Profile implements OnInit {
 
   private formatCountLabel(count: number, singular: string, plural = `${singular}s`): string {
     return `${count} ${count === 1 ? singular : plural}`;
+  }
+
+  private applyBookingsPagination(page = this.currentBookingsPage): void {
+    this.bookingsTotalItems = this.recentBookings.length;
+    this.bookingsTotalPages = Math.ceil(this.bookingsTotalItems / this.bookingsPageSize);
+    this.currentBookingsPage = this.bookingsTotalItems
+      ? Math.min(Math.max(page, 1), this.bookingsTotalPages)
+      : 1;
+
+    const startIndex = (this.currentBookingsPage - 1) * this.bookingsPageSize;
+    this.pagedBookings = this.recentBookings.slice(startIndex, startIndex + this.bookingsPageSize);
+    this.hasPreviousBookingsPage = this.currentBookingsPage > 1;
+    this.hasNextBookingsPage = this.currentBookingsPage < this.bookingsTotalPages;
   }
 }

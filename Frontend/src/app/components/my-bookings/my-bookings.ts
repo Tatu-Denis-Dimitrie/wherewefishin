@@ -6,6 +6,8 @@ import { AuthService } from '../../services/auth.service';
 import { Booking } from '../../models/booking.model';
 import QRCode from 'qrcode';
 
+type PaginationItem = number | 'ellipsis-left' | 'ellipsis-right';
+
 @Component({
   selector: 'app-my-bookings',
   imports: [CommonModule],
@@ -14,7 +16,14 @@ import QRCode from 'qrcode';
 })
 export class MyBookings implements OnInit {
   myBookings: Booking[] = [];
+  pagedBookings: Booking[] = [];
   loadingBookings = false;
+  currentPage = 1;
+  readonly pageSize = 10;
+  totalItems = 0;
+  totalPages = 0;
+  hasPreviousPage = false;
+  hasNextPage = false;
 
   showMessage = '';
   messageType: 'success' | 'error' = 'success';
@@ -39,6 +48,7 @@ export class MyBookings implements OnInit {
     this.bookingService.getMyBookings().subscribe({
       next: (bookings) => {
         this.myBookings = bookings;
+        this.applyPagination();
         this.loadingBookings = false;
         this.generateQrCodes(bookings);
       },
@@ -82,6 +92,61 @@ export class MyBookings implements OnInit {
     this.enlargedQrId = null;
   }
 
+  get pageNumbers(): number[] {
+    return Array.from({ length: this.totalPages }, (_, index) => index + 1);
+  }
+
+  get visiblePageItems(): PaginationItem[] {
+    if (this.totalPages <= 5) {
+      return this.pageNumbers;
+    }
+
+    const items: PaginationItem[] = [1];
+    const startPage = Math.max(2, this.currentPage - 1);
+    const endPage = Math.min(this.totalPages - 1, this.currentPage + 1);
+
+    if (startPage > 2) {
+      items.push('ellipsis-left');
+    }
+
+    for (let page = startPage; page <= endPage; page++) {
+      items.push(page);
+    }
+
+    if (endPage < this.totalPages - 1) {
+      items.push('ellipsis-right');
+    }
+
+    items.push(this.totalPages);
+    return items;
+  }
+
+  get pageStartItem(): number {
+    if (!this.totalItems) {
+      return 0;
+    }
+
+    return (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  get pageEndItem(): number {
+    return this.pageStartItem + this.pagedBookings.length - 1;
+  }
+
+  isPageNumber(item: PaginationItem): item is number {
+    return typeof item === 'number';
+  }
+
+  changePage(page: number): void {
+    const nextPage = Math.min(Math.max(page, 1), Math.max(this.totalPages, 1));
+    if (nextPage === this.currentPage) {
+      return;
+    }
+
+    this.applyPagination(nextPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   cancelBooking(id: number): void {
     if (!confirm('Are you sure you want to cancel this booking?')) return;
     this.bookingService.cancelBooking(id).subscribe({
@@ -107,6 +172,19 @@ export class MyBookings implements OnInit {
 
   goToMap(): void {
     this.router.navigate(['/home']);
+  }
+
+  private applyPagination(page = this.currentPage): void {
+    this.totalItems = this.myBookings.length;
+    this.totalPages = Math.ceil(this.totalItems / this.pageSize);
+    this.currentPage = this.totalItems
+      ? Math.min(Math.max(page, 1), this.totalPages)
+      : 1;
+
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    this.pagedBookings = this.myBookings.slice(startIndex, startIndex + this.pageSize);
+    this.hasPreviousPage = this.currentPage > 1;
+    this.hasNextPage = this.currentPage < this.totalPages;
   }
 
   private showToast(message: string, type: 'success' | 'error'): void {

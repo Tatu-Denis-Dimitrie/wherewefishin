@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using WhereWeFishin.API.Controllers;
@@ -10,6 +11,7 @@ using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
+using WhereWeFishin.Database.Context;
 using WhereWeFishin.Tests.TestHelpers;
 
 namespace WhereWeFishin.Tests.Controllers;
@@ -20,6 +22,7 @@ public class VideoAnalysisControllerTests
     private readonly IRepository<VideoAnalysis> _videoRepository;
     private readonly ILogger<VideoAnalysisController> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ApplicationDbContext _context;
     private readonly VideoAnalysisController _controller;
     private readonly List<VideoAnalysis> _analyses;
 
@@ -29,13 +32,18 @@ public class VideoAnalysisControllerTests
         _videoRepository = Substitute.For<IRepository<VideoAnalysis>>();
         _logger = Substitute.For<ILogger<VideoAnalysisController>>();
         _httpClientFactory = Substitute.For<IHttpClientFactory>();
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        _context = new ApplicationDbContext(options);
         _analyses = _videoRepository.UseInMemoryStore<VideoAnalysis>();
 
         _controller = new VideoAnalysisController(
             _fishRecognitionService,
             _videoRepository,
             _logger,
-            _httpClientFactory);
+            _httpClientFactory,
+            _context);
 
         SetUser(1);
         _controller.ControllerContext.HttpContext.Request.Scheme = "https";
@@ -79,6 +87,12 @@ public class VideoAnalysisControllerTests
             Headers = new HeaderDictionary(),
             ContentType = "video/mp4"
         };
+    }
+
+    private async Task SeedVideoAnalysesAsync(params VideoAnalysis[] analyses)
+    {
+        _context.VideoAnalyses.AddRange(analyses);
+        await _context.SaveChangesAsync();
     }
 
     [Fact]
@@ -214,7 +228,7 @@ public class VideoAnalysisControllerTests
         older.CreatedAt = DateTime.UtcNow.AddHours(-2);
         var newer = CreateAnalysis(2, userId: 1);
         newer.CreatedAt = DateTime.UtcNow.AddHours(-1);
-        _analyses.AddRange([older, newer]);
+        await SeedVideoAnalysesAsync(older, newer);
 
         // Act
         var result = await _controller.GetUserAnalyses(1);
@@ -234,12 +248,14 @@ public class VideoAnalysisControllerTests
     public async Task GetUserAnalyses_AppliesRequestedPagination()
     {
         // Arrange
+        var analyses = new List<VideoAnalysis>();
         for (var index = 1; index <= 12; index++)
         {
             var analysis = CreateAnalysis(index, userId: 1);
             analysis.CreatedAt = DateTime.UtcNow.AddMinutes(index);
-            _analyses.Add(analysis);
+            analyses.Add(analysis);
         }
+        await SeedVideoAnalysesAsync(analyses.ToArray());
 
         // Act
         var result = await _controller.GetUserAnalyses(1, page: 2, pageSize: 5);
@@ -267,7 +283,8 @@ public class VideoAnalysisControllerTests
         completedRecent.CreatedAt = DateTime.UtcNow.AddHours(-1);
         var completedNewest = CreateAnalysis(4, userId: 1, status: nameof(AnalysisStatus.Completed));
         completedNewest.CreatedAt = DateTime.UtcNow;
-        _analyses.AddRange([completedOld, failedRecent, completedRecent, completedNewest]);
+        _context.VideoAnalyses.AddRange(completedOld, failedRecent, completedRecent, completedNewest);
+        await _context.SaveChangesAsync();
 
         var result = await _controller.GetUserAnalysesOverview(1);
 

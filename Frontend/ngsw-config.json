@@ -34,7 +34,6 @@
     {
       "name": "api-static",
       "urls": [
-        "/api/fishingspots",
         "/api/videoanalysis/supported-fish"
       ],
       "cacheConfig": {

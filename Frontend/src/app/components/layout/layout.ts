@@ -94,18 +94,20 @@ export class Layout implements OnInit, OnDestroy {
   }
 
   private refreshNavigationItems(): void {
+    const canUseCustomerFlows = !this.isEmployee;
+
     const primaryItems: LayoutNavItem[] = [
       { key: 'home', label: 'Map', route: '/home', icon: 'map', exact: true },
-      { key: 'fish-recognition', label: 'Fish Recognition', route: '/fish-recognition', icon: 'video' },
-      { key: 'image-classification', label: 'Image Scan', route: '/image-classification', icon: 'image' },
+      ...(canUseCustomerFlows ? [{ key: 'fish-recognition', label: 'Fish Recognition', route: '/fish-recognition', icon: 'video' as const }] : []),
+      ...(canUseCustomerFlows ? [{ key: 'image-classification', label: 'Image Scan', route: '/image-classification', icon: 'image' as const }] : []),
       { key: 'profile', label: 'Profile', route: '/profile', icon: 'profile' },
-      ...(this.isEmployee ? [{ key: 'scan-qr', label: 'Scanare QR', route: '/scan-qr', icon: 'qr' as const }] : []),
+      ...(this.isEmployee ? [{ key: 'scan-qr', label: 'QR Scanner', route: '/scan-qr', icon: 'qr' as const }] : []),
       ...(this.isAdmin ? [{ key: 'admin', label: 'Admin', route: '/admin', icon: 'admin' as const }] : []),
       ...(this.isManager && this.managerSpotId
         ? [{ key: 'spot-management', label: 'Spot Management', route: ['/spots', this.managerSpotId, 'manage'] as const, icon: 'manage' as const }]
         : []),
-      { key: 'cart', label: 'Cart', route: '/cart', icon: 'cart', showCartBadge: true },
-      { key: 'my-bookings', label: 'My Bookings', route: '/my-bookings', icon: 'bookings' }
+      ...(canUseCustomerFlows ? [{ key: 'cart', label: 'Cart', route: '/cart', icon: 'cart' as const, showCartBadge: true }] : []),
+      ...(canUseCustomerFlows ? [{ key: 'my-bookings', label: 'My Bookings', route: '/my-bookings', icon: 'bookings' as const }] : [])
     ];
 
     this.primaryNavItems = primaryItems;

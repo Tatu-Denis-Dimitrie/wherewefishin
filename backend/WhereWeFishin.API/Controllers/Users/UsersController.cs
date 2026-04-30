@@ -102,6 +102,7 @@ public class UsersController : ControllerBase
         LastName = user.LastName,
         ProfilePictureUrl = user.ProfilePictureUrl,
         Role = user.Role.ToString(),
-        CreatedAt = user.CreatedAt
+        CreatedAt = user.CreatedAt,
+        IsActive = !user.IsDeleted
     };
 }

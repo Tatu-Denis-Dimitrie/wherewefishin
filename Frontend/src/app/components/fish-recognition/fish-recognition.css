@@ -211,6 +211,23 @@
   max-height: 200px; object-fit: contain;
   background: #000;
 }
+
+.card-media-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 1rem;
+  background:
+    radial-gradient(circle at top, rgba(125, 179, 74, 0.16), transparent 55%),
+    #000;
+  color: rgba(236, 233, 220, 0.82);
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  text-align: center;
+}
+
 .card-body { padding: 1rem 1.25rem; }
 .card-body-processing { padding: .65rem 1rem; }
 

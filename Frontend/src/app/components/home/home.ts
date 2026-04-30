@@ -1,7 +1,7 @@
 import { Component, OnInit, AfterViewInit, OnDestroy, HostListener, ChangeDetectorRef, NgZone, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { FishingSpotService } from '../../services/fishing-spot.service';
@@ -9,13 +9,15 @@ import { FishingSpot, CreateFishingSpot } from '../../models/fishing-spot.model'
 import { AdminService, AdminStats } from '../../services/admin.service';
 import { VideoAnalysisService } from '../../services/video-analysis.service';
 import { BookingService } from '../../services/booking.service';
-import { Booking } from '../../models/booking.model';
+import { Booking, ManagerTodaySummary } from '../../models/booking.model';
+import { EmployeeService } from '../../services/employee.service';
 import { UserService } from '../../services/user.service';
 import { User } from '../../models/user.model';
 import { RoutingService } from '../../services/routing.service';
 import { GeocodingService } from '../../services/geocoding.service';
 import { AdminHomeOverview, ManagerApplication } from '../../models/manager-application.model';
 import { ManagerApplicationService } from '../../services/manager-application.service';
+import { EmployeeOverview, EmployeeRecentVerification } from '../../models/employee.model';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { AppIconName } from '../../shared/icons/app-icon.registry';
 import {
@@ -38,7 +40,7 @@ interface HomeSpot extends FishingSpot {
   parsedFishSpecies: string[];
 }
 
-type HomeStatIcon = Extract<AppIconName, 'admin' | 'bookings' | 'success' | 'error' | 'users' | 'deactivated' | 'spots' | 'pontoons' | 'analyses' | 'visited'>;
+type HomeStatIcon = Extract<AppIconName, 'admin' | 'bookings' | 'success' | 'error' | 'users' | 'deactivated' | 'spots' | 'pontoons' | 'analyses' | 'visited' | 'qr'>;
 
 interface HomeStatCard {
   key: string;
@@ -51,7 +53,7 @@ interface HomeStatCard {
 
 @Component({
   selector: 'app-home',
-  imports: [CommonModule, FormsModule, AppIcon],
+  imports: [CommonModule, FormsModule, RouterLink, AppIcon],
   templateUrl: './home.html',
   styleUrl: './home.css',
   encapsulation: ViewEncapsulation.None
@@ -114,6 +116,9 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
   userSpotsCount = 0;
   userBookingsCount = 0;
   userVisitedLakesCount = 0;
+  managerClientsToday = 0;
+  managedSpots: HomeSpot[] = [];
+  employeeOverview: EmployeeOverview | null = null;
   loadingStats = true;
   loadingLatestSession = true;
   statCards: HomeStatCard[] = [];
@@ -153,6 +158,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     private adminService: AdminService,
     private videoAnalysisService: VideoAnalysisService,
     private bookingService: BookingService,
+    private employeeService: EmployeeService,
     private router: Router,
     private userService: UserService,
     private routingService: RoutingService,
@@ -190,9 +196,11 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.loadingStats = true;
     const userId = this.authService.getUserId();
     const hasAuthenticatedUser = !!userId;
-    const shouldLoadPersonalOverview = hasAuthenticatedUser && !this.isAdmin();
+    const shouldLoadPersonalOverview = hasAuthenticatedUser && (this.isUser() || this.isManager());
     const shouldLoadUserBookings = hasAuthenticatedUser && this.isUser();
     const shouldLoadAdminHome = hasAuthenticatedUser && this.isAdmin();
+    const shouldLoadManagerTodaySummary = hasAuthenticatedUser && this.isManager();
+    const shouldLoadEmployeeOverview = hasAuthenticatedUser && this.isEmployee();
 
     forkJoin({
       spots: this.fishingSpotService.getAll().pipe(
@@ -206,18 +214,25 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       analysisOverview: shouldLoadPersonalOverview
         ? this.videoAnalysisService.getUserAnalysesOverview(userId).pipe(catchError(() => of(null)))
         : of(null),
+      employeeOverview: shouldLoadEmployeeOverview
+        ? this.employeeService.getMyOverview().pipe(catchError(() => of(null)))
+        : of(null),
       bookings: shouldLoadUserBookings
         ? this.bookingService.getMyBookings().pipe(catchError(() => of([] as Booking[])))
         : of([] as Booking[]),
+      managerTodaySummary: shouldLoadManagerTodaySummary
+        ? this.bookingService.getManagerTodaySummary().pipe(catchError(() => of(null as ManagerTodaySummary | null)))
+        : of(null as ManagerTodaySummary | null),
       adminHome: shouldLoadAdminHome
         ? this.adminService.getHomeOverview().pipe(catchError(() => of(null)))
         : of(null)
     }).subscribe({
-      next: ({ spots, recognitionHealth, backendHealth, analysisOverview, bookings, adminHome }) => {
+      next: ({ spots, recognitionHealth, backendHealth, analysisOverview, employeeOverview, bookings, managerTodaySummary, adminHome }) => {
         this.imageRecognitionHealthy = !!recognitionHealth;
         this.videoRecognitionHealthy = !!recognitionHealth;
         this.backendHealthy = !!backendHealth;
         this.frontendHealthy = typeof navigator === 'undefined' ? true : navigator.onLine;
+        this.employeeOverview = employeeOverview;
 
         if (analysisOverview) {
           this.userAnalysesCount = analysisOverview.totalItems;
@@ -238,11 +253,18 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         this.applyFishFilter();
 
         // Spot count for manager/admin dashboard card
+        this.managedSpots = (this.isManager() || this.isAdmin()) && hasAuthenticatedUser
+          ? this.spots.filter(s => s.managerId === userId || s.userId === userId)
+          : [];
+
         if ((this.isManager() || this.isAdmin()) && hasAuthenticatedUser) {
-          this.userSpotsCount = spots.filter(s => s.managerId === userId || s.userId === userId).length;
+          this.userSpotsCount = this.managedSpots.length;
         } else {
+          this.managedSpots = [];
           this.userSpotsCount = 0;
         }
+
+        this.managerClientsToday = managerTodaySummary?.scheduledClientsToday ?? 0;
 
         // Bookings (regular users)
         if (shouldLoadUserBookings) {
@@ -331,7 +353,9 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     this.visibleSpots.forEach(spot => {
       const marker = L.marker([spot.latitude, spot.longitude], {
         icon: this.spotIcon
-      }).bindPopup(buildHomeSpotPopupContent(spot), {
+      }).bindPopup(buildHomeSpotPopupContent(spot, {
+        primaryActionLabel: this.isEmployee() ? 'Open checkpoint' : 'Book Pontoon'
+      }), {
         maxWidth: 220,
         autoPanPaddingTopLeft: [16, 96],
         autoPanPaddingBottomRight: [16, 16]
@@ -694,6 +718,55 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  get featuredManagedSpots(): HomeSpot[] {
+    return this.managedSpots.slice(0, 3);
+  }
+
+  get managerSpeciesCoverage(): number {
+    return new Set(this.managedSpots.flatMap(spot => spot.parsedFishSpecies)).size;
+  }
+
+  get managerAverageSpotPrice(): number {
+    if (this.managedSpots.length === 0) {
+      return 0;
+    }
+
+    const total = this.managedSpots.reduce((sum, spot) => sum + spot.pricePerHour, 0);
+    return total / this.managedSpots.length;
+  }
+
+  get managerCoveragePercent(): number {
+    if (this.spots.length === 0) {
+      return 0;
+    }
+
+    return Math.round((this.managedSpots.length / this.spots.length) * 100);
+  }
+
+  get managerSpeciesHighlights(): string[] {
+    const counts = this.managedSpots
+      .flatMap(spot => spot.parsedFishSpecies)
+      .reduce((map, species) => {
+        map.set(species, (map.get(species) ?? 0) + 1);
+        return map;
+      }, new Map<string, number>());
+
+    return Array.from(counts.entries())
+      .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+      .slice(0, 4)
+      .map(([species]) => species);
+  }
+
+  getManagerSpotSpeciesSummary(spot: HomeSpot): string {
+    if (spot.parsedFishSpecies.length === 0) {
+      return 'Species catalogue pending';
+    }
+
+    const preview = spot.parsedFishSpecies.slice(0, 2).join(' • ');
+    const remaining = spot.parsedFishSpecies.length - 2;
+    return remaining > 0 ? `${preview} +${remaining}` : preview;
+  }
+
   getBookingStatusClass(status: string): string {
     const normalized = status.toLowerCase();
     if (normalized === 'cancelled') return 'booking-status-cancelled';
@@ -712,6 +785,14 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
   isUser(): boolean {
     return this.currentRole === 'User';
+  }
+
+  isEmployee(): boolean {
+    return this.currentRole === 'Employee';
+  }
+
+  get employeeRecentVerifications(): EmployeeRecentVerification[] {
+    return this.employeeOverview?.recentVerifications ?? [];
   }
 
   openSpotDetails(spotId: number): void {
@@ -800,6 +881,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       return 'System Overview';
     }
 
+    if (this.isEmployee()) {
+      return 'Checkpoint Snapshot';
+    }
+
     return this.isManager() ? 'Manager Snapshot' : 'Your Activity';
   }
 
@@ -873,6 +958,46 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     ];
   }
 
+  private buildEmployeeStatCards(): HomeStatCard[] {
+    return [
+      {
+        key: 'assigned-spots',
+        value: this.employeeOverview?.assignedSpotsCount ?? this.spots.length,
+        label: 'Assigned Lakes',
+        icon: 'spots',
+        iconClass: 'spots-icon'
+      },
+      {
+        key: 'verified-qr',
+        value: this.employeeOverview?.verifiedQrScansCount ?? 0,
+        label: 'Verified QR Sessions',
+        icon: 'qr',
+        iconClass: 'processing-icon'
+      },
+      {
+        key: 'verified-today',
+        value: this.employeeOverview?.verifiedQrScansTodayCount ?? 0,
+        label: 'Verified Today',
+        icon: 'success',
+        iconClass: 'success-icon'
+      },
+      {
+        key: 'verified-guests',
+        value: this.employeeOverview?.verifiedGuestsCount ?? 0,
+        label: 'Anglers Checked In',
+        icon: 'users',
+        iconClass: 'users-icon'
+      },
+      {
+        key: 'active-assigned-bookings',
+        value: this.employeeOverview?.activeAssignedBookingsCount ?? 0,
+        label: 'Active Sessions Now',
+        icon: 'bookings',
+        iconClass: 'bookings-icon'
+      }
+    ];
+  }
+
   private buildManagerStatCards(): HomeStatCard[] {
     return [
       {
@@ -881,6 +1006,13 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         label: 'Managed Spots',
         icon: 'spots',
         iconClass: 'spots-icon'
+      },
+      {
+        key: 'clients-today',
+        value: this.managerClientsToday,
+        label: 'Clients Today',
+        icon: 'users',
+        iconClass: 'users-icon'
       },
       {
         key: 'personal-analyses',
@@ -941,6 +1073,11 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
           iconClass: 'cancelled-icon'
         }
       ];
+      return;
+    }
+
+    if (this.isEmployee()) {
+      this.statCards = this.buildEmployeeStatCards();
       return;
     }
 

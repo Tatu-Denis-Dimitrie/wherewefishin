@@ -78,6 +78,10 @@ public class ManagerApplicationsIntegrationTests
         using var factory = new ApiWebApplicationFactory();
         var userClient = await CreateAuthenticatedClientAsync(factory, "ion_fisher", "password123");
         var adminClient = await CreateAuthenticatedClientAsync(factory, "admin", "admin123");
+        var publicClient = CreateClient(factory);
+
+        var initialPublicSpotsResponse = await publicClient.GetAsync("/api/fishingspots");
+        Assert.Equal(HttpStatusCode.OK, initialPublicSpotsResponse.StatusCode);
 
         var createResponse = await userClient.PostAsJsonAsync("/api/managerapplications", BuildRequest("Approval Lake"));
         var created = await createResponse.Content.ReadFromJsonAsync<ManagerApplicationDto>();
@@ -93,13 +97,25 @@ public class ManagerApplicationsIntegrationTests
         Assert.Equal(UserRole.Manager, updatedUser.Role);
         Assert.Equal(updatedUser.Id, createdSpot.ManagerId);
 
-        var publicClient = CreateClient(factory);
         var publicSpotsResponse = await publicClient.GetAsync("/api/fishingspots");
         Assert.Equal(HttpStatusCode.OK, publicSpotsResponse.StatusCode);
 
         var spots = await publicSpotsResponse.Content.ReadFromJsonAsync<List<FishingSpotDto>>();
         Assert.NotNull(spots);
         Assert.Contains(spots, spot => spot.Name == "Approval Lake");
+    }
+
+    [Fact]
+    public async Task GetFishingSpots_PublicResponse_DisablesCaching()
+    {
+        using var factory = new ApiWebApplicationFactory();
+        var publicClient = CreateClient(factory);
+
+        var response = await publicClient.GetAsync("/api/fishingspots");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(response.Headers.CacheControl);
+        Assert.True(response.Headers.CacheControl!.NoStore);
     }
 
     [Fact]

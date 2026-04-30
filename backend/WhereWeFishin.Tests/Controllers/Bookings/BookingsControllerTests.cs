@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
@@ -10,6 +11,7 @@ using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
+using WhereWeFishin.Database.Context;
 using WhereWeFishin.Tests.TestHelpers;
 
 namespace WhereWeFishin.Tests.Controllers;
@@ -23,6 +25,7 @@ public class BookingsControllerTests
     private readonly IEmailService _emailService;
     private readonly ILogger<BookingsController> _logger;
     private readonly IConfiguration _configuration;
+    private readonly ApplicationDbContext _context;
     private readonly BookingsController _controller;
 
     public BookingsControllerTests()
@@ -46,6 +49,11 @@ public class BookingsControllerTests
             .AddInMemoryCollection(new Dictionary<string, string?>())
             .Build();
 
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        _context = new ApplicationDbContext(options);
+
         _controller = new BookingsController(
             _sessionRepository,
             _spotRepository,
@@ -53,7 +61,8 @@ public class BookingsControllerTests
             _userRepository,
             _emailService,
             _logger,
-            _configuration);
+            _configuration,
+            _context);
 
         // Default: authenticated as user 1
         SetupUser(userId: 1, role: Roles.User);
@@ -68,7 +77,8 @@ public class BookingsControllerTests
             _userRepository,
             _emailService,
             _logger,
-            configuration ?? _configuration);
+            configuration ?? _configuration,
+            _context);
 
         controller.ControllerContext = _controller.ControllerContext;
         return controller;
@@ -609,6 +619,129 @@ public class BookingsControllerTests
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var bookings = Assert.IsAssignableFrom<IEnumerable<BookingDto>>(okResult.Value);
         Assert.Single(bookings);
+    }
+
+    [Fact]
+    public async Task GetManagerTodaySummary_ReturnsDistinctClientsForManagedSpotsToday()
+    {
+        // Arrange
+        SetupUser(userId: 7, role: Roles.Manager);
+
+        var today = DateTime.UtcNow.Date;
+        _context.FishingSpots.AddRange(
+            new FishingSpot
+            {
+                Id = 10,
+                Name = "Manager Lake",
+                Latitude = 45,
+                Longitude = 25,
+                PricePerHour = 20,
+                UserId = 1,
+                ManagerId = 7
+            },
+            new FishingSpot
+            {
+                Id = 11,
+                Name = "Owned Lake",
+                Latitude = 46,
+                Longitude = 26,
+                PricePerHour = 22,
+                UserId = 7
+            },
+            new FishingSpot
+            {
+                Id = 12,
+                Name = "Other Lake",
+                Latitude = 47,
+                Longitude = 27,
+                PricePerHour = 24,
+                UserId = 2,
+                ManagerId = 8
+            });
+
+        _context.FishingSessions.AddRange(
+            new FishingSession
+            {
+                Id = 1,
+                UserId = 100,
+                FishingSpotId = 10,
+                StartDate = today.AddHours(8),
+                DurationHours = 4,
+                TotalPrice = 80,
+                Status = SessionStatus.Confirmed
+            },
+            new FishingSession
+            {
+                Id = 2,
+                UserId = 100,
+                FishingSpotId = 11,
+                StartDate = today.AddHours(14),
+                DurationHours = 2,
+                TotalPrice = 44,
+                Status = SessionStatus.Pending
+            },
+            new FishingSession
+            {
+                Id = 3,
+                UserId = 101,
+                FishingSpotId = 10,
+                StartDate = today.AddHours(10),
+                DurationHours = 3,
+                TotalPrice = 60,
+                Status = SessionStatus.Confirmed
+            },
+            new FishingSession
+            {
+                Id = 4,
+                UserId = 102,
+                FishingSpotId = 10,
+                StartDate = today.AddHours(12),
+                DurationHours = 3,
+                TotalPrice = 60,
+                Status = SessionStatus.Cancelled
+            },
+            new FishingSession
+            {
+                Id = 5,
+                UserId = 103,
+                FishingSpotId = 10,
+                StartDate = today.AddDays(1).AddHours(9),
+                DurationHours = 3,
+                TotalPrice = 60,
+                Status = SessionStatus.Confirmed
+            },
+            new FishingSession
+            {
+                Id = 6,
+                UserId = 104,
+                FishingSpotId = 12,
+                StartDate = today.AddHours(11),
+                DurationHours = 2,
+                TotalPrice = 48,
+                Status = SessionStatus.Confirmed
+            });
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _controller.GetManagerTodaySummary();
+
+        // Assert
+        var okResult = Assert.IsType<OkObjectResult>(result.Result);
+        var summary = Assert.IsType<ManagerTodaySummaryDto>(okResult.Value);
+        Assert.Equal(2, summary.ScheduledClientsToday);
+    }
+
+    [Fact]
+    public async Task GetManagerTodaySummary_WhenUnauthenticated_ReturnsUnauthorized()
+    {
+        // Arrange
+        ControllerContextFactory.SetAnonymousUser(_controller);
+
+        // Act
+        var result = await _controller.GetManagerTodaySummary();
+
+        // Assert
+        Assert.IsType<UnauthorizedResult>(result.Result);
     }
 
     [Fact]

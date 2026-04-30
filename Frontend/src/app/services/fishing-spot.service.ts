@@ -12,12 +12,15 @@ export class FishingSpotService {
   private apiUrl = `${environment.apiBaseUrl}/api/fishingspots`;
   private allCache$: Observable<FishingSpot[]> | null = null;
   private managedCache$: Observable<FishingSpot[]> | null = null;
+  private cacheRevision = 0;
 
   constructor(private http: HttpClient) {}
 
   getAll(): Observable<FishingSpot[]> {
     if (!this.allCache$) {
-      this.allCache$ = this.http.get<FishingSpot[]>(this.apiUrl).pipe(
+      this.allCache$ = this.http.get<FishingSpot[]>(this.apiUrl, {
+        params: this.buildCacheBypassParams()
+      }).pipe(
         shareReplay({ bufferSize: 1, refCount: true })
       );
     }
@@ -26,7 +29,9 @@ export class FishingSpotService {
 
   getManaged(): Observable<FishingSpot[]> {
     if (!this.managedCache$) {
-      this.managedCache$ = this.http.get<FishingSpot[]>(`${this.apiUrl}/managed`).pipe(
+      this.managedCache$ = this.http.get<FishingSpot[]>(`${this.apiUrl}/managed`, {
+        params: this.buildCacheBypassParams()
+      }).pipe(
         shareReplay({ bufferSize: 1, refCount: true })
       );
     }
@@ -37,10 +42,20 @@ export class FishingSpotService {
   clearCache(): void {
     this.allCache$ = null;
     this.managedCache$ = null;
+    this.cacheRevision += 1;
   }
 
   getById(id: number): Observable<FishingSpot> {
-    return this.http.get<FishingSpot>(`${this.apiUrl}/${id}`);
+    return this.http.get<FishingSpot>(`${this.apiUrl}/${id}`, {
+      params: this.buildCacheBypassParams()
+    });
+  }
+
+  private buildCacheBypassParams(): Record<string, string> {
+    return {
+      v: this.cacheRevision.toString(),
+      'ngsw-bypass': 'true'
+    };
   }
 
   create(spot: CreateFishingSpot): Observable<FishingSpot> {

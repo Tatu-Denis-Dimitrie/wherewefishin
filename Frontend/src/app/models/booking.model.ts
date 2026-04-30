@@ -25,6 +25,10 @@ export interface Booking {
   createdAt: string;
 }
 
+export interface ManagerTodaySummary {
+  scheduledClientsToday: number;
+}
+
 export interface CreateBookingRequest {
   fishingSpotId: number;
   pontoonId?: number;

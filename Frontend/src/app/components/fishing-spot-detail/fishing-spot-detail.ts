@@ -660,6 +660,10 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
     return this.authService.isAdmin() || this.spot.managerId === userId || this.spot.userId === userId;
   }
 
+  canUseBookingTools(): boolean {
+    return !this.authService.isEmployee();
+  }
+
   setRating(rating: number): void {
     this.newReviewRating = rating;
   }

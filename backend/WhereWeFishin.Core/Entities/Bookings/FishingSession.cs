@@ -23,6 +23,8 @@ public class FishingSession : BaseEntity
     public decimal TotalPrice { get; set; }
     public SessionStatus Status { get; set; } = SessionStatus.Pending;
     public string? VerificationToken { get; set; }
+    public int? VerifiedByUserId { get; set; }
+    public DateTime? VerifiedAt { get; set; }
 
     public User User { get; set; } = null!;
     public FishingSpot FishingSpot { get; set; } = null!;

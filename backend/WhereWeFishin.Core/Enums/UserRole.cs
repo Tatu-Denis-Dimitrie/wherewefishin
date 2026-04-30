@@ -17,4 +17,5 @@ public static class Roles
 
     public const string AdminOrManager = Admin + "," + Manager;
     public const string EmployeeOrManagerOrAdmin = Employee + "," + Manager + "," + Admin;
+    public const string UserOrManagerOrAdmin = User + "," + Manager + "," + Admin;
 }

@@ -101,8 +101,17 @@
             <span class="processing-text">Analyzing video…</span>
           </div>
 
-          <div class="card-media" *ngIf="a.processedVideoUrl && a.status.toLowerCase() !== 'processing'">
-            <video [src]="getVideoUrl(a.processedVideoUrl)" controls></video>
+          <div
+            class="card-media"
+            *ngIf="a.processedVideoUrl && a.status.toLowerCase() !== 'processing'"
+            #analysisVideoCard
+            [attr.data-analysis-id]="a.id"
+          >
+            @if (isVideoVisible(a.id)) {
+              <video [src]="getVideoUrl(a.processedVideoUrl)" controls preload="metadata"></video>
+            } @else {
+              <div class="card-media-placeholder">Video loads when it enters the screen</div>
+            }
           </div>
           <div class="card-body" [class.card-body-processing]="a.status.toLowerCase() === 'processing'">
             <div class="card-meta">

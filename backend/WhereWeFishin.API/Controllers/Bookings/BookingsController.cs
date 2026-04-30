@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using WhereWeFishin.API.Extensions;
 using WhereWeFishin.Core.DTOs;
 using WhereWeFishin.Core.Entities;
 using WhereWeFishin.Core.Enums;
 using WhereWeFishin.Core.Interfaces;
+using WhereWeFishin.Database.Context;
 using System.Security.Claims;
 using System.Globalization;
 using Stripe;
@@ -24,6 +26,7 @@ public class BookingsController : ControllerBase
     private readonly IEmailService _emailService;
     private readonly ILogger<BookingsController> _logger;
     private readonly bool _stripeEnabled;
+    private readonly ApplicationDbContext _context;
 
     public BookingsController(
         IRepository<FishingSession> sessionRepository,
@@ -32,7 +35,8 @@ public class BookingsController : ControllerBase
         IRepository<User> userRepository,
         IEmailService emailService,
         ILogger<BookingsController> logger,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ApplicationDbContext context)
     {
         _sessionRepository = sessionRepository;
         _spotRepository = spotRepository;
@@ -41,16 +45,47 @@ public class BookingsController : ControllerBase
         _emailService = emailService;
         _logger = logger;
         _stripeEnabled = !string.IsNullOrWhiteSpace(configuration["Stripe:SecretKey"]);
+        _context = context;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<BookingDto>>> GetMyBookings()
     {
+        var accessError = EnsureBookingCustomerAccess();
+        if (accessError != null) return accessError;
+
         var userId = User.GetUserId();
         if (userId == null) return Unauthorized();
 
         var sessions = await _sessionRepository.FindAsync(s => s.UserId == userId.Value);
         return Ok(await MapSessionsToDtos(sessions));
+    }
+
+    [HttpGet("manager/today-summary")]
+    [Authorize(Roles = Roles.AdminOrManager)]
+    public async Task<ActionResult<ManagerTodaySummaryDto>> GetManagerTodaySummary()
+    {
+        var userId = User.GetUserId();
+        if (userId == null) return Unauthorized();
+
+        var startOfTodayUtc = DateTime.UtcNow.Date;
+        var startOfTomorrowUtc = startOfTodayUtc.AddDays(1);
+
+        var scheduledClientsToday = await _context.FishingSessions
+            .AsNoTracking()
+            .Where(session =>
+                session.Status != SessionStatus.Cancelled &&
+                session.StartDate >= startOfTodayUtc &&
+                session.StartDate < startOfTomorrowUtc &&
+                (session.FishingSpot.ManagerId == userId.Value || session.FishingSpot.UserId == userId.Value))
+            .Select(session => session.UserId)
+            .Distinct()
+            .CountAsync();
+
+        return Ok(new ManagerTodaySummaryDto
+        {
+            ScheduledClientsToday = scheduledClientsToday
+        });
     }
 
     [HttpGet("payment-configuration")]
@@ -73,6 +108,9 @@ public class BookingsController : ControllerBase
     [HttpPost("payment-intent")]
     public async Task<ActionResult<PaymentIntentDto>> CreatePaymentIntent([FromBody] CreatePaymentIntentDto dto)
     {
+        var accessError = EnsureBookingCustomerAccess();
+        if (accessError != null) return accessError;
+
         var userId = User.GetUserId();
         if (userId == null) return Unauthorized();
 
@@ -133,6 +171,9 @@ public class BookingsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<BookingDto>> CreateBooking([FromBody] CreateBookingDto dto)
     {
+        var accessError = EnsureBookingCustomerAccess();
+        if (accessError != null) return accessError;
+
         var userId = User.GetUserId();
         if (userId == null) return Unauthorized();
 
@@ -246,6 +287,9 @@ public class BookingsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<BookingDto>> GetBooking(int id)
     {
+        var accessError = EnsureBookingCustomerAccess();
+        if (accessError != null) return accessError;
+
         var userId = User.GetUserId();
         if (userId == null) return Unauthorized();
 
@@ -268,6 +312,9 @@ public class BookingsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> CancelBooking(int id)
     {
+        var accessError = EnsureBookingCustomerAccess();
+        if (accessError != null) return accessError;
+
         var userId = User.GetUserId();
         if (userId == null) return Unauthorized();
 
@@ -391,6 +438,14 @@ public class BookingsController : ControllerBase
 
     private static bool MetadataMatches(IDictionary<string, string> metadata, string key, string expected)
         => metadata.TryGetValue(key, out var value) && string.Equals(value ?? string.Empty, expected, StringComparison.Ordinal);
+
+    private ActionResult? EnsureBookingCustomerAccess()
+    {
+        if (User.IsInRole(Roles.Employee))
+            return Forbid();
+
+        return null;
+    }
 
     private static long ToStripeAmount(decimal amount)
         => Convert.ToInt64(decimal.Round(amount * 100m, 0, MidpointRounding.AwayFromZero));

@@ -6,7 +6,8 @@ import {
   SpotEmployee,
   AssignEmployeeRequest,
   VerifyQrRequest,
-  QrVerificationResult
+  QrVerificationResult,
+  EmployeeOverview
 } from '../models/employee.model';
 import { User } from '../models/user.model';
 import { environment } from '../../environments/environment';
@@ -18,6 +19,8 @@ export class EmployeeService {
   private apiUrl = `${environment.apiBaseUrl}/api/employees`;
   private spotEmployeeCache = new Map<number, Observable<SpotEmployee[]>>();
   private availableCache$: Observable<User[]> | null = null;
+  private assignedSpotsCache$: Observable<SpotEmployee[]> | null = null;
+  private overviewCache$: Observable<EmployeeOverview> | null = null;
 
   constructor(private http: HttpClient) {}
 
@@ -40,6 +43,8 @@ export class EmployeeService {
       this.spotEmployeeCache.clear();
     }
     this.availableCache$ = null;
+    this.assignedSpotsCache$ = null;
+    this.overviewCache$ = null;
   }
 
   assignEmployee(request: AssignEmployeeRequest): Observable<SpotEmployee> {
@@ -64,10 +69,30 @@ export class EmployeeService {
   }
 
   getMyAssignedSpots(): Observable<SpotEmployee[]> {
-    return this.http.get<SpotEmployee[]>(`${this.apiUrl}/my-spots`);
+    if (!this.assignedSpotsCache$) {
+      this.assignedSpotsCache$ = this.http.get<SpotEmployee[]>(`${this.apiUrl}/my-spots`).pipe(
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
+    }
+
+    return this.assignedSpotsCache$;
+  }
+
+  getMyOverview(): Observable<EmployeeOverview> {
+    if (!this.overviewCache$) {
+      this.overviewCache$ = this.http.get<EmployeeOverview>(`${this.apiUrl}/overview`).pipe(
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
+    }
+
+    return this.overviewCache$;
   }
 
   verifyQr(request: VerifyQrRequest): Observable<QrVerificationResult> {
-    return this.http.post<QrVerificationResult>(`${this.apiUrl}/verify-qr`, request);
+    return this.http.post<QrVerificationResult>(`${this.apiUrl}/verify-qr`, request).pipe(
+      tap(() => {
+        this.overviewCache$ = null;
+      })
+    );
   }
 }

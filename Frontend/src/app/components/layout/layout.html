@@ -10,14 +10,16 @@
       </div>
       <span>WhereWeFishin</span>
     </div>
-    <a class="mobile-cart-btn" routerLink="/cart">
-      <div class="cart-icon-wrapper">
-        <app-icon name="cart" [size]="22"></app-icon>
-        @if (cartService.count() > 0) {
-          <span class="cart-badge">{{ cartService.count() }}</span>
-        }
-      </div>
-    </a>
+    @if (!isEmployee) {
+      <a class="mobile-cart-btn" routerLink="/cart">
+        <div class="cart-icon-wrapper">
+          <app-icon name="cart" [size]="22"></app-icon>
+          @if (cartService.count() > 0) {
+            <span class="cart-badge">{{ cartService.count() }}</span>
+          }
+        </div>
+      </a>
+    }
   </header>
 
   <!-- Backdrop overlay for mobile drawer -->

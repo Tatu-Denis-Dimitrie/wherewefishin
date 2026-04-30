@@ -176,6 +176,77 @@ public class EmployeesController : ControllerBase
         }));
     }
 
+    [HttpGet("overview")]
+    [Authorize(Roles = Roles.Employee)]
+    public async Task<ActionResult<EmployeeOverviewDto>> GetMyOverview()
+    {
+        var userId = User.GetUserId();
+        if (userId == null) return Unauthorized();
+
+        var assignments = (await _spotEmployeeRepository.FindAsync(e => e.UserId == userId.Value)).ToList();
+        var assignedSpotIds = assignments
+            .Select(assignment => assignment.FishingSpotId)
+            .Distinct()
+            .ToHashSet();
+
+        var verifiedSessions = (await _sessionRepository.FindAsync(session => session.VerifiedByUserId == userId.Value))
+            .Where(session => session.VerifiedAt.HasValue)
+            .OrderByDescending(session => session.VerifiedAt)
+            .ToList();
+
+        var now = DateTime.UtcNow;
+        var startOfTodayUtc = now.Date;
+        var activeAssignedBookingsCount = assignedSpotIds.Count == 0
+            ? 0
+            : (await _sessionRepository.FindAsync(session =>
+                assignedSpotIds.Contains(session.FishingSpotId) &&
+                session.Status == SessionStatus.Confirmed &&
+                session.StartDate <= now &&
+                session.StartDate.AddHours(session.DurationHours) >= now)).Count();
+
+        var recentVerifiedSessions = verifiedSessions
+            .Take(5)
+            .ToList();
+
+        var recentSpotIds = recentVerifiedSessions
+            .Select(session => session.FishingSpotId)
+            .Distinct()
+            .ToHashSet();
+        var recentUserIds = recentVerifiedSessions
+            .Select(session => session.UserId)
+            .Distinct()
+            .ToHashSet();
+
+        var spots = recentSpotIds.Count == 0
+            ? []
+            : await _spotRepository.FindAsync(spot => recentSpotIds.Contains(spot.Id));
+        var users = recentUserIds.Count == 0
+            ? []
+            : await _userRepository.FindAsync(user => recentUserIds.Contains(user.Id));
+
+        var spotMap = spots.ToDictionary(spot => spot.Id, spot => spot.Name);
+        var userMap = users.ToDictionary(user => user.Id, user => user.Username);
+
+        return Ok(new EmployeeOverviewDto
+        {
+            AssignedSpotsCount = assignedSpotIds.Count,
+            VerifiedQrScansCount = verifiedSessions.Count,
+            VerifiedQrScansTodayCount = verifiedSessions.Count(session => session.VerifiedAt >= startOfTodayUtc),
+            VerifiedGuestsCount = verifiedSessions.Select(session => session.UserId).Distinct().Count(),
+            ActiveAssignedBookingsCount = activeAssignedBookingsCount,
+            RecentVerifications = recentVerifiedSessions.Select(session => new EmployeeRecentVerificationDto
+            {
+                BookingId = session.Id,
+                FishingSpotId = session.FishingSpotId,
+                FishingSpotName = spotMap.GetValueOrDefault(session.FishingSpotId, "Unknown"),
+                Username = userMap.GetValueOrDefault(session.UserId, "Unknown"),
+                VerifiedAt = session.VerifiedAt!.Value,
+                StartDate = session.StartDate,
+                DurationHours = session.DurationHours
+            }).ToList()
+        });
+    }
+
     [HttpPost("verify-qr")]
     [Authorize(Roles = Roles.EmployeeOrManagerOrAdmin)]
     public async Task<ActionResult<QrVerificationResultDto>> VerifyQr([FromBody] VerifyQrDto dto)
@@ -221,6 +292,13 @@ public class EmployeesController : ControllerBase
             message = $"Session has not started yet. Starts at: {session.StartDate:dd.MM.yyyy HH:mm} UTC.";
         else
             message = "Valid booking! Fishing session is active.";
+
+        if (isActive && User.IsInRole(Roles.Employee) && session.VerifiedByUserId == null)
+        {
+            session.VerifiedByUserId = userId.Value;
+            session.VerifiedAt = now;
+            await _sessionRepository.UpdateAsync(session);
+        }
 
         return Ok(new QrVerificationResultDto
         {

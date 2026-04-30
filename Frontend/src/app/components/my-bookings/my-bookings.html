@@ -7,6 +7,9 @@
 
   <div class="page-header">
     <h2>My Bookings</h2>
+    @if (totalItems > 0) {
+      <span class="page-pill">Showing {{ pageStartItem }}-{{ pageEndItem }} of {{ totalItems }}</span>
+    }
   </div>
 
   @if (loadingBookings) {
@@ -26,7 +29,7 @@
     </div>
   } @else {
     <div class="bookings-list">
-      @for (booking of myBookings; track booking.id) {
+      @for (booking of pagedBookings; track booking.id) {
         <div class="booking-card" [class.cancelled]="booking.status === 'Cancelled'">
           <div class="card-accent-strip" [class]="'accent-' + booking.status.toLowerCase()"></div>
           <div class="card-body">
@@ -112,6 +115,45 @@
         </div>
       }
     </div>
+
+    @if (totalItems > pageSize) {
+      <nav class="pagination" aria-label="Bookings pagination">
+        <button
+          class="pagination-btn"
+          type="button"
+          (click)="changePage(currentPage - 1)"
+          [disabled]="!hasPreviousPage"
+        >
+          Previous
+        </button>
+
+        <div class="pagination-pages">
+          @for (item of visiblePageItems; track item) {
+            @if (isPageNumber(item)) {
+              <button
+                class="pagination-page"
+                type="button"
+                [class.is-active]="item === currentPage"
+                (click)="changePage(item)"
+              >
+                {{ item }}
+              </button>
+            } @else {
+              <span class="pagination-ellipsis" aria-hidden="true">&hellip;</span>
+            }
+          }
+        </div>
+
+        <button
+          class="pagination-btn"
+          type="button"
+          (click)="changePage(currentPage + 1)"
+          [disabled]="!hasNextPage"
+        >
+          Next
+        </button>
+      </nav>
+    }
   }
 
   @if (enlargedQrId !== null && qrCodeMap[enlargedQrId]) {

@@ -31,3 +31,22 @@ export interface QrVerificationResult {
   totalPrice?: number;
   status?: string;
 }
+
+export interface EmployeeRecentVerification {
+  bookingId: number;
+  fishingSpotId: number;
+  fishingSpotName: string;
+  username: string;
+  verifiedAt: string;
+  startDate: string;
+  durationHours: number;
+}
+
+export interface EmployeeOverview {
+  assignedSpotsCount: number;
+  verifiedQrScansCount: number;
+  verifiedQrScansTodayCount: number;
+  verifiedGuestsCount: number;
+  activeAssignedBookingsCount: number;
+  recentVerifications: EmployeeRecentVerification[];
+}
