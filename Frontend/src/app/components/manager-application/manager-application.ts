@@ -75,7 +75,7 @@ export class ManagerApplicationPage implements OnInit, OnDestroy {
       this.router.navigate(['/login']);
       return;
     }
-    if (this.authService.isAdmin()) {
+    if (!this.authService.isUser()) {
       this.router.navigate(['/home']);
       return;
     }

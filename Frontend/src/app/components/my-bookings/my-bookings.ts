@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { BookingService } from '../../services/booking.service';
 import { AuthService } from '../../services/auth.service';
 import { Booking } from '../../models/booking.model';
+import { buildBookingQrPayload } from '../../shared/qr/booking-qr';
 import QRCode from 'qrcode';
 
 type PaginationItem = number | 'ellipsis-left' | 'ellipsis-right';
@@ -39,6 +40,11 @@ export class MyBookings implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    if (!this.authService.isUser()) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
     this.loadBookings();
   }
 
@@ -61,12 +67,7 @@ export class MyBookings implements OnInit {
   private async generateQrCodes(bookings: Booking[]): Promise<void> {
     for (const booking of bookings) {
       if (this.qrCodeMap[booking.id]) continue;
-      const content = JSON.stringify({
-        bookingId: booking.id,
-        token: booking.verificationToken || '',
-        spot: booking.fishingSpotName,
-        user: this.authService.getUsername()
-      });
+      const content = buildBookingQrPayload(booking, this.authService.getUsername());
       this.qrCodeMap[booking.id] = await QRCode.toDataURL(content, { width: 420, margin: 2 });
     }
   }

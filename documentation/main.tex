@@ -1,0 +1,69 @@
+\documentclass[12pt,a4paper,oneside]{report}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[romanian]{babel}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage{helvet}
+  \renewcommand{\familydefault}{\sfdefault}
+\else
+  \usepackage{fontspec}
+  \IfFontExistsTF{Calibri}{\setmainfont{Calibri}}{\setmainfont{TeX Gyre Heros}}
+\fi
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{url}
+\usepackage[numbers,sort&compress]{natbib}
+
+\geometry{margin=2.5cm}
+\singlespacing
+\hypersetup{
+  hidelinks,
+  pdftitle={WhereWeFishin - Fishing Experience Discovery Platform Enhanced by AI},
+  pdfauthor={De completat}
+}
+
+\setlist{itemsep=0.3em, topsep=0.4em}
+
+\title{WhereWeFishin - Fishing Experience Discovery Platform Enhanced by AI}
+\author{De completat}
+\date{Mai 2026}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  {\Large Instituție de învățământ superior\par}
+  \vspace{1.5cm}
+  {\large Facultate / Specializare\par}
+  \vfill
+  {\Huge \bfseries WhereWeFishin - Fishing Experience Discovery Platform Enhanced by AI\par}
+  \vspace{1.2cm}
+  {\Large Lucrare de licență / disertație\par}
+  \vfill
+  \begin{flushright}
+    \large
+    Absolvent: De completat\\
+    Coordonator: De completat
+  \end{flushright}
+  \vfill
+  {\large Mai 2026\par}
+\end{titlepage}
+
+\pagenumbering{roman}
+\tableofcontents
+\clearpage
+
+\pagenumbering{arabic}
+\include{chapters/01-introducere}
+\include{chapters/02-fundamente-si-tehnologii}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

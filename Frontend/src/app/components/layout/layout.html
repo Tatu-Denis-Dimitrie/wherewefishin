@@ -10,7 +10,7 @@
       </div>
       <span>WhereWeFishin</span>
     </div>
-    @if (!isEmployee) {
+    @if (isUser) {
       <a class="mobile-cart-btn" routerLink="/cart">
         <div class="cart-icon-wrapper">
           <app-icon name="cart" [size]="22"></app-icon>

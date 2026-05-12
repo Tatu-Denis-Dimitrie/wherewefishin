@@ -75,10 +75,12 @@
               <div class="hstat-value">{{ loadingAnalysisOverview ? '...' : userAnalysesCount }}</div>
               <div class="hstat-label">Analyses</div>
             </div>
-            <div class="hstat">
-              <div class="hstat-value">{{ userBookingsCount }}</div>
-              <div class="hstat-label">Bookings</div>
-            </div>
+            @if (isUser()) {
+              <div class="hstat">
+                <div class="hstat-value">{{ userBookingsCount }}</div>
+                <div class="hstat-label">Bookings</div>
+              </div>
+            }
             @if (isManager() || isAdmin()) {
               <div class="hstat">
                 <div class="hstat-value">{{ loadingSpots ? '...' : userSpotsCount }}</div>
@@ -95,7 +97,7 @@
           <app-icon name="dashboard" [size]="16"></app-icon>
           <span class="tab-label">Overview</span>
         </button>
-        @if (!isEmployee()) {
+        @if (isUser()) {
           <button class="tab-btn" [class.tab-active]="activeTab === 'bookings'" (click)="setTab('bookings')">
             <app-icon name="bookings" [size]="16"></app-icon>
             <span class="tab-label">Bookings</span>
@@ -199,15 +201,17 @@
                   </div>
                 </div>
 
-                <div class="stat-card">
-                  <div class="stat-icon-wrap sicon-purple">
-                    <app-icon name="bookings" [size]="20"></app-icon>
+                @if (isUser()) {
+                  <div class="stat-card">
+                    <div class="stat-icon-wrap sicon-purple">
+                      <app-icon name="bookings" [size]="20"></app-icon>
+                    </div>
+                    <div class="stat-text">
+                      <div class="stat-num">{{ userBookingsCount }}</div>
+                      <div class="stat-lbl">Active Bookings</div>
+                    </div>
                   </div>
-                  <div class="stat-text">
-                    <div class="stat-num">{{ userBookingsCount }}</div>
-                    <div class="stat-lbl">Active Bookings</div>
-                  </div>
-                </div>
+                }
 
                 @if (isManager() || isAdmin()) {
                   <div class="stat-card">
@@ -491,7 +495,7 @@
         }
 
         <!-- ── BOOKINGS TAB ── -->
-        @if (activeTab === 'bookings' && !isEmployee()) {
+        @if (activeTab === 'bookings' && isUser()) {
           <div class="tab-panel">
 
             @if (loadingBookings) {

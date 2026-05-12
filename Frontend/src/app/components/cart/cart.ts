@@ -100,6 +100,11 @@ export class Cart implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    if (!this.authService.isUser()) {
+      this.router.navigate(['/home']);
+      return;
+    }
+
     this.initCalendars();
     this.loadPaymentConfiguration();
   }
@@ -283,15 +288,27 @@ export class Cart implements OnInit, OnDestroy {
       isCustomDuration: !this.DURATIONS.includes(item.durationHours)
     };
 
-    if (item.durationHours > 24) {
-      const endDate = new Date(existing);
-      endDate.setHours(endDate.getHours() + item.durationHours);
-      state.rangeEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-    }
+    this.syncRangeEndDateForDuration(state, item.durationHours);
 
     this.calendarStates.set(this.itemKey(item), state);
     this.buildCalendar(this.itemKey(item));
     this.loadBookedPeriodsForItem(item, state);
+  }
+
+  private syncRangeEndDateForDuration(state: ItemCalendar, durationHours: number): void {
+    if (!state.rangeStartDate) {
+      state.rangeEndDate = null;
+      return;
+    }
+
+    const startDate = new Date(state.rangeStartDate);
+    startDate.setHours(state.selectedHour, 0, 0, 0);
+
+    const endDate = new Date(startDate.getTime() + durationHours * 3600000);
+    const rangeStart = this.normalizeToMidnight(startDate);
+    const rangeEnd = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+    state.rangeEndDate = rangeEnd.getTime() === rangeStart.getTime() ? null : rangeEnd;
   }
 
   private loadBookedPeriodsForItem(item: CartItem, state: ItemCalendar): void {
@@ -485,14 +502,7 @@ export class Cart implements OnInit, OnDestroy {
     const state = this.calendarStates.get(key);
     if (state) {
       state.isCustomDuration = false;
-      if (d > 24 && state.rangeStartDate) {
-        const startWithHour = new Date(state.rangeStartDate);
-        startWithHour.setHours(state.selectedHour, 0, 0, 0);
-        const endDate = new Date(startWithHour.getTime() + d * 3600000);
-        state.rangeEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-      } else {
-        state.rangeEndDate = null;
-      }
+      this.syncRangeEndDateForDuration(state, d);
       this.buildCalendar(key);
     }
     this.cartService.updateItem(item.spotId, { durationHours: d }, item.pontoonId);
@@ -514,14 +524,7 @@ export class Cart implements OnInit, OnDestroy {
     const state = this.calendarStates.get(key);
     if (state) {
       state.isCustomDuration = true;
-      if (h > 24 && state.rangeStartDate) {
-        const startWithHour = new Date(state.rangeStartDate);
-        startWithHour.setHours(state.selectedHour, 0, 0, 0);
-        const endDate = new Date(startWithHour.getTime() + h * 3600000);
-        state.rangeEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-      } else {
-        state.rangeEndDate = null;
-      }
+      this.syncRangeEndDateForDuration(state, h);
       this.buildCalendar(key);
     }
     this.cartService.updateItem(item.spotId, { durationHours: h }, item.pontoonId);
@@ -550,14 +553,18 @@ export class Cart implements OnInit, OnDestroy {
     const state = this.calendarStates.get(this.itemKey(item));
     if (!state) return;
     state.selectedHour = (state.selectedHour + 1) % 24;
+    this.syncRangeEndDateForDuration(state, item.durationHours);
     this.updateItemFromCalendar(item, state);
+    this.buildCalendar(this.itemKey(item));
   }
 
   decrementHour(item: CartItem): void {
     const state = this.calendarStates.get(this.itemKey(item));
     if (!state) return;
     state.selectedHour = (state.selectedHour - 1 + 24) % 24;
+    this.syncRangeEndDateForDuration(state, item.durationHours);
     this.updateItemFromCalendar(item, state);
+    this.buildCalendar(this.itemKey(item));
   }
 
   onTimeWheel(event: WheelEvent, item: CartItem): void {

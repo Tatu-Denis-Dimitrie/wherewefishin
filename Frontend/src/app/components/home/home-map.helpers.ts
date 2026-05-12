@@ -14,6 +14,15 @@ export interface HomePopupOptions {
   primaryActionLabel?: string;
 }
 
+function escapePopupHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export function createHomeSpotIcon(fillColor = '#4a7c30'): L.DivIcon {
   return L.divIcon({
     className: '',
@@ -42,13 +51,17 @@ export function createHomeSpotIcon(fillColor = '#4a7c30'): L.DivIcon {
 
 export function buildHomeSpotPopupContent(spot: HomePopupSpotData, options?: HomePopupOptions): string {
   const primaryActionLabel = options?.primaryActionLabel ?? 'Book Pontoon';
+  const safeName = escapePopupHtml(spot.name);
+  const safeDescription = spot.description ? escapePopupHtml(spot.description) : '';
+  const safeFishSpecies = spot.parsedFishSpecies.map(species => escapePopupHtml(species));
   const priceHtml = spot.pricePerHour > 0
-    ? `<div style="display:flex;align-items:center;gap:6px;margin:6px 0 2px">
-         <span style="background:#4a7c3022;color:#4a7c30;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #4a7c3044">${spot.pricePerHour} RON / h</span>
-       </div>`
-    : '';
+    ? `<span class="home-spot-popup__price-badge">${spot.pricePerHour} RON / h</span>`
+    : `<span class="home-spot-popup__price-badge home-spot-popup__price-badge--free">Free access</span>`;
   const fishHtml = spot.parsedFishSpecies.length > 0
-    ? `<div style="color:#93c5fd;font-size:11px;margin-bottom:6px;line-height:1.35">Fish: ${spot.parsedFishSpecies.join(', ')}</div>`
+    ? `<div class="home-spot-popup__section">
+         <span class="home-spot-popup__section-label">Fish species</span>
+         <div class="home-spot-popup__fish-list">${safeFishSpecies.map(species => `<span class="home-spot-popup__fish-pill">${species}</span>`).join('')}</div>
+       </div>`
     : '';
 
   const pontoonSvg = renderAppIconSvg('pontoons', {
@@ -63,16 +76,24 @@ export function buildHomeSpotPopupContent(spot: HomePopupSpotData, options?: Hom
     style: 'vertical-align:middle;margin-right:5px;margin-bottom:1px'
   });
 
-  let html = `<div style="min-width:195px;font-family:inherit">`;
-  html += `<div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:3px">${spot.name}</div>`;
-  if (spot.description) {
-    html += `<div style="color:#64748b;font-size:12px;margin-bottom:4px;line-height:1.4">${spot.description}</div>`;
-  }
+  let html = `<div class="home-spot-popup">`;
+  html += `<div class="home-spot-popup__header">`;
+  html += `<div class="home-spot-popup__title-row">`;
+  html += `<h3 class="home-spot-popup__title">${safeName}</h3>`;
   html += priceHtml;
+  html += `</div>`;
+  if (spot.description) {
+    html += `<p class="home-spot-popup__description">${safeDescription}</p>`;
+  }
+  html += `</div>`;
   html += fishHtml;
-  html += `<div style="color:#94a3b8;font-size:10px;margin-bottom:10px">${spot.latitude.toFixed(5)}, ${spot.longitude.toFixed(5)}</div>`;
-  html += `<button class="popup-book-btn" style="display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;background:#4a7c30;color:#fff;border:none;transition:filter .15s;">${pontoonSvg}${primaryActionLabel}</button>`;
-  html += `<button class="popup-route-btn" style="display:flex;align-items:center;justify-content:center;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;width:100%;margin-top:6px;background:#1e3a5f;color:#60a5fa;border:1px solid #2563eb55;transition:all .15s">${navSvg}Route on map</button>`;
+  html += `<div class="home-spot-popup__meta-row">`;
+  html += `<strong class="home-spot-popup__coordinates">${spot.latitude.toFixed(5)}, ${spot.longitude.toFixed(5)}</strong>`;
+  html += `</div>`;
+  html += `<div class="home-spot-popup__actions">`;
+  html += `<button class="popup-book-btn home-spot-popup__action home-spot-popup__action--primary">${pontoonSvg}${escapePopupHtml(primaryActionLabel)}</button>`;
+  html += `<button class="popup-route-btn home-spot-popup__action home-spot-popup__action--secondary">${navSvg}Route on map</button>`;
+  html += `</div>`;
   html += `</div>`;
   return html;
 }

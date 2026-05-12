@@ -661,7 +661,11 @@ export class FishingSpotDetail implements OnInit, OnDestroy {
   }
 
   canUseBookingTools(): boolean {
-    return !this.authService.isEmployee();
+    return this.authService.isUser();
+  }
+
+  showEmployeeCheckpoint(): boolean {
+    return this.authService.isEmployee();
   }
 
   setRating(rating: number): void {

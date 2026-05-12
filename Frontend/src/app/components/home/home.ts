@@ -20,6 +20,7 @@ import { ManagerApplicationService } from '../../services/manager-application.se
 import { EmployeeOverview, EmployeeRecentVerification } from '../../models/employee.model';
 import { AppIcon } from '../../shared/icons/app-icon';
 import { AppIconName } from '../../shared/icons/app-icon.registry';
+import { buildBookingQrPayload } from '../../shared/qr/booking-qr';
 import {
   buildFallbackUserLocationPopup,
   buildHomeSpotPopupContent,
@@ -356,7 +357,9 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
       }).bindPopup(buildHomeSpotPopupContent(spot, {
         primaryActionLabel: this.isEmployee() ? 'Open checkpoint' : 'Book Pontoon'
       }), {
-        maxWidth: 220,
+        className: 'home-spot-popup-frame',
+        maxWidth: 238,
+        offset: [16, -10],
         autoPanPaddingTopLeft: [16, 96],
         autoPanPaddingBottomRight: [16, 16]
       });
@@ -375,7 +378,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
         }
         const routeBtn = container?.querySelector<HTMLButtonElement>('.popup-route-btn');
         if (routeBtn) {
-          routeBtn.onclick = () => this.showRouteOnMap(spot);
+          routeBtn.onclick = () => this.showRouteOnMap(spot, true);
         }
       });
 
@@ -383,7 +386,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  showRouteOnMap(spot: FishingSpot): void {
+  showRouteOnMap(spot: FishingSpot, closePopupOnSuccess = false): void {
     const drawRoute = (origin: L.LatLng) => {
       this.routingService.getRoute(origin.lng, origin.lat, spot.longitude, spot.latitude).subscribe({
         next: (result) => {
@@ -407,6 +410,10 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
           };
 
           this.map.fitBounds(this.routeLayer.getBounds(), { padding: [50, 50] });
+
+          if (closePopupOnSuccess) {
+            this.map.closePopup();
+          }
         },
         error: () => this.showToast('Error calculating route', 'error')
       });
@@ -638,16 +645,7 @@ export class Home implements OnInit, AfterViewInit, OnDestroy {
 
     this.isSessionQrLoading = true;
     try {
-      const content = [
-        `WhereWeFishin - Booking #${booking.id}`,
-        `Username: ${this.authService.getUsername()}`,
-        `Booking ID: #${booking.id}`,
-        `Spot: ${booking.fishingSpotName}`,
-        `Start: ${new Date(booking.startDate).toLocaleString('en-US')}`,
-        `Duration: ${booking.durationHours}h`,
-        `Total: ${booking.totalPrice.toFixed(2)} RON`,
-        `Status: ${booking.status}`
-      ].join('\n');
+      const content = buildBookingQrPayload(booking, this.authService.getUsername());
 
       const { default: QRCode } = await import('qrcode');
       this.sessionQrCode = await QRCode.toDataURL(content, { width: 180, margin: 1 });

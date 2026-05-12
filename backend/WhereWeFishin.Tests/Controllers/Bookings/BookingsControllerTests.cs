@@ -134,6 +134,19 @@ public class BookingsControllerTests
     }
 
     [Fact]
+    public async Task GetMyBookings_WhenManager_ReturnsForbid()
+    {
+        // Arrange
+        SetupUser(userId: 7, role: Roles.Manager);
+
+        // Act
+        var result = await _controller.GetMyBookings();
+
+        // Assert
+        Assert.IsType<ForbidResult>(result.Result);
+    }
+
+    [Fact]
     public void GetPaymentConfiguration_WhenStripeIsDisabled_ReturnsStripeDisabled()
     {
         // Act
@@ -241,6 +254,24 @@ public class BookingsControllerTests
             24,
             240m,
             Arg.Any<int>());
+    }
+
+    [Fact]
+    public async Task CreateBooking_WhenManager_ReturnsForbid()
+    {
+        // Arrange
+        SetupUser(userId: 7, role: Roles.Manager);
+
+        // Act
+        var result = await _controller.CreateBooking(new CreateBookingDto
+        {
+            FishingSpotId = 1,
+            StartDate = DateTime.UtcNow.AddDays(1),
+            DurationHours = 24
+        });
+
+        // Assert
+        Assert.IsType<ForbidResult>(result.Result);
     }
 
     [Fact]
@@ -745,7 +776,7 @@ public class BookingsControllerTests
     }
 
     [Fact]
-    public async Task GetMyBookings_WhenSpotLookupFails_UsesUnknownSpotName()
+    public async Task GetMyBookings_WhenSpotLookupFails_UsesUnknownSpotNameAndIncludesVerificationToken()
     {
         // Arrange
         var session = CreateSession(id: 1, userId: 1, spotId: 99);
@@ -761,7 +792,7 @@ public class BookingsControllerTests
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
         var booking = Assert.Single(Assert.IsAssignableFrom<IEnumerable<BookingDto>>(okResult.Value));
         Assert.Equal("Unknown", booking.FishingSpotName);
-        Assert.Null(booking.VerificationToken);
+        Assert.Equal("hidden-token", booking.VerificationToken);
     }
 
     [Fact]

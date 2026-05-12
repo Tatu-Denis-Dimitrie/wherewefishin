@@ -423,7 +423,7 @@
               </button>
 
             </div>
-          } @else {
+          } @else if (showEmployeeCheckpoint()) {
             <h3 class="card-title">
               <app-icon name="qr" [size]="15"></app-icon>
               Employee Checkpoint
@@ -433,6 +433,17 @@
             <a routerLink="/scan-qr" class="btn-cart btn-cart-link">
               <app-icon name="qr" [size]="16"></app-icon>
               Open QR Scanner
+            </a>
+          } @else {
+            <h3 class="card-title">
+              <app-icon name="info" [size]="15"></app-icon>
+              Customer Booking Only
+            </h3>
+            <p class="free-note">Fishing session checkout is available only for standard user accounts.</p>
+            <p class="employee-access-note">Manager and admin accounts can review lake details, but cart and booking actions are disabled for this role.</p>
+            <a routerLink="/profile" class="btn-cart btn-cart-link">
+              <app-icon name="profile" [size]="16"></app-icon>
+              Open Profile
             </a>
           }
         </div>

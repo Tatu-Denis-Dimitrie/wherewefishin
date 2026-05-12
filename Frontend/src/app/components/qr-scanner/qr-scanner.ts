@@ -4,6 +4,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { EmployeeService } from '../../services/employee.service';
 import { QrVerificationResult, SpotEmployee } from '../../models/employee.model';
 import { AppIcon } from '../../shared/icons/app-icon';
+import { parseBookingQrPayload } from '../../shared/qr/booking-qr';
 
 @Component({
   selector: 'app-qr-scanner',
@@ -92,18 +93,9 @@ export class QrScanner implements OnInit, OnDestroy {
     this.result = null;
     this.errorMessage = '';
 
-    let data: { bookingId: number; token: string } | null = null;
-    try {
-      data = JSON.parse(decodedText);
-    } catch {
+    const data = parseBookingQrPayload(decodedText);
+    if (!data) {
       this.errorMessage = 'Invalid QR code format.';
-      this.verifying = false;
-      this.stopScanner();
-      return;
-    }
-
-    if (!data || !data.bookingId || !data.token) {
-      this.errorMessage = 'QR code is not valid for this application.';
       this.verifying = false;
       this.stopScanner();
       return;

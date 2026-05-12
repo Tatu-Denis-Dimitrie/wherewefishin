@@ -99,21 +99,19 @@ export class Profile implements OnInit {
     this.loadUserProfile();
     this.loadRoleSpecificData();
 
-    if (this.authService.isEmployee()) {
-      this.recentBookings = [];
-      this.pagedBookings = [];
-      this.userBookingsCount = 0;
-      this.loadingBookings = false;
-      this.bookingsTotalItems = 0;
-      this.bookingsTotalPages = 0;
-      this.hasPreviousBookingsPage = false;
-      this.hasNextBookingsPage = false;
-    } else {
+    if (this.authService.isUser()) {
       this.loadBookings();
+    } else {
+      this.resetBookingsState();
     }
   }
 
   setTab(tab: ProfileTab): void {
+    if (tab === 'bookings' && !this.isUser()) {
+      this.activeTab = 'overview';
+      return;
+    }
+
     this.activeTab = tab;
   }
 
@@ -130,12 +128,7 @@ export class Profile implements OnInit {
       },
       error: () => {
         this.loadingBookings = false;
-        this.recentBookings = [];
-        this.pagedBookings = [];
-        this.bookingsTotalItems = 0;
-        this.bookingsTotalPages = 0;
-        this.hasPreviousBookingsPage = false;
-        this.hasNextBookingsPage = false;
+        this.resetBookingsState();
       }
     });
   }
@@ -495,11 +488,11 @@ export class Profile implements OnInit {
   }
 
   isManager(): boolean {
-    return this.user?.role === 'Manager';
+    return this.user?.role === 'Manager' || this.authService.isManager();
   }
 
   isUser(): boolean {
-    return this.user?.role === 'User';
+    return this.user?.role === 'User' || this.authService.isUser();
   }
 
   isEmployee(): boolean {
@@ -583,6 +576,18 @@ export class Profile implements OnInit {
 
   formatPrice(price: number): string {
     return price.toLocaleString('en-US', { style: 'currency', currency: 'RON', maximumFractionDigits: 0 });
+  }
+
+  private resetBookingsState(): void {
+    this.recentBookings = [];
+    this.pagedBookings = [];
+    this.userBookingsCount = 0;
+    this.loadingBookings = false;
+    this.currentBookingsPage = 1;
+    this.bookingsTotalItems = 0;
+    this.bookingsTotalPages = 0;
+    this.hasPreviousBookingsPage = false;
+    this.hasNextBookingsPage = false;
   }
 
   private formatCountLabel(count: number, singular: string, plural = `${singular}s`): string {

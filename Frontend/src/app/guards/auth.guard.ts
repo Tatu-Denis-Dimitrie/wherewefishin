@@ -28,6 +28,13 @@ export const managerGuard: CanActivateFn = () => {
   return false;
 };
 
+export const userGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  if (authService.isUser()) return true;
+  return router.createUrlTree(['/home']);
+};
+
 export const employeeGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);

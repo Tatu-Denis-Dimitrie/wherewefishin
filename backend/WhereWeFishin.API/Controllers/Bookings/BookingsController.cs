@@ -58,7 +58,7 @@ public class BookingsController : ControllerBase
         if (userId == null) return Unauthorized();
 
         var sessions = await _sessionRepository.FindAsync(s => s.UserId == userId.Value);
-        return Ok(await MapSessionsToDtos(sessions));
+        return Ok(await MapSessionsToDtos(sessions, includeVerificationToken: true));
     }
 
     [HttpGet("manager/today-summary")]
@@ -102,7 +102,7 @@ public class BookingsController : ControllerBase
     public async Task<ActionResult<IEnumerable<BookingDto>>> GetAllBookings()
     {
         var sessions = await _sessionRepository.GetAllAsync();
-        return Ok(await MapSessionsToDtos(sessions));
+        return Ok(await MapSessionsToDtos(sessions, includeVerificationToken: true));
     }
 
     [HttpPost("payment-intent")]
@@ -287,7 +287,7 @@ public class BookingsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<BookingDto>> GetBooking(int id)
     {
-        var accessError = EnsureBookingCustomerAccess();
+        var accessError = EnsureBookingCustomerAccess(allowAdminOverride: true);
         if (accessError != null) return accessError;
 
         var userId = User.GetUserId();
@@ -306,13 +306,13 @@ public class BookingsController : ControllerBase
         {
             pontoon = await _pontoonRepository.GetByIdAsync(session.PontoonId.Value);
         }
-        return Ok(MapToDto(session, spot?.Name ?? "Unknown", pontoon?.Name));
+        return Ok(MapToDto(session, spot?.Name ?? "Unknown", pontoon?.Name, includeVerificationToken: isAdmin));
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> CancelBooking(int id)
     {
-        var accessError = EnsureBookingCustomerAccess();
+        var accessError = EnsureBookingCustomerAccess(allowAdminOverride: true);
         if (accessError != null) return accessError;
 
         var userId = User.GetUserId();
@@ -439,18 +439,24 @@ public class BookingsController : ControllerBase
     private static bool MetadataMatches(IDictionary<string, string> metadata, string key, string expected)
         => metadata.TryGetValue(key, out var value) && string.Equals(value ?? string.Empty, expected, StringComparison.Ordinal);
 
-    private ActionResult? EnsureBookingCustomerAccess()
+    private ActionResult? EnsureBookingCustomerAccess(bool allowAdminOverride = false)
     {
-        if (User.IsInRole(Roles.Employee))
-            return Forbid();
+        if (HttpContext?.User?.Identity?.IsAuthenticated != true)
+            return null;
 
-        return null;
+        if (User.IsInRole(Roles.User))
+            return null;
+
+        if (allowAdminOverride && User.IsInRole(Roles.Admin))
+            return null;
+
+        return Forbid();
     }
 
     private static long ToStripeAmount(decimal amount)
         => Convert.ToInt64(decimal.Round(amount * 100m, 0, MidpointRounding.AwayFromZero));
 
-    private async Task<IEnumerable<BookingDto>> MapSessionsToDtos(IEnumerable<FishingSession> sessions)
+    private async Task<IEnumerable<BookingDto>> MapSessionsToDtos(IEnumerable<FishingSession> sessions, bool includeVerificationToken = false)
     {
         var spotIds = sessions.Select(s => s.FishingSpotId).Distinct().ToHashSet();
         var pontoonIds = sessions.Where(s => s.PontoonId.HasValue).Select(s => s.PontoonId!.Value).Distinct().ToHashSet();
@@ -463,11 +469,14 @@ public class BookingsController : ControllerBase
 
         return sessions
             .OrderByDescending(s => s.CreatedAt)
-            .Select(s => MapToDto(s, spotMap.GetValueOrDefault(s.FishingSpotId, "Unknown"),
-                                     s.PontoonId.HasValue ? pontoonMap.GetValueOrDefault(s.PontoonId.Value) : null));
+            .Select(s => MapToDto(
+                s,
+                spotMap.GetValueOrDefault(s.FishingSpotId, "Unknown"),
+                s.PontoonId.HasValue ? pontoonMap.GetValueOrDefault(s.PontoonId.Value) : null,
+                includeVerificationToken));
     }
 
-    private BookingDto MapToDto(FishingSession session, string spotName, string? pontoonName = null) => new()
+    private BookingDto MapToDto(FishingSession session, string spotName, string? pontoonName = null, bool includeVerificationToken = false) => new()
     {
         Id = session.Id,
         UserId = session.UserId,
@@ -479,7 +488,7 @@ public class BookingsController : ControllerBase
         DurationHours = session.DurationHours,
         TotalPrice = session.TotalPrice,
         Status = session.Status.ToString(),
-        VerificationToken = User.IsInRole(Roles.Admin) ? session.VerificationToken : null,
+        VerificationToken = includeVerificationToken ? session.VerificationToken : null,
         CreatedAt = session.CreatedAt
     };
 }

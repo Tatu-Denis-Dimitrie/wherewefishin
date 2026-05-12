@@ -35,6 +35,7 @@ export class Layout implements OnInit, OnDestroy {
   isAdmin = false;
   isEmployee = false;
   isManager = false;
+  isUser = false;
   isAdminRoute = false;
   isSpotManagerRoute = false;
   managerSpotId: number | null = null;
@@ -54,6 +55,7 @@ export class Layout implements OnInit, OnDestroy {
     this.isAdmin = this.authService.isAdmin();
     this.isEmployee = this.authService.isEmployee();
     this.isManager = this.authService.isManagerOrAdmin();
+    this.isUser = this.authService.isUser();
     this.updateRouteState(this.router.url);
     this.refreshNavigationItems();
 
@@ -94,7 +96,7 @@ export class Layout implements OnInit, OnDestroy {
   }
 
   private refreshNavigationItems(): void {
-    const canUseCustomerFlows = !this.isEmployee;
+    const canUseCustomerFlows = this.isUser;
 
     const primaryItems: LayoutNavItem[] = [
       { key: 'home', label: 'Map', route: '/home', icon: 'map', exact: true },
