@@ -1,0 +1,119 @@
+\chapter{Implementare și contribuții personale}
+
+Acest capitol descrie modul în care soluția propusă în capitolele anterioare a fost transpusă într-un sistem software funcțional. Dacă în capitolul precedent accentul a fost pus pe cerințe, reguli de business și decizii de proiectare, în continuare interesul este orientat spre implementarea propriu-zisă a componentelor principale ale platformei WhereWeFishin. Scopul acestui capitol nu este prezentarea exhaustivă a codului sursă, ci evidențierea modulelor dezvoltate, a alegerilor tehnice adoptate și a contribuțiilor personale care au făcut posibilă integrarea coerentă a unei aplicații multi-rol, geospațiale și asistate de inteligență artificială.
+
+Din punct de vedere structural, implementarea este prezentată pe straturi tehnice. Mai întâi este analizată arhitectura implementată și modul în care frontend-ul, backend-ul, persistența și serviciul de analiză media comunică între ele. Ulterior sunt detaliate componentele backend care concentrează regulile de business, apoi componentele frontend care construiesc experiența utilizatorului și, separat, infrastructura de procesare media bazată pe Python, YOLO și ByteTrack. În interiorul fiecărei secțiuni sunt integrate explicit acele decizii care reflectă contribuția personală a autorului, atât la nivel de proiectare tehnică, cât și la nivel de implementare efectivă.
+
+\section{Arhitectura implementată a soluției}
+
+Implementarea aplicației WhereWeFishin urmează o structură distribuită pe componente cu responsabilități bine delimitate. Interfața utilizatorului este construită ca aplicație web de tip SPA în Angular, backend-ul este realizat ca API HTTP în ASP.NET Core, persistența este gestionată prin Entity Framework Core și o bază de date relațională, iar funcționalitățile de analiză media sunt externalizate într-un serviciu Python separat. O astfel de separare a fost adoptată pentru a permite evoluția independentă a modulelor, pentru a reduce cuplarea dintre zonele cu cerințe tehnice diferite și pentru a păstra claritatea codului în jurul unor responsabilități bine definite.
+
+În implementarea efectivă, frontend-ul preia interacțiunea directă cu utilizatorul: autentificarea, explorarea hărții, vizualizarea locurilor de pescuit, rezervarea, administrarea și afișarea rezultatelor analizelor media. Backend-ul are rolul de a valida cererile, de a aplica regulile de business, de a impune autorizarea și de a coordona comunicarea cu sistemele externe. În spatele acestui strat se află modelul de date și depozitele de persistență, iar pentru zona de analiză media se folosește un serviciu Python separat, capabil să gestioneze inferență și post-procesare fără a încărca inutil API-ul principal.
+
+Contribuția personală este vizibilă aici prin alegerea unei arhitecturi care separă operațiile tranzacționale uzuale de prelucrarea media costisitoare. În locul unei abordări monolitice, a fost implementată o comunicare explicită între frontend, API și serviciul de analiză, ceea ce a simplificat atât dezvoltarea incrementală, cât și depanarea fluxurilor complexe.
+
+\section{Implementarea backend-ului}
+
+Backend-ul reprezintă nucleul logic al aplicației și zona în care sunt concentrate majoritatea regulilor de business. Implementarea sa este construită în jurul unor controllere specializate, a unor servicii reutilizabile și a unui strat de persistență bazat pe repository-uri. În practică, această structură a permis separarea logicii de transport HTTP de logica domeniului și de accesul la date, reducând duplicarea și simplificând testarea unor comportamente cheie.
+
+Un rol important îl are configurația generală a aplicației, unde sunt definite autentificarea JWT, limitarea dimensiunii cererilor, compresia răspunsurilor, politicile CORS, rate limiting-ul pentru endpoint-urile sensibile și clienții HTTP necesari integrării cu serviciul de analiză media. Această zonă a implementării este relevantă deoarece arată că backend-ul nu tratează doar operații CRUD, ci gestionează și preocupări transversale precum securitatea, performanța și interoperabilitatea.
+
+\subsection{Autentificare, autorizare și controlul accesului}
+
+Modulul de autentificare a fost implementat pentru a răspunde cerinței de separare clară a rolurilor și de protejare a operațiilor sensibile. La nivel de API, autentificarea este bazată pe tokenuri JWT, iar la nivel de cod accesul la resurse este controlat prin claims și prin reguli de autorizare reutilizabile. Alegerea acestei soluții a permis menținerea unui model coerent pentru toate tipurile de utilizatori și a redus cuplarea dintre controllere și detaliile privind identitatea curentă.
+
+În implementarea concretă, endpoint-urile de autentificare gestionează înregistrarea, autentificarea, verificarea tokenului și fluxurile de recuperare a accesului. Rata cererilor către aceste endpoint-uri este limitată pentru a reduce riscul de abuz, iar informațiile despre utilizator sunt extrase centralizat din claims, evitând repetarea logicii în fiecare controller. O decizie importantă a fost introducerea unor extensii de autorizare pentru resursele dependente de un loc de pescuit, astfel încât verificarea dreptului de administrare să poată fi refolosită în module diferite, precum pontoanele, angajații sau stocările privind repopularea.
+
+Contribuția personală în această zonă se reflectă în faptul că mecanismele de autorizare nu au fost tratate ca excepții locale în fiecare flux, ci au fost centralizate în extensii și reguli clare. Această organizare a făcut posibilă extinderea aplicației cu noi module fără a duplica logica de acces.
+
+\subsection{Locuri de pescuit, pontoane și organizarea resurselor}
+
+Implementarea locurilor de pescuit reprezintă unul dintre modulele centrale ale backend-ului, deoarece aproape toate fluxurile importante pornesc din această entitate. Controllerul dedicat gestionează listarea, filtrarea și administrarea locațiilor, iar datele sunt interogate diferențiat în funcție de rolul utilizatorului. O decizie relevantă a fost mutarea filtrării autorizate cât mai aproape de nivelul interogării, astfel încât datele să nu fie încărcate integral și filtrate ulterior doar la nivel de răspuns.
+
+Pentru modelarea subzonelor rezervabile a fost implementat și modulul de pontoane. Acesta permite asocierea unor zone distincte unui loc de pescuit și păstrează o legătură directă între componenta geospațială din interfață și regulile de disponibilitate din backend. În practică, pontonul devine astfel o resursă rezervabilă explicită și nu doar o informație descriptivă. Această abordare a fost importantă pentru a susține scenarii reale în care o locație conține mai multe spații distincte cu disponibilitate independentă.
+
+Contribuția personală este vizibilă aici prin modelarea coerentă a relației dintre entitatea principală și subzonele rezervabile, precum și prin reutilizarea acelorași reguli de autorizare pentru toate operațiile de administrare a resurselor asociate unui loc de pescuit.
+
+\subsection{Workflow-ul de aplicare pentru manager}
+
+Unul dintre cele mai relevante module implementate este fluxul de aplicare pentru rolul de manager. În locul unei creări directe a unui nou loc de pescuit, aplicația introduce un proces controlat în care un utilizator transmite datele unei locații propuse, iar administratorul decide aprobarea sau respingerea cererii. Implementarea acestui workflow a necesitat definirea explicită a stărilor aplicației, păstrarea istoricului de evaluare și asocierea clară dintre decizia administrativă și crearea efectivă a resursei în sistem.
+
+La nivel de cod, controllerul dedicat gestionează crearea cererii, actualizarea ei în condiții controlate, retransmiterea după respingere și aprobarea finală. O decizie tehnică importantă a fost limitarea tranzițiilor de stare, pentru a evita inconsistențe precum editarea unei cereri deja aprobate sau dublarea cererilor active pentru același utilizator. În plus, entitatea aplicației păstrează informații despre administratorul care a evaluat cererea, momentul evaluării și motivul respingerii, ceea ce oferă trasabilitate și face fluxul auditabil.
+
+Această zonă reprezintă o contribuție personală puternică deoarece combină model de domeniu, reguli de business și guvernanță operațională. Implementarea nu este doar tehnică, ci reflectă modul în care platforma poate crește controlat prin validarea administrativă a noilor locații.
+
+\subsection{Rezervări, sesiuni de pescuit și integrarea plății}
+
+Fluxul de rezervare este unul dintre cele mai dense din punct de vedere al logicii de business. La nivel de implementare, sistemul nu creează pur și simplu o înregistrare de tip rezervare, ci validează locul de pescuit, verifică disponibilitatea pentru intervalul ales, corelează opțional un ponton, calculează costul și tratează separat integrarea plății. Această structură a fost aleasă pentru a menține controlul asupra conflictelor temporale și pentru a reduce riscul de suprapuneri sau înregistrări incoerente.
+
+O parte importantă a implementării este legătura cu Stripe. În loc de a amesteca direct logica de plată cu persistența sesiunii finale, a fost adoptată o abordare în care se generează un \emph{PaymentIntent} care păstrează metadate relevante despre utilizator, locație și interval. Această separare oferă o bază mai sigură pentru corelarea plății cu sesiunea de pescuit și pentru evitarea unor erori de sincronizare. În paralel, modelul intern al sesiunii normalizează temporal datele și păstrează o stare explicită, precum \emph{Pending}, \emph{Confirmed} sau \emph{Cancelled}, ceea ce face posibilă urmărirea ciclului de viață al rezervării.
+
+Contribuția personală în acest modul este dată de integrarea coerentă a regulilor de disponibilitate, a modelului de sesiune și a unei plăți externe fără a pierde consistența internă a datelor. Fluxul rezultat este unul controlat, extensibil și potrivit pentru scenarii reale de utilizare.
+
+\subsection{Angajați, recenzii și servicii auxiliare}
+
+Pe lângă modulele centrale, backend-ul include și componente care completează ecosistemul operațional al aplicației. Modulul pentru angajați permite asocierea utilizatorilor la locuri de pescuit, creând astfel o delegare controlată a unor operații fără a ridica privilegiile la nivel de manager sau administrator. Sistemul de recenzii introduce feedback din partea utilizatorilor și agregă informații utile pentru descoperirea locațiilor, iar în jurul acestor fluxuri sunt integrate mecanisme auxiliare precum caching-ul răspunsurilor și trimiterea de email-uri.
+
+O decizie importantă a fost ca serviciile auxiliare să nu blocheze fluxurile critice. De exemplu, dacă trimiterea unui email eșuează, operația principală nu este anulată. În mod similar, datele des citite, precum recenziile, pot beneficia de caching și de invalidare explicită atunci când sunt modificate. Contribuția personală în această zonă constă în transformarea unor funcții aparent secundare într-o infrastructură stabilă, care îmbunătățește experiența utilizatorului fără a compromite robustețea sistemului.
+
+\section{Implementarea frontend-ului}
+
+Frontend-ul WhereWeFishin a fost implementat ca o aplicație Angular modernă, bazată pe componente standalone, routing cu încărcare lazy și guard-uri funcționale. Această alegere a permis organizarea interfeței în jurul unor zone funcționale clare și a simplificat separarea fluxurilor destinate utilizatorului obișnuit, managerului, angajatului și administratorului. Din punct de vedere tehnic, interfața nu este doar o reprezentare vizuală a datelor, ci un strat care orchestrează interacțiunea utilizatorului cu harta, rezervările, plățile, verificările și analiza media.
+
+\subsection{Structura aplicației SPA și controlul accesului în interfață}
+
+La baza implementării frontend-ului se află structura traseelor și a guard-urilor funcționale. Fiecare zonă importantă a aplicației este încărcată lazy și este protejată în funcție de rolul utilizatorului. Această organizare a redus costul inițial de încărcare și a făcut explicită corespondența dintre fluxurile din interfață și modelul de autorizare din backend. În plus, configurarea interceptorilor HTTP a permis atașarea automată a tokenului JWT și tratarea controlată a unor erori recurente, precum expirarea autentificării sau nevoia de retry.
+
+Contribuția personală este vizibilă aici prin modul în care logica de acces a fost distribuită între rutare, guard-uri și interceptoare, astfel încât comportamentul interfeței să rămână coerent cu regulile de securitate impuse de API.
+
+\subsection{Harta interactivă și explorarea locurilor de pescuit}
+
+Una dintre cele mai importante componente frontend este pagina principală de explorare, construită în jurul unei hărți interactive. Implementarea acestei zone a trebuit să combine date despre locații, geolocalizarea utilizatorului, rutarea pe hartă, informațiile despre specii și interacțiunea cu elemente de tip marker și popup. Pentru aceasta au fost dezvoltate helpers dedicați pentru marker-ele personalizate, pentru stilizarea elementelor geografice și pentru construirea ferestrelor informative într-un mod reutilizabil.
+
+Din perspectiva experienței utilizatorului, harta funcționează ca punct de intrare în platformă. Utilizatorul poate identifica rapid locațiile disponibile, poate vedea proximitatea față de poziția curentă și poate decide ce loc de pescuit merită explorat mai departe. Contribuția personală constă în integrarea coerentă a componentei Leaflet cu datele reale ale aplicației și în transformarea hărții dintr-un simplu element vizual într-un instrument central de navigare și descoperire.
+
+\subsection{Coșul, calendarul și integrarea Stripe în interfață}
+
+Fluxul de rezervare are o componentă frontend complexă, deoarece utilizatorul trebuie să poată selecta intervale, să observe zilele ocupate, să combine mai multe elemente în coș și să finalizeze plata într-un mod controlat. Pentru această zonă a fost implementat un calendar capabil să evidențieze perioade rezervate, să trateze intervale parțiale și să blocheze selecțiile invalide. În paralel, integrarea Stripe din interfață încarcă dinamic elementele necesare plății și menține separată logica de confirmare a tranzacției de logica afișării.
+
+Contribuția personală este dată de rezolvarea unor probleme practice de UX și stare: menținerea unei vizualizări clare a indisponibilităților, evitarea selecțiilor incorecte și corelarea coerentă dintre formularul de rezervare și răspunsurile backend-ului privind disponibilitatea și plata.
+
+\subsection{Wizard-ul de aplicare pentru manager și dashboard-ul operațional}
+
+Zona de manager include două componente cu valoare tehnică ridicată. Prima este wizard-ul de aplicare, organizat pe mai mulți pași, care combină date descriptive, alegerea locației pe hartă și o revizuire finală înainte de trimitere. A doua este dashboard-ul managerului, unde sunt reunite administrarea pontoanelor, gestionarea angajaților, actualizarea datelor locației și vizualizarea unor informații operaționale.
+
+Implementarea dashboard-ului managerului este relevantă deoarece concentrează mai multe subfluxuri într-o interfață unitară. Aici se vede legătura directă dintre modelul de date, regulile de business și reprezentarea lor în UI. Contribuția personală constă în construirea unei interfețe capabile să deservească activități operaționale reale, nu doar scenarii demonstrative, precum și în corelarea acesteia cu API-urile de autorizare și administrare existente în backend.
+
+\subsection{Verificarea prin cod QR și funcțiile administrative}
+
+Un flux aparte implementat în frontend este verificarea sesiunilor prin cod QR. Componenta dedicată folosește camera dispozitivului pentru citirea codului și tratează payload-ul rezervării într-o formă suficient de tolerantă pentru a gestiona variații ale structurii datelor. Acest lucru a fost important pentru a permite un flux de verificare rapid și robust în contextul utilizării pe dispozitive mobile.
+
+În paralel, zona administrativă oferă funcții de supraveghere asupra utilizatorilor, locațiilor și aplicațiilor de manager. Chiar dacă aceste operații sunt mai apropiate de administrarea internă decât de experiența utilizatorului final, implementarea lor în aceeași aplicație frontend a necesitat o separare clară a permisiunilor și a traseelor. Contribuția personală în această zonă este dată de integrarea uniformă a mai multor tipuri de fluxuri într-o singură aplicație SPA, fără a pierde coerența navigării și a modelului de acces.
+
+\section{Implementarea sistemului de analiză media}
+
+Sistemul de analiză media reprezintă componenta care diferențiază cel mai puternic proiectul WhereWeFishin de o aplicație web convențională de rezervări. Implementarea sa presupune colaborarea dintre trei straturi: interfața Angular, backend-ul .NET care orchestrează fluxul și persistă rezultatele, și serviciul Python care execută efectiv analiza. Această separare a fost necesară deoarece procesarea media implică dependențe, timpi de răspuns și constrângeri hardware diferite de restul sistemului.
+
+\subsection{Integrarea dintre backend și serviciul Python}
+
+La nivel de backend, componenta de analiză media este coordonată de un serviciu dedicat care trimite fișierele către aplicația Python, interpretează răspunsul și actualizează entitățile persistente asociate analizelor video și imaginilor. Controller-ele expun endpoint-uri pentru încărcare, listare, detaliere și ștergere, păstrând în același timp reguli clare de autorizare pentru accesul la rezultatele personale sau administrative.
+
+O decizie relevantă a fost introducerea unor stări explicite pentru analiză, precum \emph{Pending}, \emph{Processing}, \emph{Completed} și \emph{Failed}. Aceste stări permit urmărirea ciclului de viață al unei procesări și oferă frontend-ului o bază clară pentru polling și afișarea rezultatelor. Contribuția personală este evidentă în această orchestrare, deoarece ea transformă un apel extern către un serviciu de viziune artificială într-un flux controlat, persistent și ușor de integrat în restul aplicației.
+
+\subsection{Pipeline-ul video: detecție, tracking și post-procesare}
+
+În serviciul Python, analiza video pornește de la încărcarea modelului YOLO și de la configurarea tracker-ului ByteTrack. Fiecare cadru video este parcurs pentru detectarea obiectelor relevante, iar identitatea peștilor este urmărită între cadre pentru a evita contorizarea multiplă a aceluiași exemplar. În plus, sunt păstrate traiectorii vizuale ale obiectelor detectate, iar rezultatul final este reîncodat pentru a putea fi servit eficient în interfața web.
+
+Această parte a implementării este importantă deoarece combină considerente de performanță, consistență a rezultatelor și interpretabilitate vizuală. Contribuția personală se reflectă în configurarea pragurilor de încredere, în alegerea mecanismului de trail și în legătura dintre rezultatele brute ale modelului și forma în care ele sunt stocate și afișate ulterior în aplicație.
+
+\subsection{Afișarea rezultatelor în frontend și tratarea stării asincrone}
+
+În frontend, modulele pentru recunoaștere video și clasificare pe imagini trebuie să gestioneze nu doar upload-ul fișierelor, ci și o stare asincronă care evoluează în timp. Din acest motiv, a fost implementat un mecanism de polling pentru verificarea rezultatelor, iar interfața tratează separat stările de așteptare, succes și eroare. Pentru zona video au fost introduse și optimizări precum încărcarea întârziată a elementelor media și paginarea listelor de rezultate, astfel încât interfața să rămână utilizabilă chiar și în prezența unor analize numeroase.
+
+Contribuția personală este dată aici de conectarea consecventă a stărilor persistente din backend cu mecanismele de feedback din interfață. În locul unei integrări minimale de tip upload-răspuns, a fost construit un flux complet care gestionează sănătatea serviciului, așteptarea rezultatului și prezentarea sa într-o formă utilă pentru utilizator.
+
+\section{Sinteza capitolului}
+
+Implementarea platformei WhereWeFishin arată modul în care o soluție analizată anterior la nivel de cerințe și proiectare poate fi transpusă într-un sistem coerent, multi-strat și orientat spre utilizare reală. Backend-ul concentrează regulile de business, controlul accesului și integrarea serviciilor externe, frontend-ul construiește experiența utilizatorului și organizația fluxurilor operaționale, iar serviciul de analiză media extinde aplicația cu o componentă de viziune artificială separată, dar integrată controlat.
+
+Contribuția personală se reflectă în toate aceste zone: în proiectarea și implementarea workflow-ului pentru manageri, în formalizarea rezervărilor și a plăților, în construirea unei interfețe geospațiale și operaționale consistente și în integrarea unui pipeline AI capabil să proceseze atât imagini, cât și videoclipuri. Pe această bază, capitolul următor poate analiza comportamentul sistemului în scenarii concrete de testare și evaluare.

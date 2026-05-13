@@ -1,0 +1,94 @@
+\begin{thebibliography}{15}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[jwt(2015)]{jwt}
+Json web token (jwt).
+\newblock \url{https://datatracker.ietf.org/doc/html/rfc7519}, 2015.
+\newblock RFC 7519. Accesat la 09 mai 2026.
+
+\bibitem[ang(2026{\natexlab{a}})]{anglr}
+Anglr.
+\newblock \url{https://anglr.com/}, 2026{\natexlab{a}}.
+\newblock Pagină oficială a platformei. Accesat la 09 mai 2026.
+
+\bibitem[ang(2026{\natexlab{b}})]{angular}
+Angular.
+\newblock \url{https://angular.dev/}, 2026{\natexlab{b}}.
+\newblock Documentație oficială Angular. Accesat la 09 mai 2026.
+
+\bibitem[asp(2026)]{aspnetcore}
+Asp.net core documentation.
+\newblock \url{https://learn.microsoft.com/en-us/aspnet/core/}, 2026.
+\newblock Documentație oficială Microsoft pentru aplicații și servicii web
+  ASP.NET Core. Accesat la 09 mai 2026.
+
+\bibitem[efc(2026)]{efcore}
+Entity framework core documentation.
+\newblock \url{https://learn.microsoft.com/en-us/ef/core/}, 2026.
+\newblock Documentație oficială Microsoft pentru Entity Framework Core.
+  Accesat la 09 mai 2026.
+
+\bibitem[ffm(2026)]{ffmpeg}
+Ffmpeg documentation.
+\newblock \url{https://ffmpeg.org/documentation.html}, 2026.
+\newblock Documentație oficială FFmpeg. Accesat la 09 mai 2026.
+
+\bibitem[fis(2026{\natexlab{a}})]{fishangler}
+Fishangler.
+\newblock \url{https://www.fishangler.com/}, 2026{\natexlab{a}}.
+\newblock Pagină oficială a platformei. Accesat la 09 mai 2026.
+
+\bibitem[fis(2026{\natexlab{b}})]{fishbrain}
+Fishbrain.
+\newblock \url{https://fishbrain.com/}, 2026{\natexlab{b}}.
+\newblock Pagină oficială a platformei. Accesat la 09 mai 2026.
+
+\bibitem[fla(2026)]{flask}
+Flask documentation.
+\newblock \url{https://flask.palletsprojects.com/}, 2026.
+\newblock Documentație oficială pentru framework-ul Flask. Accesat la 09 mai
+  2026.
+
+\bibitem[lea(2026)]{leaflet}
+Leaflet.
+\newblock \url{https://leafletjs.com/}, 2026.
+\newblock Bibliotecă open-source pentru hărți interactive. Accesat la 09 mai
+  2026.
+
+\bibitem[ope(2026)]{opencv}
+Opencv documentation.
+\newblock \url{https://docs.opencv.org/}, 2026.
+\newblock Documentație oficială pentru biblioteca OpenCV. Accesat la 09 mai
+  2026.
+
+\bibitem[sql(2026)]{sqlserver}
+Sql server documentation.
+\newblock \url{https://learn.microsoft.com/en-us/sql/sql-server/}, 2026.
+\newblock Documentație oficială Microsoft pentru SQL Server. Accesat la 09
+  mai 2026.
+
+\bibitem[str(2026)]{stripe}
+Stripe documentation.
+\newblock \url{https://docs.stripe.com/}, 2026.
+\newblock Documentație oficială pentru integrarea plăților online. Accesat
+  la 09 mai 2026.
+
+\bibitem[ult(2026)]{ultralytics}
+Ultralytics yolo documentation.
+\newblock \url{https://docs.ultralytics.com/}, 2026.
+\newblock Documentație oficială pentru ecosistemul Ultralytics YOLO. Accesat
+  la 09 mai 2026.
+
+\bibitem[Zhang et~al.(2022)Zhang, Sun, Jiang, Yu, Weng, Yuan, Luo, Liu, and
+  Wang]{zhang2022bytetrack}
+Yifu Zhang, Peize Sun, Yi~Jiang, Dongdong Yu, Fucheng Weng, Zehuan Yuan, Ping
+  Luo, Wenyu Liu, and Xinggang Wang.
+\newblock Bytetrack: Multi-object tracking by associating every detection box.
+\newblock In \emph{Proceedings of the European Conference on Computer Vision
+  (ECCV)}, 2022.
+
+\end{thebibliography}

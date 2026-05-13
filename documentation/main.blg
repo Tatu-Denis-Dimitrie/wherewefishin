@@ -1,0 +1,73 @@
+This is BibTeX, Version 0.99e
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main.aux
+Reallocating 'name_of_file' (item size: 1) to 28 items.
+A level-1 auxiliary file: chapters/01-introducere.aux
+Reallocating 'name_of_file' (item size: 1) to 41 items.
+A level-1 auxiliary file: chapters/02-fundamente-si-tehnologii.aux
+Reallocating 'name_of_file' (item size: 1) to 61 items.
+A level-1 auxiliary file: chapters/03-analiza-cerintelor-si-proiectarea-sistemului.aux
+Reallocating 'name_of_file' (item size: 1) to 54 items.
+A level-1 auxiliary file: chapters/04-implementare-si-contributii-personale.aux
+Reallocating 'name_of_file' (item size: 1) to 36 items.
+A level-1 auxiliary file: chapters/05-testare-si-evaluare.aux
+Reallocating 'name_of_file' (item size: 1) to 9 items.
+The style file: plainnat.bst
+Reallocating 'name_of_file' (item size: 1) to 11 items.
+Database file #1: references.bib
+Warning--to sort, need author or key in fishbrain
+Warning--to sort, need author or key in fishangler
+Warning--to sort, need author or key in anglr
+Warning--to sort, need author or key in angular
+Warning--to sort, need author or key in leaflet
+Warning--to sort, need author or key in aspnetcore
+Warning--to sort, need author or key in stripe
+Warning--to sort, need author or key in ultralytics
+Warning--to sort, need author or key in efcore
+Warning--to sort, need author or key in sqlserver
+Warning--to sort, need author or key in flask
+Warning--to sort, need author or key in jwt
+Warning--to sort, need author or key in opencv
+Warning--to sort, need author or key in ffmpeg
+You've used 15 entries,
+            2773 wiz_defined-function locations,
+            658 strings with 7067 characters,
+and the built_in function-call counts, 4242 in all, are:
+= -- 416
+> -- 84
+< -- 0
++ -- 44
+- -- 27
+* -- 277
+:= -- 439
+add.period$ -- 45
+call.type$ -- 15
+change.case$ -- 54
+chr.to.int$ -- 13
+cite$ -- 58
+duplicate$ -- 234
+empty$ -- 532
+format.name$ -- 28
+if$ -- 1017
+int.to.chr$ -- 3
+int.to.str$ -- 1
+missing$ -- 1
+newline$ -- 83
+num.names$ -- 4
+pop$ -- 210
+preamble$ -- 1
+purify$ -- 39
+quote$ -- 0
+skip$ -- 184
+stack$ -- 0
+substring$ -- 44
+swap$ -- 20
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 165
+warning$ -- 14
+while$ -- 3
+width$ -- 0
+write$ -- 187
+(There were 14 warnings)
