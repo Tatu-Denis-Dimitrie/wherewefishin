@@ -2,65 +2,110 @@
 
 \section{Contextul actual și motivația alegerii temei}
 
-Procesul de digitalizare a serviciilor și activităților curente a influențat în mod vizibil și domeniile recreative, în care utilizatorii așteaptă astăzi aceleași caracteristici pe care le întâlnesc în aplicațiile comerciale mature: acces rapid la informație, interfețe coerente, automatizarea fluxurilor repetitive și posibilitatea de utilizare de pe dispozitive mobile. În acest context, pescuitul recreativ reprezintă un domeniu care păstrează încă numeroase procese fragmentate. Identificarea unei locații potrivite, verificarea disponibilității, rezervarea unui ponton, confirmarea prezenței la fața locului, comunicarea cu administratorii și păstrarea unui istoric al activității sunt, de multe ori, realizate prin combinații de rețele sociale, apeluri telefonice, formulare disparate sau mesaje transmise informal.
+Digitalizarea a schimbat mult felul în care oamenii interacționează cu serviciile din jur. Rezervările de hotel, comenzile de mâncare sau cumpărăturile online se fac acum în câteva minute, de pe telefon. Chiar și activitățile recreative au început să urmeze același drum. Pescuitul recreativ este unul dintre puținele domenii în care procesele rămân fragmentate și, în mare parte, neautomatizate.
 
-Din punct de vedere practic, această fragmentare generează mai multe dificultăți. Utilizatorul final investește timp în căutarea manuală a informațiilor, iar datele obținute nu sunt întotdeauna actualizate. Administratorul unei locații de pescuit trebuie să gestioneze programări, personal, zone de pescuit și relația cu clienții prin instrumente separate, ceea ce crește riscul de suprapuneri, erori de organizare și comunicare întârziată. În același timp, activitatea modernă de pescuit este tot mai frecvent însoțită de conținut media, iar analiza manuală a imaginilor și înregistrărilor video nu poate oferi un răspuns scalabil atunci când se dorește extragerea automată a unor informații relevante despre capturi.
+Un pescar care vrea să găsească un loc nou are câteva variante: caută pe grupuri de Facebook, sună direct la locație sau merge fizic să se intereseze. Dacă vrea să rezerve un ponton anume, de cele mai multe ori o face tot prin telefon sau mesaj. Administratorul locației gestionează programările prin foi de calcul sau notițe. Erorile apar frecvent, iar comunicarea este greoaie.
 
-Tema aleasă este motivată tocmai de această nevoie de integrare. O aplicație software dedicată pescuitului recreativ nu mai trebuie să se limiteze la afișarea unor locații pe hartă sau la păstrarea unui jurnal personal. Într-un context actual dominat de mobilitate, servicii web și componente inteligente, este justificată dezvoltarea unei platforme capabile să reunească într-un singur sistem funcționalități de descoperire a locurilor de pescuit, rezervare, administrare operațională, verificare la fața locului și analiză automată a conținutului media. O astfel de abordare răspunde atât nevoilor utilizatorului obișnuit, cât și cerințelor de administrare ale persoanelor care gestionează activitatea din locațiile de pescuit.
+Această lucrare pornește de la nevoia de a simplifica și integra aceste procese. O aplicație dedicată pescuitului recreativ nu mai trebuie să fie un simplu site cu locații pe hartă. Poate fi o platformă completă: utilizatorul găsește un loc de pescuit, rezervă un ponton, plătește online și primește o confirmare. Iar administratorul locației are un panou de control prin care vede rezervările, gestionează angajații și monitorizează activitatea.
 
-Lucrarea de față pornește de la ideea că valoarea unui produs software nu este dată exclusiv de numărul funcțiilor implementate, ci mai ales de coerența cu care acestea sunt integrate într-un flux unitar. În cazul aplicației WhereWeFishin, accentul este pus pe construirea unei experiențe complete, în care harta interactivă, rezervările, administrarea pontoanelor, rolurile diferite ale utilizatorilor și analiza asistată de inteligență artificială sunt tratate ca părți ale aceluiași sistem, nu ca module izolate dezvoltate independent.
+WhereWeFishin a fost gândit exact din această idee: o platformă care reunește descoperirea locurilor de pescuit, rezervarea, administrarea operațională și analiza automată a fișierelor media, totul într-un singur sistem.
 
 \section{Repere comparative și delimitarea problemei}
 
-În peisajul actual există numeroase aplicații care susțin parțial activitățile asociate pescuitului recreativ. Platforme cunoscute precum Fishbrain, FishAngler și ANGLR pun accent pe identificarea locurilor de pescuit, pe consultarea rapoartelor locale, pe jurnalizarea capturilor și pe componenta comunitară sau de urmărire a activității individuale \citep{fishbrain,fishangler,anglr}. O primă categorie este formată, așadar, din soluții orientate spre comunitate și jurnalizare, în care utilizatorii își înregistrează capturile, distribuie fotografii și urmăresc observațiile altor pescari. O a doua categorie reunește soluții orientate către evidența partidelor de pescuit și păstrarea unui istoric al activității, cu accent pe date despre trasee, capturi și echipamente. Există, de asemenea, aplicații care combină elemente de cartografiere, metadate despre capturi și funcții sociale, dar care tratează mai puțin zona de administrare operațională a unui spațiu de pescuit.
+Există deja câteva aplicații care se ocupă parțial de activitățile legate de pescuitul recreativ. Fishbrain, FishAngler și ANGLR sunt printre cele mai cunoscute și pun accentul pe jurnalizarea capturilor, pe comunitate și pe identificarea locurilor de pescuit din experiența altor pescari \citep{fishbrain,fishangler,anglr}. Sunt utile, dar se concentrează aproape exclusiv pe experiența individuală a pescarului.
 
-Analiza comparativă la nivel funcțional arată că majoritatea aplicațiilor existente se concentrează pe experiența individuală a pescarului, pe componenta socială sau pe organizarea informațiilor despre capturi. În schimb, procese precum rezervarea controlată a unui ponton, validarea prezenței prin mecanisme digitale, separarea rolurilor dintre utilizator, angajat, manager și administrator, precum și administrarea punctuală a unei locații de pescuit sunt tratate rar într-o manieră integrată. Această observație delimitează problema abordată în prezenta lucrare: nu este urmărită doar construirea unei aplicații pentru evidența capturilor, ci proiectarea unei platforme care să acopere atât experiența utilizatorului final, cât și activitățile operaționale necesare funcționării unui ecosistem de rezervări și administrare.
+Ce lipsește din aproape toate aceste aplicații este latura operațională: rezervarea controlată a unui ponton, validarea prezenței prin mijloace digitale, separarea clară a responsabilităților pe roluri (utilizator, angajat, manager, administrator) și administrarea propriu-zisă a unei locații de pescuit. Acestea sunt exact procesele pe care le abordează WhereWeFishin.
 
-Un al doilea element de diferențiere îl reprezintă integrarea analizei automate a conținutului media. Deși există aplicații care permit încărcarea de imagini sau clipuri și altele care oferă funcții de identificare asistată, puține soluții combină direct, într-un flux coerent, funcționalități de platformă web cu procesarea imaginilor și a materialelor video prin modele specializate de inteligență artificială. Din această perspectivă, problema tratată nu se reduce la crearea unei interfețe moderne, ci include și integrarea unei componente de viziune artificială într-o arhitectură software destinată utilizării curente.
+Un al doilea element de diferențiere este integrarea analizei automate a fișierelor media. Utilizatorul poate încărca o fotografie sau un videoclip cu o captură, iar aplicația folosește modele de inteligență artificială pentru a identifica specia de pește. Puține soluții combină, într-un flux coerent, o platformă web cu procesare automată a imaginilor și videoclipurilor.
 
-Prin urmare, contribuția aplicației WhereWeFishin este poziționată la intersecția dintre platformele de servicii digitale și sistemele software asistate de inteligență artificială. Aceasta urmărește să ofere o soluție echilibrată între nevoile de acces la informație și rezervare, pe de o parte, și nevoile de analiză, verificare și administrare, pe de altă parte. Din acest motiv, studiul de față nu propune o alternativă la aplicațiile sociale existente, ci o extindere funcțională a ideii de platformă pentru pescuit prin introducerea unor mecanisme operaționale și inteligente suplimentare.
+Concluzia analizei comparative este că WhereWeFishin nu vrea să fie o alternativă la aplicațiile sociale existente, ci acoperă un gol funcțional real: o platformă care deservește atât pescarul obișnuit, cât și administratorul locației, cu instrumente potrivite pentru fiecare.
 
 \section{Prezentarea generală a aplicației WhereWeFishin}
 
-WhereWeFishin este o aplicație web construită în jurul ideii de platformă integrată pentru descoperirea și administrarea experiențelor de pescuit. Din punct de vedere funcțional, sistemul permite identificarea locurilor de pescuit pe o hartă interactivă, consultarea informațiilor asociate fiecărei locații, rezervarea unui ponton pentru un anumit interval orar, vizualizarea istoricului personal și interacțiunea cu facilități dedicate analizării imaginilor și videoclipurilor încărcate de utilizator. În paralel, sistemul oferă instrumente distincte pentru personalul operațional și pentru persoanele care administrează locațiile, astfel încât fluxurile esențiale să poată fi gestionate în același mediu software.
+WhereWeFishin este o aplicație web construită ca o platformă integrată pentru descoperirea și administrarea experiențelor de pescuit. Utilizatorul poate găsi locuri de pescuit pe o hartă interactivă, poate rezerva un ponton, poate vedea istoricul activității sale și poate încărca imagini sau videoclipuri pentru analiză automată.
 
-Arhitectura aplicației este modulară și separă clar responsabilitățile principale. Interfața cu utilizatorul este realizată ca aplicație web de tip SPA bazată pe Angular, iar componenta cartografică se sprijină pe biblioteca Leaflet pentru interacțiunea cu hărți adaptate dispozitivelor mobile și elemente geospațiale \citep{angular,leaflet}. Componenta server este responsabilă pentru autentificare, autorizare, expunerea serviciilor REST, validarea regulilor de business și persistarea datelor și este construită ca aplicație HTTP API pe baza ASP.NET Core \citep{aspnetcore}. La nivel de stocare este utilizată o bază de date relațională gestionată printr-un strat dedicat de acces la date. Pentru funcționalitățile de analiză media este folosit un microserviciu separat, orientat către procesarea imaginilor și a materialelor video.
+Aplicația este structurată pe patru componente principale. Interfața cu utilizatorul este o aplicație web de tip SPA construită cu Angular \citep{angular}, cu o hartă interactivă bazată pe Leaflet \citep{leaflet}. Backend-ul este un API HTTP realizat cu ASP.NET Core \citep{aspnetcore}, care gestionează logica de business, autentificarea și comunicarea cu serviciile externe. Datele sunt stocate într-o bază de date relațională accesată prin Entity Framework Core \citep{efcore,sqlserver}. Analiza imaginilor și videoclipurilor este realizată de un microserviciu separat, scris în Python cu Flask \citep{flask}.
 
-Din perspectiva utilizatorilor, aplicația susține mai multe roluri operaționale. Utilizatorul obișnuit poate explora locațiile disponibile, poate efectua rezervări, își poate consulta istoricul și poate încărca imagini sau videoclipuri pentru analiză. Angajatul unei locații poate valida prezența sau anumite operații curente. Managerul administrează spațiul de pescuit, pontoanele, personalul și informațiile relevante pentru activitatea curentă, iar administratorul sistemului are control extins asupra platformei, aprobă cereri și supraveghează funcționarea generală. Introducerea acestor roluri nu are doar un scop tehnic, ci reflectă o modelare mai realistă a modului în care funcționează în practică o platformă digitală care deservește atât clienți, cât și operatori.
+Aplicația susține patru roluri de utilizator, fiecare cu un set clar de funcții. Figura~\ref{fig:roluri-si-functii} ilustrează această structură.
 
-Un flux central al aplicației este reprezentat de rezervare. Utilizatorul selectează o locație, alege un ponton și un interval de timp, iar sistemul calculează costul și generează datele necesare confirmării rezervării. În jurul acestui flux poate fi integrată și componenta de plată online, prin utilizarea infrastructurii Stripe pentru procesarea tranzacțiilor \citep{stripe}. Ulterior, rezervarea poate fi asociată unui mecanism de verificare la fața locului, prin utilizarea unui cod QR și a unui token de validare. Acest tip de abordare reduce dependența de confirmări verbale sau de verificări manuale și creează premisele unui flux controlat, auditabil și repetabil.
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  node distance=0.4cm and 0.6cm,
+  every node/.style={font=\small},
+  role/.style={draw, rounded corners, align=center, minimum width=3.1cm, minimum height=0.9cm, fill=gray!15},
+  feat/.style={draw, rounded corners, align=center, minimum width=2.9cm, minimum height=0.7cm, fill=gray!5, font=\footnotesize},
+  lbl/.style={font=\footnotesize, text=gray}
+]
+\node[role] (user) at (0,0) {Utilizator};
+\node[role] (emp)  at (3.5,0) {Angajat};
+\node[role] (mgr)  at (7,0) {Manager};
+\node[role] (adm)  at (10.5,0) {Administrator};
 
-O altă componentă importantă este cea de analiză automată a fișierelor media. Aplicația permite încărcarea de imagini și videoclipuri, iar materialele sunt trimise către o componentă software specializată în recunoașterea speciilor de pești. În implementarea actuală, această componentă valorifică modele YOLO din ecosistemul Ultralytics pentru detecție și mecanisme de tip ByteTrack pentru urmărirea obiectelor în secvențe video \citep{ultralytics,zhang2022bytetrack}. Rezultatele procesării pot include informații sintetice despre detecțiile realizate și despre conținutul analizat. Din punct de vedere academic, această funcționalitate este relevantă deoarece pune în evidență modul în care un sistem software orientat spre utilizare practică poate integra metode de inteligență artificială fără a compromite structura generală a aplicației.
+\node[feat] (u1) at (0,-1.2) {Hartă + explorare};
+\node[feat] (u2) at (0,-2.0) {Rezervări};
+\node[feat] (u3) at (0,-2.8) {Analiză media};
 
-De asemenea, aplicația include o dimensiune geospațială pronunțată. Harta interactivă este folosită nu doar pentru afișarea locurilor de pescuit, ci și pentru delimitarea unor zone specifice, pentru relaționarea poziției utilizatorului cu locațiile disponibile și pentru construirea unei interfețe intuitive de explorare. Astfel, componenta de localizare devine o parte activă a logicii aplicației și nu doar un element vizual auxiliar.
+\node[feat] (e1) at (3.5,-1.2) {Verificare QR};
+\node[feat] (e2) at (3.5,-2.0) {Vizualizare sesiuni};
+
+\node[feat] (m1) at (7,-1.2) {Pontoane};
+\node[feat] (m2) at (7,-2.0) {Angajați};
+\node[feat] (m3) at (7,-2.8) {Statistici locație};
+
+\node[feat] (a1) at (10.5,-1.2) {Aprobare manageri};
+\node[feat] (a2) at (10.5,-2.0) {Control platformă};
+
+\draw[-Latex, thick] (user) -- (u1);
+\draw[-Latex, thick] (emp)  -- (e1);
+\draw[-Latex, thick] (mgr)  -- (m1);
+\draw[-Latex, thick] (adm)  -- (a1);
+\end{tikzpicture}
+\caption{Cele patru roluri ale utilizatorilor și principalele funcții disponibile}
+\label{fig:roluri-si-functii}
+\end{figure}
+
+Un flux central al aplicației este rezervarea. Utilizatorul selectează o locație, alege un ponton și un interval orar, iar sistemul calculează costul și inițiază plata prin Stripe \citep{stripe}. La finalul procesului, sesiunea de pescuit poate fi validată la fața locului printr-un cod QR și un token unic.
+
+Componenta de analiză media permite încărcarea de imagini și videoclipuri, care sunt trimise automat către microserviciul Python. Acesta folosește modele YOLO pentru detecția peștilor în imagini și ByteTrack pentru urmărirea lor în secvențe video \citep{ultralytics,redmon2016yolo,zhang2022bytetrack}. Rezultatele sunt stocate și afișate utilizatorului în interfață.
+
+Harta interactivă nu este doar un element decorativ. Ea funcționează ca punct central de navigare, prin care utilizatorul descoperă locațiile, iar managerul delimitează vizual zonele rezervabile.
 
 \section{Obiectivele lucrării și contribuțiile originale}
 
-Obiectivul general al lucrării este proiectarea și implementarea unei platforme software capabile să digitalizeze un set coerent de procese asociate pescuitului recreativ, prin combinarea unei interfețe web moderne, a unui backend orientat pe servicii și a unei componente de analiză asistate de inteligență artificială. În mod concret, demersul urmărește să demonstreze că o aplicație din această categorie poate depăși modelul tradițional bazat exclusiv pe prezentarea locațiilor sau pe jurnalizarea capturilor și poate oferi suport real pentru activități operaționale și de analiză.
+Obiectivul principal al lucrării este proiectarea și implementarea unei platforme care să digitalizeze procesele asociate pescuitului recreativ, de la găsirea locației și rezervare până la administrare și analiză media.
 
-Pentru atingerea acestui obiectiv general, sunt urmărite mai multe obiective specifice. Primul obiectiv constă în definirea unei arhitecturi software clare, în care interfața client, logica de business, persistența datelor și procesarea media să fie separate corespunzător. Al doilea obiectiv vizează modelarea unor fluxuri reale de utilizare, precum rezervarea unui ponton, verificarea unei sesiuni, administrarea resurselor și gestionarea utilizatorilor cu roluri diferite. Al treilea obiectiv constă în integrarea unei componente de analiză media bazate pe inteligență artificială într-o platformă orientată spre utilizare curentă. Nu în ultimul rând, se urmărește obținerea unei soluții extensibile, care să poată susține dezvoltări ulterioare fără schimbări majore de arhitectură.
-
-Părțile originale evidențiate în această lucrare sunt următoarele:
-
+Obiectivele specifice sunt:
 \begin{enumerate}
-  \item integrarea într-o singură platformă a funcțiilor de descoperire a locurilor de pescuit, rezervare, administrare operațională și analiză media;
-  \item definirea unui model de roluri care separă responsabilitățile utilizatorului final, ale angajatului, ale managerului și ale administratorului;
-  \item utilizarea unei hărți interactive ca element central al interacțiunii, inclusiv pentru delimitarea și gestionarea zonelor relevante dintr-o locație de pescuit;
-  \item introducerea unui mecanism de verificare prin cod QR și token, util pentru confirmarea controlată a unor operații asociate rezervărilor;
-  \item conectarea aplicației web cu un microserviciu dedicat procesării imaginilor și videoclipurilor, capabil să furnizeze rezultate automate privind conținutul media încărcat;
-  \item organizarea soluției într-o arhitectură modulară, potrivită pentru întreținere, testare și extindere.
+  \item definirea unei arhitecturi software clare, cu separarea responsabilităților între frontend, backend, persistență și microserviciul de analiză media;
+  \item modelarea unor fluxuri reale de utilizare: rezervare, validare, administrare și gestionare pe roluri;
+  \item integrarea unui modul de analiză media bazat pe inteligență artificială într-un sistem orientat spre utilizare curentă;
+  \item construirea unei soluții extensibile, care să poată fi îmbunătățită ulterior fără rescrierea arhitecturii.
 \end{enumerate}
 
-Valoarea acestor contribuții nu rezidă doar în existența fiecărui element în mod separat, ci mai ales în modul în care acestea sunt reunite într-o soluție unitară. O hartă interactivă, un sistem de rezervări sau un modul de analiză media pot exista individual și în alte produse software. Caracterul aplicat al proiectului este dat de integrarea lor într-un flux coerent, orientat către un domeniu concret și către scenarii de utilizare care apar în mod curent în activitatea de pescuit recreativ.
+Contribuțiile originale ale acestei lucrări sunt:
+
+\begin{enumerate}
+  \item integrarea într-o singură platformă a funcțiilor de descoperire, rezervare, administrare și analiză media;
+  \item modelul de roluri cu patru niveluri, fiecare cu permisiuni bine definite;
+  \item harta interactivă ca element central al navigării, inclusiv pentru delimitarea vizuală a pontoanelor;
+  \item mecanismul de verificare prin cod QR și token, pentru confirmarea prezenței la locație;
+  \item microserviciul Python cu YOLO și ByteTrack, integrat controlat în fluxul aplicației;
+  \item arhitectura modulară, potrivită pentru întreținere, testare și extindere ulterioară.
+\end{enumerate}
+
+Valoarea acestor contribuții nu stă în fiecare element separat, ci în combinarea lor. O hartă interactivă sau un sistem de rezervări pot fi găsite și în alte aplicații. Ceea ce diferențiază WhereWeFishin este integrarea lor coerentă cu administrarea operațională și analiza AI, într-un singur sistem orientat spre un domeniu concret.
 
 \section{Structura lucrării}
 
-Lucrarea este organizată astfel încât să urmărească în mod progresiv trecerea de la contextul general și fundamentele teoretice la analiza, proiectarea, implementarea și evaluarea soluției dezvoltate. După capitolul introductiv, un capitol distinct va prezenta noțiunile teoretice și tehnologiile relevante pentru tema abordată, cu accent pe conceptele necesare înțelegerii arhitecturii aplicației, a comunicării client--server, a modelării datelor și a utilizării componentelor de inteligență artificială pentru analiza conținutului media.
+Lucrarea este organizată în șase capitole. Primul — cel de față — prezintă contextul, motivația și obiectivele proiectului.
 
-În continuare, lucrarea va include un capitol dedicat analizei cerințelor și proiectării sistemului, în care vor fi descrise rolurile utilizatorilor, cazurile de utilizare principale, structura datelor și relațiile dintre componentele arhitecturale. Acest capitol va avea rolul de a justifica deciziile de proiectare și de a delimita responsabilitățile fiecărei componente implementate.
+Capitolul al doilea prezintă fundamentele teoretice și tehnologiile utilizate: arhitectura sistemului, modelul de date, componenta geospațială, fluxul de rezervare, autentificarea și analiza media bazată pe inteligență artificială.
 
-Un capitol separat va evidenția contribuțiile personale din perspectiva implementării propriu-zise. În această parte vor fi detaliate modulele realizate, fluxurile esențiale, integrarea serviciului de analiză media și soluțiile tehnice adoptate pentru problemele întâlnite pe parcursul dezvoltării. Această secțiune trebuie să reflecte în mod clar aportul propriu al autorului, atât la nivel de concepție, cât și la nivel de realizare tehnică.
+Capitolul al treilea detaliază analiza cerințelor și proiectarea sistemului: rolurile utilizatorilor, cerințele funcționale și non-funcționale, modelul de domeniu și principalele decizii arhitecturale.
 
-Ulterior, un capitol de testare și evaluare va discuta comportamentul aplicației în scenarii relevante, funcționarea fluxurilor critice și limitele identificate. În final, lucrarea se va încheia cu un capitol de concluzii și perspective de dezvoltare, în care vor fi sintetizate rezultatele obținute și vor fi formulate direcții realiste de extindere a sistemului.
+Capitolul al patrulea prezintă implementarea propriu-zisă, cu accent pe modulele backend, interfața Angular, serviciul de analiză media și contribuțiile personale din fiecare zonă.
 
-Prin această structură, lucrarea urmărește să ofere o prezentare coerentă a unui proiect software complet, fundamentat teoretic și susținut de o implementare aplicată într-un domeniu concret. Introducerea stabilește cadrul general al problemei și justifică relevanța soluției propuse, pregătind astfel analiza detaliată din capitolele următoare.
+Capitolul al cincilea discută testarea și evaluarea aplicației: infrastructura de teste, rezultatele obținute și limitele actuale.
+
+Capitolul al șaselea sintetizează concluziile proiectului și prezintă direcțiile de extindere a platformei.

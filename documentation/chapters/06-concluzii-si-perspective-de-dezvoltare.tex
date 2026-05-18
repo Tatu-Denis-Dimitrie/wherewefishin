@@ -1,0 +1,49 @@
+\chapter{Concluzii și perspective de dezvoltare}
+
+Lucrarea de față a urmărit proiectarea și dezvoltarea unei aplicații web care să răspundă unor nevoi reale din domeniul pescuitului recreativ. Ideea de bază a fost construirea unei platforme care să nu se limiteze la afișarea locurilor de pescuit sau la păstrarea unui jurnal de capturi, ci să reunească descoperirea locațiilor, rezervarea, administrarea operațională și analiza automată a fișierelor media. Rezultatul este aplicația WhereWeFishin — o soluție multi-rol cu interfață modernă, backend separat și un microserviciu dedicat analizei imaginilor și videoclipurilor.
+
+Pe parcursul lucrării am analizat fundamentele teoretice și tehnologice, am descris cerințele și deciziile de proiectare, am prezentat implementarea componentelor principale și am evaluat comportamentul sistemului prin teste. Lucrarea nu se rezumă la descrierea unei idei, ci prezintă un sistem software concret, funcțional și extensibil.
+
+\section{Concluzii generale}
+
+Se poate aprecia că obiectivul general al lucrării a fost atins. Aplicația oferă un cadru unitar pentru activități care, în practică, sunt adesea gestionate separat sau informal. Utilizatorul poate găsi locuri de pescuit pe hartă, face rezervări, urmărește activitatea în platformă și încarcă fișiere media pentru analiză. Managerul și angajatul au la dispoziție funcții prin care administrează resursele și verifică sesiunile de pescuit.
+
+Un aspect important este că soluția nu a fost gândită pentru un singur tip de utilizator. Platforma deservește simultan clienți, personal operațional și administratori, fiecare cu nevoi și permisiuni distincte. Aceasta a impus o modelare mai atentă a cerințelor, a autorizării și a fluxurilor de lucru, dar a rezultat și într-o aplicație mai apropiată de un scenariu real.
+
+Integrarea componentei de inteligență artificială este un alt punct important. Prin microserviciul separat pentru analiza imaginilor și videoclipurilor, proiectul depășește sfera unei aplicații clasice de rezervări. Detecția peștilor și identificarea speciilor adaugă valoare practică și arată că aplicația poate valorifica conținutul media al utilizatorilor, nu doar datele introduse manual.
+
+Arhitectura separată pe componente s-a dovedit o alegere potrivită. Împărțirea în frontend, backend, bază de date și microserviciu Python a permis dezvoltarea mai clară a modulelor și o integrare mai controlată a funcțiilor costisitoare, cum este procesarea video. Aceasta oferă și o bază bună pentru extinderea ulterioară.
+
+\section{Contribuțiile principale ale lucrării}
+
+Contribuțiile principale pot fi sintetizate în câteva direcții. Prima este construirea unei platforme care combină coerent funcții de explorare, rezervare și administrare. A doua este modelul de roluri care separă clar responsabilitățile utilizatorului obișnuit, ale angajatului, ale managerului și ale administratorului. A treia este componenta geospațială relevantă: harta nu este doar decorativă, ci reprezintă un instrument central pentru descoperirea și gestionarea locurilor de pescuit.
+
+O contribuție importantă este și integrarea serviciului de analiză media bazat pe YOLO și ByteTrack. Această zonă a presupus construirea unui flux complet: de la upload în interfață, prin API, spre serviciul Python și înapoi cu rezultatele stocate și afișate utilizatorului. Nu a fost vorba doar de folosirea unor biblioteci existente, ci de integrarea lor controlată în arhitectura aplicației.
+
+Nu în ultimul rând, infrastructura de testare relevantă pentru backend este un punct forte al proiectului. Rezultatul de 349 de teste trecute în momentul evaluării arată că logica de business a fost tratată și din perspectiva validării regulate, nu doar a implementării vizibile.
+
+\section{Limitele actuale ale soluției}
+
+Ca orice proiect de această complexitate, WhereWeFishin are și limite care trebuie recunoscute. Acoperirea testării automate este mult mai bună în backend decât în frontend și în serviciul Python. Interfața și o parte din comportamentul procesării media sunt verificate în principal prin testare manuală și observații directe.
+
+Componenta de analiză video depinde de condițiile în care sunt obținute fișierele media. Calitatea imaginilor, unghiul de filmare, lumina și claritatea apei influențează rezultatul. Performanța modelului nu trebuie interpretată ca absolută, ci în raport cu contextul real de utilizare — aceasta este o limită normală a sistemelor de viziune artificială.
+
+O altă limită este că aplicația, în forma actuală, este optimizată mai ales pentru un scenariu coerent de utilizare și mai puțin pentru un volum mare de utilizatori și operații simultane. Platforma este bine structurată și pregătită pentru extindere, dar unele direcții — cum ar fi procesarea asincronă cu cozi de mesaje sau raportarea statistică avansată — rămân pentru etape ulterioare.
+
+\section{Perspective de dezvoltare}
+
+Proiectul poate fi extins în mai multe direcții utile.
+
+O primă direcție este creșterea acoperirii automate a testelor din frontend și a celor pentru serviciul Python. O suită mai echilibrată ar aduce mai multă siguranță la adăugarea de funcții noi și ar reduce riscul de regresii.
+
+O a doua direcție este îmbunătățirea componentei de analiză media. Aceasta poate include antrenarea sau ajustarea modelului pe date mai reprezentative pentru platformă, rafinarea criteriilor de detecție și statistici mai utile pentru utilizator: rapoarte pe specii, comparații între analize sau istorice filtrabile după perioadă și locație.
+
+O a treia direcție este extinderea zonei de administrare și raportare. Managerii ar putea beneficia de statistici mai detaliate privind gradul de ocupare al pontoanelor, frecvența rezervărilor sau recenziile primite. Administratorul platformei ar putea avea instrumente mai bune pentru monitorizarea sistemului și analiza evoluției utilizatorilor.
+
+Se poate lua în calcul și consolidarea comportamentului de tip PWA — notificări mai bune, funcționalitate parțial offline și confirmări simplificate pentru angajați la verificarea sesiunilor pe teren.
+
+\section{Încheiere}
+
+WhereWeFishin este o aplicație complexă, dar coerentă, care răspunde unei probleme reale printr-o combinație echilibrată de tehnologii web, modelare de domeniu și integrare AI. Pornind de la o nevoie practică bine definită, am construit o soluție modernă utilă atât pescarului obișnuit, cât și administratorului locației.
+
+Dincolo de rezultatul tehnic, proiectul a reprezentat un exercițiu complet de analiză, proiectare, integrare și validare. Tocmai această combinație dintre fundamentarea teoretică și implementarea practică dă consistență lucrării. Soluția poate fi considerată o bază solidă pentru dezvoltări ulterioare și un exemplu relevant de aplicare a tehnologiilor moderne într-un domeniu concret, apropiat de activitatea utilizatorilor reali.

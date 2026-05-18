@@ -19,6 +19,9 @@
 \usepackage{enumitem}
 \usepackage{url}
 \usepackage[numbers,sort&compress]{natbib}
+\usepackage{tikz}
+
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric}
 
 \geometry{margin=2.5cm}
 \singlespacing
@@ -34,25 +37,27 @@
 \author{De completat}
 \date{Mai 2026}
 
+\addto\captionsromanian{\renewcommand{\contentsname}{Cuprins}}
+
 \begin{document}
 
 \begin{titlepage}
+  \thispagestyle{empty}
   \centering
-  {\Large Instituție de învățământ superior\par}
-  \vspace{1.5cm}
-  {\large Facultate / Specializare\par}
-  \vfill
-  {\Huge \bfseries WhereWeFishin - Fishing Experience Discovery Platform Enhanced by AI\par}
-  \vspace{1.2cm}
+  \vspace*{2.5cm}
   {\Large Lucrare de licență / disertație\par}
+  \vspace{2.5cm}
+  {\Huge \bfseries Titlul lucrării\par}
   \vfill
-  \begin{flushright}
-    \large
-    Absolvent: De completat\\
-    Coordonator: De completat
-  \end{flushright}
+  {\Large \textbf{Autor:}\par}
+  \vspace{0.4cm}
+  {\Large Prenumele și Numele\par}
+  \vspace{1.2cm}
+  {\Large \textbf{Coordonator ştiințific:}\par}
+  \vspace{0.4cm}
+  {\Large grad didactic. dr. Prenumele și Numele\par}
   \vfill
-  {\large Mai 2026\par}
+  {\Large Braşov, 2018\par}
 \end{titlepage}
 
 \pagenumbering{roman}
@@ -65,6 +70,7 @@
 \include{chapters/03-analiza-cerintelor-si-proiectarea-sistemului}
 \include{chapters/04-implementare-si-contributii-personale}
 \include{chapters/05-testare-si-evaluare}
+\include{chapters/06-concluzii-si-perspective-de-dezvoltare}
 
 \bibliographystyle{plainnat}
 \bibliography{references}
