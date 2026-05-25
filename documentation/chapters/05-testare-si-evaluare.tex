@@ -6,36 +6,13 @@ Capitolul este organizat în jurul infrastructurii de testare existente în proi
 
 \section{Strategia de testare și infrastructura utilizată}
 
-Strategia de testare este centrată pe backend-ul .NET, unde am construit o infrastructură clară pentru teste unitare, teste de controller și teste de integrare. Proiectul dedicat testelor folosește framework-ul xUnit și include dependențe pentru mocking, pentru rularea aplicației în regim de test și pentru colectarea de coverage. Această configurație permite validarea atât a componentelor individuale, cât și a fluxurilor complete la nivel HTTP, fără a depinde de o instanță externă sau de o bază de date de producție.
+Strategia de testare este centrată pe backend-ul .NET, unde am construit o infrastructură clară pentru teste unitare, teste de controller și teste de integrare. Proiectul dedicat testelor folosește framework-ul xUnit \citep{xunit} și include dependențe pentru mocking, pentru rularea aplicației în regim de test și pentru colectarea de coverage. Această configurație permite validarea atât a componentelor individuale, cât și a fluxurilor complete la nivel HTTP, fără a depinde de o instanță externă sau de o bază de date de producție.
 
 La momentul evaluării, suita backend a raportat \textbf{349 de teste trecute și 0 teste eșuate}. Există 22 de fișiere de test distribuite pe mai multe categorii: validarea DTO-urilor, testarea serviciilor, testarea controllerelor, testarea repository-urilor și teste de integrare.
 
 Un rol central îl are fabrica de aplicație folosită pentru testele de integrare. Aceasta pornește API-ul în mediul \emph{IntegrationTesting}, injectează configurări specifice pentru conexiunea la bază de date, pentru JWT și pentru integrarea cu serviciul de recunoaștere, iar înlocuirea serviciului de email cu o implementare neutră permite verificarea fluxurilor principale fără efecte externe nedorite. Baza de date \emph{InMemory} asigură izolarea între teste și reduce costul de execuție.
 
-Infrastructura de testare este importantă deoarece permite verificarea aplicației la mai multe niveluri fără a dubla artificial codul de test. Figura~\ref{fig:niveluri-testare} ilustrează piramida de testare adoptată în proiect.
-
-\begin{figure}[ht]
-\centering
-\begin{tikzpicture}[
-	node distance=0.9cm,
-	every node/.style={font=\small},
-	layer/.style={draw, rounded corners, align=center, minimum width=8.5cm, minimum height=0.9cm},
-	arrow/.style={-Latex, thick}
-]
-\node[layer, fill=gray!15] (l1) {Validarea DTO-urilor și a regulilor simple};
-\node[layer, fill=gray!10, below=of l1] (l2) {Teste pentru servicii și logică de business};
-\node[layer, fill=gray!15, below=of l2] (l3) {Teste pentru controllere și contractele API};
-\node[layer, fill=gray!10, below=of l3] (l4) {Teste de integrare pentru fluxuri complete};
-\node[layer, fill=gray!15, below=of l4] (l5) {Validări operaționale și verificări manuale};
-
-\draw[arrow] (l1) -- (l2);
-\draw[arrow] (l2) -- (l3);
-\draw[arrow] (l3) -- (l4);
-\draw[arrow] (l4) -- (l5);
-\end{tikzpicture}
-\caption{Nivelurile principale de testare folosite în evaluarea proiectului}
-\label{fig:niveluri-testare}
-\end{figure}
+Infrastructura de testare este importantă deoarece permite verificarea aplicației la mai multe niveluri fără a dubla artificial codul de test.
 
 \section{Rezultatele rulării suitei de teste}
 
@@ -68,7 +45,36 @@ Total & 22 \\
 \label{tab:structura-suitei-de-teste}
 \end{table}
 
-Un exemplu clar sunt testele de integrare pentru autentificare: verifică înregistrarea unui utilizator, tratarea conflictelor de identitate, autentificarea și validarea tokenului primit. Similar, testele pentru aplicațiile de manager urmăresc scenarii complete — crearea cererii, respingerea, retransmiterea după corectare și aprobarea finală care promovează utilizatorul. Aceste scenarii sunt valoroase deoarece verifică împreună reguli de business, persistență și control al accesului.
+Figura~\ref{fig:distributie-nr-teste} prezintă distribuția estimată a testelor pe categorii, pe baza numărului de fișiere și a densității medii de teste per fișier.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  xbar,
+  width=0.78\textwidth,
+  height=6.5cm,
+  bar width=0.45cm,
+  xlabel={Număr estimat de teste},
+  ytick={1,2,3,4,5,6},
+  yticklabels={DTO \& extensii, Repository-uri, Servicii, Integrare, Controllere, Total},
+  xmin=0, xmax=380,
+  xtick={0,50,100,150,200,250,300,349},
+  nodes near coords,
+  nodes near coords align={horizontal},
+  every node near coord/.style={font=\footnotesize},
+  enlarge y limits=0.18,
+]
+\addplot[fill=gray!35, draw=gray!55] coordinates {
+  (9,1)(20,2)(40,3)(60,4)(220,5)(349,6)
+};
+\end{axis}
+\end{tikzpicture}
+\caption{Distribuția estimată a testelor pe categorii în proiectul backend}
+\label{fig:distributie-nr-teste}
+\end{figure}
+
+Un exemplu clar sunt testele de integrare pentru autentificare: verifică înregistrarea unui utilizator, tratarea conflictelor de identitate, autentificarea și validarea tokenului primit. Similar, testele pentru aplicațiile de manager urmăresc scenarii complete: crearea cererii, respingerea, retransmiterea după corectare și aprobarea finală care promovează utilizatorul. Aceste scenarii sunt valoroase deoarece verifică împreună reguli de business, persistență și control al accesului.
 
 O altă zonă bine reprezentată este analiza media. Testele pentru serviciul de recunoaștere validează atât cazul în care serviciul Python răspunde corect, cât și scenariile în care răspunsul extern este invalid sau serviciul nu poate fi contactat.
 

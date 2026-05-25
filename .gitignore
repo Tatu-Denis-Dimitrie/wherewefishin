@@ -41,3 +41,4 @@ backend/WhereWeFishin.API/uploads/*
 !backend/WhereWeFishin.API/uploads/.gitignore
 fish-recognition-service/uploads/
 fish-recognition-service/outputs/
+/CLAUDE.md

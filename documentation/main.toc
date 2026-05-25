@@ -3,49 +3,89 @@
 \contentsline {section}{\numberline {1.1}Contextul actual și motivația alegerii temei}{1}{section.1.1}%
 \contentsline {section}{\numberline {1.2}Repere comparative și delimitarea problemei}{2}{section.1.2}%
 \contentsline {section}{\numberline {1.3}Prezentarea generală a aplicației WhereWeFishin}{2}{section.1.3}%
-\contentsline {section}{\numberline {1.4}Obiectivele lucrării și contribuțiile originale}{4}{section.1.4}%
+\contentsline {section}{\numberline {1.4}Obiectivele lucrării și contribuțiile originale}{3}{section.1.4}%
 \contentsline {section}{\numberline {1.5}Structura lucrării}{4}{section.1.5}%
-\contentsline {chapter}{\numberline {2}Fundamente teoretice și tehnologiile utilizate}{6}{chapter.2}%
-\contentsline {section}{\numberline {2.1}Arhitectura generală a sistemului}{6}{section.2.1}%
-\contentsline {section}{\numberline {2.2}Modelul de date și entitățile de domeniu}{7}{section.2.2}%
-\contentsline {section}{\numberline {2.3}Harta interactivă și componenta geospațială}{8}{section.2.3}%
-\contentsline {section}{\numberline {2.4}Rezervări și sesiuni de pescuit}{9}{section.2.4}%
-\contentsline {section}{\numberline {2.5}Autentificare, autorizare și securitate}{10}{section.2.5}%
-\contentsline {section}{\numberline {2.6}Analiza imaginilor și videoclipurilor cu ajutorul inteligenței artificiale}{11}{section.2.6}%
-\contentsline {section}{\numberline {2.7}Servicii auxiliare și integrarea cu sisteme externe}{13}{section.2.7}%
-\contentsline {section}{\numberline {2.8}Sinteza capitolului}{13}{section.2.8}%
-\contentsline {chapter}{\numberline {3}Analiza cerințelor și proiectarea sistemului}{15}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Actorii sistemului și obiectivele operaționale}{15}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Cerințe funcționale}{16}{section.3.2}%
-\contentsline {section}{\numberline {3.3}Cerințe non-funcționale și reguli de business}{17}{section.3.3}%
-\contentsline {section}{\numberline {3.4}Proiectarea de ansamblu a sistemului}{19}{section.3.4}%
-\contentsline {section}{\numberline {3.5}Modelul de domeniu și relațiile dintre entități}{20}{section.3.5}%
-\contentsline {section}{\numberline {3.6}Fluxuri esențiale și diagrame recomandate}{21}{section.3.6}%
-\contentsline {section}{\numberline {3.7}Sinteza capitolului}{22}{section.3.7}%
-\contentsline {chapter}{\numberline {4}Implementare și contribuții personale}{23}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Arhitectura implementată a soluției}{23}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Implementarea backend-ului}{24}{section.4.2}%
-\contentsline {subsection}{\numberline {4.2.1}Autentificare, autorizare și controlul accesului}{24}{subsection.4.2.1}%
-\contentsline {subsection}{\numberline {4.2.2}Locuri de pescuit, pontoane și organizarea resurselor}{24}{subsection.4.2.2}%
-\contentsline {subsection}{\numberline {4.2.3}Workflow-ul de aplicare pentru manager}{25}{subsection.4.2.3}%
-\contentsline {subsection}{\numberline {4.2.4}Rezervări, sesiuni de pescuit și integrarea plății}{25}{subsection.4.2.4}%
-\contentsline {subsection}{\numberline {4.2.5}Angajați, recenzii și servicii auxiliare}{26}{subsection.4.2.5}%
-\contentsline {section}{\numberline {4.3}Implementarea frontend-ului}{26}{section.4.3}%
-\contentsline {subsection}{\numberline {4.3.1}Structura aplicației SPA și controlul accesului în interfață}{26}{subsection.4.3.1}%
-\contentsline {subsection}{\numberline {4.3.2}Harta interactivă și explorarea locurilor de pescuit}{27}{subsection.4.3.2}%
-\contentsline {subsection}{\numberline {4.3.3}Coșul, calendarul și integrarea Stripe în interfață}{27}{subsection.4.3.3}%
-\contentsline {subsection}{\numberline {4.3.4}Wizard-ul de aplicare pentru manager și dashboard-ul operațional}{27}{subsection.4.3.4}%
-\contentsline {subsection}{\numberline {4.3.5}Verificarea prin cod QR și funcțiile administrative}{27}{subsection.4.3.5}%
-\contentsline {section}{\numberline {4.4}Implementarea sistemului de analiză media}{28}{section.4.4}%
-\contentsline {subsection}{\numberline {4.4.1}Integrarea dintre backend și serviciul Python}{28}{subsection.4.4.1}%
-\contentsline {subsection}{\numberline {4.4.2}Pipeline-ul video: detecție, tracking și post-procesare}{28}{subsection.4.4.2}%
-\contentsline {subsection}{\numberline {4.4.3}Afișarea rezultatelor în frontend și tratarea stării asincrone}{29}{subsection.4.4.3}%
-\contentsline {section}{\numberline {4.5}Sinteza capitolului}{29}{section.4.5}%
-\contentsline {chapter}{\numberline {5}Testare și evaluare}{30}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Strategia de testare și infrastructura utilizată}{30}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Testarea unitară și validarea datelor}{31}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Testarea controllerelor și a comportamentului API}{31}{section.5.3}%
-\contentsline {section}{\numberline {5.4}Testarea de integrare a fluxurilor critice}{32}{section.5.4}%
-\contentsline {section}{\numberline {5.5}Validarea operațională a comportamentului sistemului}{32}{section.5.5}%
-\contentsline {section}{\numberline {5.6}Acoperire actuală, limitări și direcții de extindere}{33}{section.5.6}%
-\contentsline {section}{\numberline {5.7}Sinteza capitolului}{33}{section.5.7}%
+\contentsline {chapter}{\numberline {2}Fundamente teoretice și tehnologiile utilizate}{5}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Arhitectura generală a sistemului}{5}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Modelul de date și entitățile de domeniu}{6}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Harta interactivă și componenta geospațială}{6}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Rezervări și sesiuni de pescuit}{7}{section.2.4}%
+\contentsline {section}{\numberline {2.5}Autentificare, autorizare și securitate}{8}{section.2.5}%
+\contentsline {section}{\numberline {2.6}Analiza imaginilor și videoclipurilor cu inteligență artificială}{9}{section.2.6}%
+\contentsline {section}{\numberline {2.7}Servicii auxiliare și integrarea cu sisteme externe}{9}{section.2.7}%
+\contentsline {section}{\numberline {2.8}Sinteza capitolului}{10}{section.2.8}%
+\contentsline {chapter}{\numberline {3}Analiza cerințelor și proiectarea sistemului}{11}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Actorii sistemului și obiectivele operaționale}{11}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Cerințe funcționale}{12}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Cerințe non-funcționale și reguli de business}{13}{section.3.3}%
+\contentsline {section}{\numberline {3.4}Proiectarea de ansamblu a sistemului}{13}{section.3.4}%
+\contentsline {section}{\numberline {3.5}Modelul de domeniu și relațiile dintre entități}{14}{section.3.5}%
+\contentsline {section}{\numberline {3.6}Fluxuri esențiale și diagrame}{15}{section.3.6}%
+\contentsline {section}{\numberline {3.7}Sinteza capitolului}{16}{section.3.7}%
+\contentsline {chapter}{\numberline {4}Implementare și contribuții personale}{17}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Arhitectura implementată a soluției}{17}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Implementarea backend-ului}{18}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Autentificare, autorizare și controlul accesului}{18}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}Locuri de pescuit, pontoane și organizarea resurselor}{18}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Workflow-ul de aplicare pentru manager}{19}{subsection.4.2.3}%
+\contentsline {subsection}{\numberline {4.2.4}Rezervări, sesiuni de pescuit și integrarea plății}{19}{subsection.4.2.4}%
+\contentsline {subsection}{\numberline {4.2.5}Angajați, recenzii și servicii auxiliare}{20}{subsection.4.2.5}%
+\contentsline {section}{\numberline {4.3}Implementarea frontend-ului}{20}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Structura aplicației SPA și controlul accesului în interfață}{20}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Harta interactivă și explorarea locurilor de pescuit}{21}{subsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.3.3}Coșul, calendarul și integrarea Stripe în interfață}{21}{subsection.4.3.3}%
+\contentsline {subsection}{\numberline {4.3.4}Wizard-ul de aplicare și dashboard-ul operațional}{22}{subsection.4.3.4}%
+\contentsline {subsection}{\numberline {4.3.5}Verificarea prin cod QR și funcțiile administrative}{22}{subsection.4.3.5}%
+\contentsline {section}{\numberline {4.4}Implementarea sistemului de analiză media}{22}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}Integrarea dintre backend și serviciul Python}{24}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.4.2}Pipeline-ul video: detecție, tracking și post-procesare}{24}{subsection.4.4.2}%
+\contentsline {subsection}{\numberline {4.4.3}Afișarea rezultatelor în frontend și tratarea stării asincrone}{24}{subsection.4.4.3}%
+\contentsline {section}{\numberline {4.5}Infrastructura de deployment}{25}{section.4.5}%
+\contentsline {subsection}{\numberline {4.5.1}Containerizarea cu Docker și build-uri multi-etapă}{25}{subsection.4.5.1}%
+\contentsline {subsection}{\numberline {4.5.2}Rate limiting și securitatea pipeline-ului HTTP}{26}{subsection.4.5.2}%
+\contentsline {subsection}{\numberline {4.5.3}Health check-uri și reziliența serviciilor}{28}{subsection.4.5.3}%
+\contentsline {subsection}{\numberline {4.5.4}Expunerea publică prin Cloudflare Tunnel}{28}{subsection.4.5.4}%
+\contentsline {section}{\numberline {4.6}Contribuțiile principale în perspectivă de ansamblu}{29}{section.4.6}%
+\contentsline {section}{\numberline {4.7}Sinteza capitolului}{29}{section.4.7}%
+\contentsline {chapter}{\numberline {5}Modelul de inteligență artificială și setul de date}{31}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Contextul și motivația unui set de date dedicat}{31}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Colectarea și structura setului de date}{31}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Anotarea și preprocesarea imaginilor}{32}{section.5.3}%
+\contentsline {section}{\numberline {5.4}Antrenarea modelului}{32}{section.5.4}%
+\contentsline {section}{\numberline {5.5}Evaluarea performanței modelului}{33}{section.5.5}%
+\contentsline {section}{\numberline {5.6}Integrarea modelului antrenat în producție}{34}{section.5.6}%
+\contentsline {section}{\numberline {5.7}Limitări și observații ale modelului}{35}{section.5.7}%
+\contentsline {section}{\numberline {5.8}Sinteza capitolului}{35}{section.5.8}%
+\contentsline {chapter}{\numberline {6}Interfața utilizatorului și experiența de utilizare}{36}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Principii de organizare a interfeței}{36}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Experiența utilizatorului obișnuit}{37}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Interfața managerului și dashboard-ul operațional}{37}{section.6.3}%
+\contentsline {section}{\numberline {6.4}Experiența angajatului și verificarea prin cod QR}{38}{section.6.4}%
+\contentsline {section}{\numberline {6.5}Panoul administrativ}{38}{section.6.5}%
+\contentsline {section}{\numberline {6.6}Gestionarea autentificării și comunicarea cu API-ul}{39}{section.6.6}%
+\contentsline {section}{\numberline {6.7}Adaptabilitate și considerații de utilizare mobilă}{39}{section.6.7}%
+\contentsline {section}{\numberline {6.8}Sinteza capitolului}{40}{section.6.8}%
+\contentsline {chapter}{\numberline {7}Testare și evaluare}{41}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Strategia de testare și infrastructura utilizată}{41}{section.7.1}%
+\contentsline {section}{\numberline {7.2}Rezultatele rulării suitei de teste}{42}{section.7.2}%
+\contentsline {section}{\numberline {7.3}Testarea unitară și validarea datelor}{43}{section.7.3}%
+\contentsline {section}{\numberline {7.4}Testarea controllerelor și a comportamentului API}{43}{section.7.4}%
+\contentsline {section}{\numberline {7.5}Testarea de integrare a fluxurilor critice}{43}{section.7.5}%
+\contentsline {section}{\numberline {7.6}Validarea operațională a comportamentului sistemului}{44}{section.7.6}%
+\contentsline {section}{\numberline {7.7}Acoperire actuală, limitări și direcții de extindere}{44}{section.7.7}%
+\contentsline {section}{\numberline {7.8}Sinteza capitolului}{44}{section.7.8}%
+\contentsline {chapter}{\numberline {8}Securitate și infrastructură de deployment}{46}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Arhitectura de securitate în straturi}{46}{section.8.1}%
+\contentsline {section}{\numberline {8.2}Autentificarea prin JSON Web Tokens}{46}{section.8.2}%
+\contentsline {section}{\numberline {8.3}Autorizare pe roluri și proprietate}{47}{section.8.3}%
+\contentsline {section}{\numberline {8.4}Protecția fluxurilor sensibile}{48}{section.8.4}%
+\contentsline {section}{\numberline {8.5}Izolarea componentelor și securitatea comunicației interne}{49}{section.8.5}%
+\contentsline {section}{\numberline {8.6}Containerizarea aplicației cu Docker}{49}{section.8.6}%
+\contentsline {section}{\numberline {8.7}Gestionarea configurației pe medii de execuție}{51}{section.8.7}%
+\contentsline {section}{\numberline {8.8}Sinteza capitolului}{51}{section.8.8}%
+\contentsline {chapter}{\numberline {9}Concluzii și perspective de dezvoltare}{52}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Concluzii generale}{52}{section.9.1}%
+\contentsline {section}{\numberline {9.2}Contribuțiile principale ale lucrării}{53}{section.9.2}%
+\contentsline {section}{\numberline {9.3}Limitele actuale ale soluției}{53}{section.9.3}%
+\contentsline {section}{\numberline {9.4}Perspective de dezvoltare}{54}{section.9.4}%
+\contentsline {section}{\numberline {9.5}Încheiere}{54}{section.9.5}%

@@ -1,4 +1,4 @@
-\begin{thebibliography}{15}
+\begin{thebibliography}{26}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -8,80 +8,142 @@
 \bibitem[jwt(2015)]{jwt}
 Json web token (jwt).
 \newblock \url{https://datatracker.ietf.org/doc/html/rfc7519}, 2015.
-\newblock RFC 7519. Accesat la 09 mai 2026.
+\newblock RFC 7519. Accesat la 03 aprilie 2026.
 
-\bibitem[ang(2026{\natexlab{a}})]{anglr}
+\bibitem[owa(2021)]{owasp}
+Owasp top ten.
+\newblock \url{https://owasp.org/www-project-top-ten/}, 2021.
+\newblock Proiect de referință pentru securitatea aplicațiilor web. Accesat
+  la 09 mai 2026.
+
+\bibitem[ang(2025)]{anglr}
 Anglr.
-\newblock \url{https://anglr.com/}, 2026{\natexlab{a}}.
-\newblock Pagină oficială a platformei. Accesat la 09 mai 2026.
+\newblock \url{https://anglr.com/}, 2025.
+\newblock Pagină oficială a platformei. Accesat la 19 decembrie 2025.
 
-\bibitem[ang(2026{\natexlab{b}})]{angular}
+\bibitem[fis(2025{\natexlab{a}})]{fishangler}
+Fishangler.
+\newblock \url{https://www.fishangler.com/}, 2025{\natexlab{a}}.
+\newblock Pagină oficială a platformei. Accesat la 17 decembrie 2025.
+
+\bibitem[fis(2025{\natexlab{b}})]{fishbrain}
+Fishbrain.
+\newblock \url{https://fishbrain.com/}, 2025{\natexlab{b}}.
+\newblock Pagină oficială a platformei. Accesat la 14 decembrie 2025.
+
+\bibitem[ang(2026)]{angular}
 Angular.
-\newblock \url{https://angular.dev/}, 2026{\natexlab{b}}.
-\newblock Documentație oficială Angular. Accesat la 09 mai 2026.
+\newblock \url{https://angular.dev/}, 2026.
+\newblock Documentație oficială Angular. Accesat la 08 ianuarie 2026.
 
 \bibitem[asp(2026)]{aspnetcore}
 Asp.net core documentation.
 \newblock \url{https://learn.microsoft.com/en-us/aspnet/core/}, 2026.
 \newblock Documentație oficială Microsoft pentru aplicații și servicii web
-  ASP.NET Core. Accesat la 09 mai 2026.
+  ASP.NET Core. Accesat la 11 ianuarie 2026.
+
+\bibitem[doc(2026)]{docker}
+Docker documentation.
+\newblock \url{https://docs.docker.com/}, 2026.
+\newblock Documentație oficială Docker. Accesat la 14 aprilie 2026.
 
 \bibitem[efc(2026)]{efcore}
 Entity framework core documentation.
 \newblock \url{https://learn.microsoft.com/en-us/ef/core/}, 2026.
 \newblock Documentație oficială Microsoft pentru Entity Framework Core.
-  Accesat la 09 mai 2026.
+  Accesat la 04 martie 2026.
 
 \bibitem[ffm(2026)]{ffmpeg}
 Ffmpeg documentation.
 \newblock \url{https://ffmpeg.org/documentation.html}, 2026.
-\newblock Documentație oficială FFmpeg. Accesat la 09 mai 2026.
-
-\bibitem[fis(2026{\natexlab{a}})]{fishangler}
-Fishangler.
-\newblock \url{https://www.fishangler.com/}, 2026{\natexlab{a}}.
-\newblock Pagină oficială a platformei. Accesat la 09 mai 2026.
-
-\bibitem[fis(2026{\natexlab{b}})]{fishbrain}
-Fishbrain.
-\newblock \url{https://fishbrain.com/}, 2026{\natexlab{b}}.
-\newblock Pagină oficială a platformei. Accesat la 09 mai 2026.
+\newblock Documentație oficială FFmpeg. Accesat la 20 martie 2026.
 
 \bibitem[fla(2026)]{flask}
 Flask documentation.
 \newblock \url{https://flask.palletsprojects.com/}, 2026.
-\newblock Documentație oficială pentru framework-ul Flask. Accesat la 09 mai
-  2026.
+\newblock Documentație oficială pentru framework-ul Flask. Accesat la 17
+  martie 2026.
 
 \bibitem[lea(2026)]{leaflet}
 Leaflet.
 \newblock \url{https://leafletjs.com/}, 2026.
-\newblock Bibliotecă open-source pentru hărți interactive. Accesat la 09 mai
-  2026.
+\newblock Bibliotecă open-source pentru hărți interactive. Accesat la 23
+  ianuarie 2026.
 
 \bibitem[ope(2026)]{opencv}
 Opencv documentation.
 \newblock \url{https://docs.opencv.org/}, 2026.
-\newblock Documentație oficială pentru biblioteca OpenCV. Accesat la 09 mai
-  2026.
+\newblock Documentație oficială pentru biblioteca OpenCV. Accesat la 19
+  martie 2026.
+
+\bibitem[pyt(2026)]{pytorch}
+Pytorch documentation.
+\newblock \url{https://pytorch.org/docs/stable/}, 2026.
+\newblock Documentație oficială PyTorch. Accesat la 17 aprilie 2026.
 
 \bibitem[sql(2026)]{sqlserver}
 Sql server documentation.
 \newblock \url{https://learn.microsoft.com/en-us/sql/sql-server/}, 2026.
-\newblock Documentație oficială Microsoft pentru SQL Server. Accesat la 09
-  mai 2026.
+\newblock Documentație oficială Microsoft pentru SQL Server. Accesat la 04
+  martie 2026.
 
 \bibitem[str(2026)]{stripe}
 Stripe documentation.
 \newblock \url{https://docs.stripe.com/}, 2026.
 \newblock Documentație oficială pentru integrarea plăților online. Accesat
-  la 09 mai 2026.
+  la 12 februarie 2026.
 
 \bibitem[ult(2026)]{ultralytics}
 Ultralytics yolo documentation.
 \newblock \url{https://docs.ultralytics.com/}, 2026.
 \newblock Documentație oficială pentru ecosistemul Ultralytics YOLO. Accesat
-  la 09 mai 2026.
+  la 16 februarie 2026.
+
+\bibitem[xun(2026)]{xunit}
+xunit.net documentation.
+\newblock \url{https://xunit.net/}, 2026.
+\newblock Framework open-source pentru teste unitare în .NET. Accesat la 28
+  aprilie 2026.
+
+\bibitem[Fielding(2000)]{fielding2000}
+Roy~Thomas Fielding.
+\newblock \emph{Architectural Styles and the Design of Network-based Software
+  Architectures}.
+\newblock PhD thesis, University of California, Irvine, 2000.
+
+\bibitem[Goodfellow et~al.(2016)Goodfellow, Bengio, and
+  Courville]{goodfellow2016}
+Ian Goodfellow, Yoshua Bengio, and Aaron Courville.
+\newblock \emph{Deep Learning}.
+\newblock MIT Press, 2016.
+
+\bibitem[Myers et~al.(2011)Myers, Sandler, and Badgett]{myers2011}
+Glenford~J. Myers, Corey Sandler, and Tom Badgett.
+\newblock \emph{The Art of Software Testing}.
+\newblock Wiley, 3 edition, 2011.
+
+\bibitem[Pressman and Maxim(2014)]{pressman2014}
+Roger~S. Pressman and Bruce~R. Maxim.
+\newblock \emph{Software Engineering: A Practitioner's Approach}.
+\newblock McGraw-Hill Education, 8 edition, 2014.
+
+\bibitem[Redmon et~al.(2016)Redmon, Divvala, Girshick, and
+  Farhadi]{redmon2016yolo}
+Joseph Redmon, Santosh Divvala, Ross Girshick, and Ali Farhadi.
+\newblock You only look once: Unified, real-time object detection.
+\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
+  Pattern Recognition}, pages 779--788, 2016.
+
+\bibitem[Silberschatz et~al.(2019)Silberschatz, Korth, and
+  Sudarshan]{silberschatz2019}
+Abraham Silberschatz, Henry~F. Korth, and S.~Sudarshan.
+\newblock \emph{Database System Concepts}.
+\newblock McGraw-Hill Education, 7 edition, 2019.
+
+\bibitem[Sommerville(2015)]{sommerville2015}
+Ian Sommerville.
+\newblock \emph{Software Engineering}.
+\newblock Pearson, 10 edition, 2015.
 
 \bibitem[Zhang et~al.(2022)Zhang, Sun, Jiang, Yu, Weng, Yuan, Luo, Liu, and
   Wang]{zhang2022bytetrack}

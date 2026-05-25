@@ -1,4 +1,4 @@
-\chapter{Analiza cerințelor și proiectarea sistemului}
+﻿\chapter{Analiza cerințelor și proiectarea sistemului}
 
 Acest capitol descrie cum am transformat fundamentele teoretice din capitolul anterior într-un model concret de cerințe și decizii de proiectare pentru WhereWeFishin. Scopul nu este descrierea codului, ci justificarea structurii sistemului prin raportare la fluxurile operaționale pe care acesta trebuie să le susțină. Analiza cerințelor și proiectarea sistemului sunt etape esențiale în ingineria software, deoarece definesc baza pe care se construiește implementarea \citep{sommerville2015,pressman2014}.
 
@@ -19,36 +19,38 @@ Cei patru actori principali sunt:
 
 Figura~\ref{fig:use-cases} prezintă o diagramă simplificată a cazurilor de utilizare, care evidențiază legătura dintre fiecare actor și funcțiile sale principale.
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
-  every node/.style={font=\small},
-  actor/.style={draw, rounded corners, align=center, minimum width=2.2cm, minimum height=0.8cm, fill=gray!20},
-  uc/.style={draw, ellipse, align=center, minimum width=3.2cm, minimum height=0.75cm, fill=gray!5},
-  arrow/.style={-Latex}
+  every node/.style={font=\normalsize},
+  hdr/.style={fill=gray!38, draw=none, text width=3.8cm, align=center,
+              minimum height=1.0cm, font=\normalsize\bfseries},
+  itm/.style={fill=gray!8, draw=none, text width=3.8cm, align=center,
+              minimum height=0.95cm, font=\normalsize},
+  grp/.style={draw, fill=none, rounded corners=5pt, line width=0.9pt, inner sep=2pt},
 ]
-\node[actor] (user) at (0, 0)    {Utilizator};
-\node[actor] (emp)  at (0, -4.5) {Angajat};
-\node[actor] (mgr)  at (10, 0)   {Manager};
-\node[actor] (adm)  at (10, -4.5){Administrator};
+\node[hdr] (u0) at (0, 0)    {Utilizator};
+\node[itm, below=0pt of u0] (u1) {Explorare hartă};
+\node[itm, below=0pt of u1] (u2) {Rezervare ponton};
+\node[itm, below=0pt of u2] (u3) {Plată online};
+\node[itm, below=0pt of u3] (u4) {Analiză media};
+\node[grp, fit=(u0)(u1)(u2)(u3)(u4)] {};
 
-\node[uc] (uc1) at (5,  0.8) {Explorare hartă};
-\node[uc] (uc2) at (5, -0.5) {Rezervare ponton};
-\node[uc] (uc3) at (5, -1.8) {Plată online};
-\node[uc] (uc4) at (5, -3.1) {Analiză media};
-\node[uc] (uc5) at (5, -4.5) {Validare sesiune QR};
-\node[uc] (uc6) at (5, -5.8) {Administrare locație};
-\node[uc] (uc7) at (5, -7.1) {Gestionare platformă};
+\node[hdr] (e0) at (5, 0)    {Angajat};
+\node[itm, below=0pt of e0] (e1) {Validare sesiune QR};
+\node[grp, fit=(e0)(e1)] {};
 
-\draw[arrow] (user) -- (uc1);
-\draw[arrow] (user) -- (uc2);
-\draw[arrow] (user) -- (uc3);
-\draw[arrow] (user) -- (uc4);
-\draw[arrow] (emp)  -- (uc5);
-\draw[arrow] (mgr)  -- (uc1);
-\draw[arrow] (mgr)  -- (uc6);
-\draw[arrow] (adm)  -- (uc7);
-\end{tikzpicture}
+\node[hdr] (m0) at (10, 0)   {Manager};
+\node[itm, below=0pt of m0] (m1) {Explorare hartă};
+\node[itm, below=0pt of m1] (m2) {Administrare loca\c{t}ie};
+\node[grp, fit=(m0)(m1)(m2)] {};
+
+\node[hdr] (a0) at (15, 0)   {Administrator};
+\node[itm, below=0pt of a0] (a1) {Gestionare platformă};
+\node[grp, fit=(a0)(a1)] {};
+\end{tikzpicture}%
+}
 \caption{Diagrama de cazuri de utilizare (simplificată)}
 \label{fig:use-cases}
 \end{figure}
@@ -81,7 +83,7 @@ Pe lângă funcționalitățile vizibile, aplicația trebuie să respecte și un
 
 \textbf{Securitatea} este prima cerință non-funcțională. Platforma trebuie să protejeze identitățile, datele și operațiile sensibile. Controlul accesului este aplicat consecvent la nivel de backend, nu doar la nivel de interfață.
 
-\textbf{Consistența temporală a rezervărilor} este critică. Sistemul trebuie să normalizeze valorile de timp, să valideze că rezervările vizează intervale viitoare și să verifice conflictele cu sesiunile existente. Starea sesiunii — \emph{Pending}, \emph{Confirmed}, \emph{Cancelled} — trebuie urmărită explicit.
+\textbf{Consistența temporală a rezervărilor} este critică. Sistemul trebuie să normalizeze valorile de timp, să valideze că rezervările vizează intervale viitoare și să verifice conflictele cu sesiunile existente. Starea sesiunii (\emph{Pending}, \emph{Confirmed}, \emph{Cancelled}) trebuie urmărită explicit.
 
 \textbf{Fiabilitatea fluxurilor operaționale} presupune că procesele secundare nu blochează fluxurile critice. Dacă trimiterea unui email eșuează, rezervarea nu trebuie anulată. O analiză media cu erori trebuie marcată ca eșuată, fără a afecta restul sistemului.
 
@@ -97,32 +99,34 @@ Pe baza cerințelor formulate, WhereWeFishin este proiectată ca un sistem modul
 
 Interfața web este orientată spre experiența utilizatorului și spre orchestrarea fluxurilor de interacțiune. Ea filtrează și ghidează acțiunile, dar validările esențiale și deciziile privind accesul sunt tratate în backend. Backend-ul este nucleul logic al sistemului: implementează regulile de autorizare, validările de business, controlul fluxurilor și coordonarea serviciilor externe. Persistența este tratată separat, printr-un strat dedicat și un model relațional centrat pe entitățile domeniului.
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
-  node distance=1.8cm and 2.2cm,
-  every node/.style={font=\small},
-  box/.style={draw, rounded corners, align=center, minimum width=3.4cm, minimum height=1cm, fill=gray!10},
+  node distance=3.0cm and 5.0cm,
+  every node/.style={font=\normalsize},
+  box/.style={draw, rounded corners, align=center, minimum width=5.5cm, minimum height=1.6cm, fill=gray!10, line width=0.7pt},
   arrow/.style={-Latex, thick}
 ]
-\node[box] (frontend) {Frontend Angular\\interfață web};
-\node[box, right=of frontend] (backend) {Backend ASP.NET Core\\API și reguli de business};
-\node[box, below=of backend] (db) {SQL Server + EF Core\\persistența datelor};
-\node[box, right=of backend] (python) {Serviciu Python\\analiză imagini și video};
+\node[box] (backend)  {Backend ASP.NET Core\\API și reguli de business};
+\node[box, left=of backend]  (frontend) {Frontend Angular\\interfață web};
+\node[box, below=of backend] (db)       {SQL Server + EF Core\\persistența datelor};
+\node[box, right=of backend] (python)   {Serviciu Python\\analiză imagini și video};
 \node[box, above=of backend] (external) {Servicii externe\\plăți și e-mail};
 
 \draw[arrow] (frontend) -- (backend);
-\draw[arrow] (backend) -- (db);
-\draw[arrow] (backend) -- (python);
-\draw[arrow] (backend) -- (external);
-\end{tikzpicture}
+\draw[arrow] (backend)  -- (db);
+\draw[arrow] (backend)  -- (python);
+\draw[arrow] (backend)  -- (external);
+\end{tikzpicture}%
+}
 \caption{Arhitectura de ansamblu a aplicației WhereWeFishin}
 \label{fig:arhitectura-wherewefishin}
 \end{figure}
 
 Microserviciul de analiză media este separat din motive practice: procesarea imaginilor și videoclipurilor implică dependențe, resurse și timpi de execuție diferiți față de operațiile obișnuite ale aplicației. Izolarea lui reduce cuplarea și limitează impactul operațiilor costisitoare asupra API-ului principal.
 
-Serviciile externe auxiliare — procesarea plăților, notificările — sunt integrate astfel încât să poată fi înlocuite fără a afecta structura fluxurilor de business.
+Serviciile externe auxiliare (procesarea plăților, notificările) sunt integrate astfel încât să poată fi înlocuite fără a afecta structura fluxurilor de business.
 
 \section{Modelul de domeniu și relațiile dintre entități}
 
@@ -132,64 +136,114 @@ Modelul de domeniu descrie obiectele principale ale sistemului și relațiile di
 
 \textbf{Pontonul} este o resursă rezervabilă distinctă, asociată unui loc de pescuit. Introducerea lui răspunde nevoii de delimitare mai precisă a spațiului: utilizatorul nu rezervă întotdeauna întreaga locație, ci adesea o zonă concretă.
 
-\textbf{Sesiunea de pescuit} materializează fluxul de rezervare. Leagă utilizatorul de o locație, de un ponton, de un interval temporal, de un cost și de o stare operațională. Stările explicite — \emph{Pending}, \emph{Confirmed}, \emph{Cancelled} — oferă trasabilitate și susțin regulile de business.
+\textbf{Sesiunea de pescuit} materializează fluxul de rezervare. Leagă utilizatorul de o locație, de un ponton, de un interval temporal, de un cost și de o stare operațională. Stările explicite (\emph{Pending}, \emph{Confirmed}, \emph{Cancelled}) oferă trasabilitate și susțin regulile de business.
 
 \textbf{Utilizatorul} apare în aproape toate fluxurile. Rolul său nu este unic, ci este diferențiat prin asocierea cu responsabilități diferite. Un utilizator poate iniția rezervări, poate lăsa recenzii sau poate deveni manager printr-un proces formalizat.
 
-Modelul include și \textbf{aplicația de manager} — care descrie procesul prin care un utilizator poate ajunge să administreze o locație — și relația \textbf{angajat--loc de pescuit}, care permite delegarea controlată a activităților operaționale.
+Modelul include și \textbf{aplicația de manager}, care descrie procesul prin care un utilizator poate ajunge să administreze o locație, și relația \textbf{angajat--loc de pescuit}, care permite delegarea controlată a activităților operaționale.
 
 \textbf{Recenziile}, \textbf{repopulările cu pești} și \textbf{analizele media} completează modelul. Analizele media au un ciclu de viață special, cu stări de tip \emph{Pending}, \emph{Processing}, \emph{Completed} și \emph{Failed}, care reflectă natura asincronă a procesării.
 
 Toate aceste entități formează un model coerent, în care obiectele principale sunt conectate prin relații care reflectă activitatea reală a platformei.
 
+Figura~\ref{fig:diagrama-clase} prezintă o diagramă simplificată a claselor principale, cu atributele cheie ale fiecărei entități.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  hd/.style={fill=gray!38, draw=none, text width=4.5cm, align=center, minimum height=0.9cm, font=\small\bfseries},
+  bd/.style={fill=gray!8, draw=none, text width=4.5cm, align=left, inner sep=5pt, font=\footnotesize},
+  grp/.style={draw, fill=none, rounded corners=4pt, line width=0.85pt, inner sep=0pt},
+  rel/.style={-Latex, thick, draw=gray!65},
+  lbl/.style={font=\tiny, fill=white, inner sep=2pt}
+]
+\node[hd] (uH) at (0,    0)    {User};
+\node[bd, below=0pt of uH] (uB) {id : Guid\\email : string\\username : string\\role : UserRole};
+\node[grp, fit=(uH)(uB)] {};
+
+\node[hd] (sH) at (6.5,  0)    {FishingSpot};
+\node[bd, below=0pt of sH] (sB) {id : Guid\\name : string\\latitude : double\\longitude : double\\hourlyRate : decimal};
+\node[grp, fit=(sH)(sB)] {};
+
+\node[hd] (rH) at (13,   0)    {Review};
+\node[bd, below=0pt of rH] (rB) {id : Guid\\userId : Guid\\fishingSpotId : Guid\\rating : int [1..5]\\comment : string};
+\node[grp, fit=(rH)(rB)] {};
+
+\node[hd] (fH) at (0,   -5.2)  {FishingSession};
+\node[bd, below=0pt of fH] (fB) {id : Guid\\startTime : DateTime\\endTime : DateTime\\totalCost : decimal\\status : SessionStatus};
+\node[grp, fit=(fH)(fB)] {};
+
+\node[hd] (pH) at (6.5, -5.2)  {Pontoon};
+\node[bd, below=0pt of pH] (pB) {id : Guid\\name : string\\fishingSpotId : Guid\\coordinates : string};
+\node[grp, fit=(pH)(pB)] {};
+
+\node[hd] (mH) at (13,  -5.2)  {MediaAnalysis};
+\node[bd, below=0pt of mH] (mB) {id : Guid\\userId : Guid\\fileType : string\\status : AnalysisStatus\\detections : JSON};
+\node[grp, fit=(mH)(mB)] {};
+
+\draw[rel] (uH.east) -- node[lbl, above]{rezervă la} (sH.west);
+\draw[rel] (sH.east) -- node[lbl, above]{primește} (rH.west);
+\draw[rel] (fH.east) -- node[lbl, above]{la} (pH.west);
+\draw[rel] (uB.south) -- node[lbl, left, pos=0.15]{1} node[lbl, left, pos=0.85]{*} (fH.north);
+\draw[rel] (sB.south) -- node[lbl, right, pos=0.15]{1} node[lbl, right, pos=0.85]{*} (pH.north);
+\end{tikzpicture}%
+}
+\caption{Diagrama claselor principale cu atributele entităților de domeniu}
+\label{fig:diagrama-clase}
+\end{figure}
+
 \section{Fluxuri esențiale și diagrame}
 
-Figura~\ref{fig:flux-rezervare-validare} prezintă fluxul principal al unei rezervări, de la alegerea locului de pescuit până la verificarea prin cod QR.
+Figura~\ref{fig:flux-rezervare-validare} prezintă fluxul principal al unei rezervări, de la alegerea locului de pescuit până la verificarea prin cod QR. Fiecare pas din diagramă corespunde unei operații concrete din sistem: alegerea locului de pescuit implică o interogare filtrată a locațiilor disponibile, selectarea pontonului și intervalului presupune verificarea disponibilității și calculul costului, iar validarea și plata solicită integrarea cu serviciul Stripe. Crearea sesiunii de pescuit este pasul în care toate datele verificate sunt persistate, iar verificarea prin cod QR reprezintă confirmarea fizică a prezenței la locație, mediată de angajat.
 
-\begin{figure}[ht]
+
+\begin{figure}[htbp]
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
-  node distance=1.1cm and 0.9cm,
-  every node/.style={font=\small},
-  step/.style={draw, rounded corners, align=center, minimum width=2.7cm, minimum height=0.95cm, fill=gray!10},
+  node distance=2.2cm,
+  every node/.style={font=\normalsize},
+  fstep/.style={draw, rounded corners, align=center, minimum width=4.0cm, minimum height=1.5cm, fill=gray!10, line width=0.7pt},
   arrow/.style={-Latex, thick}
 ]
-\node[step] (s1) {Alegerea\\locului de pescuit};
-\node[step, right=of s1] (s2) {Selectarea\\pontonului și intervalului};
-\node[step, right=of s2] (s3) {Validare\\și plată};
-\node[step, right=of s3] (s4) {Crearea sesiunii\\de pescuit};
-\node[step, right=of s4] (s5) {Verificare\\prin cod QR};
-
+\node[fstep] (s1) {Alegere\\loca\c{t}ie};
+\node[fstep, right=of s1] (s2) {Selectare ponton\\și interval};
+\node[fstep, right=of s2] (s3) {Validare\\și plată};
+\node[fstep, right=of s3] (s4) {Creare\\sesiune};
+\node[fstep, right=of s4] (s5) {Verificare\\cod QR};
 \draw[arrow] (s1) -- (s2);
 \draw[arrow] (s2) -- (s3);
 \draw[arrow] (s3) -- (s4);
 \draw[arrow] (s4) -- (s5);
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption{Fluxul principal al unei rezervări și al validării sesiunii de pescuit}
 \label{fig:flux-rezervare-validare}
 \end{figure}
 
-Al doilea flux important este cel al analizei media, prezentat în figura~\ref{fig:flux-analiza-media}. Față de rezervare, care este aproape sincronă, analiza media este un flux asincron, cu stări intermediare vizibile utilizatorului.
+Al doilea flux important este cel al analizei media, prezentat în figura~\ref{fig:flux-analiza-media}. Față de rezervare, care este aproape sincronă, analiza media este un flux asincron, cu stări intermediare vizibile utilizatorului. Încărcarea fișierului declanșează crearea unei înregistrări cu starea \emph{Pending}, iar trimiterea efectivă către serviciul Python inițiază procesarea. Detectarea și urmărirea obiectelor sunt operații costisitoare, a căror durată variază în funcție de dimensiunea fișierului și de complexitatea conținutului. Stocarea rezultatelor marchează finalizarea procesării, iar afișarea în interfață este posibilă imediat după confirmarea stării \emph{Completed}.
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
-  node distance=1.1cm and 0.7cm,
-  every node/.style={font=\small},
-  step/.style={draw, rounded corners, align=center, minimum width=2.8cm, minimum height=0.95cm, fill=gray!10},
+  node distance=2.2cm,
+  every node/.style={font=\normalsize},
+  fstep/.style={draw, rounded corners, align=center, minimum width=4.0cm, minimum height=1.5cm, fill=gray!10, line width=0.7pt},
   arrow/.style={-Latex, thick}
 ]
-\node[step] (a1) {Încărcare fișier\\(imagine / video)};
-\node[step, right=of a1] (a2) {Trimitere către\\serviciul Python};
-\node[step, right=of a2] (a3) {Detectare și\\urmărire obiecte};
-\node[step, right=of a3] (a4) {Stocare\\rezultate};
-\node[step, right=of a4] (a5) {Afișare rezultat\\în interfață};
-
+\node[fstep] (a1) {Upload\\fișier};
+\node[fstep, right=of a1] (a2) {Trimitere\\Python};
+\node[fstep, right=of a2] (a3) {Detectare\\și tracking};
+\node[fstep, right=of a3] (a4) {Stocare\\rezultate};
+\node[fstep, right=of a4] (a5) {Afișare\\rezultat};
 \draw[arrow] (a1) -- (a2);
 \draw[arrow] (a2) -- (a3);
 \draw[arrow] (a3) -- (a4);
 \draw[arrow] (a4) -- (a5);
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption{Fluxul de analiză media: de la upload până la afișarea rezultatelor}
 \label{fig:flux-analiza-media}
 \end{figure}

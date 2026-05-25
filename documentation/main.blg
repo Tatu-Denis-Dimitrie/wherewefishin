@@ -10,7 +10,15 @@ A level-1 auxiliary file: chapters/03-analiza-cerintelor-si-proiectarea-sistemul
 Reallocating 'name_of_file' (item size: 1) to 54 items.
 A level-1 auxiliary file: chapters/04-implementare-si-contributii-personale.aux
 Reallocating 'name_of_file' (item size: 1) to 36 items.
+A level-1 auxiliary file: chapters/05-model-ai-si-dataset.aux
+Reallocating 'name_of_file' (item size: 1) to 51 items.
+A level-1 auxiliary file: chapters/05-interfata-si-experienta-utilizator.aux
+Reallocating 'name_of_file' (item size: 1) to 36 items.
 A level-1 auxiliary file: chapters/05-testare-si-evaluare.aux
+Reallocating 'name_of_file' (item size: 1) to 41 items.
+A level-1 auxiliary file: chapters/07-securitate-si-deployment.aux
+Reallocating 'name_of_file' (item size: 1) to 55 items.
+A level-1 auxiliary file: chapters/06-concluzii-si-perspective-de-dezvoltare.aux
 Reallocating 'name_of_file' (item size: 1) to 9 items.
 The style file: plainnat.bst
 Reallocating 'name_of_file' (item size: 1) to 11 items.
@@ -21,53 +29,57 @@ Warning--to sort, need author or key in anglr
 Warning--to sort, need author or key in angular
 Warning--to sort, need author or key in leaflet
 Warning--to sort, need author or key in aspnetcore
-Warning--to sort, need author or key in stripe
-Warning--to sort, need author or key in ultralytics
 Warning--to sort, need author or key in efcore
 Warning--to sort, need author or key in sqlserver
 Warning--to sort, need author or key in flask
+Warning--to sort, need author or key in stripe
+Warning--to sort, need author or key in ultralytics
 Warning--to sort, need author or key in jwt
 Warning--to sort, need author or key in opencv
 Warning--to sort, need author or key in ffmpeg
-You've used 15 entries,
+Warning--to sort, need author or key in docker
+Warning--to sort, need author or key in pytorch
+Warning--to sort, need author or key in xunit
+Warning--to sort, need author or key in owasp
+You've used 26 entries,
             2773 wiz_defined-function locations,
-            658 strings with 7067 characters,
-and the built_in function-call counts, 4242 in all, are:
-= -- 416
-> -- 84
-< -- 0
-+ -- 44
-- -- 27
-* -- 277
-:= -- 439
-add.period$ -- 45
-call.type$ -- 15
-change.case$ -- 54
-chr.to.int$ -- 13
-cite$ -- 58
-duplicate$ -- 234
-empty$ -- 532
-format.name$ -- 28
-if$ -- 1017
-int.to.chr$ -- 3
+            718 strings with 8790 characters,
+and the built_in function-call counts, 8077 in all, are:
+= -- 756
+> -- 254
+< -- 4
++ -- 105
+- -- 78
+* -- 545
+:= -- 976
+add.period$ -- 78
+call.type$ -- 26
+change.case$ -- 102
+chr.to.int$ -- 25
+cite$ -- 88
+duplicate$ -- 446
+empty$ -- 911
+format.name$ -- 88
+if$ -- 1862
+int.to.chr$ -- 2
 int.to.str$ -- 1
-missing$ -- 1
-newline$ -- 83
-num.names$ -- 4
-pop$ -- 210
+missing$ -- 12
+newline$ -- 138
+num.names$ -- 32
+pop$ -- 351
 preamble$ -- 1
-purify$ -- 39
+purify$ -- 78
 quote$ -- 0
-skip$ -- 184
+skip$ -- 345
 stack$ -- 0
-substring$ -- 44
-swap$ -- 20
-text.length$ -- 0
+substring$ -- 102
+swap$ -- 39
+text.length$ -- 1
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 165
-warning$ -- 14
-while$ -- 3
+type$ -- 261
+warning$ -- 18
+while$ -- 27
 width$ -- 0
-write$ -- 187
-(There were 14 warnings)
+write$ -- 325
+(There were 18 warnings)

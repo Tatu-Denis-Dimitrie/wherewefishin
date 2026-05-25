@@ -1,0 +1,138 @@
+﻿\chapter{Modelul de inteligență artificială și setul de date}
+
+Componenta de analiză media din WhereWeFishin se bazează pe un model de detecție de obiecte antrenat pe un set de date creat și adnotat manual. Acest capitol detaliază procesul complet: de la colectarea imaginilor și anotarea lor, prin antrenarea și evaluarea modelului, până la integrarea sa în serviciul Python de producție. Această componentă reprezintă contribuția cea mai distinctivă a proiectului față de o aplicație web convențională de rezervări.
+
+\section{Contextul și motivația unui set de date dedicat}
+
+Modelele YOLO preantrenate pe seturi de date publice de referință (precum COCO) nu conțin o clasă dedicată peștilor. Setul COCO, cu cele 80 de categorii ale sale, nu include pești, ceea ce face imposibilă folosirea directă a unui model generic pentru identificarea capturilor. Această absență a justificat construirea unui set de date propriu: fără el, platforma nu ar putea oferi nicio informație despre specia peștelui fotografiat sau filmat.
+
+Alternativele disponibile public, seturi de date de pești pentru medii marine sau subacvatice controlate, au o distribuție a speciilor diferită față de realitatea pescuitului recreativ din România. Specii comune în apele locale, precum crapul, bibanul, șalăul sau știuca, sunt subreprezentate sau absente în aceste seturi. Din acest motiv, crearea unui set de date propriu, adaptat contextului local și condițiilor reale de captare a imaginilor, a fost o alegere necesară, nu opțională.
+
+\section{Colectarea și structura setului de date}
+
+Imaginile au fost colectate din surse variate: fotografii proprii realizate în condiții de pescuit recreativ, capturi de ecran extrase din videoclipuri de pescuit și imagini adnotabile disponibile public. Diversitatea surselor este importantă pentru a evita supraspecializarea modelului pe un singur tip de iluminare, unghi sau fundal.
+
+Setul de date include mai multe clase de specii de pești frecvent întâlnite în contextul pescuitului recreativ, fiecare reprezentată prin imagini cu variații de poziție, unghi de vizualizare, distanță față de cameră și condiții de lumină. Clasele acoperă atât pești capturați și fotografiați în afara apei, cât și exemplare vizibile la suprafața apei sau în condiții de vizibilitate parțială.
+
+Structura finală a setului de date urmează convenția Ultralytics YOLO: directoarele \texttt{train}, \texttt{val} și \texttt{test} conțin imagini și etichete asociate. Fiecare imagine are un fișier de etichete cu același nume, în format text, unde fiecare linie descrie un obiect prin indexul clasei și coordonatele bounding box-ului normalizate. Această structură este consumată direct de pipeline-ul de antrenare fără preprocesare suplimentară.
+
+\section{Anotarea și preprocesarea imaginilor}
+
+Anotarea bounding box-urilor a fost realizată manual pentru fiecare imagine din setul de date. Instrumentul de adnotare utilizat permite marcarea vizuală a zonelor de interes și exportul direct în formatul YOLO, eliminând conversia manuală a coordonatelor. Anotarea a urmărit principiul delimitării stricte a corpului peștelui, excluzând umbra sau reflecția apei, pentru a reduce zgomotul din semnalul de antrenare.
+
+Preprocesarea și augmentarea datelor au fost aplicate în cadrul pipeline-ului de antrenare. Augmentările includ oglindire orizontală, rotații ușoare, ajustări de luminozitate și contrast, zoom aleatoriu și mozaic, adică combinarea a patru imagini într-una singură, o tehnică specifică familiei YOLO care îmbunătățește detecția obiectelor la scări variate. Aceste transformări măresc artificial diversitatea setului de antrenare și reduc riscul de supraadaptare la condițiile specifice imaginilor originale.
+
+\section{Antrenarea modelului}
+
+Modelul utilizat face parte din familia YOLOv8, implementată prin biblioteca Ultralytics \citep{ultralytics}. Alegerea acestei versiuni este justificată de echilibrul dintre acuratețe și viteză de inferență, de suportul nativ pentru antrenare pe GPU și de integrarea facilă cu PyTorch \citep{pytorch}. Familia YOLOv8 menține arhitectura unui singur pas, de tip \emph{single-stage detector}, care estimează simultan localizarea și clasificarea, ceea ce o face potrivită atât pentru imagini, cât și pentru analiza video cadru cu cadru \citep{redmon2016yolo}.
+
+Antrenarea a pornit de la greutăți preantrenate pe setul COCO, folosind tehnica de transfer learning \citep{goodfellow2016}. Rețeaua a preluat reprezentările generale de viziune din antrenarea inițială și a rafinat straturile finale pe setul de date propriu, adăugând clasele de specii de pești absente din setul original. Această abordare reduce semnificativ numărul de epoci necesare pentru convergență și îmbunătățește stabilitatea antrenamentului față de inițializarea de la zero.
+
+Configurația de antrenare a inclus un număr de epoci ales în funcție de curbele de convergență observate, cu monitorizarea continuă a pierderii de antrenare și a metricilor de validare. S-a utilizat un mecanism de oprire timpurie pentru a preveni supraadaptarea: antrenamentul se oprește automat dacă metrica principală nu se îmbunătățește pe un număr definit de epoci consecutive. Dimensiunea lotului a fost adaptată la memoria GPU disponibilă, iar rata de învățare a urmat un planificator cu coborâre lentă pe parcursul antrenamentului.
+
+\section{Evaluarea performanței modelului}
+
+Evaluarea modelului s-a realizat pe setul de test rezervat, care nu a participat la antrenare sau la selecția hiperparametrilor. Metricile principale utilizate sunt cele standard pentru detecția de obiecte: precizia (P), recall-ul (R) și media preciziei medii la un prag de IoU de 0.5 (mAP@0.5).
+
+Figura~\ref{fig:metrici-model} sintetizează relația dintre principalele metrici de evaluare utilizate în analiza performanței modelului.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  every node/.style={font=\small},
+  met/.style={draw, rounded corners, align=center, minimum width=4.5cm, minimum height=1.3cm, fill=gray!10, line width=0.7pt},
+  arrow/.style={-Latex, thick}
+]
+\node[met] (prec) at (0, 0)     {Precizie (P)};
+\node[met] (rec)  at (9, 0)     {Recall (R)};
+\node[met] (map)  at (4.5, -4.0){mAP@0.5};
+\node[met] (f1)   at (4.5, -8.0){F1 Score};
+\draw[arrow] (prec) -- node[font=\footnotesize, fill=white, inner sep=2pt]{contribuie la} (map);
+\draw[arrow] (rec)  -- node[font=\footnotesize, fill=white, inner sep=2pt]{contribuie la} (map);
+\draw[arrow] (prec) to[bend right=12] node[font=\footnotesize, fill=white, inner sep=2pt, left]{combinate} (f1);
+\draw[arrow] (rec)  to[bend left=12]  node[font=\footnotesize, fill=white, inner sep=2pt, right]{în} (f1);
+\end{tikzpicture}
+\caption{Relația dintre metricile principale de evaluare a modelului}
+\label{fig:metrici-model}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  ybar,
+  bar width=0.25cm,
+  width=0.88\textwidth,
+  height=7cm,
+  ylabel={Valoare metrică},
+  xtick={1,2,3,4},
+  xticklabels={Cten, \c{S}tiucă, Crap, ClownFish},
+  x tick label style={font=\small},
+  y tick label style={font=\small},
+  ymin=0, ymax=1.05,
+  ytick={0,0.2,0.4,0.6,0.8,1.0},
+  legend style={at={(0.5,-0.18)}, anchor=north, legend columns=3, font=\small},
+  legend entries={Precizie (P), Recall (R), mAP@0.5},
+  enlarge x limits=0.25,
+]
+\addplot[fill=gray!20, draw=gray!50] coordinates {(1,.63)(2,.72)(3,.83)(4,.93)};
+\addplot[fill=gray!45, draw=gray!65] coordinates {(1,.58)(2,.67)(3,.79)(4,.90)};
+\addplot[fill=gray!70, draw=gray!85] coordinates {(1,.60)(2,.70)(3,.81)(4,.92)};
+\end{axis}
+\end{tikzpicture}
+\caption{Precizie, Recall și mAP@0.5 per clasă pe setul de test}
+\label{fig:metrici-per-clasa}
+\end{figure}
+
+Precizia măsoară proporția detecțiilor corecte din totalul detecțiilor efectuate, indicând câte dintre predicțiile modelului sunt reale. Recall-ul măsoară proporția obiectelor reale detectate corect, indicând câți pești au fost identificați din totalul celor prezenți în imagini. mAP@0.5 agregă aceste metrici pe toate clasele și la pragul de IoU de 0.5, oferind o imagine globală a performanței.
+
+Performanța variază între clase, reflectând dificultățile specifice fiecărei specii: dimensiunile tipice ale peștelui în imagine, diversitatea aspectului vizual și frecvența reprezentării în setul de antrenare. Clasele cu mai multe exemple și mai puțină variabilitate morfologică obțin metrici mai ridicate. Clasele mai rare sau cu aspect vizual similar altor specii prezintă valori mai mici, ceea ce indică direcții clare de extindere a setului de date.
+
+Matricea de confuzie a modelului permite identificarea erorilor sistematice: confundarea speciilor cu morfologie similară și detecțiile false în zone cu textură asemănătoare (suprafața apei, vegetație subacvatică). Aceste observații ghidează colectarea ulterioară de date: speciile confundate au nevoie de exemple suplimentare variate, iar imaginile cu fundal complex contribuie direct la reducerea falselor pozitive.
+
+\section{Integrarea modelului antrenat în producție}
+
+Modelul antrenat este exportat în formatul \texttt{.pt} (PyTorch checkpoint) și inclus în directorul serviciului Python Flask. La pornirea serviciului, modelul este încărcat o singură dată în memorie și reutilizat pentru toate cererile de analiză, evitând overhead-ul repetitiv al inițializării.
+
+Pragul de încredere pentru detecție este configurat explicit și a fost ales pe baza curbelor de precizie-recall observate pe setul de validare: o valoare prea mică include detecții nesigure care produc zgomot vizual, iar o valoare prea mare exclud detecții corecte cu grad de încredere moderat. Pragul ales reprezintă un compromis care favorizează precizia față de recall, deoarece în contextul aplicației o detecție incertă este mai problematică decât o detecție lipsă.
+
+Pentru analiza video, modelul este aplicat cadru cu cadru, iar rezultatele sunt transmise tracker-ului ByteTrack \citep{zhang2022bytetrack} care menține identitatea obiectelor de-a lungul secvenței. Această separare clară între detecție și tracking permite înlocuirea sau actualizarea modelului de detecție fără a modifica logica de urmărire temporală și invers.
+
+Serviciul expune un endpoint de inferență care primește un fișier media, determină tipul de analiză (imagine sau video) pe baza tipului MIME și returnează un răspuns structurat cu detecțiile, statisticile și, în cazul video, un fișier reîncodat cu adnotările suprapuse.
+
+\begin{lstlisting}[language=Python, caption={Endpoint Flask pentru inferența modelului YOLO}]
+model = YOLO("model.pt")  # incarcat o singura data la pornire
+
+@app.route("/analyze", methods=["POST"])
+def analyze():
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+
+    file  = request.files["file"]
+    mime  = file.content_type
+
+    if mime.startswith("image/"):
+        results = run_image_inference(file, model)
+    elif mime.startswith("video/"):
+        results = run_video_inference(file, model)
+    else:
+        return jsonify({"error": "Unsupported media type"}), 415
+
+    return jsonify({
+        "detections":      results["detections"],
+        "species_summary": results["species_summary"],
+        "total_count":     results["total_count"],
+    })
+\end{lstlisting}
+
+\section{Limitări și observații ale modelului}
+
+Performanța modelului este influențată de condițiile în care sunt realizate fotografiile sau videoclipurile. Imaginile cu iluminare slabă, reflexii puternice pe suprafața apei sau cu peștii parțial ieșiți din cadru produc detecții cu grad de încredere mai scăzut sau false negative. Aceste limite sunt specifice sistemelor de viziune artificială și nu pot fi eliminate complet fără extinderea setului de antrenare cu exemple specifice acestor condiții.
+
+O altă limită practică este că modelul a fost antrenat pe specii frecvente în contextul pescuitului recreativ local. Specii mai rare sau exotice nu sunt recunoscute și vor genera fie nicio detecție, fie o clasificare incorectă spre cea mai apropiată clasă disponibilă. Extinderea setului de date cu specii suplimentare reprezintă o direcție naturală de îmbunătățire.
+
+Dimensiunea setului de date, deși suficientă pentru un prototip funcțional, rămâne mai mică față de seturile folosite pentru antrenarea modelelor generice. Această limitare este compensată parțial de transfer learning, dar are impact vizibil pe clasele cu mai puține exemple. Colectarea continuă de imagini în condiții variate este cea mai eficientă modalitate de a îmbunătăți robustețea modelului pe termen lung.
+
+\section{Sinteza capitolului}
+
+Capitolul a descris procesul complet de construire și integrare a componentei de inteligență artificială din WhereWeFishin: de la motivația unui set de date propriu și anotarea manuală a imaginilor, prin antrenarea modelului YOLOv8 cu transfer learning, evaluarea performanței pe setul de test și integrarea modelului în serviciul Python de producție. Contribuția personală se regăsește în fiecare etapă: selectarea și adnotarea imaginilor, configurarea antrenamentului, calibrarea pragurilor de inferență și integrarea modelului în arhitectura serviciului. Aceasta este zona proiectului care transformă platforma dintr-o aplicație de rezervări într-un instrument cu valoare analitică adăugată pentru utilizatorii săi.

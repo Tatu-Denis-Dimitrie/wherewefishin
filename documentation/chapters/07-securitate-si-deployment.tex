@@ -1,0 +1,211 @@
+﻿\chapter{Securitate și infrastructură de deployment}
+
+Funcționalitățile vizibile ale unei aplicații web, mai precis formulare, hărți și rezervări, se sprijină pe o infrastructură de securitate care, dacă este neglijată, poate compromite întregul sistem. Acest capitol tratează în detaliu mecanismele de securitate implementate în WhereWeFishin și modul în care aplicația este containerizată și configurată pentru deployment. Sunt analizate autentificarea prin JWT, autorizarea pe roluri, protecția fluxurilor sensibile, izolarea componentelor și gestionarea configurației pe medii.
+
+\section{Arhitectura de securitate în straturi}
+
+Securitatea aplicației nu este concentrată într-un singur punct, ci distribuită pe mai multe niveluri independente. Această abordare în straturi reduce riscul că un singur mecanism compromis să afecteze întregul sistem.
+
+La nivel de transport, comunicarea între client și backend se realizează exclusiv prin HTTPS, ceea ce elimină riscul interceptării tokenurilor sau a datelor sensibile în tranzit. La nivel de autentificare, identitatea utilizatorului este verificată la fiecare cerere prin validarea unui token JWT. La nivel de autorizare, fiecare endpoint controlează explicit ce rol are voie să execute operația respectivă. La nivel de logică de business, serviciile verifică și apartenența resurselor: un manager poate modifica doar locațiile proprii, nu pe ale altora.
+
+Un principiu de bază aplicat este că frontendului nu i se acordă încredere pentru decizii de securitate. Orice acțiune sensibilă este revalidată complet în backend, indiferent de ce afirmă sau trimite clientul. Această separare este importantă deoarece interfața web poate fi ocolită de oricine poate construi o cerere HTTP manuală \citep{owasp}.
+
+\section{Autentificarea prin JSON Web Tokens}
+
+Autentificarea în WhereWeFishin folosește tokenuri JWT, conform RFC 7519 \citep{jwt}. Un token JWT este un șir compact format din trei segmente codificate Base64URL, separate prin puncte: antet, payload și semnătură.
+
+Antetul specifică algoritmul de semnare și tipul tokenului. În implementarea curentă se folosește HMAC-SHA256 (\texttt{HS256}), un algoritm simetric care semnează și verifică tokenul cu aceeași cheie secretă stocată pe server. Payload-ul conține \emph{claims}, adică perechi cheie-valoare cu informații despre utilizator și token:
+
+\begin{itemize}
+  \item \texttt{sub}: identificatorul unic al utilizatorului;
+  \item \texttt{email}: adresa de e-mail, folosită și ca username implicit;
+  \item \texttt{role}: rolul acordat (\texttt{User}, \texttt{Employee}, \texttt{Manager}, \texttt{Administrator});
+  \item \texttt{iss} și \texttt{aud}: emițătorul și destinatarul așteptat al tokenului;
+  \item \texttt{exp} și \texttt{iat}: momentul expirării și al emiterii.
+\end{itemize}
+
+Semnătura este calculată ca HMAC-SHA256 aplicat concatenării antet și payload. Orice modificare a conținutului tokenului invalidează semnătura, ceea ce înseamnă că un atacator nu poate modifica rolul sau ID-ul utilizatorului fără a cunoaște cheia secretă.
+
+În ASP.NET Core \citep{aspnetcore}, validarea JWT este configurată explicit prin parametrii de validare injectați la înregistrarea middleware-ului: issuer-ul, audience-ul, durata de viață și cheia de semnare sunt verificate la fiecare cerere. Fereastra de toleranță pentru expirare (\texttt{ClockSkew}) este setată la zero, ceea ce înseamnă că un token expirat este respins imediat, fără perioadă de grație. Odată validat, tokenul este decodat, iar claims-urile sunt populate în \texttt{HttpContext.User}, disponibile în orice punct al pipeline-ului.
+
+\begin{lstlisting}[language={[Sharp]C}, caption={Configurarea autentificării JWT în Program.cs}]
+builder.Services
+  .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+  .AddJwtBearer(options =>
+  {
+      options.TokenValidationParameters = new TokenValidationParameters
+      {
+          ValidateIssuer           = true,
+          ValidateAudience         = true,
+          ValidateLifetime         = true,
+          ValidateIssuerSigningKey = true,
+          ValidIssuer     = builder.Configuration["Jwt:Issuer"],
+          ValidAudience   = builder.Configuration["Jwt:Audience"],
+          IssuerSigningKey = new SymmetricSecurityKey(
+              Encoding.UTF8.GetBytes(
+                  builder.Configuration["Jwt:Key"]!)),
+          ClockSkew = TimeSpan.Zero
+      };
+  });
+\end{lstlisting}
+
+\section[Autorizare pe roluri și proprietate]{Autorizarea pe bază de roluri și verificarea proprietății resurselor}
+
+Autentificarea confirmă identitatea utilizatorului. Autorizarea decide ce operații are voie să execute. WhereWeFishin combină două mecanisme: autorizarea declarativă pe roluri și verificarea explicită a proprietății resurselor.
+
+Autorizarea declarativă se aplică la nivel de controller sau de acțiune prin atributul \texttt{[Authorize]}, cu specificarea rolului sau rolurilor permise. Un endpoint de administrare a locației este decorat cu \texttt{[Authorize(Roles = "Manager,Administrator")]}, ceea ce face ca framework-ul să respingă automat orice cerere de la un utilizator fără unul dintre aceste roluri, înainte ca logica de business să fie executată.
+
+\begin{lstlisting}[language={[Sharp]C}, caption={Autorizare pe rol și verificarea proprietății resursei}]
+[ApiController]
+[Route("api/[controller]")]
+[Authorize(Roles = "Manager,Administrator")]
+public class FishingSpotsController : ControllerBase
+{
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(
+        Guid id, UpdateFishingSpotDto dto)
+    {
+        // Extragere identitate din claims JWT
+        var userId = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        var spot = await _service.GetByIdAsync(id);
+
+        // Verificare proprietate resursa
+        if (spot.ManagerId.ToString() != userId)
+            return Forbid();
+
+        await _service.UpdateAsync(id, dto);
+        return NoContent();
+    }
+}
+\end{lstlisting}
+
+Autorizarea declarativă nu este suficientă pentru resurse care aparțin unui anumit utilizator. Un manager autentificat nu trebuie să poată modifica locația unui alt manager, chiar dacă ambii au rolul \texttt{Manager}. Acest control este aplicat în stratul de servicii: ID-ul utilizatorului curent este extras din claims-urile tokenului și comparat cu câmpul de proprietate al resursei solicitate. Dacă nu coincid, cererea este respinsă cu HTTP 403, indiferent de rolul utilizatorului.
+
+Fluxul complet al unei cereri de actualizare a unei locații este astfel: validare JWT → extragere claims → verificare rol \texttt{Manager} → verificare că locația aparține managerului autentificat → execuție logică de business. Fiecare pas este independent, iar eșecul oricăruia oprește procesarea fără a expune informații suplimentare.
+
+\section{Protecția fluxurilor sensibile}
+
+Endpoint-urile de autentificare sunt protejate și prin \emph{rate limiting}. ASP.NET Core oferă, începând cu versiunea 7, middleware dedicat pentru limitarea numărului de cereri pe interval de timp. Această măsură previne atacurile de tip brute-force: un atacator care încearcă parole în mod repetat va primi răspunsuri de tip HTTP 429 după depășirea pragului, fără posibilitatea de a continua cu cereri nelimitate.
+
+Validarea datelor de intrare este aplicată sistematic prin \emph{data annotations} pe clasele DTO. Atributele \texttt{[Required]}, \texttt{[StringLength]}, \texttt{[Range]} și \texttt{[RegularExpression]} definesc constrângerile așteptate direct pe modelul de date. ASP.NET Core evaluează aceste constrângeri automat în procesul de model binding: o cerere cu date invalide primește HTTP 400 cu detalii despre câmpurile incorecte, fără ca logica de business să fie invocată.
+
+\begin{lstlisting}[language={[Sharp]C}, caption={Exemplu de DTO cu validare declarativă prin DataAnnotations}]
+public class CreateFishingSessionDto
+{
+    [Required]
+    public Guid FishingSpotId { get; set; }
+
+    public Guid? PontoonId { get; set; }
+
+    [Required]
+    public DateTime StartTime { get; set; }
+
+    [Required]
+    public DateTime EndTime { get; set; }
+}
+
+public class CreateReviewDto
+{
+    [Required]
+    public Guid FishingSpotId { get; set; }
+
+    [Required]
+    [Range(1, 5, ErrorMessage = "Rating must be between 1 and 5")]
+    public int Rating { get; set; }
+
+    [StringLength(1000)]
+    public string? Comment { get; set; }
+}
+\end{lstlisting}
+
+Validarea fișierelor media este tratată în două straturi. La nivel de server (Kestrel), limita de 150 MB pentru corpul cererii este configurată explicit, respingând fișierele prea mari înainte ca acestea să fie procesate. La nivel de controller, tipul MIME declarat este verificat față de o listă albă de formate acceptate. Fișierul nu este scris în stocare permanentă până când toate validările nu au trecut.
+
+\section{Izolarea componentelor și securitatea comunicației interne}
+
+Microserviciul Python de analiză media nu este expus direct în rețeaua publică. El rulează pe un port intern, accesibil exclusiv de la backend-ul .NET. Prin această izolare, toate verificările de autentificare și autorizare sunt aplicate de API-ul principal înainte ca orice date să ajungă la serviciul de procesare. Serviciul Python nu implementează autentificare proprie: această responsabilitate rămâne complet la nivelul backend-ului.
+
+Secretele aplicației, printre care cheia de semnare JWT, string-ul de conexiune la baza de date, cheia API Stripe și credențialele SMTP, nu sunt stocate în codul sursă. Acestea sunt furnizate prin variabile de mediu sau prin fișiere de configurare excluse din sistemul de versionare. Separarea configurației de cod permite utilizarea unor valori diferite pe medii diferite fără modificarea aplicației.
+
+\section{Containerizarea aplicației cu Docker}
+
+Deploymentul aplicației WhereWeFishin folosește Docker \citep{docker} și Docker Compose pentru a orchestra mai multe containere independente. Fiecare componentă rulează în propriul container, cu dependențe și configurații izolate.
+
+Figura~\ref{fig:docker-arhitectura} prezintă structura containerizată a aplicației.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{0.9\textwidth}{!}{%
+\begin{tikzpicture}[
+  box/.style={draw, rounded corners, align=center, minimum width=3.8cm, minimum height=1.3cm, fill=gray!10, line width=0.7pt, font=\small},
+  arrow/.style={-Latex, thick},
+  lbl/.style={font=\footnotesize, fill=white, inner sep=3pt}
+]
+\node[box] (ng)  at (0,    0)    {nginx\\Angular};
+\node[box] (api) at (6.5,  0)    {ASP.NET Core\\API};
+\node[box] (py)  at (13,   0)    {Python Flask\\AI Service};
+\node[box] (db)  at (6.5, -3.5)  {SQL Server\\baza de date};
+
+\draw[arrow] (ng)  -- node[lbl, above]{HTTP/REST} (api);
+\draw[arrow] (api) -- node[lbl, above]{HTTP intern} (py);
+\draw[arrow] (api) -- node[lbl, right]{EF Core} (db);
+\end{tikzpicture}%
+}
+\caption{Arhitectura containerizată a aplicației WhereWeFishin}
+\label{fig:docker-arhitectura}
+\end{figure}
+
+Serviciul \texttt{frontend} compilează aplicația Angular în fișiere statice și le servește prin nginx, care acționează și ca reverse proxy pentru cererile API, eliminând problemele CORS în producție. Serviciul \texttt{api} rulează backend-ul .NET și depinde de serviciul de bază de date: Docker Compose garantează că baza de date este pregătită înainte de pornirea API-ului, prin configurarea ordinii de dependențe și a health check-urilor. Serviciul \texttt{ai-service} rulează independent și expune un singur endpoint de inferență pe rețeaua internă. Serviciul \texttt{database} folosește imaginea oficială SQL Server pe Linux.
+
+Modelul antrenat este montat ca volum în containerul Python, fără a fi inclus în imaginea Docker. Această decizie reduce dimensiunea imaginii și permite actualizarea modelului fără a reconstrui containerul.
+
+\begin{lstlisting}[language=bash, caption={Structura serviciilor în docker-compose.yml}]
+services:
+  frontend:
+    build: ./Frontend
+    ports: ["80:80"]
+    depends_on: [api]
+
+  api:
+    build: ./Backend
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__Default=${DB_CONNECTION}
+      - Jwt__Key=${JWT_SECRET}
+      - Jwt__Issuer=${JWT_ISSUER}
+    depends_on:
+      database:
+        condition: service_healthy
+
+  ai-service:
+    build: ./PythonService
+    volumes:
+      - ./models/model.pt:/app/model.pt:ro
+
+  database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - SA_PASSWORD=${DB_PASSWORD}
+      - ACCEPT_EULA=Y
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd",
+             "-S", "localhost", "-U", "sa",
+             "-P", "${DB_PASSWORD}", "-Q", "SELECT 1"]
+      interval: 10s
+      retries: 5
+\end{lstlisting}
+
+\section{Gestionarea configurației pe medii de execuție}
+
+ASP.NET Core implementează un sistem de configurare ierarhic, în care valorile sunt suprascriere succesive. Fișierul \texttt{appsettings.json} conține configurația de bază, comună tuturor mediilor: structura secțiunilor, valorile implicite și referințele la variabilele de mediu. Fișierul \texttt{appsettings.Development.json} adaugă configurații specifice mediului local: URL-ul bazei de date locale, chei de test pentru Stripe și o valoare secretă JWT dedicată dezvoltării. Pe mediul de producție, valorile sensibile sunt furnizate exclusiv prin variabile de mediu, cu prioritate maximă față de fișierele de configurare.
+
+Variabila de mediu \texttt{ASPNETCORE\_ENVIRONMENT} controlează comportamentul aplicației. Pe mediul de dezvoltare, Swagger UI este activ, logarea este detaliată și CORS acceptă orice origine. Pe mediul de producție, Swagger este dezactivat, logarea este restricționată la evenimente importante și CORS permite doar originile cunoscute ale frontendului.
+
+Aceeași logică se aplică și serviciului Python: comportamentul acestuia este diferit în funcție de variabila \texttt{FLASK\_ENV}. În modul debug, erorile sunt afișate detaliat și reîncărcarea automată a codului este activă. În producție, serverul rulează cu Gunicorn, care gestionează mai eficient conexiunile concurente decât serverul de dezvoltare Flask.
+
+\section{Sinteza capitolului}
+
+Securitatea și deployment-ul nu sunt aspecte secundare ale unui proiect software: ele definesc condițiile în care funcționalitățile implementate pot fi folosite în siguranță și la scară. WhereWeFishin implementează securitate la mai multe niveluri: autentificare JWT cu validare strictă, autorizare pe roluri combinată cu verificări de proprietate a resurselor, rate limiting pe fluxurile sensibile și izolarea componentelor prin containerizare. Gestionarea configurației pe medii diferite asigură că secretele și comportamentele specifice producției nu ajung în mediul de dezvoltare și invers. Această structură oferă o bază solidă pentru operarea platformei în condiții reale.
+
+Aplicația este expusă public la adresa \url{https://wherewefishin.uk}. Infrastructura de deployment rulează pe un server personal, ceea ce înseamnă că disponibilitatea platformei nu este garantată continuu: serverul poate fi oprit în anumite intervale, iar aplicația să nu fie accesibilă la momentul verificării.

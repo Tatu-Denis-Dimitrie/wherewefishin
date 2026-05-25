@@ -1,4 +1,4 @@
-\chapter{Implementare și contribuții personale}
+﻿\chapter{Implementare și contribuții personale}
 
 Acest capitol descrie cum a fost transpusă în practică soluția prezentată în capitolele anterioare. Dacă în capitolul precedent am discutat cerințele și deciziile de proiectare, acum mă concentrez pe implementarea propriu-zisă a componentelor platformei WhereWeFishin. Scopul nu este prezentarea exhaustivă a codului sursă, ci evidențierea modulelor dezvoltate, alegerilor tehnice și contribuțiilor personale care au făcut posibilă integrarea unui sistem multi-rol, geospațial și asistat de inteligență artificială.
 
@@ -7,6 +7,10 @@ Implementarea este prezentată pe straturi tehnice: mai întâi arhitectura gene
 \section{Arhitectura implementată a soluției}
 
 Implementarea urmează o structură distribuită pe componente cu responsabilități bine delimitate. Interfața este o aplicație Angular, backend-ul este un API HTTP în ASP.NET Core, persistența este gestionată prin Entity Framework Core, iar analiza media este externalizată unui serviciu Python separat. Această separare permite evoluția independentă a modulelor, reduce cuplarea între zone cu cerințe tehnice diferite și menține claritatea codului.
+
+Implementarea urmărește un model cu straturi clare de responsabilitate. La nivelul de transport HTTP, controllerele preiau cererile, aplică autorizarea și delegă logica de business serviciilor. Serviciile orchestrează regulile domeniului, apelează repository-urile pentru acces la date și comunică cu serviciile externe. Repository-urile encapsulează interogările Entity Framework Core, menținând separarea dintre logica domeniului și detaliile de persistență. Această structură reduce cuplarea și permite testarea independentă a fiecărui strat.
+
+Configurarea aplicației ASP.NET Core urmează un lanț de middleware definit explicit: autentificare, autorizare, compresie, CORS, rate limiting și rutare. Ordinea middleware-ului este importantă deoarece determină când se aplică fiecare politică și garantează că cererile neautorizate sunt respinse înainte de a atinge logica de business. Injecția de dependențe este utilizată sistematic: fiecare serviciu este înregistrat cu durata de viață corespunzătoare (tranzient, scoped sau singleton) în funcție de natura operației.
 
 Contribuția personală este vizibilă încă de la nivelul arhitecturii: am ales să separ operațiile tranzacționale uzuale de prelucrarea media costisitoare. Față de o abordare monolitică, comunicarea explicită dintre frontend, API și serviciul de analiză a simplificat atât dezvoltarea incrementală, cât și depanarea fluxurilor complexe.
 
@@ -22,29 +26,30 @@ Modulul de autentificare separă clar rolurile și protejează operațiile sensi
 
 Endpoint-urile de autentificare gestionează înregistrarea, autentificarea, verificarea tokenului și recuperarea accesului. Rata cererilor este limitată pentru a reduce riscul de abuz. Informațiile despre utilizator sunt extrase centralizat din claims, evitând repetarea logicii în fiecare controller.
 
-Am introdus extensii de autorizare pentru resursele dependente de un loc de pescuit, astfel încât verificarea dreptului de administrare să poată fi refolosită în module diferite — pontoane, angajați, repopulări. Aceasta a permis extinderea aplicației cu noi module fără a duplica logica de acces.
+Am introdus extensii de autorizare pentru resursele dependente de un loc de pescuit, astfel încât verificarea dreptului de administrare să poată fi refolosită în module diferite: pontoane, angajați, repopulări. Aceasta a permis extinderea aplicației cu noi module fără a duplica logica de acces.
 
 Figura~\ref{fig:flux-autentificare} ilustrează fluxul de autentificare, de la cererea clientului până la validarea tokenului JWT.
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
+\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
-  node distance=1.1cm and 0.7cm,
-  every node/.style={font=\small},
-  step/.style={draw, rounded corners, align=center, minimum width=3cm, minimum height=0.95cm, fill=gray!10},
+  node distance=2.2cm,
+  every node/.style={font=\normalsize},
+  fstep/.style={draw, rounded corners, align=center, minimum width=4.0cm, minimum height=1.5cm, fill=gray!10, line width=0.7pt},
   arrow/.style={-Latex, thick}
 ]
-\node[step] (b1) {Client trimite\\credențiale};
-\node[step, right=of b1] (b2) {Backend verifică\\username și parolă};
-\node[step, right=of b2] (b3) {Generare\\token JWT};
-\node[step, right=of b3] (b4) {Token trimis\\clientului};
-\node[step, right=of b4] (b5) {Cereri ulterioare\\cu token în header};
-
+\node[fstep] (b1) {Credențiale\\trimise};
+\node[fstep, right=of b1] (b2) {Verificare\\backend};
+\node[fstep, right=of b2] (b3) {Generare\\token JWT};
+\node[fstep, right=of b3] (b4) {Token\\returnat};
+\node[fstep, right=of b4] (b5) {Cereri autorizate\\cu token};
 \draw[arrow] (b1) -- (b2);
 \draw[arrow] (b2) -- (b3);
 \draw[arrow] (b3) -- (b4);
 \draw[arrow] (b4) -- (b5);
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption{Fluxul de autentificare bazat pe tokenuri JWT}
 \label{fig:flux-autentificare}
 \end{figure}
@@ -54,6 +59,8 @@ Figura~\ref{fig:flux-autentificare} ilustrează fluxul de autentificare, de la c
 Implementarea locurilor de pescuit este unul dintre modulele centrale ale backend-ului, deoarece aproape toate fluxurile importante pornesc din această entitate. Controllerul gestionează listarea, filtrarea și administrarea locațiilor, cu interogări diferențiate în funcție de rolul utilizatorului. Am mutat filtrarea autorizată cât mai aproape de nivelul interogării, astfel încât datele să nu fie încărcate integral și filtrate doar la nivel de răspuns.
 
 Pentru pontoane am implementat un modul separat care asociază zone distincte unui loc de pescuit și menține o legătură directă între componenta geospațială din interfață și regulile de disponibilitate din backend. Pontonul devine astfel o resursă rezervabilă explicită, nu doar o informație descriptivă. Această abordare este importantă pentru scenarii reale în care o locație conține mai multe spații cu disponibilitate independentă.
+
+Coordonatele geografice ale pontoanelor sunt stocate ca liste de puncte ce descriu conturul poligonal al zonei rezervabile. Această alegere permite reprezentarea fidelă a formei unui ponton pe hartă, nu doar a centrului său. La adăugarea sau modificarea unui ponton din interfața managerului, datele geospațiale sunt serializate în format GeoJSON, transmise la backend și stocate în baza de date. La listare, coordonatele sunt deserializate și trimise frontend-ului, care le interpretează direct ca layer Leaflet. Această soluție simplifică persistența fără a necesita o extensie geospațială dedicată a bazei de date, păstrând compatibilitatea cu operațiile de afișare și modificare din interfață.
 
 Contribuția personală constă în modelarea coerentă a relației dintre entitatea principală și subzonele rezervabile, precum și în reutilizarea acelorași reguli de autorizare pentru toate operațiile de administrare.
 
@@ -71,15 +78,21 @@ Această zonă reprezintă o contribuție personală importantă deoarece combin
 
 Fluxul de rezervare este cel mai dens din punct de vedere al logicii de business. La nivel de implementare, sistemul nu creează pur și simplu o înregistrare, ci validează locul de pescuit, verifică disponibilitatea pentru intervalul ales, corelează opțional un ponton, calculează costul și tratează separat integrarea plății.
 
-Legătura cu Stripe este separată clar de persistența sesiunii finale. Am generat un \emph{PaymentIntent} care păstrează metadate relevante despre utilizator, locație și interval. Această separare oferă o bază mai sigură pentru corelarea plății cu sesiunea de pescuit și pentru evitarea erorilor de sincronizare. Modelul intern al sesiunii normalizează temporal datele și păstrează o stare explicită — \emph{Pending}, \emph{Confirmed} sau \emph{Cancelled}.
+Legătura cu Stripe este separată clar de persistența sesiunii finale. Am generat un \emph{PaymentIntent} care păstrează metadate relevante despre utilizator, locație și interval. Această separare oferă o bază mai sigură pentru corelarea plății cu sesiunea de pescuit și pentru evitarea erorilor de sincronizare. Modelul intern al sesiunii normalizează temporal datele și păstrează o stare explicită: \emph{Pending}, \emph{Confirmed} sau \emph{Cancelled}.
+
+Detectarea conflictelor temporale este implementată printr-o interogare LINQ evaluată direct la nivel de bază de date. Condiția de conflict pentru un ponton dat verifică dacă există sesiuni confirmate sau în așteptare ale căror intervale se intersectează cu cel solicitat, adică sesiuni care încep înainte de finalul intervalului nou și se termină după începutul acestuia. Această formulare acoperă toate cazurile de suprapunere parțială sau totală și evită încărcarea inutilă a datelor în memorie. Rezultatul este un mesaj explicit de conflict transmis clientului, care include intervalul neeligibil, astfel încât interfața poate evidenția perioada ocupată fără a necesita interogări suplimentare.
 
 Contribuția personală în acest modul este integrarea coerentă a regulilor de disponibilitate, a modelului de sesiune și a unei plăți externe, fără a pierde consistența internă a datelor.
 
 \subsection{Angajați, recenzii și servicii auxiliare}
 
-Backend-ul include și componente care completează partea operațională. Modulul de angajați permite asocierea utilizatorilor la locuri de pescuit, creând o delegare controlată a operațiilor fără ridicarea privilegiilor la nivel de manager. Sistemul de recenzii introduce feedback din partea utilizatorilor și poate beneficia de caching al răspunsurilor și de invalidare explicită atunci când datele sunt modificate.
+Backend-ul include și componente care completează partea operațională. Modulul de angajați permite asocierea utilizatorilor la locuri de pescuit, creând o delegare controlată a operațiilor fără ridicarea privilegiilor la nivel de manager. Relația angajat–locație este gestionată explicit, cu verificarea că utilizatorul asociat există și că nu deține deja un rol mai ridicat pentru locația respectivă, prevenind suprapunerile de responsabilitate.
 
-Am ales ca serviciile auxiliare să nu blocheze fluxurile critice. Dacă trimiterea unui email eșuează, operația principală nu este anulată. Contribuția personală constă în transformarea unor funcții aparent secundare într-o infrastructură stabilă care îmbunătățește experiența fără a compromite funcționarea sistemului.
+Sistemul de recenzii introduce feedback din partea utilizatorilor pentru locurile de pescuit vizitate. Recenziile sunt validate la nivel de rating și lungime a textului, iar interogările care le agregă pot fi cache-uite la nivel de răspuns HTTP pentru a reduce încărcarea bazei de date în scenarii cu trafic ridicat. Invalidarea cache-ului se face explicit la adăugarea sau modificarea unei recenzii, asigurând că datele prezentate sunt actuale.
+
+Serviciul de notificări prin email este integrat la momentele cheie ale fluxurilor: confirmarea rezervării, aprobarea sau respingerea aplicației de manager și notificările despre analizele media finalizate. Implementarea folosește un serviciu asincron cu comportament de tip fire-and-forget: dacă trimiterea eșuează, operația principală nu este afectată și nu este anulată. Această izolare este importantă pentru ca un furnizor de email indisponibil temporar să nu blocheze rezervările sau alte fluxuri critice.
+
+Contribuția personală constă în transformarea unor funcții aparent secundare într-o infrastructură stabilă care îmbunătățește experiența utilizatorului fără a compromite fiabilitatea sistemului.
 
 \section{Implementarea frontend-ului}
 
@@ -87,58 +100,274 @@ Frontend-ul WhereWeFishin este o aplicație Angular modernă, bazată pe compone
 
 \subsection{Structura aplicației SPA și controlul accesului în interfață}
 
-La baza implementării se află structura traseelor și guard-urile funcționale. Fiecare zonă importantă se încarcă lazy și este protejată în funcție de rolul utilizatorului. Configurarea interceptorilor HTTP permite atașarea automată a tokenului JWT și tratarea controlată a erorilor recurente, precum expirarea autentificării.
+La baza implementării se află structura traseelor și guard-urile funcționale. Fiecare zonă importantă se încarcă lazy și este protejată în funcție de rolul utilizatorului. Guard-urile funcționale verifică atât prezența tokenului JWT, cât și rolul din claims, redirecționând utilizatorii neautorizați înainte ca modulul să fie descărcat. Configurarea interceptorilor HTTP permite atașarea automată a tokenului la fiecare cerere și tratarea controlată a erorilor recurente, precum expirarea autentificării: în acest caz, utilizatorul este deconectat și redirecționat spre pagina de autentificare.
 
-Contribuția personală constă în distribuirea logicii de acces între rutare, guard-uri și interceptoare, astfel încât comportamentul interfeței să rămână coerent cu regulile de securitate ale API-ului.
+Structura de module standalone a facilitat și separarea configurației de rutare: zona utilizatorului, zona managerului, zona angajatului și zona administratorului sunt module independente, cu propriile rute și guard-uri, ceea ce simplifică atât întreținerea, cât și extinderea ulterioară cu noi zone funcționale.
+
+Contribuția personală constă în distribuirea coerentă a logicii de acces între rutare, guard-uri și interceptoare, astfel încât comportamentul interfeței să rămână aliniat permanent cu regulile de securitate aplicate de API.
 
 \subsection{Harta interactivă și explorarea locurilor de pescuit}
 
 Una dintre cele mai importante componente frontend este pagina de explorare, construită în jurul hărții interactive. Am combinat date despre locații, geolocalizarea utilizatorului, rutare pe hartă și informații despre specii. Am dezvoltat helperi dedicați pentru markere personalizate, stilizarea elementelor geografice și construirea ferestrelor informative într-un mod reutilizabil.
 
+Sistemul de markere personalizate utilizează template-uri SVG generate dinamic, colorate diferit în funcție de disponibilitate sau tipul de marker. Ferestrele informative sunt construite din template-uri HTML compilate separat și injectate în Leaflet ca stringuri, o abordare care păstrează compatibilitatea cu biblioteca de hartă fără a introduce componente Angular în afara contextului normal de rendering. Helperii dedicați pentru tooltip-uri și badge-uri permit reutilizarea aceluiași cod de generare a conținutului vizual în mai multe contexte: harta principală de explorare, harta de administrare a managerului și componentele de detaliu ale locației.
+
 Harta funcționează ca punct de intrare în platformă: utilizatorul identifică rapid locațiile disponibile, vede proximitatea față de poziția sa și decide ce loc merită explorat mai departe. Contribuția personală constă în integrarea componentei Leaflet cu datele reale ale aplicației și în transformarea hărții dintr-un element vizual într-un instrument central de navigare.
 
 \subsection{Coșul, calendarul și integrarea Stripe în interfață}
 
-Fluxul de rezervare are o componentă frontend complexă. Utilizatorul selectează intervale, vede zilele ocupate, combină mai multe elemente în coș și finalizează plata. Am implementat un calendar care evidențiază perioadele rezervate, tratează intervale parțiale și blochează selecțiile invalide. Integrarea Stripe încarcă dinamic elementele de plată și menține separată logica de confirmare a tranzacției de logica afișării.
+Fluxul de rezervare are o componentă frontend complexă, cu mai multe stări și validări vizuale. Utilizatorul selectează intervale orar, vede zilele ocupate, poate combina mai multe elemente în coș și finalizează plata. Calendarul pe care l-am implementat evidențiază perioadele rezervate cu granularitate de jumătate de zi, tratează corect intervalele parțiale, în care pontonul este disponibil doar pentru o parte din zi, și blochează selecțiile invalide înainte ca utilizatorul să ajungă la pasul de plată. Această validare vizuală reduce numărul de erori raportate de API și îmbunătățește experiența de rezervare.
 
-Contribuția personală constă în rezolvarea unor probleme practice de UX: vizualizarea clară a indisponibilităților, evitarea selecțiilor greșite și corelarea coerentă dintre formularul de rezervare și răspunsurile backend-ului.
+Integrarea Stripe se bazează pe Stripe Elements, care încarcă dinamic câmpurile de plată direct în pagină, fără redirecționare externă. Logica de confirmare a plății este separată de logica de afișare: componenta frontend așteaptă confirmarea \emph{PaymentIntent} de la Stripe înainte de a solicita backend-ului crearea sesiunii de pescuit, evitând situațiile în care o sesiune este creată fără ca plata să fie finalizată.
 
-\subsection{Wizard-ul de aplicare pentru manager și dashboard-ul operațional}
+Contribuția personală constă în rezolvarea unor probleme practice de UX și sincronizare: vizualizarea clară a indisponibilităților, evitarea selecțiilor greșite și corelarea coerentă a stărilor de plată cu răspunsurile backend-ului.
 
-Zona de manager include două componente cu valoare tehnică ridicată. Wizard-ul de aplicare este organizat pe mai mulți pași și combină date descriptive, alegerea locației pe hartă și o revizuire finală înainte de trimitere. Dashboard-ul managerului reunește administrarea pontoanelor, gestionarea angajaților, actualizarea datelor locației și vizualizarea informațiilor operaționale.
+\subsection{Wizard-ul de aplicare și dashboard-ul operațional}
 
-Dashboard-ul este relevant deoarece concentrează mai multe subfluxuri într-o interfață unitară. Se vede direct legătura dintre modelul de date, regulile de business și reprezentarea lor în UI. Contribuția personală constă în construirea unei interfețe capabile să deservească activități operaționale reale, nu doar scenarii demonstrative.
+Zona de manager include două componente cu valoare tehnică ridicată. Wizard-ul de aplicare este organizat pe mai mulți pași și combină date descriptive, alegerea locației pe hartă și o revizuire finală înainte de trimitere. Fiecare pas validează datele introduse înainte de a permite avansarea, astfel încât erorile sunt interceptate timpuriu, nu la trimiterea finală a formularului. Starea completată a fiecărui pas este păstrată în memorie pe durata sesiunii, permițând utilizatorului să revină la pași anteriori fără a pierde datele introduse.
+
+Dashboard-ul managerului reunește administrarea pontoanelor, gestionarea angajaților, actualizarea datelor locației și vizualizarea informațiilor operaționale. Componentele sunt încărcate independent, astfel că o secțiune cu date lente, de exemplu lista rezervărilor, nu blochează afișarea celorlalte. Interacțiunile cu harta pentru administrarea pontoanelor sunt gestionate printr-un serviciu dedicat care asigură sincronizarea între starea grafică a hărții și modelul de date persistent.
+
+Dashboard-ul este relevant deoarece concentrează mai multe subfluxuri distincte într-o interfață unitară coerentă. Contribuția personală constă în construirea unei interfețe capabile să deservească activități operaționale reale, cu stări clare și feedback imediat la fiecare acțiune.
 
 \subsection{Verificarea prin cod QR și funcțiile administrative}
 
-Am implementat și un flux de verificare a sesiunilor prin cod QR. Componenta folosește camera dispozitivului pentru citirea codului și tratează datele rezervării într-o formă suficient de tolerantă pentru a gestiona variații ale structurii lor. Acest lucru a fost important pentru a permite un flux rapid și stabil pe dispozitive mobile.
+Am implementat un flux de verificare a sesiunilor prin cod QR conceput pentru utilizare în teren. Componenta accesează camera dispozitivului prin API-ul browser-ului, procesează în timp real imaginea captată și extrage datele codului. Tratarea datelor rezervării este suficient de tolerantă pentru a gestiona variații ale structurii lor, de exemplu coduri generate de versiuni anterioare ale aplicației sau cu formatare ușor diferită, fără a respinge coduri valide din motive formale. Odată decodat codul, componenta interogează API-ul pentru detaliile sesiunii și prezintă un rezumat clar angajatului, cu opțiunea de confirmare.
 
-Zona administrativă oferă funcții de supraveghere asupra utilizatorilor, locațiilor și aplicațiilor de manager. Integrarea tuturor tipurilor de fluxuri într-o singură aplicație SPA a necesitat o separare clară a permisiunilor și a traseelor, fără a pierde coerența navigării.
+Zona administrativă oferă funcții de supraveghere asupra utilizatorilor înregistrați, locațiilor active și aplicațiilor de manager în așteptare. Am implementat componente tabelare cu filtrare și paginare, astfel încât listele să rămână utilizabile chiar și atunci când numărul de înregistrări crește. Fluxul de aprobare a aplicațiilor include stări vizuale clare pentru fiecare cerere și acțiuni rapide de decizie: aprobare sau respingere cu motivație.
+
+Integrarea tuturor tipurilor de fluxuri într-o singură aplicație SPA a necesitat o separare clară a permisiunilor și a traseelor, asigurând coerența navigării și securitatea accesului la date.
 
 \section{Implementarea sistemului de analiză media}
 
 Sistemul de analiză media este componenta care diferențiază cel mai clar WhereWeFishin de o aplicație web convențională de rezervări. Implementarea implică colaborarea dintre trei straturi: interfața Angular, backend-ul .NET care orchestrează fluxul și serviciul Python care execută analiza.
 
+Spre deosebire de celelalte fluxuri din platformă, cum ar fi rezervări, recenzii sau administrare, analiza media nu poate fi tratată sincron. Un fișier video poate necesita câteva zeci de secunde sau chiar minute pentru a fi procesat, iar blocarea unui thread HTTP pe toată această durată ar face sistemul nefuncțional sub orice trafic real. De aceea, componenta a fost proiectată în jurul unui model asincron explicit, cu un ciclu de viață format din patru stări persistate: \emph{Pending}, \emph{Processing}, \emph{Completed} și \emph{Failed}. Aceste stări sunt accesibile în orice moment prin polling din frontend și recuperabile după un restart al serverului.
+
+Coordonarea celor trei straturi urmează un protocol clar: utilizatorul încarcă fișierul prin interfața Angular, care îl trimite la backend-ul .NET printr-o cerere multipart. Backend-ul validează fișierul, creează înregistrarea de analiză în starea \emph{Pending} și returnează imediat un identificator unic clientului, fără a aștepta finalizarea procesării. Trimiterea efectivă la serviciul Python este inițiată asincron: starea analizei devine \emph{Processing} pe durata apelului, iar la primirea rezultatelor trece în \emph{Completed}. Dacă serviciul Python este indisponibil sau returnează o eroare, analiza este marcată ca \emph{Failed} fără a propaga excepția spre utilizator.
+
+\begin{lstlisting}[language={[Sharp]C}, caption={Trimiterea fișierului media la serviciul Python și actualizarea stării}]
+public async Task<MediaAnalysisResult> SendToAnalysisServiceAsync(
+    Stream fileStream, string fileName, string mimeType,
+    CancellationToken ct = default)
+{
+    using var content = new MultipartFormDataContent();
+    var fileContent   = new StreamContent(fileStream);
+    fileContent.Headers.ContentType =
+        new MediaTypeHeaderValue(mimeType);
+    content.Add(fileContent, "file", fileName);
+
+    var response = await _httpClient.PostAsync(
+        "/analyze", content, ct);
+    response.EnsureSuccessStatusCode();
+
+    return await response.Content
+        .ReadFromJsonAsync<MediaAnalysisResult>(ct)
+        ?? throw new InvalidOperationException(
+               "Empty response from analysis service");
+}
+\end{lstlisting}
+
+Clientul HTTP care comunică cu serviciul Python este configurat cu un timeout extins, necesar pentru videoclipurile lungi, și cu politici de retry limitate la erorile tranziente de rețea. Separarea serviciului HTTP de controllerul de upload permite testarea independentă: controllerul poate fi testat cu un serviciu simulat care returnează rezultate predefinite, iar serviciul HTTP poate fi testat izolat față de logica de persistență. Validarea fișierelor înaintea trimiterii include verificarea tipului MIME față de o listă albă și limitarea dimensiunii: imagini până la 10 MB, videoclipuri până la 150 MB. Fișierele care nu respectă aceste constrângeri sunt respinse la nivelul controller-ului, fără a atinge serviciul Python, reducând astfel riscul procesării unor fișiere corupte sau cu format neașteptat.
+
 \subsection{Integrarea dintre backend și serviciul Python}
 
-La nivel de backend, un serviciu dedicat trimite fișierele către aplicația Python, interpretează răspunsul și actualizează entitățile persistente. Controllerele expun endpoint-uri pentru încărcare, listare, detaliere și ștergere, cu reguli clare de autorizare.
+La nivel de backend, un serviciu dedicat gestionează comunicarea cu aplicația Python: trimite fișierele spre procesare, interpretează răspunsul primit și actualizează entitățile persistente. Comunicarea se face prin HTTP, cu timeout configurabil și mecanism de retry pentru cazurile în care serviciul Python nu răspunde imediat. Dacă serviciul este indisponibil, analiza este marcată ca \emph{Failed}, fără a afecta restul aplicației.
 
-Am introdus stări explicite pentru analiză: \emph{Pending}, \emph{Processing}, \emph{Completed} și \emph{Failed}. Acestea permit urmărirea ciclului de viață al procesării și oferă frontend-ului o bază clară pentru polling și afișarea rezultatelor. Contribuția personală constă în transformarea unui apel extern câtre un serviciu de viziune artificială într-un flux controlat, persistent și ușor de integrat.
+Controllerele expun endpoint-uri pentru încărcare, listare, detaliere și ștergere a analizelor, cu reguli clare de autorizare: utilizatorul poate accesa doar propriile analize, iar managerul poate consulta analizele asociate locației sale. Validarea fișierelor la upload include verificarea tipului MIME și a dimensiunii, cu limite configurate explicit pentru imagini și videoclipuri.
+
+Am introdus stări explicite pentru fiecare analiză: \emph{Pending} (înregistrată, neîncepută), \emph{Processing} (trimisă spre serviciul Python), \emph{Completed} (rezultate disponibile) și \emph{Failed} (procesare eșuată). Aceste stări permit urmărirea ciclului de viață al procesării, oferă frontend-ului o bază clară pentru polling și fac auditul erorilor de procesare posibil fără a necesita loguri externe.
+
+Contribuția personală constă în transformarea unui apel extern către un serviciu specializat de viziune artificială într-un flux controlat, persistent și ușor de monitorizat.
 
 \subsection{Pipeline-ul video: detecție, tracking și post-procesare}
 
-În serviciul Python, analiza video pornește de la încărcarea modelului YOLO și configurarea tracker-ului ByteTrack. Fiecare cadru video este analizat pentru detectarea obiectelor relevante, iar identitatea peștilor este urmărită între cadre pentru a evita contorizarea multiplă a aceluiași exemplar. Traiectoriile vizuale ale obiectelor sunt păstrate, iar rezultatul final este reîncodat pentru a putea fi servit eficient în interfață.
+În serviciul Python, analiza video pornește de la încărcarea modelului YOLO și configurarea tracker-ului ByteTrack cu parametrii adaptați domeniului: praguri de încredere pentru detecție, dimensiunea minimă a bounding box-ului și numărul de cadre de toleranță pentru reidentificarea unui obiect pierdut temporar. Fiecare cadru video este analizat de modelul YOLO pentru detectarea obiectelor relevante, iar ByteTrack asociază detecțiile succesive aceluiași identificator de obiect între cadre, evitând astfel contorizarea multiplă a aceluiași exemplar.
 
-Contribuția personală se reflectă în configurarea pragurilor de încredere, alegerea mecanismului de trail și legătura dintre rezultatele brute ale modelului și forma în care sunt stocate și afișate ulterior.
+Traiectoriile vizuale ale obiectelor sunt păstrate ca trasee temporale, cu momentele de apariție și dispariție pentru fiecare identificator urmărit. Această informație permite generarea unui rezumat statistic complet: numărul total de exemplare distincte, speciile dominante și distribuția temporală a detecțiilor. Rezultatul video este reîncodat cu FFmpeg pentru a produce un fișier cu adnotările vizibile suprapuse, care poate fi servit direct în interfață.
+
+Contribuția personală se reflectă în calibrarea pragurilor, alegerea mecanismului de vizualizare a traseelor și proiectarea formei în care rezultatele brute ale modelului sunt convertite în structuri stocabile și ușor de interpretat de frontend.
 
 \subsection{Afișarea rezultatelor în frontend și tratarea stării asincrone}
 
-În frontend, modulele pentru recunoaștere video și clasificare pe imagini gestionează nu doar upload-ul fișierelor, ci și o stare asincronă care evoluează în timp. Am implementat un mecanism de polling pentru verificarea rezultatelor, iar interfața tratează separat stările de așteptare, succes și eroare. Pentru zona video am introdus și optimizări: încărcare întârziată a elementelor media și paginarea listelor de rezultate.
+În frontend, modulele pentru recunoaștere video și clasificare pe imagini gestionează nu doar upload-ul fișierelor, ci și o stare asincronă care evoluează în timp. Imediat după încărcarea unui fișier, componenta afișează starea \emph{Pending} și pornește un mecanism de polling cu interval configurabil: la fiecare câteva secunde, se interogă backend-ul pentru actualizarea stării analizei. Odată ce starea devine \emph{Completed} sau \emph{Failed}, polling-ul se oprește și interfața tranzitionează automat la afișarea rezultatelor sau a mesajului de eroare.
 
-Contribuția personală constă în conectarea consecventă a stărilor persistente din backend cu mecanismele de feedback din interfață, construind un flux complet care gestionează sănătatea serviciului, așteptarea rezultatului și prezentarea sa utilă pentru utilizator.
+Afișarea rezultatelor pentru imagini include vizualizarea bounding box-urilor detectate suprapuse pe imagine originală, o listă a speciilor identificate cu gradele de încredere asociate și statistici agregate. Pentru video, interfața oferă playerul cu adnotările vizibile, rezumatul temporal al detecțiilor și istoricul complet al exemplarelor urmărite pe durata înregistrării.
+
+Optimizările pentru zona video includ încărcarea întârziată a elementelor media grele, paginarea listelor de rezultate și comprimarea răspunsurilor de la backend. Acestea reduc consumul de date și mențin interfața responsivă chiar și pentru videoclipuri cu multe detecții.
+
+Contribuția personală constă în conectarea coerentă a stărilor persistente din backend cu mecanismele de feedback vizual din interfață, construind un flux complet care gestionează așteptarea, erorile de procesare și prezentarea rezultatelor într-o formă utilă utilizatorului.
+
+\section{Infrastructura de deployment}
+
+Aplicația WhereWeFishin rulează în producție pe o mașină locală, expusă public prin Cloudflare Tunnel, fără a necesita o adresă IP statică sau configurarea manuală a porturilor în router. Această abordare combină simplitatea operațională cu un nivel ridicat de securitate: tot traficul trece printr-o conexiune criptată spre infrastructura Cloudflare, mașina gazdă nu expune niciun port public, iar certificatele TLS sunt gestionate automat. Componentele aplicației sunt containerizate cu Docker și orchestrate cu Docker Compose, asigurând portabilitate și consistență între medii.
+
+\subsection{Containerizarea cu Docker și build-uri multi-etapă}
+
+Fiecare componentă a aplicației rulează într-un container Docker separat \citep{docker}, orchestrate împreună cu Docker Compose. Structura cuprinde patru servicii principale: baza de date SQL Server, backend-ul ASP.NET Core, serviciul Python de analiză media și frontend-ul Angular servit prin Nginx.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=3.0cm and 4.5cm,
+  every node/.style={font=\normalsize},
+  svc/.style={draw, rounded corners, align=center, minimum width=5.0cm, minimum height=1.6cm, fill=gray!10, line width=0.7pt},
+  arrow/.style={-Latex, thick}
+]
+\node[svc] (ng)  {Angular (Nginx)};
+\node[svc, below=of ng]        (api) {ASP.NET Core API};
+\node[svc, below left=of api]  (db)  {SQL Server};
+\node[svc, below right=of api] (py)  {Python Media Service};
+
+\draw[arrow] (ng)  -- (api);
+\draw[arrow] (api) -- (db);
+\draw[arrow] (api) -- (py);
+\end{tikzpicture}%
+}
+\caption{Serviciile Docker și dependențele dintre ele}
+\label{fig:docker-services}
+\end{figure}
+
+Imaginile Docker sunt construite prin \emph{Dockerfile}-uri cu build multi-etapă. Separarea etapei de compilare de cea de execuție reduce semnificativ dimensiunea imaginii finale și elimină din containerul de producție toate uneltele de build, cum ar fi compilatorul .NET SDK, sursele și fișierele intermediare, care nu sunt necesare la rulare și ar reprezenta o suprafață de atac suplimentară.
+
+\begin{lstlisting}[language=bash, caption={Dockerfile multi-etapă pentru backend-ul ASP.NET Core}]
+# Etapa 1: compilare
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+COPY ["WhereWeFishin.API/WhereWeFishin.API.csproj",
+      "WhereWeFishin.API/"]
+RUN dotnet restore "WhereWeFishin.API/WhereWeFishin.API.csproj"
+COPY . .
+WORKDIR "/src/WhereWeFishin.API"
+RUN dotnet publish -c Release -o /app/publish
+
+# Etapa 2: runtime (imagine mai mica, fara SDK)
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "WhereWeFishin.API.dll"]
+\end{lstlisting}
+
+Același principiu se aplică pentru frontend: Angular CLI compilează aplicația în etapa de build, iar imaginea finală conține exclusiv fișierele statice servite de Nginx. Fișierul \texttt{docker-compose.yml} definește rețeaua internă comună tuturor serviciilor, volumele persistente pentru baza de date și fișierele media, precum și ordinea de pornire prin directiva \texttt{depends\_on} cu condiție de tip \texttt{service\_healthy}. Backend-ul nu pornește până când SQL Server nu trece health check-ul, prevenind erori de conexiune la pornire.
+
+Modelul antrenat YOLOv8 este montat ca volum read-only în containerul Python (\texttt{:ro}), fără a fi inclus în imagine. Această decizie permite actualizarea modelului fără a reconstrui sau republica containerul. Variabilele de mediu sensibile, cum ar fi șirul de conexiune la baza de date, secretul JWT și cheile Stripe, sunt injectate prin fișierul \texttt{.env} exclus din controlul versiunilor, separând configurația de codul sursă.
+
+\subsection{Rate limiting și securitatea pipeline-ului HTTP}
+
+Pipeline-ul HTTP al backend-ului include mai multe straturi de protecție configurate explicit în \texttt{Program.cs}. Rate limiting-ul este primul mecanism de apărare pentru endpoint-urile expuse la abuz: ASP.NET Core 7+ include middleware dedicat pentru limitarea numărului de cereri per interval de timp, fără dependențe externe.
+
+\begin{lstlisting}[language={[Sharp]C}, caption={Configurarea rate limiting-ului cu politici diferențiate}]
+builder.Services.AddRateLimiter(options =>
+{
+    // Politica stricta pentru autentificare
+    options.AddFixedWindowLimiter("auth", policy =>
+    {
+        policy.PermitLimit  = 5;
+        policy.Window       = TimeSpan.FromMinutes(1);
+        policy.QueueLimit   = 0;
+    });
+
+    // Politica pentru upload media
+    options.AddFixedWindowLimiter("upload", policy =>
+    {
+        policy.PermitLimit  = 10;
+        policy.Window       = TimeSpan.FromMinutes(1);
+        policy.QueueLimit   = 2;
+    });
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+\end{lstlisting}
+
+Endpoint-urile de autentificare aplică politica \texttt{"auth"}, configurată prin atributul \texttt{EnableRateLimiting} pe acțiunile de login: un client care depășește 5 cereri pe minut primește HTTP~429, prevenind atacurile de tip brute-force. Endpoint-urile de upload folosesc politica \texttt{"upload"}, cu o coadă de 2 cereri pentru a absorbi vârfuri scurte fără a respinge imediat utilizatorii legitimi.
+
+Compresia răspunsurilor este configurată prin middleware-ul \texttt{ResponseCompression}, cu suport pentru Brotli și Gzip, activat condiționat în funcție de header-ul \texttt{Accept-Encoding} al clientului. Aceasta reduce lățimea de bandă consumată de răspunsurile JSON voluminoase, în special listele de locații cu metadata completă și rezultatele analizelor media cu multe detecții.
+
+Politicile CORS sunt definite separat pentru mediul de dezvoltare și producție. În dezvoltare, originile sunt permise larg pentru a facilita lucrul local. În producție, politica restricționează \texttt{Origin} la domeniile aplicației, blocând cererile încrucișate de la surse neautorizate:
+
+\begin{lstlisting}[language={[Sharp]C}, caption={Politica CORS diferențiată pe mediu de execuție}]
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Production", policy =>
+        policy.WithOrigins(
+                   "https://wherefishin.ro",
+                   "https://www.wherefishin.ro")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials());
+
+    options.AddPolicy("Development", policy =>
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
+
+var corsPolicy = app.Environment.IsProduction()
+    ? "Production" : "Development";
+app.UseCors(corsPolicy);
+\end{lstlisting}
+
+Limitarea dimensiunii corpului cererilor HTTP este configurată la nivelul serverului Kestrel: cererile obișnuite au o limită de 5 MB, iar endpoint-urile de upload media sunt configurate explicit la 150 MB. Fișierele care depășesc această limită sunt respinse de Kestrel înainte de a atinge controllerul, fără a consuma resurse de procesare.
+
+\subsection{Health check-uri și reziliența serviciilor}
+
+Fiecare serviciu Docker expune un health check configurat în \texttt{docker-compose.yml}. Health check-ul SQL Server verifică că motorul de baze de date acceptă conexiuni prin execuția unui \texttt{SELECT 1} cu credențialele de serviciu. ASP.NET Core expune un endpoint \texttt{/health} prin middleware-ul \texttt{HealthChecks}, care verifică conexiunea la baza de date și disponibilitatea serviciului Python.
+
+Această configurare servește două scopuri. La pornire, Docker Compose folosește starea health check-urilor pentru a ordona inițializarea serviciilor: backend-ul nu pornește până când baza de date nu este gata. În producție, un orchestrator sau un script de monitorizare poate detecta și reporni automat serviciile degradate. Separarea health check-ului de logica aplicației menține un punct de verificare neutral, disponibil fără autentificare, dar inaccesibil public prin configurația Cloudflare Tunnel.
+
+Reziliența comunicării dintre backend și serviciul Python este implementată prin politici de retry configurate pe clientul HTTP. Erorile tranziente de rețea, cum ar fi timeout sau conexiune refuzată, declanșează reîncercarea de maximum două ori, cu interval exponențial. Erorile permanente (HTTP 4xx de la serviciul Python) nu sunt reîncercate, deoarece retrimiterea aceluiași fișier invalid nu va produce un rezultat diferit. Această separare între erori tranziente și permanente reduce zgomotul din loguri și evită supraîncărcarea unui serviciu deja degradat.
+
+\subsection{Expunerea publică prin Cloudflare Tunnel}
+
+Cloudflare Tunnel (\texttt{cloudflared}) rulează ca un serviciu suplimentar în stiva Docker Compose. La pornire, deschide o conexiune persistentă criptată spre infrastructura Cloudflare și înregistrează regulile de rutare configurate în panoul Cloudflare Zero Trust. Traficul de la utilizatori ajunge la serverele Cloudflare, care îl redirecționează prin tunel spre containerele locale, fără ca nicio adresă IP sau port să fie expus direct pe internet. Această topologie elimină o categorie întreagă de riscuri: scanarea porturilor, atacurile directe asupra IP-ului mașinii și exploatarea unor servicii expuse accidental.
+
+Configurația tunelului asociază subdomeniile aplicației serviciilor interne prin numele lor Docker Compose. Cererea spre \texttt{api.wherefishin.ro} este trimisă la \texttt{http://api:8080}, iar cererea spre \texttt{wherefishin.ro} la \texttt{http://frontend:80}. Serviciul Python nu apare în configurația de rutare și rămâne accesibil exclusiv din rețeaua internă Docker.
+
+Cloudflare gestionează automat certificatele TLS și reînnoirea lor. Prin intermediul Cloudflare WAF (Web Application Firewall), traficul este filtrat și înainte de a ajunge la tunel: regulile de tip OWASP sunt aplicate implicit, iar adresele IP cu comportament abuziv pot fi blocate la nivelul rețelei Cloudflare, fără a atinge mașina gazdă. Protecția DDoS funcționează prin absorbția traficului în infrastructura distribuită Cloudflare, nu prin capacitatea mașinii locale.
+
+Contribuția personală în această zonă constă în configurarea completă a stivei Docker Compose, scrierea \emph{Dockerfile}-urilor optimizate pentru fiecare serviciu, definirea politicilor de rate limiting și CORS diferențiate pe mediu și integrarea Cloudflare Tunnel ca mecanism de expunere securizată, fără a compromite izolarea rețelei interne.
+
+\section{Contribuțiile principale în perspectivă de ansamblu}
+
+Proiectul WhereWeFishin reunește contribuții personale semnificative în cinci zone funcționale distincte, fiecare cu propriile provocări tehnice și decizii de implementare. Această distribuție nu a fost planificată a priori, ci a rezultat din necesitățile reale ale platformei: un sistem multi-rol, geospațial și asistat de inteligență artificială nu poate fi construit dintr-un singur centru de greutate tehnic.
+
+Componenta de \textbf{rezervări și sesiuni} este cea mai densă din perspectiva regulilor de business: validarea disponibilității, calculul costului, corelarea plății Stripe cu starea sesiunii și gestionarea conflictelor temporale. Componenta de \textbf{administrare a locațiilor} acoperă workflow-ul de aplicare pentru manager, pontoanele cu geometrie geospațială și relația angajat–locație. Componenta de \textbf{analiză media AI} reprezintă integrarea microserviciului Python cu pipeline-ul de detecție YOLO și tracking ByteTrack, plus ciclul de viață asincron gestionat între backend și frontend. Componenta de \textbf{interfață și experiență utilizator} include harta interactivă Leaflet, calendarul de disponibilitate, wizard-ul de aplicare și fluxul de plată Stripe Elements. Modulul de \textbf{autentificare și securitate} asigură separarea rolurilor, autorizarea bazată pe claims și protecția endpoint-urilor sensibile.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[font=\small]
+\def\R{2.2}
+\fill[gray!15] (0,0) -- (90:\R) arc (90:0:\R) -- cycle;
+\fill[gray!35] (0,0) -- (0:\R) arc (0:-72:\R) -- cycle;
+\fill[gray!58] (0,0) -- (-72:\R) arc (-72:-144:\R) -- cycle;
+\fill[gray!25] (0,0) -- (-144:\R) arc (-144:-216:\R) -- cycle;
+\fill[gray!48] (0,0) -- (-216:\R) arc (-216:-270:\R) -- cycle;
+\foreach \a in {90,0,-72,-144,-216} {
+  \draw[white, line width=1.8pt] (0,0) -- (\a:\R);
+}
+\draw[gray!55, line width=0.5pt] (0,0) circle (\R);
+\node[font=\footnotesize] at (45:{0.62*\R})   {25\%};
+\node[font=\footnotesize] at (-36:{0.62*\R})  {20\%};
+\node[font=\footnotesize] at (-108:{0.62*\R}) {20\%};
+\node[font=\footnotesize] at (180:{0.62*\R})  {20\%};
+\node[font=\footnotesize] at (117:{0.62*\R})  {15\%};
+\begin{scope}[xshift=3.4cm]
+  \fill[gray!15] (0, 0.15) rectangle (0.38, 0.50); \node[right, font=\footnotesize] at (0.48, 0.33) {Rezervări și sesiuni (25\%)};
+  \fill[gray!35] (0,-0.45) rectangle (0.38,-0.10); \node[right, font=\footnotesize] at (0.48,-0.27) {Administrare loca\c{t}ii (20\%)};
+  \fill[gray!58] (0,-1.05) rectangle (0.38,-0.70); \node[right, font=\footnotesize] at (0.48,-0.87) {Analiză media AI (20\%)};
+  \fill[gray!25] (0,-1.65) rectangle (0.38,-1.30); \node[right, font=\footnotesize] at (0.48,-1.47) {Interfață \c{s}i UX (20\%)};
+  \fill[gray!48] (0,-2.25) rectangle (0.38,-1.90); \node[right, font=\footnotesize] at (0.48,-2.07) {Autentificare (15\%)};
+\end{scope}
+\end{tikzpicture}
+\caption{Distribuția contribuțiilor personale pe zone funcționale ale platformei}
+\label{fig:distributie-contributii}
+\end{figure}
+
+Proporțiile din figura~\ref{fig:distributie-contributii} reflectă complexitatea relativă a fiecărei zone, estimată prin numărul de componente implementate, densitatea regulilor de business și gradul de integrare cu servicii externe. Nu există o zonă neglijabilă: autentificarea, deși cea mai mică ca pondere, este fundația pe care se sprijină controlul accesului în toate celelalte module.
 
 \section{Sinteza capitolului}
 
 Implementarea WhereWeFishin arată cum o soluție analizată la nivel de cerințe și proiectare poate fi transpusă într-un sistem coerent, multi-strat și orientat spre utilizare reală. Backend-ul concentrează regulile de business și integrarea serviciilor externe, frontend-ul construiește experiența utilizatorului și orchestrează fluxurile operaționale, iar serviciul de analiză media extinde aplicația cu o componentă de viziune artificială integrată controlat.
 
-Contribuția personală se regăsește în toate aceste zone: în proiectarea și implementarea workflow-ului pentru manageri, în formalizarea rezervărilor și a plăților, în construirea unei interfețe geospațiale consistente și în integrarea unui pipeline AI capabil să proceseze atât imagini, cât și videoclipuri.
+Contribuția personală se regăsește în toate aceste zone: în proiectarea și implementarea workflow-ului pentru manageri, în formalizarea rezervărilor și a plăților, în construirea unei interfețe geospațiale consistente și în integrarea unui pipeline AI capabil să proceseze atât imagini, cât și videoclipuri. Infrastructura de deployment asigură că toate aceste componente pot fi pornite și expuse public cu un singur set de comenzi, pe orice mașină care are Docker instalat.

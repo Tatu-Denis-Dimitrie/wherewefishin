@@ -1,4 +1,4 @@
-\chapter{Fundamente teoretice și tehnologiile utilizate}
+﻿\chapter{Fundamente teoretice și tehnologiile utilizate}
 
 Acest capitol prezintă baza teoretică și tehnologică pe care se sprijină aplicația WhereWeFishin. Dacă în capitolul introductiv am descris motivația și obiectivele proiectului, acum mă concentrez pe conceptele care au ghidat proiectarea și implementarea efectivă a sistemului. Sunt analizate arhitectura generală, modelul de date, componenta geospațială, fluxul de rezervare, autentificarea și componenta de analiză media bazată pe inteligență artificială.
 
@@ -8,7 +8,7 @@ Scopul nu este reproducerea detaliilor de cod, ci clarificarea principiilor pe c
 
 O aplicație care deservește simultan utilizatori finali, angajați și administratori are nevoie de o arhitectură bine structurată. Trebuie să gestioneze interacțiuni de interfață, validări de business, persistența datelor, comunicarea cu servicii externe și, în cazul de față, procesarea unor fișiere media. Din acest motiv, WhereWeFishin este construită ca un sistem cu mai multe componente distincte, dar integrate coerent.
 
-Interfața cu utilizatorul este o aplicație web de tip SPA dezvoltată cu Angular \citep{angular}. Această alegere este potrivită pentru o aplicație cu navigare fluidă, componente reutilizabile, formulare complexe și actualizare dinamică a conținutului. WhereWeFishin are fluxuri variate — autentificare, hartă interactivă, rezervare, administrare, upload de fișiere — și o interfață bazată pe componente permite separarea clară a responsabilităților.
+Interfața cu utilizatorul este o aplicație web de tip SPA dezvoltată cu Angular \citep{angular}. Această alegere este potrivită pentru o aplicație cu navigare fluidă, componente reutilizabile, formulare complexe și actualizare dinamică a conținutului. WhereWeFishin are fluxuri variate (autentificare, hartă interactivă, rezervare, administrare, upload de fișiere), iar o interfață bazată pe componente permite separarea clară a responsabilităților.
 
 Backend-ul este un API HTTP realizat cu ASP.NET Core \citep{aspnetcore}. El centralizează logica de business, aplică regulile de validare, controlează accesul la resurse și expune servicii pentru interfața web. ASP.NET Core oferă suport solid pentru autentificare, autorizare, middleware și interoperabilitate cu servicii externe. Stilul arhitectural adoptat este REST, larg utilizat în aplicațiile web moderne \citep{fielding2000}.
 
@@ -32,36 +32,37 @@ Entitatea centrală este \textbf{locul de pescuit}. El conține informații desc
 
 Figura~\ref{fig:model-date} prezintă principalele entități și relațiile dintre ele.
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
+\resizebox{0.88\textwidth}{!}{%
 \begin{tikzpicture}[
-  every node/.style={font=\small},
-  ent/.style={draw, rounded corners, align=center, minimum width=2.9cm, minimum height=0.85cm, fill=gray!10},
+  ent/.style={draw, rounded corners, align=center, minimum width=3.0cm, minimum height=1.1cm, fill=gray!10, line width=0.7pt, font=\small},
   arrow/.style={-Latex, thick},
-  lbl/.style={font=\footnotesize, fill=white, inner sep=1pt}
+  lbl/.style={font=\tiny, fill=white, inner sep=2pt}
 ]
-\node[ent] (user)    at (0, 0)    {Utilizator};
-\node[ent] (spot)    at (5, 0)    {Loc de pescuit};
-\node[ent] (pontoon) at (5, -2.2) {Ponton};
-\node[ent] (session) at (0, -2.2) {Sesiune de pescuit};
-\node[ent] (review)  at (5, -4.4) {Recenzie};
-\node[ent] (analysis)at (0, -4.4) {Analiză media};
-\node[ent] (restock) at (2.5,-6.2){Repopulare pești};
+\node[ent] (user)     at (5.5,   0)    {Utilizator};
+\node[ent] (analysis) at (0,    -2.8)  {Analiză media};
+\node[ent] (session)  at (4,    -2.8)  {Sesiune de pescuit};
+\node[ent] (spot)     at (8,    -2.8)  {Loc de pescuit};
+\node[ent] (review)   at (12.5, -2.8)  {Recenzie};
+\node[ent] (pontoon)  at (5,    -5.5)  {Ponton};
+\node[ent] (restock)  at (10,   -5.5)  {Repopulare pe\c{s}ti};
 
-\draw[arrow] (user)    -- node[lbl, above]{face} (session);
-\draw[arrow] (session) -- node[lbl, above]{la} (spot);
-\draw[arrow] (spot)    -- node[lbl, right]{are} (pontoon);
-\draw[arrow] (session) -- node[lbl, right]{include} (pontoon);
-\draw[arrow] (user)    -- node[lbl, left]{scrie} (review);
-\draw[arrow] (review)  -- node[lbl, right]{despre} (spot);
-\draw[arrow] (user)    -- node[lbl, left]{încarcă} (analysis);
-\draw[arrow] (spot)    -- node[lbl, right]{primește} (restock);
-\end{tikzpicture}
+\draw[arrow] (user)    -- node[lbl, above]{face}            (session);
+\draw[arrow] (user)    -- node[lbl, above]{scrie}           (review);
+\draw[arrow] (user)    -- node[lbl, above]{încărcă}         (analysis);
+\draw[arrow] (session) -- node[lbl, above]{la}                      (spot);
+\draw[arrow] (session) -- node[lbl, above]{include}         (pontoon);
+\draw[arrow] (spot)    -- node[lbl, above]{are}             (pontoon);
+\draw[arrow] (spot)    -- node[lbl, above]{prime\c{s}te}   (restock);
+\draw[arrow] (review)  -- node[lbl, above, pos=0.5]{despre}         (spot);
+\end{tikzpicture}%
+}
 \caption{Principalele entități și relații din modelul de date}
 \label{fig:model-date}
 \end{figure}
 
-Privit în ansamblu, modelul de date răspunde nevoii de coerență între lumea reală și reprezentarea sa informatică. Utilizarea unei baze de date relaționale și a unui ORM este potrivită deoarece permite exprimarea clară a relațiilor și reduce riscul inconsistențelor.
+Privit în ansamblu, modelul de date răspunde nevoii de coerență între lumea reală și reprezentarea sa informatică. Utilizarea unei baze de date relaționale și a unui ORM este potrivită deoarece permite exprimarea clară a relațiilor și reduce riscul inconsistențelor \citep{silberschatz2019}.
 
 \section{Harta interactivă și componenta geospațială}
 
@@ -75,7 +76,7 @@ Un aspect important este că pontonul nu este tratat doar ca o etichetă, ci ca 
 
 \section{Rezervări și sesiuni de pescuit}
 
-Fluxul de rezervare transformă informația statică despre o locație într-o interacțiune concretă. Utilizatorul solicită utilizarea unui loc sau a unui ponton pentru un interval de timp determinat. Rezultatul intern al acestei acțiuni este o sesiune de pescuit — entitatea care reține toate datele necesare gestionării operaționale.
+Fluxul de rezervare transformă informația statică despre o locație într-o interacțiune concretă. Utilizatorul solicită utilizarea unui loc sau a unui ponton pentru un interval de timp determinat. Rezultatul intern al acestei acțiuni este o sesiune de pescuit, entitatea care reține toate datele necesare gestionării operaționale.
 
 Această distincție între „rezervare" (acțiunea utilizatorului) și „sesiune de pescuit" (obiectul intern al sistemului) este utilă atât tehnic, cât și pentru claritatea textului. Sistemul urmărește un obiect bine definit care leagă utilizatorul de locație, ponton, interval temporal, cost și stare operațională.
 
@@ -91,15 +92,19 @@ După confirmare, sesiunea intră într-un flux de validare la fața locului pri
 
 Orice aplicație care gestionează conturi, date personale și rezervări trebuie să trateze securitatea ca o cerință de bază. La WhereWeFishin, această nevoie este accentuată de faptul că sistemul deservește categorii diferite de utilizatori, fiecare cu permisiuni distincte.
 
-Autentificarea se bazează pe tokenuri JWT, standardizate prin RFC 7519 \citep{jwt}. Acest mecanism este potrivit pentru un API consumat de o interfață SPA: permite transportul controlat al informațiilor despre utilizator și susține un model fără stare pe server, compatibil cu serviciile REST.
+Autentificarea se bazează pe tokenuri JWT, standardizate prin RFC 7519 \citep{jwt}. Acest mecanism este potrivit pentru un API consumat de o interfață SPA: permite transportul controlat al informațiilor despre utilizator și susține un model fără stare pe server, compatibil cu serviciile REST. Spre deosebire de sesiunile clasice stocate pe server, un token JWT conține toate informațiile necesare validării identității, semnat criptografic, astfel încât serverul nu trebuie să mențină nicio stare de sesiune.
 
-Autentificarea singură nu este suficientă. Sistemul trebuie să decidă și ce poate face fiecare utilizator autentificat — aceasta este autorizarea. Un utilizator obișnuit poate face rezervări și consulta propriul istoric, dar nu poate administra locații ale altor persoane. Un manager operează numai asupra resurselor asociate locațiilor sale. ASP.NET Core oferă suport explicit pentru aceste mecanisme, inclusiv limitarea accesului la rute pe baza rolurilor \citep{aspnetcore}.
+Un token JWT este structurat din trei segmente: antet (algoritmul de semnare), payload (claims cu date despre utilizator: identificator, rol, email, emițător, audiență, dată expirare) și semnătură (HMAC-SHA256 aplicat pe primele două segmente). La fiecare cerere, backend-ul validează semnătura, verifică că emițătorul și audiența corespund configurației așteptate și că tokenul nu a expirat. Fereastra de toleranță pentru expirare este setată la zero, fără perioadă de grație.
 
-Securitatea nu se reduce la un singur mecanism. Ea include validarea datelor primite, protejarea fluxurilor sensibile și delimitarea clară a interacțiunilor dintre componente. De exemplu, operațiile privind plățile sau accesul la rezultatele analizelor media sunt expuse doar în condiții bine definite.
+Autentificarea singură nu este suficientă. Sistemul trebuie să decidă și ce poate face fiecare utilizator autentificat: aceasta este autorizarea. Un utilizator obișnuit poate face rezervări și consulta propriul istoric, dar nu poate administra locații ale altor persoane. Un manager operează numai asupra resurselor asociate locațiilor sale. ASP.NET Core oferă suport explicit pentru aceste mecanisme, inclusiv limitarea accesului la rute pe baza rolurilor \citep{aspnetcore}.
 
-\section{Analiza imaginilor și videoclipurilor cu ajutorul inteligenței artificiale}
+Autorizarea funcționează pe două niveluri complementare. La nivel de endpoint, atributul \texttt{[Authorize]} cu specificarea rolului oprește orice cerere care nu provine de la un utilizator cu rolul respectiv, înainte ca logica de business să fie executată. La nivel de resursă, serviciile verifică explicit că utilizatorul autentificat este proprietarul resursei pe care încearcă să o modifice: un manager nu poate edita locația unui alt manager, chiar dacă ambii au același rol.
 
-Una dintre componentele care diferențiază WhereWeFishin de o platformă obișnuită de rezervări este integrarea analizei media bazate pe inteligență artificială. Această zonă aparține domeniului viziunii artificiale — ramura AI care extrage automat informații din imagini și secvențe video. Interesul principal este detectarea și identificarea speciilor de pești în fișierele încărcate de utilizator.
+Securitatea nu se reduce la un singur mecanism. Ea include validarea datelor primite, protejarea fluxurilor sensibile și delimitarea clară a interacțiunilor dintre componente. Operațiile privind plățile sau accesul la rezultatele analizelor media sunt expuse doar în condiții bine definite. Un principiu aplicat consistent este că frontendului nu i se acordă încredere pentru decizii de securitate: orice validare vizibilă în interfață este replicată și în backend, independent.
+
+\section{Analiza imaginilor și videoclipurilor cu inteligență artificială}
+
+Una dintre componentele care diferențiază WhereWeFishin de o platformă obișnuită de rezervări este integrarea analizei media bazate pe inteligență artificială. Această zonă aparține domeniului viziunii artificiale, ramura AI care extrage automat informații din imagini și secvențe video \citep{goodfellow2016}. Interesul principal este detectarea și identificarea speciilor de pești în fișierele încărcate de utilizator.
 
 În analiza imaginilor statice, problema de bază este detecția obiectelor: localizarea peștelui în imagine și clasificarea sa. Familia de modele YOLO este larg utilizată în acest domeniu datorită vitezei și eficienței practice \citep{ultralytics,redmon2016yolo}. Pentru WhereWeFishin, aceasta este alegerea potrivită deoarece funcționează bine atât pe imagini, cât și pe secvențe video.
 

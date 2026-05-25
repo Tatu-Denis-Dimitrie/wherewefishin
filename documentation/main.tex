@@ -1,30 +1,70 @@
 \documentclass[12pt,a4paper,oneside]{report}
 
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
+\PassOptionsToPackage{hyphens}{url}
 \usepackage[romanian]{babel}
 \usepackage{iftex}
 \ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
   \usepackage{helvet}
   \renewcommand{\familydefault}{\sfdefault}
 \else
   \usepackage{fontspec}
-  \IfFontExistsTF{Calibri}{\setmainfont{Calibri}}{\setmainfont{TeX Gyre Heros}}
+  \IfFontExistsTF{Calibri}%
+    {\setmainfont{Calibri}[Ligatures=TeX]}%
+    {\setmainfont{TeX Gyre Heros}[Ligatures=TeX]}%
 \fi
 \usepackage{geometry}
 \usepackage{setspace}
 \usepackage{microtype}
 \usepackage{graphicx}
+\usepackage{xcolor}
 \usepackage{hyperref}
 \usepackage{enumitem}
 \usepackage{url}
 \usepackage[numbers,sort&compress]{natbib}
+\usepackage{listings}
 \usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{indentfirst}
+\usepackage{titlesec}
+\titleformat{\chapter}[display]{\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titleformat{\section}[block]{\normalfont\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}[block]{\normalfont\normalsize\bfseries}{\thesubsection}{1em}{}
+\titlespacing*{\chapter}{0pt}{50pt}{40pt}
+\titlespacing*{\section}{1.5em}{3.5ex plus 1ex minus .2ex}{2.3ex plus .2ex}
+\titlespacing*{\subsection}{3.0em}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
 
-\usetikzlibrary{arrows.meta,positioning,shapes.geometric}
+\lstdefinestyle{codestyle}{
+  basicstyle=\footnotesize\ttfamily,
+  breaklines=true,
+  breakatwhitespace=false,
+  frame=single,
+  rulecolor=\color{gray!40},
+  backgroundcolor=\color{gray!6},
+  numbers=left,
+  numberstyle=\tiny\color{gray!55},
+  numbersep=8pt,
+  tabsize=2,
+  showstringspaces=false,
+  captionpos=b,
+  float=htbp,
+  aboveskip=\medskipamount,
+  belowskip=\medskipamount,
+  keywordstyle=\bfseries\color{black},
+  commentstyle=\itshape\color{black!55},
+  stringstyle=\color{black!75},
+  xleftmargin=1.5em,
+  framexleftmargin=1.5em,
+}
+\lstset{style=codestyle}
+
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit}
 
 \geometry{margin=2.5cm}
 \singlespacing
+\emergencystretch=3em
 \hypersetup{
   hidelinks,
   pdftitle={WhereWeFishin - Fishing Experience Discovery Platform Enhanced by AI},
@@ -37,31 +77,19 @@
 \author{De completat}
 \date{Mai 2026}
 
-\addto\captionsromanian{\renewcommand{\contentsname}{Cuprins}}
+\addto\captionsromanian{%
+  \renewcommand{\contentsname}{Cuprins}%
+  \renewcommand{\listfigurename}{Lista figurilor și diagramelor}%
+}
+
 
 \begin{document}
 
-\begin{titlepage}
-  \thispagestyle{empty}
-  \centering
-  \vspace*{2.5cm}
-  {\Large Lucrare de licență / disertație\par}
-  \vspace{2.5cm}
-  {\Huge \bfseries Titlul lucrării\par}
-  \vfill
-  {\Large \textbf{Autor:}\par}
-  \vspace{0.4cm}
-  {\Large Prenumele și Numele\par}
-  \vspace{1.2cm}
-  {\Large \textbf{Coordonator ştiințific:}\par}
-  \vspace{0.4cm}
-  {\Large grad didactic. dr. Prenumele și Numele\par}
-  \vfill
-  {\Large Braşov, 2018\par}
-\end{titlepage}
 
 \pagenumbering{roman}
 \tableofcontents
+\clearpage
+\listoffigures
 \clearpage
 
 \pagenumbering{arabic}
@@ -69,7 +97,10 @@
 \include{chapters/02-fundamente-si-tehnologii}
 \include{chapters/03-analiza-cerintelor-si-proiectarea-sistemului}
 \include{chapters/04-implementare-si-contributii-personale}
+\include{chapters/05-model-ai-si-dataset}
+\include{chapters/05-interfata-si-experienta-utilizator}
 \include{chapters/05-testare-si-evaluare}
+\include{chapters/07-securitate-si-deployment}
 \include{chapters/06-concluzii-si-perspective-de-dezvoltare}
 
 \bibliographystyle{plainnat}

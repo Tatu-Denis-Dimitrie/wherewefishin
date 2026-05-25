@@ -1,6 +1,6 @@
-\chapter{Concluzii și perspective de dezvoltare}
+﻿\chapter{Concluzii și perspective de dezvoltare}
 
-Lucrarea de față a urmărit proiectarea și dezvoltarea unei aplicații web care să răspundă unor nevoi reale din domeniul pescuitului recreativ. Ideea de bază a fost construirea unei platforme care să nu se limiteze la afișarea locurilor de pescuit sau la păstrarea unui jurnal de capturi, ci să reunească descoperirea locațiilor, rezervarea, administrarea operațională și analiza automată a fișierelor media. Rezultatul este aplicația WhereWeFishin — o soluție multi-rol cu interfață modernă, backend separat și un microserviciu dedicat analizei imaginilor și videoclipurilor.
+Lucrarea de față a urmărit proiectarea și dezvoltarea unei aplicații web care să răspundă unor nevoi reale din domeniul pescuitului recreativ. Ideea de bază a fost construirea unei platforme care să nu se limiteze la afișarea locurilor de pescuit sau la păstrarea unui jurnal de capturi, ci să reunească descoperirea locațiilor, rezervarea, administrarea operațională și analiza automată a fișierelor media. Rezultatul este aplicația WhereWeFishin, o soluție multi-rol cu interfață modernă, backend separat și un microserviciu dedicat analizei imaginilor și videoclipurilor.
 
 Pe parcursul lucrării am analizat fundamentele teoretice și tehnologice, am descris cerințele și deciziile de proiectare, am prezentat implementarea componentelor principale și am evaluat comportamentul sistemului prin teste. Lucrarea nu se rezumă la descrierea unei idei, ci prezintă un sistem software concret, funcțional și extensibil.
 
@@ -14,36 +14,56 @@ Integrarea componentei de inteligență artificială este un alt punct important
 
 Arhitectura separată pe componente s-a dovedit o alegere potrivită. Împărțirea în frontend, backend, bază de date și microserviciu Python a permis dezvoltarea mai clară a modulelor și o integrare mai controlată a funcțiilor costisitoare, cum este procesarea video. Aceasta oferă și o bază bună pentru extinderea ulterioară.
 
+Din perspectivă tehnică, implementarea a demonstrat că o arhitectură cu componente separate funcționează eficient chiar și la nivel de prototip. Izolarea microserviciului de procesare video a permis utilizarea unor biblioteci specializate, precum PyTorch, OpenCV și FFmpeg, fără a afecta comportamentul și stabilitatea API-ului principal. Aceeași separare va ușura și înlocuirea sau actualizarea modelului de detecție pe măsură ce setul de date crește.
+
+Infrastructura de testare construită în jurul backend-ului reflectă o abordare matură față de calitatea codului. Cele 349 de teste trecute nu sunt un simplu indicator numeric, ci rezultatul unei structuri deliberate: validare la nivelul DTO-urilor, teste de controller pentru contractele API și teste de integrare pentru fluxurile complete. Această structură permite adăugarea de noi funcții cu un risc mai mic de regresii neobservate.
+
 \section{Contribuțiile principale ale lucrării}
 
 Contribuțiile principale pot fi sintetizate în câteva direcții. Prima este construirea unei platforme care combină coerent funcții de explorare, rezervare și administrare. A doua este modelul de roluri care separă clar responsabilitățile utilizatorului obișnuit, ale angajatului, ale managerului și ale administratorului. A treia este componenta geospațială relevantă: harta nu este doar decorativă, ci reprezintă un instrument central pentru descoperirea și gestionarea locurilor de pescuit.
 
 O contribuție importantă este și integrarea serviciului de analiză media bazat pe YOLO și ByteTrack. Această zonă a presupus construirea unui flux complet: de la upload în interfață, prin API, spre serviciul Python și înapoi cu rezultatele stocate și afișate utilizatorului. Nu a fost vorba doar de folosirea unor biblioteci existente, ci de integrarea lor controlată în arhitectura aplicației.
 
-Nu în ultimul rând, infrastructura de testare relevantă pentru backend este un punct forte al proiectului. Rezultatul de 349 de teste trecute în momentul evaluării arată că logica de business a fost tratată și din perspectiva validării regulate, nu doar a implementării vizibile.
+Nu în ultimul rând, infrastructura de testare relevantă pentru backend este un punct forte al proiectului. Rezultatul de 349 de teste trecute în momentul evaluării arată că logica de business a fost tratată și din perspectiva validării regulate, nu doar a implementării vizibile. Structura în mai multe niveluri, anume validare DTO, teste de controller și teste de integrare, oferă o plasă de siguranță reală pentru dezvoltarea ulterioară.
+
+O contribuție mai puțin vizibilă, dar la fel de importantă, este setul de date propriu pentru antrenarea modelului AI. Absența peștilor din seturile de date publice generice a impus colectarea și adnotarea manuală a imaginilor, adaptate la speciile și condițiile fotografice specifice pescuitului recreativ local. Aceasta este o componentă de cercetare aplicată, nu doar de integrare de biblioteci existente.
 
 \section{Limitele actuale ale soluției}
 
 Ca orice proiect de această complexitate, WhereWeFishin are și limite care trebuie recunoscute. Acoperirea testării automate este mult mai bună în backend decât în frontend și în serviciul Python. Interfața și o parte din comportamentul procesării media sunt verificate în principal prin testare manuală și observații directe.
 
-Componenta de analiză video depinde de condițiile în care sunt obținute fișierele media. Calitatea imaginilor, unghiul de filmare, lumina și claritatea apei influențează rezultatul. Performanța modelului nu trebuie interpretată ca absolută, ci în raport cu contextul real de utilizare — aceasta este o limită normală a sistemelor de viziune artificială.
+Componenta de analiză video depinde de condițiile în care sunt obținute fișierele media. Calitatea imaginilor, unghiul de filmare, lumina și claritatea apei influențează rezultatul. Performanța modelului nu trebuie interpretată ca absolută, ci în raport cu contextul real de utilizare, limita normală a sistemelor de viziune artificială.
 
-O altă limită este că aplicația, în forma actuală, este optimizată mai ales pentru un scenariu coerent de utilizare și mai puțin pentru un volum mare de utilizatori și operații simultane. Platforma este bine structurată și pregătită pentru extindere, dar unele direcții — cum ar fi procesarea asincronă cu cozi de mesaje sau raportarea statistică avansată — rămân pentru etape ulterioare.
+O altă limită este că aplicația, în forma actuală, este optimizată mai ales pentru un scenariu coerent de utilizare și mai puțin pentru un volum mare de utilizatori și operații simultane. Platforma este bine structurată și pregătită pentru extindere, dar unele direcții (cum ar fi procesarea asincronă cu cozi de mesaje sau raportarea statistică avansată) rămân pentru etape ulterioare.
+
+Un aspect operațional care nu a fost abordat este scalabilitatea orizontală: în configurația actuală, aplicația rulează ca o singură instanță per componentă. Extinderea la scenarii cu volum ridicat de cereri simultane ar necesita ajustări la nivelul arhitecturii de deployment: balansare de sarcină, procesare asincronă a analizelor media prin cozi de mesaje și strategii de caching mai avansate pentru răspunsurile frecvent accesate.
 
 \section{Perspective de dezvoltare}
 
 Proiectul poate fi extins în mai multe direcții utile.
 
-O primă direcție este creșterea acoperirii automate a testelor din frontend și a celor pentru serviciul Python. O suită mai echilibrată ar aduce mai multă siguranță la adăugarea de funcții noi și ar reduce riscul de regresii.
+O primă direcție este creșterea acoperirii automate a testelor din frontend și a celor pentru serviciul Python. O suită mai echilibrată ar aduce mai multă siguranță la adăugarea de funcții noi și ar reduce riscul de regresii nedetectate timpuriu.
 
-O a doua direcție este îmbunătățirea componentei de analiză media. Aceasta poate include antrenarea sau ajustarea modelului pe date mai reprezentative pentru platformă, rafinarea criteriilor de detecție și statistici mai utile pentru utilizator: rapoarte pe specii, comparații între analize sau istorice filtrabile după perioadă și locație.
+O a doua direcție este îmbunătățirea componentei de analiză media. Pe termen scurt, aceasta presupune extinderea setului de date cu specii suplimentare și imagini în condiții variate de iluminare și unghi. Pe termen mediu, modelul ar putea deveni un instrument util și pentru identificarea speciilor protejate, contribuind la un pescuit recreativ mai responsabil. Rafinarea statisticilor returnate, cum ar fi rapoarte pe specii, comparații între sesiuni sau istorice filtrabile după locație și perioadă, ar crește semnificativ valoarea percepută a funcției de analiză.
 
-O a treia direcție este extinderea zonei de administrare și raportare. Managerii ar putea beneficia de statistici mai detaliate privind gradul de ocupare al pontoanelor, frecvența rezervărilor sau recenziile primite. Administratorul platformei ar putea avea instrumente mai bune pentru monitorizarea sistemului și analiza evoluției utilizatorilor.
+O a treia direcție este extinderea zonei de administrare și raportare. Managerii ar putea beneficia de grafice de ocupare a pontoanelor pe intervale de timp, frecvența rezervărilor și distribuția recenziilor. Administratorul platformei ar putea avea instrumente mai bune pentru monitorizarea sistemului și analiza evoluției bazei de utilizatori.
 
-Se poate lua în calcul și consolidarea comportamentului de tip PWA — notificări mai bune, funcționalitate parțial offline și confirmări simplificate pentru angajați la verificarea sesiunilor pe teren.
+O a patra direcție vizează integrările externe: sincronizarea cu calendare populare, trimiterea de notificări push pentru confirmări și remindere, sau exportul rezervărilor în formate standard. Aceste funcții nu afectează arhitectura de bază, dar adaugă comodință pentru utilizatorii frecvenți ai platformei.
+
+Se poate lua în calcul și consolidarea comportamentului de tip PWA: funcționalitate parțial offline, sincronizare în background și confirmări simplificate pentru angajați la verificarea sesiunilor pe teren, în zone cu conectivitate mobilă limitată.
 
 \section{Încheiere}
 
 WhereWeFishin este o aplicație complexă, dar coerentă, care răspunde unei probleme reale printr-o combinație echilibrată de tehnologii web, modelare de domeniu și integrare AI. Pornind de la o nevoie practică bine definită, am construit o soluție modernă utilă atât pescarului obișnuit, cât și administratorului locației.
 
-Dincolo de rezultatul tehnic, proiectul a reprezentat un exercițiu complet de analiză, proiectare, integrare și validare. Tocmai această combinație dintre fundamentarea teoretică și implementarea practică dă consistență lucrării. Soluția poate fi considerată o bază solidă pentru dezvoltări ulterioare și un exemplu relevant de aplicare a tehnologiilor moderne într-un domeniu concret, apropiat de activitatea utilizatorilor reali.
+Realizarea proiectului a presupus navigarea unor compromisuri tehnice care nu apar în aplicații simple: când să tratezi o operație sincron și când asincron, cum să separi responsabilitățile fără cuplare excesivă, cum să echilibrezi securitatea cu ușurința utilizării și când să delegi o funcție unui serviciu extern în loc să o implementezi intern. Aceste decizii nu au o soluție unică corectă: tocmai de aceea reflectă judecată inginerească, nu doar aplicarea unui tipar cunoscut.
+
+Un aspect care s-a dovedit esențial pe parcurs este rolul testării în menținerea coerenței sistemului. Pe măsură ce platforma a crescut în complexitate, cu mai multe roluri, mai multe fluxuri interdependente și mai multe integrări externe, suita de teste a funcționat ca plasă de siguranță la fiecare modificare. Experiența aceasta confirmă că infrastructura de testare nu este un cost suplimentar față de implementare, ci o condiție pentru controlul calității pe termen lung. Un sistem fără teste nu poate fi extins cu încredere; un sistem cu o suită solidă poate.
+
+Integrarea componentei de inteligență artificială a adus o perspectivă diferită față de celelalte module. Antrenarea modelului, calibrarea pragurilor de inferență și gestionarea ciclului de viață asincron al analizei nu urmează aceleași tipare ca un endpoint REST sau un formular de rezervare. Natura non-deterministă a unui model de detecție, al cărei rezultat depinde de date și nu de logică, a necesitat o arhitectură capabilă să absorbe această variabilitate fără a compromite predictibilitatea restului aplicației. Separarea explicită a serviciului Python de API-ul principal a fost tocmai mecanismul care a permis acest lucru.
+
+Platforma construită nu este un prototip conceptual, ci un sistem funcțional, cu autentificare și autorizare reale, rezervări corelate cu plată, analiză media prin model antrenat pe date proprii și deployment containerizat expus public. Faptul că sistemul rulează în producție și nu doar pe mașina de dezvoltare reprezintă un criteriu important al maturității tehnice atinse. Această dimensiune practică, de la prima cerere HTTP până la containerul Docker care servește traficul real, este poate cel mai concret indicator al reușitei proiectului.
+
+Dincolo de rezultatul tehnic, lucrarea a reprezentat un exercițiu complet de analiză, proiectare, integrare și validare. Tocmai această combinație dintre fundamentarea teoretică și implementarea practică îi dă consistență. Dacă privim platforma nu ca pe o lucrare finalizată, ci ca pe o primă versiune dintr-un produs viu, atunci pașii următori, anume extinderea modelului AI cu noi specii, scalabilitatea orizontală și suita de teste frontend, nu sunt concluzii ale proiectului, ci puncte de start pentru continuare. Această deschidere este, în sine, un semn al solidității arhitecturii construite.
+
+La început am spus că totul a pornit de la o întrebare simplă: de ce un lucru atât de frumos trebuie să fie atât de complicat de rezervat? Răspunsul la acea întrebare este această platformă. Nu pentru că a rezolvat toate problemele, ci pentru că o problemă reală merită un răspuns pe măsură. Dacă un singur pescar va ajunge mai ușor la baltă datorită ei, fără telefoane inutile și drumuri degeaba, atunci proiectul și-a atins scopul cel mai important. Și poate că, datorită acestei platforme, undeva, cineva se va trezi cu noaptea-n cap plin de același entuziasm cu care mă trezeam și eu.

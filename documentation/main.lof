@@ -1,0 +1,24 @@
+\babel@toc {romanian}{}\relax 
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {1.1}{\ignorespaces Cele patru roluri ale utilizatorilor și principalele funcții disponibile}}{3}{figure.1.1}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Principalele entități și relații din modelul de date}}{7}{figure.2.1}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Diagrama de cazuri de utilizare (simplificată)}}{12}{figure.3.1}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Arhitectura de ansamblu a aplicației WhereWeFishin}}{14}{figure.3.2}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Diagrama claselor principale cu atributele entităților de domeniu}}{15}{figure.3.3}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Fluxul principal al unei rezervări și al validării sesiunii de pescuit}}{15}{figure.3.4}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Fluxul de analiză media: de la upload până la afișarea rezultatelor}}{15}{figure.3.5}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Fluxul de autentificare bazat pe tokenuri JWT}}{18}{figure.4.1}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Serviciile Docker și dependențele dintre ele}}{25}{figure.4.2}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Distribuția contribuțiilor personale pe zone funcționale ale platformei}}{29}{figure.4.3}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {5.1}{\ignorespaces Relația dintre metricile principale de evaluare a modelului}}{33}{figure.5.1}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces Precizie, Recall și mAP@0.5 per clasă pe setul de test}}{34}{figure.5.2}%
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {7.1}{\ignorespaces Distribuția estimată a testelor pe categorii în proiectul backend}}{42}{figure.7.1}%
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {8.1}{\ignorespaces Arhitectura containerizată a aplicației WhereWeFishin}}{50}{figure.8.1}%
+\addvspace {10\p@ }
