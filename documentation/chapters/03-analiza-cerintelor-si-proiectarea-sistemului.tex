@@ -11,9 +11,9 @@ Funcționarea WhereWeFishin presupune interacțiunea dintre patru categorii de u
 Cei patru actori principali sunt:
 
 \begin{enumerate}
-  \item \textbf{utilizatorul obișnuit}, care explorează locurile de pescuit pe hartă, face rezervări, își urmărește istoricul, lasă recenzii și poate încărca fișiere media pentru analiză;
-  \item \textbf{angajatul}, care lucrează într-una sau mai multe locații și are acces la un set restrâns de funcții: verificarea sesiunilor și consultarea informațiilor relevante pentru locul de muncă;
-  \item \textbf{managerul}, care administrează un loc de pescuit, gestionează pontoanele, angajații și informațiile descriptive, și urmărește rezervările;
+  \item \textbf{utilizatorul obișnuit}, care explorează locurile de pescuit pe hartă, face rezervări, își urmărește istoricul, lasă recenzii și poate încărca fișiere media pentru analiză.
+  \item \textbf{angajatul}, care lucrează într-una sau mai multe locații și are acces la un set restrâns de funcții: verificarea sesiunilor și consultarea informațiilor relevante pentru locul de muncă.
+  \item \textbf{managerul}, care administrează un loc de pescuit, gestionează pontoanele, angajații și informațiile descriptive, și urmărește rezervările.
   \item \textbf{administratorul sistemului}, care are o perspectivă globală, aprobă sau respinge cereri și supraveghează întreaga platformă.
 \end{enumerate}
 
@@ -83,7 +83,7 @@ Pe lângă funcționalitățile vizibile, aplicația trebuie să respecte și un
 
 \textbf{Securitatea} este prima cerință non-funcțională. Platforma trebuie să protejeze identitățile, datele și operațiile sensibile. Controlul accesului este aplicat consecvent la nivel de backend, nu doar la nivel de interfață.
 
-\textbf{Consistența temporală a rezervărilor} este critică. Sistemul trebuie să normalizeze valorile de timp, să valideze că rezervările vizează intervale viitoare și să verifice conflictele cu sesiunile existente. Starea sesiunii (\emph{Pending}, \emph{Confirmed}, \emph{Cancelled}) trebuie urmărită explicit.
+\textbf{Consistența temporală a rezervărilor} este critică. Sistemul trebuie să normalizeze valorile de timp, să valideze că rezervările vizează intervale viitoare și să verifice conflictele cu sesiunile existente. Starea sesiunii (\emph{Pending}, \emph{Confirmed}, \emph{Cancelled}) trebuie urmărită explicit. Spre exemplu, dacă pontonul A este rezervat între orele 10:00 și 14:00, o cerere pentru intervalul 12:00–16:00 este respinsă deoarece intervalele se suprapun parțial. La fel, o cerere pentru 09:00–17:00 este respinsă deoarece include complet rezervarea existentă. Ambele cazuri sunt acoperite de aceeași condiție de detectare a conflictelor, evaluată direct la nivelul bazei de date.
 
 \textbf{Fiabilitatea fluxurilor operaționale} presupune că procesele secundare nu blochează fluxurile critice. Dacă trimiterea unui email eșuează, rezervarea nu trebuie anulată. O analiză media cu erori trebuie marcată ca eșuată, fără a afecta restul sistemului.
 

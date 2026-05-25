@@ -17,16 +17,31 @@ Autentificarea în WhereWeFishin folosește tokenuri JWT, conform RFC 7519 \cite
 Antetul specifică algoritmul de semnare și tipul tokenului. În implementarea curentă se folosește HMAC-SHA256 (\texttt{HS256}), un algoritm simetric care semnează și verifică tokenul cu aceeași cheie secretă stocată pe server. Payload-ul conține \emph{claims}, adică perechi cheie-valoare cu informații despre utilizator și token:
 
 \begin{itemize}
-  \item \texttt{sub}: identificatorul unic al utilizatorului;
-  \item \texttt{email}: adresa de e-mail, folosită și ca username implicit;
-  \item \texttt{role}: rolul acordat (\texttt{User}, \texttt{Employee}, \texttt{Manager}, \texttt{Administrator});
-  \item \texttt{iss} și \texttt{aud}: emițătorul și destinatarul așteptat al tokenului;
+  \item \texttt{sub}: identificatorul unic al utilizatorului.
+  \item \texttt{email}: adresa de e-mail, folosită și ca username implicit.
+  \item \texttt{role}: rolul acordat (\texttt{User}, \texttt{Employee}, \texttt{Manager}, \texttt{Administrator}).
+  \item \texttt{iss} și \texttt{aud}: emițătorul și destinatarul așteptat al tokenului.
   \item \texttt{exp} și \texttt{iat}: momentul expirării și al emiterii.
 \end{itemize}
 
-Semnătura este calculată ca HMAC-SHA256 aplicat concatenării antet și payload. Orice modificare a conținutului tokenului invalidează semnătura, ceea ce înseamnă că un atacator nu poate modifica rolul sau ID-ul utilizatorului fără a cunoaște cheia secretă.
+Un payload decodat tipic, emis după autentificarea unui utilizator obișnuit, arată astfel:
 
-În ASP.NET Core \citep{aspnetcore}, validarea JWT este configurată explicit prin parametrii de validare injectați la înregistrarea middleware-ului: issuer-ul, audience-ul, durata de viață și cheia de semnare sunt verificate la fiecare cerere. Fereastra de toleranță pentru expirare (\texttt{ClockSkew}) este setată la zero, ceea ce înseamnă că un token expirat este respins imediat, fără perioadă de grație. Odată validat, tokenul este decodat, iar claims-urile sunt populate în \texttt{HttpContext.User}, disponibile în orice punct al pipeline-ului.
+\begin{lstlisting}[language=bash, caption={Exemplu de payload JWT decodat pentru un utilizator WhereWeFishin}]
+{
+  "sub":      "3f8a92c1-4e2d-4b71-a8f0-2d7c1e3a9b5f",
+  "username": "pescar_ion",
+  "email":    "ion@exemplu.ro",
+  "role":     "User",
+  "iss":      "WhereWeFishin",
+  "aud":      "WhereWeFishin",
+  "iat":      1748200000,
+  "exp":      1748286400
+}
+\end{lstlisting}
+
+Câmpul \texttt{exp} marchează expirarea (24 de ore după emitere), iar \texttt{role} este citit direct de middleware-ul de autorizare fără interogări suplimentare la baza de date. Semnătura HMAC-SHA256 garantează că un atacator nu poate modifica rolul sau ID-ul utilizatorului fără a cunoaște cheia secretă.
+
+Validarea JWT în ASP.NET Core \citep{aspnetcore} verifică la fiecare cerere issuer-ul, audience-ul, durata de viață și semnătura. \texttt{ClockSkew} este setat la zero: tokenurile expirate sunt respinse imediat, fără perioadă de grație.
 
 \begin{lstlisting}[language={[Sharp]C}, caption={Configurarea autentificării JWT în Program.cs}]
 builder.Services
@@ -156,9 +171,11 @@ Figura~\ref{fig:docker-arhitectura} prezintă structura containerizată a aplica
 \label{fig:docker-arhitectura}
 \end{figure}
 
-Serviciul \texttt{frontend} compilează aplicația Angular în fișiere statice și le servește prin nginx, care acționează și ca reverse proxy pentru cererile API, eliminând problemele CORS în producție. Serviciul \texttt{api} rulează backend-ul .NET și depinde de serviciul de bază de date: Docker Compose garantează că baza de date este pregătită înainte de pornirea API-ului, prin configurarea ordinii de dependențe și a health check-urilor. Serviciul \texttt{ai-service} rulează independent și expune un singur endpoint de inferență pe rețeaua internă. Serviciul \texttt{database} folosește imaginea oficială SQL Server pe Linux.
+Serviciul \texttt{frontend} compilează aplicația Angular în etapa de build și servește fișierele statice prin nginx, care acționează și ca reverse proxy: cererile cu prefixul \texttt{/api/} sunt redirecționate intern către containerul backend, astfel încât browserul comunică cu un singur origin și problemele CORS sunt eliminate fără configurări suplimentare în aplicație. Serviciul \texttt{database} folosește imaginea oficială SQL Server pe Linux, cu datele persistate într-un volum Docker dedicat, astfel încât oprirea sau recrearea containerului nu duce la pierderea lor.
 
-Modelul antrenat este montat ca volum în containerul Python, fără a fi inclus în imaginea Docker. Această decizie reduce dimensiunea imaginii și permite actualizarea modelului fără a reconstrui containerul.
+Serviciul \texttt{api} depinde explicit de baza de date prin directiva \texttt{depends\_on} cu condiția \texttt{service\_healthy}: Docker Compose nu pornește backend-ul până când health check-ul SQL Server nu confirmă că motorul acceptă conexiuni reale, prevenind erorile de inițializare. Serviciul \texttt{ai-service} nu expune niciun port public și este accesibil exclusiv din rețeaua internă Docker, de la containerul \texttt{api}, garantând că autentificarea și autorizarea sunt aplicate de backend înainte ca datele media să ajungă la serviciul de procesare.
+
+Modelul antrenat este montat ca volum read-only (\texttt{:ro}) în containerul Python, fără a fi inclus în imaginea Docker. Această decizie reduce dimensiunea imaginii și permite actualizarea modelului prin simpla înlocuire a fișierului pe sistemul gazdă și repornirea containerului, fără a necesita un nou build sau o nouă publicare a imaginii.
 
 \begin{lstlisting}[language=bash, caption={Structura serviciilor în docker-compose.yml}]
 services:
@@ -173,7 +190,6 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ConnectionStrings__Default=${DB_CONNECTION}
       - Jwt__Key=${JWT_SECRET}
-      - Jwt__Issuer=${JWT_ISSUER}
     depends_on:
       database:
         condition: service_healthy

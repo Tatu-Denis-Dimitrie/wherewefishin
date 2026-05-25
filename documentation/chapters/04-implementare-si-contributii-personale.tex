@@ -80,7 +80,23 @@ Fluxul de rezervare este cel mai dens din punct de vedere al logicii de business
 
 Legătura cu Stripe este separată clar de persistența sesiunii finale. Am generat un \emph{PaymentIntent} care păstrează metadate relevante despre utilizator, locație și interval. Această separare oferă o bază mai sigură pentru corelarea plății cu sesiunea de pescuit și pentru evitarea erorilor de sincronizare. Modelul intern al sesiunii normalizează temporal datele și păstrează o stare explicită: \emph{Pending}, \emph{Confirmed} sau \emph{Cancelled}.
 
-Detectarea conflictelor temporale este implementată printr-o interogare LINQ evaluată direct la nivel de bază de date. Condiția de conflict pentru un ponton dat verifică dacă există sesiuni confirmate sau în așteptare ale căror intervale se intersectează cu cel solicitat, adică sesiuni care încep înainte de finalul intervalului nou și se termină după începutul acestuia. Această formulare acoperă toate cazurile de suprapunere parțială sau totală și evită încărcarea inutilă a datelor în memorie. Rezultatul este un mesaj explicit de conflict transmis clientului, care include intervalul neeligibil, astfel încât interfața poate evidenția perioada ocupată fără a necesita interogări suplimentare.
+Detectarea conflictelor temporale este implementată printr-o interogare LINQ evaluată direct la nivel de bază de date, care acoperă toate cazurile de suprapunere parțială sau totală fără a încărca datele în memorie.
+
+\needspace{10\baselineskip}
+\begin{lstlisting}[language={[Sharp]C}, caption={Interogarea LINQ pentru detectarea conflictelor de rezervare}]
+var hasConflict = await _context.FishingSessions
+    .Where(s => s.PontoonId == request.PontoonId
+             && s.Status    != SessionStatus.Cancelled
+             && s.StartTime  < request.EndTime
+             && s.EndTime    > request.StartTime)
+    .AnyAsync(cancellationToken);
+
+if (hasConflict)
+    return Result.Fail(
+        "Intervalul selectat se suprapune cu o rezervare existenta.");
+\end{lstlisting}
+
+Rezultatul este un mesaj explicit de conflict transmis clientului, care include intervalul neeligibil, astfel încât interfața poate evidenția perioada ocupată fără a necesita interogări suplimentare.
 
 Contribuția personală în acest modul este integrarea coerentă a regulilor de disponibilitate, a modelului de sesiune și a unei plăți externe, fără a pierde consistența internă a datelor.
 
@@ -140,11 +156,9 @@ Integrarea tuturor tipurilor de fluxuri într-o singură aplicație SPA a necesi
 
 \section{Implementarea sistemului de analiză media}
 
-Sistemul de analiză media este componenta care diferențiază cel mai clar WhereWeFishin de o aplicație web convențională de rezervări. Implementarea implică colaborarea dintre trei straturi: interfața Angular, backend-ul .NET care orchestrează fluxul și serviciul Python care execută analiza.
+Sistemul de analiză media implică colaborarea dintre trei straturi: interfața Angular, backend-ul .NET care orchestrează fluxul și serviciul Python care execută analiza. Procesarea video nu poate fi sincronă, deoarece un fișier poate necesita zeci de secunde, iar blocarea unui thread HTTP pe toată durata ar face sistemul nefuncțional.
 
-Spre deosebire de celelalte fluxuri din platformă, cum ar fi rezervări, recenzii sau administrare, analiza media nu poate fi tratată sincron. Un fișier video poate necesita câteva zeci de secunde sau chiar minute pentru a fi procesat, iar blocarea unui thread HTTP pe toată această durată ar face sistemul nefuncțional sub orice trafic real. De aceea, componenta a fost proiectată în jurul unui model asincron explicit, cu un ciclu de viață format din patru stări persistate: \emph{Pending}, \emph{Processing}, \emph{Completed} și \emph{Failed}. Aceste stări sunt accesibile în orice moment prin polling din frontend și recuperabile după un restart al serverului.
-
-Coordonarea celor trei straturi urmează un protocol clar: utilizatorul încarcă fișierul prin interfața Angular, care îl trimite la backend-ul .NET printr-o cerere multipart. Backend-ul validează fișierul, creează înregistrarea de analiză în starea \emph{Pending} și returnează imediat un identificator unic clientului, fără a aștepta finalizarea procesării. Trimiterea efectivă la serviciul Python este inițiată asincron: starea analizei devine \emph{Processing} pe durata apelului, iar la primirea rezultatelor trece în \emph{Completed}. Dacă serviciul Python este indisponibil sau returnează o eroare, analiza este marcată ca \emph{Failed} fără a propaga excepția spre utilizator.
+Componenta este proiectată în jurul unui model asincron cu patru stări persistate: \emph{Pending}, \emph{Processing}, \emph{Completed} și \emph{Failed}. Utilizatorul încarcă fișierul, backend-ul returnează imediat un identificator, iar procesarea continuă asincron. Dacă serviciul Python este indisponibil, analiza este marcată ca \emph{Failed} fără a propaga eroarea spre utilizator.
 
 \begin{lstlisting}[language={[Sharp]C}, caption={Trimiterea fișierului media la serviciul Python și actualizarea stării}]
 public async Task<MediaAnalysisResult> SendToAnalysisServiceAsync(
@@ -168,17 +182,11 @@ public async Task<MediaAnalysisResult> SendToAnalysisServiceAsync(
 }
 \end{lstlisting}
 
-Clientul HTTP care comunică cu serviciul Python este configurat cu un timeout extins, necesar pentru videoclipurile lungi, și cu politici de retry limitate la erorile tranziente de rețea. Separarea serviciului HTTP de controllerul de upload permite testarea independentă: controllerul poate fi testat cu un serviciu simulat care returnează rezultate predefinite, iar serviciul HTTP poate fi testat izolat față de logica de persistență. Validarea fișierelor înaintea trimiterii include verificarea tipului MIME față de o listă albă și limitarea dimensiunii: imagini până la 10 MB, videoclipuri până la 150 MB. Fișierele care nu respectă aceste constrângeri sunt respinse la nivelul controller-ului, fără a atinge serviciul Python, reducând astfel riscul procesării unor fișiere corupte sau cu format neașteptat.
+Clientul HTTP este configurat cu timeout extins pentru videoclipuri și retry limitat la erorile tranziente. Validarea fișierelor verifică tipul MIME și dimensiunea: imagini până la 10 MB, videoclipuri până la 150 MB. Fișierele neconforme sunt respinse de controller fără a atinge serviciul Python.
 
 \subsection{Integrarea dintre backend și serviciul Python}
 
-La nivel de backend, un serviciu dedicat gestionează comunicarea cu aplicația Python: trimite fișierele spre procesare, interpretează răspunsul primit și actualizează entitățile persistente. Comunicarea se face prin HTTP, cu timeout configurabil și mecanism de retry pentru cazurile în care serviciul Python nu răspunde imediat. Dacă serviciul este indisponibil, analiza este marcată ca \emph{Failed}, fără a afecta restul aplicației.
-
-Controllerele expun endpoint-uri pentru încărcare, listare, detaliere și ștergere a analizelor, cu reguli clare de autorizare: utilizatorul poate accesa doar propriile analize, iar managerul poate consulta analizele asociate locației sale. Validarea fișierelor la upload include verificarea tipului MIME și a dimensiunii, cu limite configurate explicit pentru imagini și videoclipuri.
-
-Am introdus stări explicite pentru fiecare analiză: \emph{Pending} (înregistrată, neîncepută), \emph{Processing} (trimisă spre serviciul Python), \emph{Completed} (rezultate disponibile) și \emph{Failed} (procesare eșuată). Aceste stări permit urmărirea ciclului de viață al procesării, oferă frontend-ului o bază clară pentru polling și fac auditul erorilor de procesare posibil fără a necesita loguri externe.
-
-Contribuția personală constă în transformarea unui apel extern către un serviciu specializat de viziune artificială într-un flux controlat, persistent și ușor de monitorizat.
+Serviciul de backend gestionează comunicarea cu Python prin HTTP cu timeout configurabil și retry pentru erori tranziente. Controllerele expun endpoint-uri pentru încărcare, listare, detaliere și ștergere, cu autorizare diferențiată: utilizatorul accesează doar propriile analize, managerul le poate consulta pe cele ale locației sale. Stările explicite (\emph{Pending}, \emph{Processing}, \emph{Completed}, \emph{Failed}) oferă frontend-ului baza pentru polling și permit auditul erorilor fără loguri externe.
 
 \subsection{Pipeline-ul video: detecție, tracking și post-procesare}
 
@@ -280,19 +288,17 @@ builder.Services.AddRateLimiter(options =>
 });
 \end{lstlisting}
 
-Endpoint-urile de autentificare aplică politica \texttt{"auth"}, configurată prin atributul \texttt{EnableRateLimiting} pe acțiunile de login: un client care depășește 5 cereri pe minut primește HTTP~429, prevenind atacurile de tip brute-force. Endpoint-urile de upload folosesc politica \texttt{"upload"}, cu o coadă de 2 cereri pentru a absorbi vârfuri scurte fără a respinge imediat utilizatorii legitimi.
+Endpoint-urile de autentificare aplică politica \texttt{"auth"} (5 cereri/minut, HTTP~429 la depășire). Cele de upload aplică politica \texttt{"upload"} cu o coadă de 2 cereri pentru a absorbi vârfuri scurte. Compresia \texttt{ResponseCompression} (Brotli/Gzip) reduce lățimea de bandă pentru răspunsurile JSON voluminoase.
 
-Compresia răspunsurilor este configurată prin middleware-ul \texttt{ResponseCompression}, cu suport pentru Brotli și Gzip, activat condiționat în funcție de header-ul \texttt{Accept-Encoding} al clientului. Aceasta reduce lățimea de bandă consumată de răspunsurile JSON voluminoase, în special listele de locații cu metadata completă și rezultatele analizelor media cu multe detecții.
-
-Politicile CORS sunt definite separat pentru mediul de dezvoltare și producție. În dezvoltare, originile sunt permise larg pentru a facilita lucrul local. În producție, politica restricționează \texttt{Origin} la domeniile aplicației, blocând cererile încrucișate de la surse neautorizate:
+Politicile CORS sunt diferențiate pe mediu: în dezvoltare originile sunt permise larg, în producție sunt restricționate la domeniile aplicației:
 
 \begin{lstlisting}[language={[Sharp]C}, caption={Politica CORS diferențiată pe mediu de execuție}]
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Production", policy =>
         policy.WithOrigins(
-                   "https://wherefishin.ro",
-                   "https://www.wherefishin.ro")
+                   "https://wherewefishin.uk",
+                   "https://www.wherewefishin.uk")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials());
@@ -322,7 +328,7 @@ Reziliența comunicării dintre backend și serviciul Python este implementată 
 
 Cloudflare Tunnel (\texttt{cloudflared}) rulează ca un serviciu suplimentar în stiva Docker Compose. La pornire, deschide o conexiune persistentă criptată spre infrastructura Cloudflare și înregistrează regulile de rutare configurate în panoul Cloudflare Zero Trust. Traficul de la utilizatori ajunge la serverele Cloudflare, care îl redirecționează prin tunel spre containerele locale, fără ca nicio adresă IP sau port să fie expus direct pe internet. Această topologie elimină o categorie întreagă de riscuri: scanarea porturilor, atacurile directe asupra IP-ului mașinii și exploatarea unor servicii expuse accidental.
 
-Configurația tunelului asociază subdomeniile aplicației serviciilor interne prin numele lor Docker Compose. Cererea spre \texttt{api.wherefishin.ro} este trimisă la \texttt{http://api:8080}, iar cererea spre \texttt{wherefishin.ro} la \texttt{http://frontend:80}. Serviciul Python nu apare în configurația de rutare și rămâne accesibil exclusiv din rețeaua internă Docker.
+Configurația tunelului asociază subdomeniile aplicației serviciilor interne prin numele lor Docker Compose. Cererea spre \texttt{api.wherewefishin.uk} este trimisă la \texttt{http://api:8080}, iar cererea spre \texttt{wherewefishin.uk} la \texttt{http://frontend:80}. Serviciul Python nu apare în configurația de rutare și rămâne accesibil exclusiv din rețeaua internă Docker.
 
 Cloudflare gestionează automat certificatele TLS și reînnoirea lor. Prin intermediul Cloudflare WAF (Web Application Firewall), traficul este filtrat și înainte de a ajunge la tunel: regulile de tip OWASP sunt aplicate implicit, iar adresele IP cu comportament abuziv pot fi blocate la nivelul rețelei Cloudflare, fără a atinge mașina gazdă. Protecția DDoS funcționează prin absorbția traficului în infrastructura distribuită Cloudflare, nu prin capacitatea mașinii locale.
 

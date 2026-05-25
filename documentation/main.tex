@@ -24,6 +24,7 @@
 \usepackage{url}
 \usepackage[numbers,sort&compress]{natbib}
 \usepackage{listings}
+\usepackage{needspace}
 \usepackage{tikz}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
@@ -40,7 +41,7 @@
   basicstyle=\footnotesize\ttfamily,
   breaklines=true,
   breakatwhitespace=false,
-  frame=single,
+  frame=leftline,
   rulecolor=\color{gray!40},
   backgroundcolor=\color{gray!6},
   numbers=left,
@@ -49,7 +50,6 @@
   tabsize=2,
   showstringspaces=false,
   captionpos=b,
-  float=htbp,
   aboveskip=\medskipamount,
   belowskip=\medskipamount,
   keywordstyle=\bfseries\color{black},
@@ -72,6 +72,9 @@
 }
 
 \setlist{itemsep=0.3em, topsep=0.4em}
+
+\widowpenalty=10000
+\clubpenalty=10000
 
 \title{WhereWeFishin - Fishing Experience Discovery Platform Enhanced by AI}
 \author{De completat}

@@ -74,7 +74,42 @@ Figura~\ref{fig:distributie-nr-teste} prezintă distribuția estimată a testelo
 \label{fig:distributie-nr-teste}
 \end{figure}
 
-Un exemplu clar sunt testele de integrare pentru autentificare: verifică înregistrarea unui utilizator, tratarea conflictelor de identitate, autentificarea și validarea tokenului primit. Similar, testele pentru aplicațiile de manager urmăresc scenarii complete: crearea cererii, respingerea, retransmiterea după corectare și aprobarea finală care promovează utilizatorul. Aceste scenarii sunt valoroase deoarece verifică împreună reguli de business, persistență și control al accesului.
+Un exemplu clar sunt testele de integrare pentru autentificare: verifică înregistrarea unui utilizator, tratarea conflictelor de identitate, autentificarea și validarea tokenului primit.
+
+\begin{lstlisting}[language={[Sharp]C}, caption={Test de integrare: înregistrare urmată de autentificare și validarea tokenului JWT}]
+[Fact]
+public async Task Register_ThenLogin_ReturnsValidJwtToken()
+{
+    var registerPayload = new
+    {
+        Username        = "test_pescar",
+        Email           = "test@exemplu.ro",
+        Password        = "Parola_Sigura1!",
+        ConfirmPassword = "Parola_Sigura1!"
+    };
+
+    var regResponse = await _client.PostAsJsonAsync(
+        "/api/auth/register", registerPayload);
+    Assert.Equal(HttpStatusCode.OK, regResponse.StatusCode);
+
+    var loginPayload = new
+    {
+        Username = "test_pescar",
+        Password = "Parola_Sigura1!"
+    };
+
+    var loginResponse = await _client.PostAsJsonAsync(
+        "/api/auth/login", loginPayload);
+    var result = await loginResponse.Content
+        .ReadFromJsonAsync<LoginResponseDto>();
+
+    Assert.Equal(HttpStatusCode.OK, loginResponse.StatusCode);
+    Assert.NotNull(result?.Token);
+    Assert.NotEmpty(result!.Token);
+}
+\end{lstlisting}
+
+Similar, testele pentru aplicațiile de manager urmăresc scenarii complete: crearea cererii, respingerea, retransmiterea după corectare și aprobarea finală care promovează utilizatorul. Aceste scenarii sunt valoroase deoarece verifică împreună reguli de business, persistență și control al accesului.
 
 O altă zonă bine reprezentată este analiza media. Testele pentru serviciul de recunoaștere validează atât cazul în care serviciul Python răspunde corect, cât și scenariile în care răspunsul extern este invalid sau serviciul nu poate fi contactat.
 

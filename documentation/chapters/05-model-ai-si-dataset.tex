@@ -6,7 +6,7 @@ Componenta de analiză media din WhereWeFishin se bazează pe un model de detec�
 
 Modelele YOLO preantrenate pe seturi de date publice de referință (precum COCO) nu conțin o clasă dedicată peștilor. Setul COCO, cu cele 80 de categorii ale sale, nu include pești, ceea ce face imposibilă folosirea directă a unui model generic pentru identificarea capturilor. Această absență a justificat construirea unui set de date propriu: fără el, platforma nu ar putea oferi nicio informație despre specia peștelui fotografiat sau filmat.
 
-Alternativele disponibile public, seturi de date de pești pentru medii marine sau subacvatice controlate, au o distribuție a speciilor diferită față de realitatea pescuitului recreativ din România. Specii comune în apele locale, precum crapul, bibanul, șalăul sau știuca, sunt subreprezentate sau absente în aceste seturi. Din acest motiv, crearea unui set de date propriu, adaptat contextului local și condițiilor reale de captare a imaginilor, a fost o alegere necesară, nu opțională.
+Alternativele disponibile public, seturi de date de pești pentru medii marine sau subacvatice controlate, au o distribuție a speciilor diferită față de realitatea pescuitului recreativ din România. Specii comune în apele locale, precum crapul, ctenoul, șalăul sau știuca, sunt subreprezentate sau absente în aceste seturi. Din acest motiv, crearea unui set de date propriu, adaptat contextului local și condițiilor reale de captare a imaginilor, a fost o alegere necesară, nu opțională.
 
 \section{Colectarea și structura setului de date}
 
@@ -14,7 +14,17 @@ Imaginile au fost colectate din surse variate: fotografii proprii realizate în 
 
 Setul de date include mai multe clase de specii de pești frecvent întâlnite în contextul pescuitului recreativ, fiecare reprezentată prin imagini cu variații de poziție, unghi de vizualizare, distanță față de cameră și condiții de lumină. Clasele acoperă atât pești capturați și fotografiați în afara apei, cât și exemplare vizibile la suprafața apei sau în condiții de vizibilitate parțială.
 
-Structura finală a setului de date urmează convenția Ultralytics YOLO: directoarele \texttt{train}, \texttt{val} și \texttt{test} conțin imagini și etichete asociate. Fiecare imagine are un fișier de etichete cu același nume, în format text, unde fiecare linie descrie un obiect prin indexul clasei și coordonatele bounding box-ului normalizate. Această structură este consumată direct de pipeline-ul de antrenare fără preprocesare suplimentară.
+Structura finală a setului de date urmează convenția Ultralytics YOLO: directoarele \texttt{train}, \texttt{val} și \texttt{test} conțin imagini și etichete asociate. Fiecare imagine are un fișier de etichete cu același nume, în format text, unde fiecare linie descrie un obiect prin indexul clasei și coordonatele bounding box-ului normalizate.
+
+\needspace{10\baselineskip}
+\begin{lstlisting}[language=bash, caption={Exemplu de fișier de adnotare YOLO pentru o imagine cu doi crapi și o stiuca}]
+# <clasa>  <cx>    <cy>    <w>     <h>
+0           0.512   0.438   0.324   0.671
+0           0.231   0.689   0.198   0.412
+1           0.764   0.312   0.155   0.283
+\end{lstlisting}
+
+Fiecare linie corespunde unui pește detectat în imagine. Indexul clasei (\texttt{0} = crap, \texttt{1} = stiuca) este urmat de coordonatele centrului bounding box-ului (\texttt{cx}, \texttt{cy}) și de lățimea și înălțimea acestuia (\texttt{w}, \texttt{h}), toate normalizate în intervalul \([0, 1]\) față de dimensiunile imaginii. Această structură este consumată direct de pipeline-ul de antrenare fără preprocesare suplimentară.
 
 \section{Anotarea și preprocesarea imaginilor}
 
@@ -66,7 +76,7 @@ Figura~\ref{fig:metrici-model} sintetizează relația dintre principalele metric
   height=7cm,
   ylabel={Valoare metrică},
   xtick={1,2,3,4},
-  xticklabels={Cten, \c{S}tiucă, Crap, ClownFish},
+  xticklabels={Cteno, \c{S}tiucă, Crap, ClownFish},
   x tick label style={font=\small},
   y tick label style={font=\small},
   ymin=0, ymax=1.05,

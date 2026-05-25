@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.5.12)  25 MAY 2026 11:46
+This is XeTeX, Version 3.141592653-2.6-0.999997 (MiKTeX 25.12) (preloaded format=xelatex 2026.5.23)  25 MAY 2026 16:09
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -11,15 +11,15 @@ Document Class: report 2025/01/22 v1.4n Standard LaTeX document class
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/base\size12.clo
 File: size12.clo 2025/01/22 v1.4n Standard LaTeX file (size option)
 )
-\c@part=\count275
-\c@chapter=\count276
-\c@section=\count277
-\c@subsection=\count278
-\c@subsubsection=\count279
-\c@paragraph=\count280
-\c@subparagraph=\count281
-\c@figure=\count282
-\c@table=\count283
+\c@part=\count271
+\c@chapter=\count272
+\c@section=\count273
+\c@subsection=\count274
+\c@subsubsection=\count275
+\c@paragraph=\count276
+\c@subparagraph=\count277
+\c@figure=\count278
+\c@table=\count279
 \abovecaptionskip=\skip49
 \belowcaptionskip=\skip50
 \bibindent=\dimen148
@@ -27,7 +27,7 @@ File: size12.clo 2025/01/22 v1.4n Standard LaTeX file (size option)
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/babel\babel.sty
 Package: babel 2026/04/15 v26.6 The multilingual framework for LuaLaTeX, pdfLaT
 eX and XeLaTeX
-\babel@savecnt=\count284
+\babel@savecnt=\count280
 LaTeX Encoding Info:    Redeclaring text command \ij (encoding OT1) on input li
 ne 2078.
 LaTeX Encoding Info:    Redeclaring text command \IJ (encoding OT1) on input li
@@ -45,9 +45,9 @@ on input line 2111.
 \U@D=\dimen149
 \l@unhyphenated=\language79
 
-(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/babel\txtbabel.def)
+(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/babel\xebabel.def)
 \bbl@readstream=\read2
-\bbl@dirlevel=\count285
+\bbl@dirlevel=\count281
 Package babel Info: Configuration files are deprecated, as
 (babel)             they can break document portability.
 (babel)             Reported on input line 4206.
@@ -69,39 +69,117 @@ ldf
 Language: romanian 2021/04/04 v1.2m Romanian support from the babel system
 )) (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/iftex\iftex.sty
 Package: iftex 2024/12/12 v1.0g TeX engine tests
-) (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/base\fontenc.sty
+) (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/fontspec\fontspec.sty
+(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/l3packages/xparse\xparse
+.sty (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/l3kernel\expl3.sty
+Package: expl3 2026-03-20 L3 programming layer (loader) 
+
+
+! LaTeX Error: Mismatched LaTeX support files detected.
+(LaTeX)        Loading 'expl3.sty' aborted!
+(LaTeX)        
+(LaTeX)        The L3 programming layer in the LaTeX format
+(LaTeX)        is dated 2025-12-24, but in your TeX tree the files require
+(LaTeX)        at least 2026-03-20.
+
+For immediate help type H <return>.
+ ...                                              
+                                                  
+l.78      \ExplLoaderFileDate{expl3.sty}}
+                                         %
+
+The most likely causes are:
+ - A recent format generation failed;
+ - A stray format file in the user tree which needs to be removed or rebuilt;
+ - You are running a manually installed version of expl3.sty
+   which is incompatible with the version in LaTeX.
+
+LaTeX will abort loading the incompatible support files but this may lead to
+later errors. Please ensure that your LaTeX format is correctly regenerated.
+
+
+)
+Package: xparse 2025-10-09 L3 Experimental document command parser
+)
+Package: fontspec 2025/09/29 v2.9g Font selection for XeLaTeX and LuaLaTeX
+
+(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/fontspec\fontspec-xetex.
+sty
+Package: fontspec-xetex 2025/09/29 v2.9g Font selection for XeLaTeX and LuaLaTe
+X
+\l__fontspec_script_int=\count282
+\l__fontspec_language_int=\count283
+\l__fontspec_strnum_int=\count284
+\l__fontspec_tmp_int=\count285
+\l__fontspec_tmpa_int=\count286
+\l__fontspec_tmpb_int=\count287
+\l__fontspec_tmpc_int=\count288
+\l__fontspec_em_int=\count289
+\l__fontspec_emdef_int=\count290
+\l__fontspec_strong_int=\count291
+\l__fontspec_strongdef_int=\count292
+\l__fontspec_tmpa_dim=\dimen150
+\l__fontspec_tmpb_dim=\dimen151
+\l__fontspec_tmpc_dim=\dimen152
+ (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/base\fontenc.sty
 Package: fontenc 2025/07/18 v2.1d Standard LaTeX package
 )
-(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/base\inputenc.sty
-Package: inputenc 2024/02/08 v1.3d Input encoding file
-\inpenc@prehook=\toks17
-\inpenc@posthook=\toks18
-)
-(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\helvet.sty
-Package: helvet 2020/03/25 PSNFSS-v9.3 (WaS) 
+(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/fontspec\fontspec.cfg)))
 
-(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty
-Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
-\KV@toks@=\toks19
-))
+Package fontspec Info: 
+(fontspec)             Font family 'Calibri(0)' created for font 'Calibri'
+(fontspec)             with options [Ligatures=TeX,Ligatures=TeX].
+(fontspec)              
+(fontspec)              This font family consists of the following NFSS
+(fontspec)             series/shapes:
+(fontspec)              
+(fontspec)             - 'normal' (m/n) with NFSS spec.:
+(fontspec)             <->"Calibri/OT:script=latn;language=dflt;mapping=tex-tex
+t;"
+(fontspec)             - 'small caps'  (m/sc) with NFSS spec.:
+(fontspec)             <->"Calibri/OT:script=latn;language=dflt;+smcp;mapping=t
+ex-text;"
+(fontspec)             - 'bold' (b/n) with NFSS spec.:
+(fontspec)             <->"Calibri/B/OT:script=latn;language=dflt;mapping=tex-t
+ext;"
+(fontspec)             - 'bold small caps'  (b/sc) with NFSS spec.:
+(fontspec)             <->"Calibri/B/OT:script=latn;language=dflt;+smcp;mapping
+=tex-text;"
+(fontspec)             - 'italic' (m/it) with NFSS spec.:
+(fontspec)             <->"Calibri/I/OT:script=latn;language=dflt;mapping=tex-t
+ext;"
+(fontspec)             - 'italic small caps'  (m/scit) with NFSS spec.:
+(fontspec)             <->"Calibri/I/OT:script=latn;language=dflt;+smcp;mapping
+=tex-text;"
+(fontspec)             - 'bold italic' (b/it) with NFSS spec.:
+(fontspec)             <->"Calibri/BI/OT:script=latn;language=dflt;mapping=tex-
+text;"
+(fontspec)             - 'bold italic small caps'  (b/scit) with NFSS spec.:
+(fontspec)             <->"Calibri/BI/OT:script=latn;language=dflt;+smcp;mappin
+g=tex-text;"
+
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.sty
 Package: geometry 2026/03/07 v6.0 Page Geometry
 
+(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty
+Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
+\KV@toks@=\toks17
+)
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifvtex.sty
 Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
 )
-\Gm@cnth=\count286
-\Gm@cntv=\count287
-\c@Gm@tempcnt=\count288
-\Gm@bindingoffset=\dimen150
-\Gm@wd@mp=\dimen151
-\Gm@odd@mp=\dimen152
-\Gm@even@mp=\dimen153
-\Gm@layoutwidth=\dimen154
-\Gm@layoutheight=\dimen155
-\Gm@layouthoffset=\dimen156
-\Gm@layoutvoffset=\dimen157
-\Gm@dimlist=\toks20
+\Gm@cnth=\count293
+\Gm@cntv=\count294
+\c@Gm@tempcnt=\count295
+\Gm@bindingoffset=\dimen153
+\Gm@wd@mp=\dimen154
+\Gm@odd@mp=\dimen155
+\Gm@even@mp=\dimen156
+\Gm@layoutwidth=\dimen157
+\Gm@layoutheight=\dimen158
+\Gm@layouthoffset=\dimen159
+\Gm@layoutvoffset=\dimen160
+\Gm@dimlist=\toks18
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.cfg))
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/setspace\setspace.sty
@@ -112,27 +190,26 @@ Package: microtype 2026/03/01 v3.2d Micro-typographical refinements (RS)
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/etoolbox\etoolbox.sty
 Package: etoolbox 2025/10/02 v2.5m e-TeX tools for LaTeX (JAW)
-\etb@tempcnta=\count289
+\etb@tempcnta=\count296
 )
-\MT@toks=\toks21
+\MT@toks=\toks19
 \MT@tempbox=\box53
-\MT@count=\count290
+\MT@count=\count297
 LaTeX Info: Redefining \noprotrusionifhmode on input line 1084.
 LaTeX Info: Redefining \leftprotrusion on input line 1085.
-\MT@prot@toks=\toks22
+\MT@prot@toks=\toks20
 LaTeX Info: Redefining \rightprotrusion on input line 1104.
 LaTeX Info: Redefining \textls on input line 1449.
-\MT@outer@kern=\dimen158
+\MT@outer@kern=\dimen161
 LaTeX Info: Redefining \microtypecontext on input line 2053.
 LaTeX Info: Redefining \textmicrotypecontext on input line 2070.
-\MT@listname@count=\count291
+\MT@listname@count=\count298
 
-(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/microtype\microtype-pdft
-ex.def
-File: microtype-pdftex.def 2026/03/01 v3.2d Definitions specific to pdftex (RS)
-
-LaTeX Info: Redefining \lsstyle on input line 944.
-LaTeX Info: Redefining \lslig on input line 944.
+(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/microtype\microtype-xete
+x.def
+File: microtype-xetex.def 2026/03/01 v3.2d Definitions specific to xetex (RS)
+LaTeX Info: Redefining \lsstyle on input line 443.
+LaTeX Info: Redefining \lslig on input line 451.
 \MT@outer@space=\skip51
 )
 Package microtype Info: Loading configuration file microtype.cfg.
@@ -154,24 +231,23 @@ Package: trig 2023/12/02 v1.11 sin cos tan (DPC)
 g
 File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
 )
-Package graphics Info: Driver file: pdftex.def on input line 106.
+Package graphics Info: Driver file: xetex.def on input line 106.
 
-(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/graphics-def\pdftex.def
-File: pdftex.def 2025/09/29 v1.2d Graphics/color driver for pdftex
+(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/graphics-def\xetex.def
+File: xetex.def 2025/11/01 v5.0p Graphics/color driver for xetex
 ))
-\Gin@req@height=\dimen159
-\Gin@req@width=\dimen160
+\Gin@req@height=\dimen162
+\Gin@req@width=\dimen163
 ) (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor.sty
 Package: xcolor 2024/09/29 v3.02 LaTeX color extensions (UK)
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\color.cfg
 File: color.cfg 2016/01/02 v1.6 sample color configuration
 )
-Package xcolor Info: Driver file: pdftex.def on input line 274.
+Package xcolor Info: Driver file: xetex.def on input line 274.
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/graphics\mathcolor.ltx)
 Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1349.
-Package xcolor Info: Model `hsb' substituted by `rgb' on input line 1353.
 Package xcolor Info: Model `RGB' extended on input line 1365.
 Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1367.
 Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1368.
@@ -206,7 +282,7 @@ Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
 )
 Package pdftexcmds Info: \pdf@primitive is available.
 Package pdftexcmds Info: \pdf@ifprimitive is available.
-Package pdftexcmds Info: \pdfdraftmode found.
+Package pdftexcmds Info: \pdfdraftmode not found.
 )) (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/hycolor\hycolor.sty
 Package: hycolor 2020-01-27 v1.10 Color options for hyperref/bookmark (HO)
 ) (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\nameref.sty
@@ -222,30 +298,26 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/kvoptions\kvoptions.sty
 Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
 ))
-\c@section@level=\count292
+\c@section@level=\count299
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\stringenc.st
 y
 Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
 )
 )
-\@linkdim=\dimen161
-\Hy@linkcounter=\count293
-\Hy@pagecounter=\count294
+\@linkdim=\dimen164
+\Hy@linkcounter=\count300
+\Hy@pagecounter=\count301
  (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\pd1enc.def
 File: pd1enc.def 2026-04-24 v7.01q Hyperref: PDFDocEncoding definition (HO)
-Now handling font encoding PD1 ...
-... no UTF-8 mapping file for font encoding PD1
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/intcalc\intcalc.sty
 Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
 )
-\Hy@SavedSpaceFactor=\count295
+\Hy@SavedSpaceFactor=\count302
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\puenc.def
 File: puenc.def 2026-04-24 v7.01q Hyperref: PDF Unicode definition (HO)
-Now handling font encoding PU ...
-... no UTF-8 mapping file for font encoding PU
 )
 Package hyperref Info: Hyper figures OFF on input line 4199.
 Package hyperref Info: Link nesting OFF on input line 4204.
@@ -254,14 +326,14 @@ Package hyperref Info: Plain pages OFF on input line 4214.
 Package hyperref Info: Backreferencing OFF on input line 4219.
 Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
 Package hyperref Info: Bookmarks ON on input line 4466.
-\c@Hy@tempcnt=\count296
+\c@Hy@tempcnt=\count303
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/url\url.sty
 \Urlmuskip=\muskip17
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 )
 LaTeX Info: Redefining \url on input line 4805.
-\XeTeXLinkMargin=\dimen162
+\XeTeXLinkMargin=\dimen165
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/bitset\bitset.sty
 Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
@@ -271,9 +343,9 @@ sty
 Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
 )
 ))
-\Fld@menulength=\count297
-\Field@Width=\dimen163
-\Fld@charsize=\dimen164
+\Fld@menulength=\count304
+\Field@Width=\dimen166
+\Fld@charsize=\dimen167
 Package hyperref Info: Hyper figures OFF on input line 6091.
 Package hyperref Info: Link nesting OFF on input line 6096.
 Package hyperref Info: Hyper index ON on input line 6099.
@@ -281,16 +353,19 @@ Package hyperref Info: backreferencing OFF on input line 6106.
 Package hyperref Info: Link coloring OFF on input line 6111.
 Package hyperref Info: Link coloring with OCG OFF on input line 6116.
 Package hyperref Info: PDF/A mode OFF on input line 6121.
-\Hy@abspage=\count298
-\c@Item=\count299
-\c@Hfootnote=\count300
+\Hy@abspage=\count305
+\c@Item=\count306
+\c@Hfootnote=\count307
 )
-Package hyperref Info: Driver (autodetected): hpdftex.
+Package hyperref Info: Driver (autodetected): hxetex.
 
-(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hpdftex.def
-File: hpdftex.def 2026-04-24 v7.01q Hyperref driver for pdfTeX
-\Fld@listcount=\count301
-\c@bookmark@seq@number=\count302
+(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hxetex.def
+File: hxetex.def 2026-04-24 v7.01q Hyperref driver for XeTeX
+\pdfm@box=\box54
+\c@Hy@AnnotLevel=\count308
+\HyField@AnnotCount=\count309
+\Fld@listcount=\count310
+\c@bookmark@seq@number=\count311
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/rerunfilecheck\rerunfile
 check.sty
@@ -308,41 +383,41 @@ Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/enumitem\enumitem.sty
 Package: enumitem 2025/02/06 v3.11 Customized lists
 \labelindent=\skip53
-\enit@outerparindent=\dimen165
-\enit@toks=\toks23
-\enit@inbox=\box54
-\enit@count@id=\count303
-\enitdp@description=\count304
+\enit@outerparindent=\dimen168
+\enit@toks=\toks21
+\enit@inbox=\box55
+\enit@count@id=\count312
+\enitdp@description=\count313
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/natbib\natbib.sty
 Package: natbib 2010/09/13 8.31b (PWD, AO)
 \bibhang=\skip54
 \bibsep=\skip55
 LaTeX Info: Redefining \cite on input line 694.
-\c@NAT@ctr=\count305
+\c@NAT@ctr=\count314
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.sty
-\lst@mode=\count306
-\lst@gtempboxa=\box55
-\lst@token=\toks24
-\lst@length=\count307
-\lst@currlwidth=\dimen166
-\lst@column=\count308
-\lst@pos=\count309
-\lst@lostspace=\dimen167
-\lst@width=\dimen168
-\lst@newlines=\count310
-\lst@lineno=\count311
-\lst@maxwidth=\dimen169
+\lst@mode=\count315
+\lst@gtempboxa=\box56
+\lst@token=\toks22
+\lst@length=\count316
+\lst@currlwidth=\dimen169
+\lst@column=\count317
+\lst@pos=\count318
+\lst@lostspace=\dimen170
+\lst@width=\dimen171
+\lst@newlines=\count319
+\lst@lineno=\count320
+\lst@maxwidth=\dimen172
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstpatch.sty
 File: lstpatch.sty 2025/11/14 1.11b (Carsten Heinz)
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstmisc.sty
 File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
-\c@lstnumber=\count312
-\lst@skipnumbers=\count313
-\lst@framebox=\box56
+\c@lstnumber=\count321
+\lst@skipnumbers=\count322
+\lst@framebox=\box57
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.cfg
 File: listings.cfg 2025/11/14 1.11b listings configuration
@@ -355,7 +430,9 @@ Package: listings 2025/11/14 1.11b (Carsten Heinz)
     but found:
         2025/11/14 1.11b (Carsten Heinz)
     so I'm assuming it got fixed.
-
+(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/needspace\needspace.sty
+Package: needspace 2025/03/13 v1.3e reserve vertical space
+)
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/pgf/frontendlayer\tikz.s
 ty
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgf.sty
@@ -363,13 +440,13 @@ ty
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil-
 common.tex
-\pgfutil@everybye=\toks25
-\pgfutil@tempdima=\dimen170
-\pgfutil@tempdimb=\dimen171
+\pgfutil@everybye=\toks23
+\pgfutil@tempdima=\dimen173
+\pgfutil@tempdimb=\dimen174
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil-
 latex.def
-\pgfutil@abb=\box57
+\pgfutil@abb=\box58
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfrcs.c
 ode.tex
@@ -388,53 +465,59 @@ Package: pgfsys 2025-08-29 v3.1.11a (3.1.11a)
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys.
 code.tex
-\pgfkeys@pathtoks=\toks26
-\pgfkeys@temptoks=\toks27
+\pgfkeys@pathtoks=\toks24
+\pgfkeys@temptoks=\toks25
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeysl
 ibraryfiltered.code.tex
-\pgfkeys@tmptoks=\toks28
+\pgfkeys@tmptoks=\toks26
 ))
-\pgf@x=\dimen172
-\pgf@y=\dimen173
-\pgf@xa=\dimen174
-\pgf@ya=\dimen175
-\pgf@xb=\dimen176
-\pgf@yb=\dimen177
-\pgf@xc=\dimen178
-\pgf@yc=\dimen179
-\pgf@xd=\dimen180
-\pgf@yd=\dimen181
+\pgf@x=\dimen175
+\pgf@y=\dimen176
+\pgf@xa=\dimen177
+\pgf@ya=\dimen178
+\pgf@xb=\dimen179
+\pgf@yb=\dimen180
+\pgf@xc=\dimen181
+\pgf@yc=\dimen182
+\pgf@xd=\dimen183
+\pgf@yd=\dimen184
 \w@pgf@writea=\write3
 \r@pgf@reada=\read3
-\c@pgf@counta=\count314
-\c@pgf@countb=\count315
-\c@pgf@countc=\count316
-\c@pgf@countd=\count317
-\t@pgf@toka=\toks29
-\t@pgf@tokb=\toks30
-\t@pgf@tokc=\toks31
-\pgf@sys@id@count=\count318
+\c@pgf@counta=\count323
+\c@pgf@countb=\count324
+\c@pgf@countc=\count325
+\c@pgf@countd=\count326
+\t@pgf@toka=\toks27
+\t@pgf@tokb=\toks28
+\t@pgf@tokc=\toks29
+\pgf@sys@id@count=\count327
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf.cf
 g
 File: pgf.cfg 2025-08-29 v3.1.11a (3.1.11a)
 )
-Driver file for pgf: pgfsys-pdftex.def
+Driver file for pgf: pgfsys-xetex.def
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsys
--pdftex.def
-File: pgfsys-pdftex.def 2025-08-29 v3.1.11a (3.1.11a)
+-xetex.def
+File: pgfsys-xetex.def 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsys
+-dvipdfmx.def
+File: pgfsys-dvipdfmx.def 2025-08-29 v3.1.11a (3.1.11a)
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsys
 -common-pdf.def
 File: pgfsys-common-pdf.def 2025-08-29 v3.1.11a (3.1.11a)
+)
+\pgfsys@objnum=\count328
 )))
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsys
 softpath.code.tex
 File: pgfsyssoftpath.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgfsyssoftpath@smallbuffer@items=\count319
-\pgfsyssoftpath@bigbuffer@items=\count320
+\pgfsyssoftpath@smallbuffer@items=\count329
+\pgfsyssoftpath@bigbuffer@items=\count330
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsys
 protocol.code.tex
@@ -450,12 +533,12 @@ tex
 ode.tex)
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathparser
 .code.tex
-\pgfmath@dimen=\dimen182
-\pgfmath@count=\count321
-\pgfmath@box=\box58
-\pgfmath@toks=\toks32
-\pgfmath@stack@operand=\toks33
-\pgfmath@stack@operation=\toks34
+\pgfmath@dimen=\dimen185
+\pgfmath@count=\count331
+\pgfmath@box=\box59
+\pgfmath@toks=\toks30
+\pgfmath@stack@operand=\toks31
+\pgfmath@stack@operation=\toks32
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfuncti
 ons.code.tex)
@@ -479,59 +562,59 @@ ons.integerarithmetics.code.tex)
 ode.tex)
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfloat.
 code.tex
-\c@pgfmathroundto@lastzeros=\count322
+\c@pgfmathroundto@lastzeros=\count332
 ))
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfint.code.t
 ex)
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcore
 points.code.tex
 File: pgfcorepoints.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgf@picminx=\dimen183
-\pgf@picmaxx=\dimen184
-\pgf@picminy=\dimen185
-\pgf@picmaxy=\dimen186
-\pgf@pathminx=\dimen187
-\pgf@pathmaxx=\dimen188
-\pgf@pathminy=\dimen189
-\pgf@pathmaxy=\dimen190
-\pgf@xx=\dimen191
-\pgf@xy=\dimen192
-\pgf@yx=\dimen193
-\pgf@yy=\dimen194
-\pgf@zx=\dimen195
-\pgf@zy=\dimen196
+\pgf@picminx=\dimen186
+\pgf@picmaxx=\dimen187
+\pgf@picminy=\dimen188
+\pgf@picmaxy=\dimen189
+\pgf@pathminx=\dimen190
+\pgf@pathmaxx=\dimen191
+\pgf@pathminy=\dimen192
+\pgf@pathmaxy=\dimen193
+\pgf@xx=\dimen194
+\pgf@xy=\dimen195
+\pgf@yx=\dimen196
+\pgf@yy=\dimen197
+\pgf@zx=\dimen198
+\pgf@zy=\dimen199
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcore
 pathconstruct.code.tex
 File: pgfcorepathconstruct.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgf@path@lastx=\dimen197
-\pgf@path@lasty=\dimen198
+\pgf@path@lastx=\dimen256
+\pgf@path@lasty=\dimen257
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcore
 pathusage.code.tex
 File: pgfcorepathusage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgf@shorten@end@additional=\dimen199
-\pgf@shorten@start@additional=\dimen256
+\pgf@shorten@end@additional=\dimen258
+\pgf@shorten@start@additional=\dimen259
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcore
 scopes.code.tex
 File: pgfcorescopes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgfpic=\box59
-\pgf@hbox=\box60
-\pgf@layerbox@main=\box61
-\pgf@picture@serial@count=\count323
+\pgfpic=\box60
+\pgf@hbox=\box61
+\pgf@layerbox@main=\box62
+\pgf@picture@serial@count=\count333
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcore
 graphicstate.code.tex
 File: pgfcoregraphicstate.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgflinewidth=\dimen257
+\pgflinewidth=\dimen260
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcore
 transformations.code.tex
 File: pgfcoretransformations.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgf@pt@x=\dimen258
-\pgf@pt@y=\dimen259
-\pgf@pt@temp=\dimen260
+\pgf@pt@x=\dimen261
+\pgf@pt@y=\dimen262
+\pgf@pt@temp=\dimen263
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcore
 quick.code.tex
@@ -548,14 +631,14 @@ File: pgfcorepathprocessing.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcore
 arrows.code.tex
 File: pgfcorearrows.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgfarrowsep=\dimen261
+\pgfarrowsep=\dimen264
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcore
 shade.code.tex
 File: pgfcoreshade.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgf@max=\dimen262
-\pgf@sys@shading@range@num=\count324
-\pgf@shadingcount=\count325
+\pgf@max=\dimen265
+\pgf@sys@shading@range@num=\count334
+\pgf@shadingcount=\count335
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcore
 image.code.tex
@@ -564,7 +647,7 @@ File: pgfcoreimage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcore
 external.code.tex
 File: pgfcoreexternal.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgfexternal@startupbox=\box62
+\pgfexternal@startupbox=\box63
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcore
 layers.code.tex
@@ -585,7 +668,7 @@ File: pgfcorerdf.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodules
 hapes.code.tex
 File: pgfmoduleshapes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgfnodeparttextbox=\box63
+\pgfnodeparttextbox=\box64
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodulep
 lot.code.tex
@@ -594,8 +677,8 @@ File: pgfmoduleplot.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgfcom
 p-version-0-65.sty
 Package: pgfcomp-version-0-65 2025-08-29 v3.1.11a (3.1.11a)
-\pgf@nodesepstart=\dimen263
-\pgf@nodesepend=\dimen264
+\pgf@nodesepstart=\dimen266
+\pgf@nodesepend=\dimen267
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgfcom
 p-version-1-18.sty
@@ -613,10 +696,10 @@ tex))
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgffor.c
 ode.tex
 Package: pgffor 2025-08-29 v3.1.11a (3.1.11a)
-\pgffor@iter=\dimen265
-\pgffor@skip=\dimen266
-\pgffor@stack=\toks35
-\pgffor@toks=\toks36
+\pgffor@iter=\dimen268
+\pgffor@skip=\dimen269
+\pgffor@stack=\toks33
+\pgffor@toks=\toks34
 ))
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz
 \tikz.code.tex
@@ -625,34 +708,34 @@ Package: tikz 2025-08-29 v3.1.11a (3.1.11a)
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgflibra
 ryplothandlers.code.tex
 File: pgflibraryplothandlers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgf@plot@mark@count=\count326
-\pgfplotmarksize=\dimen267
+\pgf@plot@mark@count=\count336
+\pgfplotmarksize=\dimen270
 )
-\tikz@lastx=\dimen268
-\tikz@lasty=\dimen269
-\tikz@lastxsaved=\dimen270
-\tikz@lastysaved=\dimen271
-\tikz@lastmovetox=\dimen272
-\tikz@lastmovetoy=\dimen273
-\tikzleveldistance=\dimen274
-\tikzsiblingdistance=\dimen275
-\tikz@figbox=\box64
-\tikz@figbox@bg=\box65
-\tikz@tempbox=\box66
-\tikz@tempbox@bg=\box67
-\tikztreelevel=\count327
-\tikznumberofchildren=\count328
-\tikznumberofcurrentchild=\count329
-\tikz@fig@count=\count330
+\tikz@lastx=\dimen271
+\tikz@lasty=\dimen272
+\tikz@lastxsaved=\dimen273
+\tikz@lastysaved=\dimen274
+\tikz@lastmovetox=\dimen275
+\tikz@lastmovetoy=\dimen276
+\tikzleveldistance=\dimen277
+\tikzsiblingdistance=\dimen278
+\tikz@figbox=\box65
+\tikz@figbox@bg=\box66
+\tikz@tempbox=\box67
+\tikz@tempbox@bg=\box68
+\tikztreelevel=\count337
+\tikznumberofchildren=\count338
+\tikznumberofcurrentchild=\count339
+\tikz@fig@count=\count340
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodulem
 atrix.code.tex
 File: pgfmodulematrix.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgfmatrixcurrentrow=\count331
-\pgfmatrixcurrentcolumn=\count332
-\pgf@matrix@numberofcolumns=\count333
+\pgfmatrixcurrentrow=\count341
+\pgfmatrixcurrentcolumn=\count342
+\pgf@matrix@numberofcolumns=\count343
 )
-\tikz@expandcount=\count334
+\tikz@expandcount=\count344
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz
 /libraries\tikzlibrarytopaths.code.tex
@@ -667,12 +750,12 @@ Package: pgfplots 2021/05/15 v1.18.1 Data Visualization (1.18.1)
 .tex
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots\pgfplotscore.
 code.tex
-\t@pgfplots@toka=\toks37
-\t@pgfplots@tokb=\toks38
-\t@pgfplots@tokc=\toks39
-\pgfplots@tmpa=\dimen276
-\c@pgfplots@coordindex=\count335
-\c@pgfplots@scanlineindex=\count336
+\t@pgfplots@toka=\toks35
+\t@pgfplots@tokb=\toks36
+\t@pgfplots@tokc=\toks37
+\pgfplots@tmpa=\dimen279
+\c@pgfplots@coordindex=\count345
+\c@pgfplots@scanlineindex=\count346
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/sys\pgfplotss
 ysgeneric.code.tex))
@@ -683,9 +766,9 @@ b\pgfplotsoldpgfsupp_loader.code.tex
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgflibra
 ryfpu.code.tex)
 Package pgfplots: loading complementary utilities for your pgf version...
-\t@pgf@toka=\toks40
-\t@pgf@tokb=\toks41
-\t@pgf@tokc=\toks42
+\t@pgf@toka=\toks38
+\t@pgf@tokb=\toks39
+\t@pgf@tokc=\toks40
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/oldpgfcompati
 b\pgfplotsoldpgfsupp_pgfutil-common-lists.tex))
@@ -697,14 +780,14 @@ util.code.tex
 \pgfplotsliststructureext.code.tex)
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/liststructure
 \pgfplotsarray.code.tex
-\c@pgfplotsarray@tmp=\count337
+\c@pgfplotsarray@tmp=\count347
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/liststructure
 \pgfplotsmatrix.code.tex)
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/numtable\pgfp
 lotstableshared.code.tex
-\c@pgfplotstable@counta=\count338
-\t@pgfplotstable@a=\toks43
+\c@pgfplotstable@counta=\count348
+\t@pgfplotstable@a=\toks41
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/liststructure
 \pgfplotsdeque.code.tex)
@@ -716,10 +799,14 @@ binary.data.code.tex))
 util.verb.code.tex)
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/libs\pgflibra
 rypgfplots.surfshading.code.tex
-\c@pgfplotslibrarysurf@no=\count339
+\c@pgfplotslibrarysurf@no=\count349
 
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/sys\pgflibrar
-ypgfplots.surfshading.pgfsys-pdftex.def)))
+ypgfplots.surfshading.pgfsys-xetex.def
+(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/sys\pgflibrar
+ypgfplots.surfshading.pgfsys-dvipdfmx.def
+\c@pgfplotslibrarysurf@streamlen=\count350
+))))
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/util\pgfplots
 colormap.code.tex
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/util\pgfplots
@@ -748,16 +835,16 @@ s.code.tex)
 /libraries\tikzlibrarydecorations.code.tex
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmoduled
 ecorations.code.tex
-\pgfdecoratedcompleteddistance=\dimen277
-\pgfdecoratedremainingdistance=\dimen278
-\pgfdecoratedinputsegmentcompleteddistance=\dimen279
-\pgfdecoratedinputsegmentremainingdistance=\dimen280
-\pgf@decorate@distancetomove=\dimen281
-\pgf@decorate@repeatstate=\count340
-\pgfdecorationsegmentamplitude=\dimen282
-\pgfdecorationsegmentlength=\dimen283
+\pgfdecoratedcompleteddistance=\dimen280
+\pgfdecoratedremainingdistance=\dimen281
+\pgfdecoratedinputsegmentcompleteddistance=\dimen282
+\pgfdecoratedinputsegmentremainingdistance=\dimen283
+\pgf@decorate@distancetomove=\dimen284
+\pgf@decorate@repeatstate=\count351
+\pgfdecorationsegmentamplitude=\dimen285
+\pgfdecorationsegmentlength=\dimen286
 )
-\tikz@lib@dec@box=\box68
+\tikz@lib@dec@box=\box69
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz
 /libraries\tikzlibrarydecorations.pathmorphing.code.tex
@@ -769,13 +856,13 @@ ons\pgflibrarydecorations.pathmorphing.code.tex))
 ons\pgflibrarydecorations.pathreplacing.code.tex))
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgfplots/libs\tikzlibr
 arypgfplots.contourlua.code.tex)
-\pgfplots@numplots=\count341
-\pgfplots@xmin@reg=\dimen284
-\pgfplots@xmax@reg=\dimen285
-\pgfplots@ymin@reg=\dimen286
-\pgfplots@ymax@reg=\dimen287
-\pgfplots@zmin@reg=\dimen288
-\pgfplots@zmax@reg=\dimen289
+\pgfplots@numplots=\count352
+\pgfplots@xmin@reg=\dimen287
+\pgfplots@xmax@reg=\dimen288
+\pgfplots@ymin@reg=\dimen289
+\pgfplots@ymax@reg=\dimen290
+\pgfplots@zmin@reg=\dimen291
+\pgfplots@zmax@reg=\dimen292
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz
 /libraries\tikzlibraryplotmarks.code.tex
@@ -790,23 +877,23 @@ Package: indentfirst 2023/07/02 v1.03 Indent first paragraph (DPC)
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/titlesec\titlesec.sty
 Package: titlesec 2025/01/04 v2.17 Sectioning titles
-\ttl@box=\box69
+\ttl@box=\box70
 \beforetitleunit=\skip56
 \aftertitleunit=\skip57
-\ttl@plus=\dimen290
-\ttl@minus=\dimen291
-\ttl@toksa=\toks44
-\titlewidth=\dimen292
-\titlewidthlast=\dimen293
-\titlewidthfirst=\dimen294
+\ttl@plus=\dimen293
+\ttl@minus=\dimen294
+\ttl@toksa=\toks42
+\titlewidth=\dimen295
+\titlewidthlast=\dimen296
+\titlewidthfirst=\dimen297
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgflibra
 ryarrows.meta.code.tex
 File: pgflibraryarrows.meta.code.tex 2025-08-29 v3.1.11a (3.1.11a)
-\pgfarrowinset=\dimen295
-\pgfarrowlength=\dimen296
-\pgfarrowwidth=\dimen297
-\pgfarrowlinewidth=\dimen298
+\pgfarrowinset=\dimen298
+\pgfarrowlength=\dimen299
+\pgfarrowwidth=\dimen300
+\pgfarrowlinewidth=\dimen301
 )
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tikz
 /libraries\tikzlibrarypositioning.code.tex
@@ -824,16 +911,12 @@ File: pgflibraryshapes.geometric.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 /libraries\tikzlibraryfit.code.tex
 File: tikzlibraryfit.code.tex 2025-08-29 v3.1.11a (3.1.11a)
 )
-LaTeX Font Info:    Trying to load font information for T1+phv on input line 86
-.
-
-(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\t1phv.fd
-File: t1phv.fd 2020/03/25 scalable font definitions for T1/phv.
-)
-(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-pdft
-ex.def
-File: l3backend-pdftex.def 2026-02-18 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count342
+(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-xete
+x.def
+File: l3backend-xetex.def 2026-02-18 L3 backend support: XeTeX
+\g__graphics_track_int=\count353
+\g__pdfannot_backend_int=\count354
+\g__pdfannot_backend_link_int=\count355
 ) (main.aux (chapters/01-introducere.aux)
 (chapters/02-fundamente-si-tehnologii.aux)
 (chapters/03-analiza-cerintelor-si-proiectarea-sistemului.aux)
@@ -844,29 +927,91 @@ File: l3backend-pdftex.def 2026-02-18 L3 backend support: PDF output (pdfTeX)
 ) (chapters/06-concluzii-si-perspective-de-dezvoltare.aux))
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 86.
-LaTeX Font Info:    ... okay on input line 86.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 89.
+LaTeX Font Info:    ... okay on input line 89.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 89.
+LaTeX Font Info:    ... okay on input line 89.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 89.
+LaTeX Font Info:    ... okay on input line 89.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 89.
+LaTeX Font Info:    ... okay on input line 89.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 89.
+LaTeX Font Info:    ... okay on input line 89.
+LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 89.
+LaTeX Font Info:    ... okay on input line 89.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 89.
+LaTeX Font Info:    ... okay on input line 89.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 89.
+LaTeX Font Info:    ... okay on input line 89.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 89.
+LaTeX Font Info:    ... okay on input line 89.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 89.
+LaTeX Font Info:    ... okay on input line 89.
+
+Package fontspec Info: 
+(fontspec)             Adjusting the maths setup (use [no-math] to avoid
+(fontspec)             this).
+
+\symlegacymaths=\mathgroup4
+LaTeX Font Info:    Overwriting symbol font `legacymaths' in version `bold'
+(Font)                  OT1/cmr/m/n --> OT1/cmr/bx/n on input line 89.
+LaTeX Font Info:    Redeclaring math accent \acute on input line 89.
+LaTeX Font Info:    Redeclaring math accent \grave on input line 89.
+LaTeX Font Info:    Redeclaring math accent \ddot on input line 89.
+LaTeX Font Info:    Redeclaring math accent \tilde on input line 89.
+LaTeX Font Info:    Redeclaring math accent \bar on input line 89.
+LaTeX Font Info:    Redeclaring math accent \breve on input line 89.
+LaTeX Font Info:    Redeclaring math accent \check on input line 89.
+LaTeX Font Info:    Redeclaring math accent \hat on input line 89.
+LaTeX Font Info:    Redeclaring math accent \dot on input line 89.
+LaTeX Font Info:    Redeclaring math accent \mathring on input line 89.
+LaTeX Font Info:    Redeclaring math symbol \colon on input line 89.
+LaTeX Font Info:    Redeclaring math symbol \Gamma on input line 89.
+LaTeX Font Info:    Redeclaring math symbol \Delta on input line 89.
+LaTeX Font Info:    Redeclaring math symbol \Theta on input line 89.
+LaTeX Font Info:    Redeclaring math symbol \Lambda on input line 89.
+LaTeX Font Info:    Redeclaring math symbol \Xi on input line 89.
+LaTeX Font Info:    Redeclaring math symbol \Pi on input line 89.
+LaTeX Font Info:    Redeclaring math symbol \Sigma on input line 89.
+LaTeX Font Info:    Redeclaring math symbol \Upsilon on input line 89.
+LaTeX Font Info:    Redeclaring math symbol \Phi on input line 89.
+LaTeX Font Info:    Redeclaring math symbol \Psi on input line 89.
+LaTeX Font Info:    Redeclaring math symbol \Omega on input line 89.
+LaTeX Font Info:    Redeclaring math symbol \mathdollar on input line 89.
+LaTeX Font Info:    Redeclaring symbol font `operators' on input line 89.
+LaTeX Font Info:    Encoding `OT1' has changed to `TU' for symbol font
+(Font)              `operators' in the math version `normal' on input line 89.
+LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
+(Font)                  OT1/cmr/m/n --> TU/Calibri(0)/m/n on input line 89.
+LaTeX Font Info:    Encoding `OT1' has changed to `TU' for symbol font
+(Font)              `operators' in the math version `bold' on input line 89.
+LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
+(Font)                  OT1/cmr/bx/n --> TU/Calibri(0)/m/n on input line 89.
+LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
+(Font)                  TU/Calibri(0)/m/n --> TU/Calibri(0)/m/n on input line 8
+9.
+LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `normal'
+(Font)                  OT1/cmr/m/it --> TU/Calibri(0)/m/it on input line 89.
+LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `normal'
+(Font)                  OT1/cmr/bx/n --> TU/Calibri(0)/b/n on input line 89.
+LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `normal'
+(Font)                  OT1/cmss/m/n --> TU/lmss/m/n on input line 89.
+LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `normal'
+(Font)                  OT1/cmtt/m/n --> TU/lmtt/m/n on input line 89.
+LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
+(Font)                  TU/Calibri(0)/m/n --> TU/Calibri(0)/b/n on input line 8
+9.
+LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
+(Font)                  OT1/cmr/bx/it --> TU/Calibri(0)/b/it on input line 89.
+LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
+(Font)                  OT1/cmss/bx/n --> TU/lmss/b/n on input line 89.
+LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
+(Font)                  OT1/cmtt/m/n --> TU/lmtt/b/n on input line 89.
 
 *geometry* driver: auto-detecting
-*geometry* detected driver: pdftex
+*geometry* detected driver: xetex
 *geometry* verbose mode - [ preamble ] result:
-* driver: pdftex
+* driver: xetex
 * paper: a4paper
 * layout: <same size as paper>
 * layoutoffset:(h,v)=(0.0pt,0.0pt)
@@ -897,68 +1042,33 @@ LaTeX Font Info:    ... okay on input line 86.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-LaTeX Info: Redefining \microtypecontext on input line 86.
-Package microtype Info: Applying patch `item' on input line 86.
-Package microtype Info: Applying patch `toc' on input line 86.
-Package microtype Info: Applying patch `eqnum' on input line 86.
-Package microtype Info: Applying patch `footnote' on input line 86.
-Package microtype Info: Applying patch `verbatim' on input line 86.
-LaTeX Info: Redefining \microtypesetup on input line 86.
-Package microtype Info: Generating PDF output.
+LaTeX Info: Redefining \microtypecontext on input line 89.
+Package microtype Info: Applying patch `item' on input line 89.
+Package microtype Info: Applying patch `toc' on input line 89.
+Package microtype Info: Applying patch `eqnum' on input line 89.
+Package microtype Info: Applying patch `footnote' on input line 89.
+Package microtype Info: Applying patch `verbatim' on input line 89.
+LaTeX Info: Redefining \microtypesetup on input line 89.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
-Package microtype Info: Automatic font expansion enabled (level 2),
-(microtype)             stretch: 20, shrink: 20, step: 1, non-selected.
-Package microtype Info: Using default expansion set `alltext-nott'.
-Package microtype Info: Patching command `\showhyphens'.
 Package microtype Info: No adjustment of tracking.
-Package microtype Info: No adjustment of interword spacing.
-Package microtype Info: No adjustment of character kerning.
+Package microtype Info: No adjustment of spacing.
+Package microtype Info: No adjustment of kerning.
 Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `phv' (encoding: T1).
+(microtype)             `Calibri' (encoding: TU).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
-
-(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mki
-i
-[Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count343
-\scratchdimen=\dimen299
-\scratchbox=\box70
-\nofMPsegments=\count344
-\nofMParguments=\count345
-\everyMPshowfont=\toks45
-\MPscratchCnt=\count346
-\MPscratchDim=\dimen300
-\MPnumerator=\count347
-\makeMPintoPDFobject=\count348
-\everyMPtoPDFconversion=\toks46
-)
-(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-ba
-se.sty
-Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
-Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
-85.
-
-(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/00miktex\epstopdf-sys.cf
-g
-File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
-))
-Package hyperref Info: Link coloring OFF on input line 86.
- (main.out) (main.out)
+Package hyperref Info: Link coloring OFF on input line 89.
+(main.out) (main.out)
 \@outlinefile=\write4
 \openout4 = `main.out'.
 
-\c@lstlisting=\count349
+\c@lstlisting=\count356
 
 Package pgfplots notification 'compat/show suggested version=true': document ha
 s been generated with the most recent feature set (\pgfplotsset{compat=1.18}).
 
 (main.toc
-(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-cmr.cfg
-File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman 
-(RS)
-)
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <12> on input line 3.
 LaTeX Font Info:    External font `cmex10' loaded for size
@@ -966,23 +1076,18 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 LaTeX Font Info:    External font `cmex10' loaded for size
 (Font)              <6> on input line 3.
 
+(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/microtype\mt-cmr.cfg
+File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman 
+(RS)
+)
 [1
 
 
-{C:/Users/CNAE/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/CNAE/
-AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc}] [2])
+] [2])
 \tf@toc=\write5
 \openout5 = `main.toc'.
 
- [3]
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <24.88> on input line 92.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <20.74> on input line 92.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <17.28> on input line 92.
-
-(main.lof)
+ [3] (main.lof)
 \tf@lof=\write6
 \openout6 = `main.lof'.
 
@@ -994,17 +1099,13 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 
  (chapters/01-introducere.tex
 Capitolul 1.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <14.4> on input line 3.
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 3.
 [1
 
 
 
 ] [2]
 Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `cmtt' (encoding: T1).
+(microtype)             `lmtt' (encoding: TU).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
  [3]) [4]
@@ -1012,198 +1113,153 @@ Package microtype Info: Loading generic protrusion settings for font family
 
  (chapters/02-fundamente-si-tehnologii.tex
 Capitolul 2.
+
+Underfull \hbox (badness 1314) in paragraph at lines 1--1
+|\TU/Calibri(0)/b/n/24.88 Fundamente teoretice și tehnologiile utili-
+ []
+
 [5
 
 
 
 
-] [6] [7] [8] [9]) [10]
+] [6] [7] [8]) [9]
 \openout2 = `chapters/03-analiza-cerintelor-si-proiectarea-sistemului.aux'.
 
 
 (chapters/03-analiza-cerintelor-si-proiectarea-sistemului.tex
 Capitolul 3.
-[11
+[10
 
 
 
 
-] [12]
-LaTeX Font Info:    Font shape `T1/phv/m/it' in size <12> not available
-(Font)              Font shape `T1/phv/m/sl' tried instead on input line 86.
- [13]
-LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 191.
- [14] [15]) [16]
+] [11] [12] [13] [14]) [15]
 \openout2 = `chapters/04-implementare-si-contributii-personale.aux'.
 
 
 (chapters/04-implementare-si-contributii-personale.tex
 Capitolul 4.
-[17
+[16
 
 
 
 
-] [18] [19] [20] [21]
-Underfull \hbox (badness 1721) in paragraph at lines 129--130
-[]\T1/phv/m/n/12 (+20) Dashboard-ul ma-na-ge-ru-lui reune[]te ad-mi-nis-tra-rea
- pon-toa-ne-lor, ges-tio-na-rea
- []
-
-[22]
+] [17]
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 )
 Package hyperref Info: bookmark level for unknown lstlisting defaults to 0 on i
-nput line 149.
-LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 150.
+nput line 86.
+LaTeX Font Info:    Font shape `TU/lmtt/bx/n' in size <10> not available
+(Font)              Font shape `TU/lmtt/b/n' tried instead on input line 94.
 
-[23] [24] [25]
-(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
-File: lstlang1.sty 2025/11/14 1.11b listings language file
-)
-(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
-File: lstlang1.sty 2025/11/14 1.11b listings language file
-)
-[26]
-Underfull \hbox (badness 2529) in paragraph at lines 285--286
-\T1/phv/m/n/12 (+20) cu su-port pen-tru Bro-tli []i Gzip, ac-ti-vat condi[]iona
-t �n func[]ie de header-ul
+[18] [19] [20]
+Underfull \hbox (badness 1199) in paragraph at lines 159--160
+[]\TU/Calibri(0)/m/n/12 Sistemul de analiză media implică colaborarea dintre tr
+ei straturi: interfața Angular,
  []
 
-[27] [28]) [29] [30]
+[21] [22]
+(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
+File: lstlang1.sty 2025/11/14 1.11b listings language file
+)
+(C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
+File: lstlang1.sty 2025/11/14 1.11b listings language file
+)
+[23]
+Underfull \hbox (badness 1072) in paragraph at lines 260--261
+\TU/Calibri(0)/m/n/12 de build, iar imaginea finală conține exclusiv fișierele 
+statice servite de Nginx. Fișierul
+ []
+
+[24]
+Underfull \hbox (badness 1270) in paragraph at lines 321--322
+[]\TU/Calibri(0)/m/n/12 Fiecare serviciu Docker expune un health check configur
+at în \TU/lmtt/m/n/12 docker-compose.yml\TU/Calibri(0)/m/n/12 .
+ []
+
+[25] [26]) [27]
 \openout2 = `chapters/05-model-ai-si-dataset.aux'.
 
  (chapters/05-model-ai-si-dataset.tex
 Capitolul 5.
-[31
+[28
 
 
 
 
-] [32]
+] [29]
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <10.95> on input line 81.
- [33]
+(Font)              <10.95> on input line 91.
+ [30]
 (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstlang1.sty
 File: lstlang1.sty 2025/11/14 1.11b listings language file
 )
-[34]) [35]
+[31]) [32]
 \openout2 = `chapters/05-interfata-si-experienta-utilizator.aux'.
 
  (chapters/05-interfata-si-experienta-utilizator.tex
 Capitolul 6.
-[36
+[33
 
 
 
 
-] [37] [38] [39]) [40]
+] [34] [35]) [36] [37]
 \openout2 = `chapters/05-testare-si-evaluare.aux'.
 
  (chapters/05-testare-si-evaluare.tex
 Capitolul 7.
-[41
-
-
-
-
-] [42] [43]) [44] [45]
-\openout2 = `chapters/07-securitate-si-deployment.aux'.
-
- (chapters/07-securitate-si-deployment.tex
-Capitolul 8.
-[46
+[38
 
 
 
 
 ]
-LaTeX Font Info:    Trying to load font information for TS1+phv on input line 2
-0.
- (C:\Users\CNAE\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ts1phv.fd
-File: ts1phv.fd 2020/03/25 scalable font definitions for TS1/phv.
-)
-Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `phv' (encoding: TS1).
-(microtype)             For optimal results, create family-specific settings.
-(microtype)             See the microtype manual for details.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 71.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 71.
+ [39] [40] [41]) [42]
+\openout2 = `chapters/07-securitate-si-deployment.aux'.
 
-[47]
-LaTeX Info: Symbol \textrightarrow not provided by
-            font family phv in TS1 encoding.
-            Default family used instead on input line 86.
-Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `cmss' (encoding: T1).
-(microtype)             For optimal results, create family-specific settings.
-(microtype)             See the microtype manual for details.
-Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `cmss' (encoding: TS1).
-(microtype)             For optimal results, create family-specific settings.
-(microtype)             See the microtype manual for details.
-LaTeX Info: Symbol \textrightarrow not provided by
-            font family phv in TS1 encoding.
-            Default family used instead on input line 86.
-LaTeX Info: Symbol \textrightarrow not provided by
-            font family phv in TS1 encoding.
-            Default family used instead on input line 86.
-LaTeX Info: Symbol \textrightarrow not provided by
-            font family phv in TS1 encoding.
-            Default family used instead on input line 86.
- [48] [49] [50]) [51]
+ (chapters/07-securitate-si-deployment.tex
+Capitolul 8.
+[43
+
+
+
+
+]
+Underfull \hbox (badness 1248) in paragraph at lines 71--72
+[]\TU/Calibri(0)/m/n/12 Autorizarea declarativă se aplică la nivel de controlle
+r sau de acțiune prin atributul
+ []
+
+[44] [45] [46] [47]) [48]
 \openout2 = `chapters/06-concluzii-si-perspective-de-dezvoltare.aux'.
 
 
 (chapters/06-concluzii-si-perspective-de-dezvoltare.tex
 Capitolul 9.
-[52
+[49
 
 
 
 
-] [53] [54]) [55] (main.bbl
-Underfull \hbox (badness 3088) in paragraph at lines 57--60
-[]\T1/phv/m/n/12 (+20) Ffmpeg do-cu-men-ta-tion.  []$\T1/cmtt/m/n/12 https : / 
-/ ffmpeg . org / documentation . html$[]\T1/phv/m/n/12 (+20) , 2026.
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 62--66
-[]\T1/phv/m/n/12 (+20) Flask do-cu-men-ta-tion.  []$\T1/cmtt/m/n/12 https : / /
- flask . palletsprojects . com/$[]\T1/phv/m/n/12 (+20) , 2026.
- []
-
-
-Underfull \hbox (badness 3088) in paragraph at lines 62--66
-\T1/phv/m/n/12 (+20) Documenta[]ie ofi-ci-al� pen-tru framework-ul Flask. Ac-ce
--sat la 17 mar-tie
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 80--83
-[]\T1/phv/m/n/12 (+20) Pytorch do-cu-men-ta-tion.  []$\T1/cmtt/m/n/12 https : /
- / pytorch . org / docs / stable/$[]\T1/phv/m/n/12 (+20) , 2026.
- []
-
-
-Underfull \hbox (badness 1668) in paragraph at lines 85--89
-[]\T1/phv/m/n/12 (+20) Sql ser-ver do-cu-men-ta-tion.  []$\T1/cmtt/m/n/12 https
- : / / learn . microsoft . com / en -[] us / sql / sql -[]
- []
-
-[56
-
-
-
+] [50] [51]) [52] (main.bbl
+Underfull \hbox (badness 10000) in paragraph at lines 85--89
+[]\TU/Calibri(0)/m/n/12 Sql server documentation.  []$[][][][][] [] [] [] [][][
+][][] [] [][][][][][][][][] [] [][][] [] [][] [][] [][] [] [][][] [] [][][] [][
 ]
-Underfull \hbox (badness 4792) in paragraph at lines 97--101
-[]\T1/phv/m/n/12 (+20) Ultralytics yolo do-cu-men-ta-tion.  []$\T1/cmtt/m/n/12 
-https : / / docs . ultralytics . com/$[]\T1/phv/m/n/12 (+20) , 2026.
  []
 
-) [57] (main.aux (chapters/01-introducere.aux)
+[53
+
+
+
+]) [54] (main.aux (chapters/01-introducere.aux)
 (chapters/02-fundamente-si-tehnologii.aux)
 (chapters/03-analiza-cerintelor-si-proiectarea-sistemului.aux)
 (chapters/04-implementare-si-contributii-personale.aux)
@@ -1213,33 +1269,18 @@ https : / / docs . ultralytics . com/$[]\T1/phv/m/n/12 (+20) , 2026.
 ) (chapters/06-concluzii-si-perspective-de-dezvoltare.aux))
  ***********
 LaTeX2e <2025-11-01>
-L3 programming layer <2025-12-24>
+L3 programming layer <2026-03-20>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: 52714CBC06A86B3F59483C440FC65B82;23843.
  ) 
 Here is how much of TeX's memory you used:
- 39053 strings out of 467870
- 883611 string characters out of 5418839
- 1759548 words of memory out of 5000000
- 66524 multiletter control sequences out of 15000+600000
- 693722 words of font info for 326 fonts, out of 8000000 for 9000
- 1141 hyphenation exceptions out of 8191
- 84i,19n,94p,1066b,2300s stack positions out of 10000i,1000n,20000p,200000b,200000s
- <C:\Users\CNAE\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcss1
-200.pk> <C:\Users\CNAE\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\
-ecit1000.pk> <C:\Users\CNAE\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dp
-i600\ectt1000.pk> <C:\Users\CNAE\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/
-ec/dpi600\ectt1200.pk><C:/Users/CNAE/AppData/Local/Programs/MiKTeX/fonts/type1/
-public/amsfonts/cm/cmmi10.pfb><C:/Users/CNAE/AppData/Local/Programs/MiKTeX/font
-s/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/CNAE/AppData/Local/Programs/MiKT
-eX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/CNAE/AppData/Local/Progra
-ms/MiKTeX/fonts/type1/urw/helvetic/uhvb8a.pfb><C:/Users/CNAE/AppData/Local/Prog
-rams/MiKTeX/fonts/type1/urw/helvetic/uhvr8a.pfb><C:/Users/CNAE/AppData/Local/Pr
-ograms/MiKTeX/fonts/type1/urw/helvetic/uhvro8a.pfb>
-Output written on main.pdf (61 pages, 548652 bytes).
-PDF statistics:
- 1386 PDF objects out of 1440 (max. 8388607)
- 414 named destinations out of 1000 (max. 500000)
- 85213 words of extra memory for PDF output out of 89155 (max. 10000000)
+ 39343 strings out of 402986
+ 930543 string characters out of 5448710
+ 1862033 words of memory out of 5000000
+ 67467 multiletter control sequences out of 15000+600000
+ 631981 words of font info for 84 fonts, out of 8000000 for 9000
+ 1348 hyphenation exceptions out of 8191
+ 84i,17n,94p,1030b,2302s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
+Output written on main.pdf (58 pages).
