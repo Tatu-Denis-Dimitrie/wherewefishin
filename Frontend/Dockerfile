@@ -6,7 +6,7 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 
-ARG STRIPE_PUBLISHABLE_KEY=pk_test_51T3tmZLbUF11stB2s4FUN6xMWGAhgT9P9daOS7hFjpB5X4VZldHe5pScprP7D1hJPjL1sM7JVOzsUBhX6rVyqEVt00Ucyq4JYv
+ARG STRIPE_PUBLISHABLE_KEY
 
 # Copy package files for layer caching
 COPY package.json package-lock.json* ./

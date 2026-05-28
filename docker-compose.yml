@@ -53,7 +53,7 @@ services:
       Smtp__FromName: WhereWeFishin
       Smtp__UseDefaultCredentials: "false"
       Smtp__FrontendUrl: ${FRONTEND_URL:-https://wherewefishin.uk}
-      Stripe__SecretKey: ${STRIPE_SECRET_KEY:-sk_test_51T3tmZLbUF11stB2MBlfdXrkJDs40dmH5CcPhaQTKMOtpBVKAZlQ7SEGN4tGtKdIY3Dt1ojOjKnSSSOszmYuzGlD00DiB3OCmv}
+      Stripe__SecretKey: ${STRIPE_SECRET_KEY:?STRIPE_SECRET_KEY must be set in .env}
     ports:
       - "8080:8080"
     volumes:
@@ -106,7 +106,7 @@ services:
       context: ./Frontend
       dockerfile: Dockerfile
       args:
-        STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-pk_test_51T3tmZLbUF11stB2s4FUN6xMWGAhgT9P9daOS7hFjpB5X4VZldHe5pScprP7D1hJPjL1sM7JVOzsUBhX6rVyqEVt00Ucyq4JYv}
+        STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:?STRIPE_PUBLISHABLE_KEY must be set in .env}
     container_name: wherewefishin-frontend
     ports:
       - "80:80"
