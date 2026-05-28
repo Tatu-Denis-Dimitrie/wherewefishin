@@ -18,17 +18,56 @@ Feedback-ul vizual pentru operații asincrone (upload, procesare media, confirma
 
 Fluxul principal al unui utilizator obișnuit începe cu harta interactivă. Aceasta este pagina centrală de explorare și reprezintă punctul de intrare în platformă. Pe hartă sunt marcate toate locațiile active, fiecare cu un marker personalizat. La interacțiunea cu un marker apare o fereastră informativă cu datele esențiale: denumire, rating mediu, tarif orar și un buton de acces la detalii complete. Geolocalizarea utilizatorului permite orientarea rapidă față de locațiile din apropiere.
 
+
 Pagina de detalii a unei locații reunește toate informațiile relevante: descrierea locației, lista pontoanelor disponibile, recenziile altor utilizatori și un modul de rezervare. Utilizatorul poate selecta un ponton, alege data și intervalul orar dorit și vede costul calculat automat pe baza tarifului orar și a duratei. Calendarul de rezervare evidențiază zilele parțial sau complet ocupate și blochează selecțiile invalide, ghidând utilizatorul spre intervale disponibile fără a necesita verificări manuale.
+
+Modulul de rezervare este structurat în trei componente interdependente: selectarea pontoanelor disponibile, marcate vizual în funcție de ocupare, calendarul interactiv și câmpurile pentru ora de start și durata sesiunii. Costul total este recalculat automat la fiecare modificare, fără acțiuni suplimentare din partea utilizatorului. Schimbarea duratei sau a orei de start actualizează prețul în timp real, permițând compararea rapidă a variantelor disponibile înainte de a adăuga sesiunea în coș.
+
+Codificarea cromatică a zilelor din calendar comunică starea de disponibilitate fără explicații suplimentare: zilele complet ocupate sunt marcate cu roșu, cele cu disponibilitate parțială cu galben, iar cele complet libere cu verde. Această convenție este reluată consecvent în toate modulele de rezervare ale platformei, indiferent de locație, pentru a reduce sarcina cognitivă a utilizatorului care explorează mai multe locuri. Selectarea unei zile complet ocupate este dezactivată direct la nivelul calendarului, eliminând posibilitatea trimiterii unei cereri invalide spre backend.
+
+Predefinirea unor durate uzuale prin butoanele \emph{12h}, \emph{24h}, \emph{48h} și \emph{72h} accelerează procesul de rezervare pentru scenariile cele mai frecvente, însă utilizatorul păstrează libertatea de a defini o durată personalizată prin opțiunea \emph{Custom}. După confirmarea selecției, sesiunea este adăugată în coș și poate fi combinată cu rezervări pentru alte locații sau pontoane, urmând să fie plătite împreună într-o singură tranzacție.
+
+Selectorul de oră de început este organizat cu navigare prin săgeți pentru a permite ajustări rapide fără a deschide un meniu vertical. Pasul implicit de o oră acoperă majoritatea scenariilor reale, deoarece sesiunile de pescuit nu sunt în general planificate cu precizie de minute. Validarea în timp real împiedică selectarea unei date din trecut sau a unei combinații dată–oră care ar trece în trecut: dacă utilizatorul alege ziua curentă, orele deja trecute sunt automat dezactivate. Figura~\ref{fig:calendar-rezervare} prezintă această interfață cu disponibilitățile vizualizate pe calendar.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\textwidth]{images/form-calendar.png}
+\caption{Calendarul de rezervare cu disponibilitatea pontoanelor și calculul automat al costului}
+\label{fig:calendar-rezervare}
+\end{figure}
 
 Fluxul de rezervare se finalizează prin plată online sau prin confirmare directă, în funcție de configurația locației. Integrarea cu Stripe este transparentă pentru utilizator: datele de plată sunt completate într-un formular securizat integrat în pagină, fără redirecționare externă. După confirmare, sesiunea apare în istoricul utilizatorului și generează un cod QR asociat rezervării, accesibil direct din aplicație și pregătit pentru verificarea la fața locului.
 
-Modulul de analiză media este accesibil dintr-o secțiune dedicată. Utilizatorul poate încărca o imagine sau un videoclip, iar interfața afișează starea de procesare în timp real printr-un mecanism de polling vizibil. Rezultatele includ speciile detectate, numărul de instanțe identificate și, în cazul videoclipurilor, un rezumat al detecțiilor pe intervale de timp. Componenta este separată intenționat de fluxul de rezervare, pentru a nu complica experiența utilizatorilor care nu doresc să folosească funcția de analiză media.
+
+Modulul de analiză media este accesibil dintr-o secțiune dedicată. Utilizatorul poate încărca o imagine sau un videoclip, iar interfața afișează starea de procesare în timp real printr-un mecanism de polling vizibil. Rezultatele includ speciile detectate, numărul de instanțe identificate și, în cazul videoclipurilor, un rezumat al detecțiilor pe intervale de timp.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/fish-recog.png}
+\caption{Pagina de analiză media cu zona de upload, speciile detectabile și istoricul analizelor}
+\label{fig:fish-recognition-pagina}
+\end{figure}
+
+Componenta este separată intenționat de fluxul de rezervare, pentru a nu complica experiența utilizatorilor care nu doresc să folosească funcția de analiză media.
 
 Secțiunea de profil și istoricul activității oferă utilizatorului o imagine completă a rezervărilor trecute și viitoare, a analizelor media efectuate și a recenziilor lăsate. Această zonă îndeplinește și un rol de trasabilitate: utilizatorul poate oricând verifica detaliile unei rezervări, inclusiv codul QR, fără a depinde de un email de confirmare.
 
 \section{Interfața managerului și dashboard-ul operațional}
 
 Zona managerului este construită în jurul unui dashboard care concentrează informațiile operaționale relevante pentru administrarea unui loc de pescuit. Structura este organizată pe secțiuni distincte: administrarea pontoanelor, gestionarea angajaților, informații despre locație și rezervările active.
+
+Prima secțiune vizibilă la accesarea dashboard-ului este suita de statistici agregate: numărul total de rezervări create, rezervările active în ziua curentă, veniturile cumulate, ratingul mediu al locației și numărul de recenzii primite. Imediat sub statistici, un grafic de bare prezintă distribuția sesiunilor pe zile sau săptămâni, oferind o imagine rapidă a ritmului de activitate. Aceste date permit managerului să evalueze starea locației dintr-o privire, înainte de a intra în secțiunile de detaliu.
+
+Meniul lateral oferă acces direct la subsecțiunile principale: dashboard-ul cu vederea de ansamblu, modulul de administrare a pontoanelor, secțiunea de repopulare cu pești și panoul de setări ale locației. Această organizare separă clar activitățile de monitorizare de cele de administrare propriu-zisă, permițând managerului să comute rapid între contexte fără a pierde starea curentă a paginii. Butonul de reîmprospătare manuală, plasat în partea superioară, permite actualizarea instantanee a statisticilor fără a necesita reîncărcarea întregii pagini, util mai ales în perioadele de trafic ridicat când rezervările noi apar frecvent.
+
+Secțiunea de informații prezintă datele administrative ale locației: tariful orar configurat, numele managerului responsabil și coordonatele geografice. Lista repopulărilor recente, vizibilă în partea inferioară a dashboard-ului, oferă context operațional important pentru manager: dacă o specie a fost recent repopulată, este probabil să atragă mai mulți pescari în zilele următoare. Figura~\ref{fig:dashboard-manager} ilustrează această vedere de ansamblu, cu toate componentele descrise mai sus.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/manager-dashboard.png}
+\caption{Dashboard-ul managerului cu statistici agregate și graficul de activitate al locației}
+\label{fig:dashboard-manager}
+\end{figure}
 
 Administrarea pontoanelor utilizează direct harta interactivă: managerul poate adăuga un ponton nou printr-un instrument de desen pe hartă, conturând vizual zona rezervabilă. Coordonatele sunt extrase automat din interacțiunea cu harta, fără a fi nevoie de introducerea manuală a valorilor numerice. Această abordare reduce ambiguitățile și oferă un feedback imediat despre cum va apărea zona în interfața publică, permițând ajustări înainte de salvare.
 
@@ -40,7 +79,16 @@ Procesul de aplicare pentru rolul de manager este mediat de un wizard cu mai mul
 
 Angajatul are cel mai restrâns set de funcții, adaptat nevoilor operaționale de la fața locului. Interfața sa principală este componenta de scanare a codului QR, accesibilă direct după autentificare, fără pași intermediari.
 
-Componenta de scanare utilizează camera dispozitivului și procesează codul QR al sesiunii de pescuit. Odată identificată sesiunea, interfața afișează detaliile rezervării: utilizatorul, pontonul, intervalul și starea curentă. Dacă sesiunea este validă și în intervalul corect, angajatul confirmă prezența cu o singură acțiune. Dacă există o neconcordanță, de exemplu sesiune expirată, ponton diferit sau cod invalid, interfața afișează un mesaj explicit care descrie problema, fără a bloca complet fluxul.
+Componenta de scanare utilizează camera dispozitivului și procesează codul QR al sesiunii de pescuit. Decodificarea are loc în timp real, cadru cu cadru, printr-o bibliotecă de procesare integrată în browser, fără a trimite imaginea la server. Când codul este identificat, token-ul de rezervare este extras și trimis backend-ului pentru validare: sistemul verifică că sesiunea aparține locației angajatului, că intervalul este activ și că prezența nu a fost deja confirmată. Rezultatul validării apare imediat în interfață, fără navigare sau pași intermediari. Figura~\ref{fig:qr-scanner-angajat} prezintă interfața componentei, cu locația asignată și camera activă.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.45\textwidth]{images/angajat-qrpage.jpeg}
+\caption{Interfața de scanare QR a angajatului, cu locația asignată și camera activă}
+\label{fig:qr-scanner-angajat}
+\end{figure}
+
+Odată identificată sesiunea, interfața afișează detaliile rezervării: utilizatorul, pontonul, intervalul și starea curentă. Dacă sesiunea este validă și în intervalul corect, angajatul confirmă prezența cu o singură acțiune. Dacă există o neconcordanță, de exemplu sesiune expirată, ponton diferit sau cod invalid, interfața afișează un mesaj explicit care descrie problema, fără a bloca complet fluxul.
 
 Această abordare este importantă pentru utilizarea în teren. Angajatul lucrează adesea în condiții care nu permit o interacțiune lungă cu aplicația, de exemplu în aer liber, cu posibilă iluminare variabilă sau conexiune mobilă instabilă. Simplificarea interfeței la funcțiile strict necesare pentru verificare este o decizie deliberată de UX, care prioritizează viteza și claritatea operației în fața complexității vizuale. Angajatul poate verifica o sesiune în câteva secunde, fără a naviga prin meniuri sau a căuta manual rezervarea în liste.
 
@@ -60,7 +108,7 @@ Tokenul JWT primit la autentificare este stocat în \texttt{localStorage}, ceea 
 
 Protecția rutelor private este realizată prin \emph{route guards}. Fiecare zonă funcțională, anume dashboard manager, panou angajat și control administrator, are un guard care verifică dacă utilizatorul este autentificat și dacă rolul său corespunde zonei accesate. Dacă nu, Angular redirecționează automat spre o pagină publică, fără a încărca componenta protejată. Această verificare se face pe baza datelor din token, decodate local la nivel de client: validarea criptografică rămâne exclusiv în responsabilitatea backend-ului.
 
-Serviciile Angular pentru comunicarea cu API-ul sunt organizate pe domenii: un serviciu pentru autentificare, unul pentru rezervări, unul pentru locuri de pescuit și unul pentru analiza media. Fiecare serviciu expune metode tipizate care returnează \texttt{Observable<T>}, permițând componentelor să se aboneze la răspunsuri și să gestioneze stările de încărcare, succes și eroare în mod declarativ. Această arhitectură facilitează și testarea unitară a logicii de business din frontend, izolat de comunicarea HTTP.
+Serviciile Angular pentru comunicarea cu API-ul sunt organizate pe domenii: un serviciu pentru autentificare, unul pentru rezervări, unul pentru locuri de pescuit și unul pentru analiza media. Fiecare serviciu expune metode tipizate care returnează \texttt{Observable<T>}, permițând componentelor să se aboneze la răspunsuri și să gestioneze stările de încărcare, succes și eroare în mod declarativ. Tiparea statică oferită de TypeScript \citep{typescript} ajută la detectarea erorilor de contract HTTP la momentul compilării, înainte ca acestea să producă probleme în execuție. Această arhitectură facilitează și testarea unitară a logicii de business din frontend, izolat de comunicarea HTTP.
 
 \section{Adaptabilitate și considerații de utilizare mobilă}
 

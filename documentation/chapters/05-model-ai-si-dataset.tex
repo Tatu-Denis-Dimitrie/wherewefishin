@@ -1,10 +1,10 @@
 ﻿\chapter{Modelul de inteligență artificială și setul de date}
 
-Componenta de analiză media din WhereWeFishin se bazează pe un model de detecție de obiecte antrenat pe un set de date creat și adnotat manual. Acest capitol detaliază procesul complet: de la colectarea imaginilor și anotarea lor, prin antrenarea și evaluarea modelului, până la integrarea sa în serviciul Python de producție. Această componentă reprezintă contribuția cea mai distinctivă a proiectului față de o aplicație web convențională de rezervări.
+Componenta de analiză media din WhereWeFishin se bazează pe un model de detecție de obiecte antrenat pe un set de date creat și adnotat manual. Acest capitol detaliază procesul complet: de la colectarea imaginilor și adnotarea lor, prin antrenarea și evaluarea modelului, până la integrarea sa în serviciul Python de producție. Această componentă reprezintă contribuția cea mai distinctivă a proiectului față de o aplicație web convențională de rezervări.
 
 \section{Contextul și motivația unui set de date dedicat}
 
-Modelele YOLO preantrenate pe seturi de date publice de referință (precum COCO) nu conțin o clasă dedicată peștilor. Setul COCO, cu cele 80 de categorii ale sale, nu include pești, ceea ce face imposibilă folosirea directă a unui model generic pentru identificarea capturilor. Această absență a justificat construirea unui set de date propriu: fără el, platforma nu ar putea oferi nicio informație despre specia peștelui fotografiat sau filmat.
+Modelele YOLO preantrenate pe seturi de date publice de referință (precum COCO \citep{lin2014coco}) nu conțin o clasă dedicată peștilor. Setul COCO, cu cele 80 de categorii ale sale, nu include pești, ceea ce face imposibilă folosirea directă a unui model generic pentru identificarea capturilor. Această absență a justificat construirea unui set de date propriu: fără el, platforma nu ar putea oferi nicio informație despre specia peștelui fotografiat sau filmat.
 
 Alternativele disponibile public, seturi de date de pești pentru medii marine sau subacvatice controlate, au o distribuție a speciilor diferită față de realitatea pescuitului recreativ din România. Specii comune în apele locale, precum crapul, ctenoul, șalăul sau știuca, sunt subreprezentate sau absente în aceste seturi. Din acest motiv, crearea unui set de date propriu, adaptat contextului local și condițiilor reale de captare a imaginilor, a fost o alegere necesară, nu opțională.
 
@@ -26,9 +26,9 @@ Structura finală a setului de date urmează convenția Ultralytics YOLO: direct
 
 Fiecare linie corespunde unui pește detectat în imagine. Indexul clasei (\texttt{0} = crap, \texttt{1} = stiuca) este urmat de coordonatele centrului bounding box-ului (\texttt{cx}, \texttt{cy}) și de lățimea și înălțimea acestuia (\texttt{w}, \texttt{h}), toate normalizate în intervalul \([0, 1]\) față de dimensiunile imaginii. Această structură este consumată direct de pipeline-ul de antrenare fără preprocesare suplimentară.
 
-\section{Anotarea și preprocesarea imaginilor}
+\section{Adnotarea și preprocesarea imaginilor}
 
-Anotarea bounding box-urilor a fost realizată manual pentru fiecare imagine din setul de date. Instrumentul de adnotare utilizat permite marcarea vizuală a zonelor de interes și exportul direct în formatul YOLO, eliminând conversia manuală a coordonatelor. Anotarea a urmărit principiul delimitării stricte a corpului peștelui, excluzând umbra sau reflecția apei, pentru a reduce zgomotul din semnalul de antrenare.
+Adnotarea bounding box-urilor a fost realizată manual pentru fiecare imagine din setul de date. Instrumentul de adnotare utilizat permite marcarea vizuală a zonelor de interes și exportul direct în formatul YOLO, eliminând conversia manuală a coordonatelor. Adnotarea a urmărit principiul delimitării stricte a corpului peștelui, excluzând umbra sau reflecția apei, pentru a reduce zgomotul din semnalul de antrenare.
 
 Preprocesarea și augmentarea datelor au fost aplicate în cadrul pipeline-ului de antrenare. Augmentările includ oglindire orizontală, rotații ușoare, ajustări de luminozitate și contrast, zoom aleatoriu și mozaic, adică combinarea a patru imagini într-una singură, o tehnică specifică familiei YOLO care îmbunătățește detecția obiectelor la scări variate. Aceste transformări măresc artificial diversitatea setului de antrenare și reduc riscul de supraadaptare la condițiile specifice imaginilor originale.
 
@@ -36,7 +36,7 @@ Preprocesarea și augmentarea datelor au fost aplicate în cadrul pipeline-ului 
 
 Modelul utilizat face parte din familia YOLOv8, implementată prin biblioteca Ultralytics \citep{ultralytics}. Alegerea acestei versiuni este justificată de echilibrul dintre acuratețe și viteză de inferență, de suportul nativ pentru antrenare pe GPU și de integrarea facilă cu PyTorch \citep{pytorch}. Familia YOLOv8 menține arhitectura unui singur pas, de tip \emph{single-stage detector}, care estimează simultan localizarea și clasificarea, ceea ce o face potrivită atât pentru imagini, cât și pentru analiza video cadru cu cadru \citep{redmon2016yolo}.
 
-Antrenarea a pornit de la greutăți preantrenate pe setul COCO, folosind tehnica de transfer learning \citep{goodfellow2016}. Rețeaua a preluat reprezentările generale de viziune din antrenarea inițială și a rafinat straturile finale pe setul de date propriu, adăugând clasele de specii de pești absente din setul original. Această abordare reduce semnificativ numărul de epoci necesare pentru convergență și îmbunătățește stabilitatea antrenamentului față de inițializarea de la zero.
+Antrenarea a pornit de la greutăți preantrenate pe setul COCO \citep{lin2014coco}, folosind tehnica de transfer learning \citep{goodfellow2016,bishop2006}. Rețeaua a preluat reprezentările generale de viziune din antrenarea inițială și a rafinat straturile finale pe setul de date propriu, adăugând clasele de specii de pești absente din setul original. Această abordare reduce semnificativ numărul de epoci necesare pentru convergență și îmbunătățește stabilitatea antrenamentului față de inițializarea de la zero.
 
 Configurația de antrenare a inclus un număr de epoci ales în funcție de curbele de convergență observate, cu monitorizarea continuă a pierderii de antrenare și a metricilor de validare. S-a utilizat un mecanism de oprire timpurie pentru a preveni supraadaptarea: antrenamentul se oprește automat dacă metrica principală nu se îmbunătățește pe un număr definit de epoci consecutive. Dimensiunea lotului a fost adaptată la memoria GPU disponibilă, iar rata de învățare a urmat un planificator cu coborâre lentă pe parcursul antrenamentului.
 
@@ -106,7 +106,20 @@ Modelul antrenat este exportat în formatul \texttt{.pt} (PyTorch checkpoint) ș
 
 Pragul de încredere pentru detecție este configurat explicit și a fost ales pe baza curbelor de precizie-recall observate pe setul de validare: o valoare prea mică include detecții nesigure care produc zgomot vizual, iar o valoare prea mare exclud detecții corecte cu grad de încredere moderat. Pragul ales reprezintă un compromis care favorizează precizia față de recall, deoarece în contextul aplicației o detecție incertă este mai problematică decât o detecție lipsă.
 
-Pentru analiza video, modelul este aplicat cadru cu cadru, iar rezultatele sunt transmise tracker-ului ByteTrack \citep{zhang2022bytetrack} care menține identitatea obiectelor de-a lungul secvenței. Această separare clară între detecție și tracking permite înlocuirea sau actualizarea modelului de detecție fără a modifica logica de urmărire temporală și invers.
+Pentru analiza video, modelul este aplicat cadru cu cadru, iar rezultatele sunt transmise tracker-ului ByteTrack \citep{zhang2022bytetrack} care menține identitatea obiectelor de-a lungul secvenței. Față de abordări anterioare precum SORT \citep{bewley2016sort}, ByteTrack păstrează și detecțiile cu grad de încredere scăzut, ceea ce reduce fragmentarea traseelor atunci când peștele este parțial ocluzat sau iese temporar din cadru. Această separare clară între detecție și tracking permite înlocuirea sau actualizarea modelului de detecție fără a modifica logica de urmărire temporală și invers.
+
+ByteTrack asociază fiecărui pește detectat un identificator unic, păstrat pe parcursul întregii secvențe video atât timp cât exemplarul rămâne vizibil. Dacă peștele iese temporar din cadru și revine, algoritmul încearcă să-l reidentifice pe baza poziției anterioare și a caracteristicilor detecției. Această persistență a identității este esențială pentru numărarea corectă a exemplarelor distincte: fără tracking, un singur pește care apare în 100 de cadre ar fi contorizat de 100 de ori, generând statistici complet eronate. Cu tracking activ, același pește contribuie cu o singură unitate la totalul speciei sale.
+
+Suprapunerea vizuală a rezultatelor pe video se realizează prin desenarea bounding box-urilor color asociate fiecărui identificator, însoțite de eticheta speciei și gradul de încredere al detecției. Contorul cumulativ de exemplare unice este actualizat în timp real și afișat în colțul superior al fiecărui cadru procesat, oferind utilizatorului o imagine imediată a activității înregistrate.
+
+Reîncodarea finală a videoclipului procesat utilizează FFmpeg cu codecul H.264, care oferă un echilibru bun între dimensiunea fișierului rezultat și compatibilitatea cu majoritatea browserelor și dispozitivelor. Această alegere permite redarea directă în pagina web prin elementul HTML \texttt{video}, fără conversii sau plugin-uri suplimentare la client. Figura~\ref{fig:tracking-video-frame} ilustrează un cadru extras dintr-un videoclip procesat în aceste condiții.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/fish-recogResult.png}
+\caption{Frame dintr-un videoclip procesat: detecție YOLOv8 cu bounding box-uri și ID-uri de tracking ByteTrack}
+\label{fig:tracking-video-frame}
+\end{figure}
 
 Serviciul expune un endpoint de inferență care primește un fișier media, determină tipul de analiză (imagine sau video) pe baza tipului MIME și returnează un răspuns structurat cu detecțiile, statisticile și, în cazul video, un fișier reîncodat cu adnotările suprapuse.
 
@@ -145,4 +158,4 @@ Dimensiunea setului de date, deși suficientă pentru un prototip funcțional, r
 
 \section{Sinteza capitolului}
 
-Capitolul a descris procesul complet de construire și integrare a componentei de inteligență artificială din WhereWeFishin: de la motivația unui set de date propriu și anotarea manuală a imaginilor, prin antrenarea modelului YOLOv8 cu transfer learning, evaluarea performanței pe setul de test și integrarea modelului în serviciul Python de producție. Contribuția personală se regăsește în fiecare etapă: selectarea și adnotarea imaginilor, configurarea antrenamentului, calibrarea pragurilor de inferență și integrarea modelului în arhitectura serviciului. Aceasta este zona proiectului care transformă platforma dintr-o aplicație de rezervări într-un instrument cu valoare analitică adăugată pentru utilizatorii săi.
+Capitolul a descris procesul complet de construire și integrare a componentei de inteligență artificială din WhereWeFishin: de la motivația unui set de date propriu și adnotarea manuală a imaginilor, prin antrenarea modelului YOLOv8 cu transfer learning, evaluarea performanței pe setul de test și integrarea modelului în serviciul Python de producție. Contribuția personală se regăsește în fiecare etapă: selectarea și adnotarea imaginilor, configurarea antrenamentului, calibrarea pragurilor de inferență și integrarea modelului în arhitectura serviciului. Aceasta este zona proiectului care transformă platforma dintr-o aplicație de rezervări într-un instrument cu valoare analitică adăugată pentru utilizatorii săi.

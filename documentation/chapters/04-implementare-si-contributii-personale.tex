@@ -8,7 +8,7 @@ Implementarea este prezentată pe straturi tehnice: mai întâi arhitectura gene
 
 Implementarea urmează o structură distribuită pe componente cu responsabilități bine delimitate. Interfața este o aplicație Angular, backend-ul este un API HTTP în ASP.NET Core, persistența este gestionată prin Entity Framework Core, iar analiza media este externalizată unui serviciu Python separat. Această separare permite evoluția independentă a modulelor, reduce cuplarea între zone cu cerințe tehnice diferite și menține claritatea codului.
 
-Implementarea urmărește un model cu straturi clare de responsabilitate. La nivelul de transport HTTP, controllerele preiau cererile, aplică autorizarea și delegă logica de business serviciilor. Serviciile orchestrează regulile domeniului, apelează repository-urile pentru acces la date și comunică cu serviciile externe. Repository-urile encapsulează interogările Entity Framework Core, menținând separarea dintre logica domeniului și detaliile de persistență. Această structură reduce cuplarea și permite testarea independentă a fiecărui strat.
+Implementarea urmărește un model cu straturi clare de responsabilitate. La nivelul de transport HTTP, controllerele preiau cererile, aplică autorizarea și delegă logica de business serviciilor. Serviciile orchestrează regulile domeniului, apelează repository-urile pentru acces la date și comunică cu serviciile externe. Repository-urile encapsulează interogările Entity Framework Core, menținând separarea dintre logica domeniului și detaliile de persistență. Această abordare urmează \emph{Repository pattern} descris de Fowler \citep{fowler2002}, care recomandă tratarea colecției de obiecte persistate ca pe o colecție în memorie din perspectiva codului de business. Această structură reduce cuplarea și permite testarea independentă a fiecărui strat.
 
 Configurarea aplicației ASP.NET Core urmează un lanț de middleware definit explicit: autentificare, autorizare, compresie, CORS, rate limiting și rutare. Ordinea middleware-ului este importantă deoarece determină când se aplică fiecare politică și garantează că cererile neautorizate sunt respinse înainte de a atinge logica de business. Injecția de dependențe este utilizată sistematic: fiecare serviciu este înregistrat cu durata de viață corespunzătoare (tranzient, scoped sau singleton) în funcție de natura operației.
 
@@ -60,7 +60,7 @@ Implementarea locurilor de pescuit este unul dintre modulele centrale ale backen
 
 Pentru pontoane am implementat un modul separat care asociază zone distincte unui loc de pescuit și menține o legătură directă între componenta geospațială din interfață și regulile de disponibilitate din backend. Pontonul devine astfel o resursă rezervabilă explicită, nu doar o informație descriptivă. Această abordare este importantă pentru scenarii reale în care o locație conține mai multe spații cu disponibilitate independentă.
 
-Coordonatele geografice ale pontoanelor sunt stocate ca liste de puncte ce descriu conturul poligonal al zonei rezervabile. Această alegere permite reprezentarea fidelă a formei unui ponton pe hartă, nu doar a centrului său. La adăugarea sau modificarea unui ponton din interfața managerului, datele geospațiale sunt serializate în format GeoJSON, transmise la backend și stocate în baza de date. La listare, coordonatele sunt deserializate și trimise frontend-ului, care le interpretează direct ca layer Leaflet. Această soluție simplifică persistența fără a necesita o extensie geospațială dedicată a bazei de date, păstrând compatibilitatea cu operațiile de afișare și modificare din interfață.
+Coordonatele geografice ale pontoanelor sunt stocate ca liste de puncte ce descriu conturul poligonal al zonei rezervabile. Această alegere permite reprezentarea fidelă a formei unui ponton pe hartă, nu doar a centrului său. La adăugarea sau modificarea unui ponton din interfața managerului, datele geospațiale sunt serializate în format GeoJSON \citep{geojson}, transmise la backend și stocate în baza de date. La listare, coordonatele sunt deserializate și trimise frontend-ului, care le interpretează direct ca layer Leaflet. Această soluție simplifică persistența fără a necesita o extensie geospațială dedicată a bazei de date, păstrând compatibilitatea cu operațiile de afișare și modificare din interfață.
 
 Contribuția personală constă în modelarea coerentă a relației dintre entitatea principală și subzonele rezervabile, precum și în reutilizarea acelorași reguli de autorizare pentru toate operațiile de administrare.
 
@@ -128,13 +128,36 @@ Una dintre cele mai importante componente frontend este pagina de explorare, con
 
 Sistemul de markere personalizate utilizează template-uri SVG generate dinamic, colorate diferit în funcție de disponibilitate sau tipul de marker. Ferestrele informative sunt construite din template-uri HTML compilate separat și injectate în Leaflet ca stringuri, o abordare care păstrează compatibilitatea cu biblioteca de hartă fără a introduce componente Angular în afara contextului normal de rendering. Helperii dedicați pentru tooltip-uri și badge-uri permit reutilizarea aceluiași cod de generare a conținutului vizual în mai multe contexte: harta principală de explorare, harta de administrare a managerului și componentele de detaliu ale locației.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.35\textwidth]{images/pop-up.png}
+\caption{Fereastra informativă afișată la selectarea unui marker pe hartă}
+\label{fig:popup-locatie}
+\end{figure}
+
 Harta funcționează ca punct de intrare în platformă: utilizatorul identifică rapid locațiile disponibile, vede proximitatea față de poziția sa și decide ce loc merită explorat mai departe. Contribuția personală constă în integrarea componentei Leaflet cu datele reale ale aplicației și în transformarea hărții dintr-un element vizual într-un instrument central de navigare.
 
 \subsection{Coșul, calendarul și integrarea Stripe în interfață}
 
 Fluxul de rezervare are o componentă frontend complexă, cu mai multe stări și validări vizuale. Utilizatorul selectează intervale orar, vede zilele ocupate, poate combina mai multe elemente în coș și finalizează plata. Calendarul pe care l-am implementat evidențiază perioadele rezervate cu granularitate de jumătate de zi, tratează corect intervalele parțiale, în care pontonul este disponibil doar pentru o parte din zi, și blochează selecțiile invalide înainte ca utilizatorul să ajungă la pasul de plată. Această validare vizuală reduce numărul de erori raportate de API și îmbunătățește experiența de rezervare.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/lake-page.png}
+\caption{Pagina de detalii a unei locații cu harta pontoanelor, speciile disponibile și modulul de rezervare}
+\label{fig:pagina-detalii-locatie}
+\end{figure}
+
 Integrarea Stripe se bazează pe Stripe Elements, care încarcă dinamic câmpurile de plată direct în pagină, fără redirecționare externă. Logica de confirmare a plății este separată de logica de afișare: componenta frontend așteaptă confirmarea \emph{PaymentIntent} de la Stripe înainte de a solicita backend-ului crearea sesiunii de pescuit, evitând situațiile în care o sesiune este creată fără ca plata să fie finalizată.
+
+Pagina de checkout reunește rezumatul comenzii (locație, ponton, interval, cost total) cu formularul de card integrat direct în pagină. Câmpurile Stripe sunt izolate într-un iframe securizat, astfel că datele cardului nu trec niciodată prin serverele aplicației. Erorile de validare ale cardului sunt afișate imediat sub câmpul relevant, fără reîncărcare de pagină, ghidând utilizatorul să corecteze datele înainte de confirmare. Tipurile de card acceptate (Visa, Mastercard, American Express) sunt afișate vizibil lângă formular pentru a evita confuzii.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/stripe-form.png}
+\caption{Pagina de checkout cu rezumatul comenzii și formularul de plată Stripe integrat}
+\label{fig:formular-plata-stripe}
+\end{figure}
 
 Contribuția personală constă în rezolvarea unor probleme practice de UX și sincronizare: vizualizarea clară a indisponibilităților, evitarea selecțiilor greșite și corelarea coerentă a stărilor de plată cu răspunsurile backend-ului.
 
@@ -149,6 +172,13 @@ Dashboard-ul este relevant deoarece concentrează mai multe subfluxuri distincte
 \subsection{Verificarea prin cod QR și funcțiile administrative}
 
 Am implementat un flux de verificare a sesiunilor prin cod QR conceput pentru utilizare în teren. Componenta accesează camera dispozitivului prin API-ul browser-ului, procesează în timp real imaginea captată și extrage datele codului. Tratarea datelor rezervării este suficient de tolerantă pentru a gestiona variații ale structurii lor, de exemplu coduri generate de versiuni anterioare ale aplicației sau cu formatare ușor diferită, fără a respinge coduri valide din motive formale. Odată decodat codul, componenta interogează API-ul pentru detaliile sesiunii și prezintă un rezumat clar angajatului, cu opțiunea de confirmare.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{images/qrcode-generator.png}
+\caption{Codul QR asociat rezervării, accesibil din secțiunea My Bookings}
+\label{fig:rezervare-cod-qr}
+\end{figure}
 
 Zona administrativă oferă funcții de supraveghere asupra utilizatorilor înregistrați, locațiilor active și aplicațiilor de manager în așteptare. Am implementat componente tabelare cu filtrare și paginare, astfel încât listele să rămână utilizabile chiar și atunci când numărul de înregistrări crește. Fluxul de aprobare a aplicațiilor include stări vizuale clare pentru fiecare cerere și acțiuni rapide de decizie: aprobare sau respingere cu motivație.
 
@@ -326,7 +356,7 @@ Reziliența comunicării dintre backend și serviciul Python este implementată 
 
 \subsection{Expunerea publică prin Cloudflare Tunnel}
 
-Cloudflare Tunnel (\texttt{cloudflared}) rulează ca un serviciu suplimentar în stiva Docker Compose. La pornire, deschide o conexiune persistentă criptată spre infrastructura Cloudflare și înregistrează regulile de rutare configurate în panoul Cloudflare Zero Trust. Traficul de la utilizatori ajunge la serverele Cloudflare, care îl redirecționează prin tunel spre containerele locale, fără ca nicio adresă IP sau port să fie expus direct pe internet. Această topologie elimină o categorie întreagă de riscuri: scanarea porturilor, atacurile directe asupra IP-ului mașinii și exploatarea unor servicii expuse accidental.
+Cloudflare Tunnel (\texttt{cloudflared}) \citep{cloudflare-tunnel} rulează ca un serviciu suplimentar în stiva Docker Compose. La pornire, deschide o conexiune persistentă criptată spre infrastructura Cloudflare și înregistrează regulile de rutare configurate în panoul Cloudflare Zero Trust. Traficul de la utilizatori ajunge la serverele Cloudflare, care îl redirecționează prin tunel spre containerele locale, fără ca nicio adresă IP sau port să fie expus direct pe internet. Această topologie elimină o categorie întreagă de riscuri: scanarea porturilor, atacurile directe asupra IP-ului mașinii și exploatarea unor servicii expuse accidental.
 
 Configurația tunelului asociază subdomeniile aplicației serviciilor interne prin numele lor Docker Compose. Cererea spre \texttt{api.wherewefishin.uk} este trimisă la \texttt{http://api:8080}, iar cererea spre \texttt{wherewefishin.uk} la \texttt{http://frontend:80}. Serviciul Python nu apare în configurația de rutare și rămâne accesibil exclusiv din rețeaua internă Docker.
 

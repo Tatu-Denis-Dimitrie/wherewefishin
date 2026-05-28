@@ -35,51 +35,54 @@ Warning--to sort, need author or key in flask
 Warning--to sort, need author or key in stripe
 Warning--to sort, need author or key in ultralytics
 Warning--to sort, need author or key in jwt
+Warning--to sort, need author or key in owasp
 Warning--to sort, need author or key in opencv
 Warning--to sort, need author or key in ffmpeg
 Warning--to sort, need author or key in docker
+Warning--to sort, need author or key in cloudflare-tunnel
 Warning--to sort, need author or key in pytorch
+Warning--to sort, need author or key in typescript
 Warning--to sort, need author or key in xunit
-Warning--to sort, need author or key in owasp
-You've used 26 entries,
+Warning--to sort, need author or key in nginx
+You've used 37 entries,
             2773 wiz_defined-function locations,
-            718 strings with 8790 characters,
-and the built_in function-call counts, 8077 in all, are:
-= -- 756
-> -- 254
-< -- 4
-+ -- 105
-- -- 78
-* -- 545
-:= -- 976
-add.period$ -- 78
-call.type$ -- 26
-change.case$ -- 102
-chr.to.int$ -- 25
-cite$ -- 88
-duplicate$ -- 446
-empty$ -- 911
-format.name$ -- 88
-if$ -- 1862
+            768 strings with 10447 characters,
+and the built_in function-call counts, 12604 in all, are:
+= -- 1145
+> -- 504
+< -- 10
++ -- 194
+- -- 156
+* -- 865
+:= -- 1623
+add.period$ -- 113
+call.type$ -- 37
+change.case$ -- 157
+chr.to.int$ -- 36
+cite$ -- 116
+duplicate$ -- 671
+empty$ -- 1321
+format.name$ -- 174
+if$ -- 2850
 int.to.chr$ -- 2
 int.to.str$ -- 1
-missing$ -- 12
-newline$ -- 138
-num.names$ -- 32
-pop$ -- 351
+missing$ -- 22
+newline$ -- 195
+num.names$ -- 64
+pop$ -- 518
 preamble$ -- 1
-purify$ -- 78
+purify$ -- 126
 quote$ -- 0
-skip$ -- 345
+skip$ -- 526
 stack$ -- 0
-substring$ -- 102
-swap$ -- 39
-text.length$ -- 1
+substring$ -- 199
+swap$ -- 72
+text.length$ -- 3
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 261
-warning$ -- 18
-while$ -- 27
+type$ -- 362
+warning$ -- 21
+while$ -- 57
 width$ -- 0
-write$ -- 325
-(There were 18 warnings)
+write$ -- 463
+(There were 21 warnings)

@@ -1,24 +1,34 @@
 \babel@toc {romanian}{}\relax 
 \addvspace {10\p@ }
 \contentsline {figure}{\numberline {1.1}{\ignorespaces Cele patru roluri ale utilizatorilor și principalele funcții disponibile}}{3}{figure.1.1}%
+\contentsline {figure}{\numberline {1.2}{\ignorespaces Harta interactivă cu locațiile de pescuit marcate pe teritoriul României}}{3}{figure.1.2}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {2.1}{\ignorespaces Principalele entități și relații din modelul de date}}{7}{figure.2.1}%
+\contentsline {figure}{\numberline {2.1}{\ignorespaces Principalele entități și relații din modelul de date}}{8}{figure.2.1}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {3.1}{\ignorespaces Diagrama de cazuri de utilizare (simplificată)}}{11}{figure.3.1}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces Arhitectura de ansamblu a aplicației WhereWeFishin}}{13}{figure.3.2}%
-\contentsline {figure}{\numberline {3.3}{\ignorespaces Diagrama claselor principale cu atributele entităților de domeniu}}{14}{figure.3.3}%
-\contentsline {figure}{\numberline {3.4}{\ignorespaces Fluxul principal al unei rezervări și al validării sesiunii de pescuit}}{14}{figure.3.4}%
-\contentsline {figure}{\numberline {3.5}{\ignorespaces Fluxul de analiză media: de la upload până la afișarea rezultatelor}}{14}{figure.3.5}%
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Diagrama de cazuri de utilizare (simplificată)}}{13}{figure.3.1}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Arhitectura de ansamblu a aplicației WhereWeFishin}}{15}{figure.3.2}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Diagrama claselor principale cu atributele entităților de domeniu}}{16}{figure.3.3}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Fluxul principal al unei rezervări și al validării sesiunii de pescuit}}{16}{figure.3.4}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Fluxul de analiză media: de la upload până la afișarea rezultatelor}}{16}{figure.3.5}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Fluxul de autentificare bazat pe tokenuri JWT}}{17}{figure.4.1}%
-\contentsline {figure}{\numberline {4.2}{\ignorespaces Serviciile Docker și dependențele dintre ele}}{23}{figure.4.2}%
-\contentsline {figure}{\numberline {4.3}{\ignorespaces Distribuția contribuțiilor personale pe zone funcționale ale platformei}}{27}{figure.4.3}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Fluxul de autentificare bazat pe tokenuri JWT}}{19}{figure.4.1}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Fereastra informativă afișată la selectarea unui marker pe hartă}}{22}{figure.4.2}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Pagina de detalii a unei locații cu harta pontoanelor, speciile disponibile și modulul de rezervare}}{23}{figure.4.3}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Pagina de checkout cu rezumatul comenzii și formularul de plată Stripe integrat}}{24}{figure.4.4}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Codul QR asociat rezervării, accesibil din secțiunea My Bookings}}{25}{figure.4.5}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces Serviciile Docker și dependențele dintre ele}}{27}{figure.4.6}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces Distribuția contribuțiilor personale pe zone funcționale ale platformei}}{31}{figure.4.7}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {5.1}{\ignorespaces Relația dintre metricile principale de evaluare a modelului}}{30}{figure.5.1}%
-\contentsline {figure}{\numberline {5.2}{\ignorespaces Precizie, Recall și mAP@0.5 per clasă pe setul de test}}{31}{figure.5.2}%
+\contentsline {figure}{\numberline {5.1}{\ignorespaces Relația dintre metricile principale de evaluare a modelului}}{34}{figure.5.1}%
+\contentsline {figure}{\numberline {5.2}{\ignorespaces Precizie, Recall și mAP@0.5 per clasă pe setul de test}}{35}{figure.5.2}%
+\contentsline {figure}{\numberline {5.3}{\ignorespaces Frame dintr-un videoclip procesat: detecție YOLOv8 cu bounding box-uri și ID-uri de tracking ByteTrack}}{36}{figure.5.3}%
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {6.1}{\ignorespaces Calendarul de rezervare cu disponibilitatea pontoanelor și calculul automat al costului}}{40}{figure.6.1}%
+\contentsline {figure}{\numberline {6.2}{\ignorespaces Pagina de analiză media cu zona de upload, speciile detectabile și istoricul analizelor}}{41}{figure.6.2}%
+\contentsline {figure}{\numberline {6.3}{\ignorespaces Dashboard-ul managerului cu statistici agregate și graficul de activitate al locației}}{42}{figure.6.3}%
+\contentsline {figure}{\numberline {6.4}{\ignorespaces Interfața de scanare QR a angajatului, cu locația asignată și camera activă}}{43}{figure.6.4}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {7.1}{\ignorespaces Distribuția estimată a testelor pe categorii în proiectul backend}}{39}{figure.7.1}%
+\contentsline {figure}{\numberline {7.1}{\ignorespaces Distribuția estimată a testelor pe categorii în proiectul backend}}{47}{figure.7.1}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {8.1}{\ignorespaces Arhitectura containerizată a aplicației WhereWeFishin}}{47}{figure.8.1}%
+\contentsline {figure}{\numberline {8.1}{\ignorespaces Arhitectura containerizată a aplicației WhereWeFishin}}{55}{figure.8.1}%
 \addvspace {10\p@ }
