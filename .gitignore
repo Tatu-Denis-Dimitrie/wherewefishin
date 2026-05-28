@@ -42,3 +42,5 @@ backend/WhereWeFishin.API/uploads/*
 fish-recognition-service/uploads/
 fish-recognition-service/outputs/
 /CLAUDE.md
+/.claude/
+.claude/
