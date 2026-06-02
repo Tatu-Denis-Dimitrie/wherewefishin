@@ -146,7 +146,7 @@ Modelul include și \textbf{aplicația de manager}, care descrie procesul prin c
 
 Toate aceste entități formează un model coerent, în care obiectele principale sunt conectate prin relații care reflectă activitatea reală a platformei.
 
-Figura~\ref{fig:diagrama-clase} prezintă o diagramă simplificată a claselor principale, cu atributele cheie ale fiecărei entități.
+Figura~\ref{fig:diagrama-clase} prezintă o diagramă simplificată a claselor principale, cu atributele cheie ale fiecărei entități. Fiecare entitate conține și câmpuri auxiliare gestionate transparent de infrastructură (timestamp de creare, flag de ștergere logică), excluse din reprezentare pentru claritate. Constrângerile de integritate referențială declarate la nivelul bazei de date completează relațiile vizuale din diagramă, garantând consistența datelor independent de stratul aplicativ.
 
 \begin{figure}[htbp]
 \centering

@@ -139,6 +139,8 @@ Rezultatul final poate include mai multe categorii de date: numărul total de de
 
 Este important de menționat că analiza automată nu este infailibilă. Performanța depinde de calitatea imaginilor, iluminare, claritatea apei, unghiuri de filmare și gradul de adaptare al modelului la speciile urmărite. Rezultatele trebuie înțelese în raport cu limitele normale ale sistemelor de viziune artificială.
 
+Integrarea componentei de analiză media în arhitectura WhereWeFishin urmărește un model asincron deliberat: fișierul este primit de backend, care inițiază procesarea și returnează imediat un identificator, fără a bloca thread-ul HTTP pe durata analizei. Rezultatele sunt stocate de microserviciul Python și preluate de interfață printr-un mecanism de polling cu interval configurabil. Această separare permite gestionarea unor videoclipuri de dimensiune mare fără a afecta disponibilitatea API-ului principal sau experiența celorlalți utilizatori activi în același timp.
+
 \section{Servicii auxiliare și integrarea cu sisteme externe}
 
 Pe lângă componentele principale, platforma are nevoie și de servicii auxiliare care completează experiența utilizatorului și susțin operațiile curente.

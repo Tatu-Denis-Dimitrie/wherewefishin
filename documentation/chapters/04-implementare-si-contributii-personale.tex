@@ -80,7 +80,6 @@ Legătura cu Stripe este separată clar de persistența sesiunii finale. Am gene
 
 Detectarea conflictelor temporale este implementată printr-o interogare LINQ evaluată direct la nivel de bază de date, care acoperă toate cazurile de suprapunere parțială sau totală fără a încărca datele în memorie.
 
-\needspace{10\baselineskip}
 \begin{lstlisting}[language={[Sharp]C}, caption={Interogarea LINQ pentru detectarea conflictelor de rezervare}]
 var hasConflict = await _context.FishingSessions
     .Where(s => s.PontoonId == request.PontoonId

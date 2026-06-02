@@ -62,9 +62,13 @@ Figura~\ref{fig:curbe-antrenare} prezintă curbele de evoluție pentru cele 100 
 
 Evaluarea modelului s-a realizat pe setul de test rezervat, care nu a participat la antrenare sau la selecția hiperparametrilor. Metricile principale utilizate sunt cele standard pentru detecția de obiecte: precizia (P), recall-ul (R) și media preciziei medii la un prag de IoU de 0.5 (mAP@0.5).
 
+Precizia (P) măsoară câte dintre detecțiile returnate de model sunt corecte, raportând detecțiile adevărat pozitive la suma dintre adevărat pozitive și fals pozitive. Recall-ul (R) măsoară câte dintre obiectele reale au fost detectate, raportând adevărat pozitivele la suma dintre adevărat pozitive și fals negative. Valoarea F1, media armonică dintre precizie și recall, oferă o metrică unificată utilă mai ales când distribuția claselor este dezechilibrată.
+
+Pragul de IoU (Intersection over Union) de 0.5 reprezintă criteriul standard de acceptare: o detecție este considerată corectă dacă bounding box-ul prognozat se suprapune cu cel de referință în proporție de cel puțin 50\%. Metrica mAP@0.5--0.95 extinde acest criteriu calculând media mAP la praguri mai stricte (până la 0.95 cu pas de 0.05), penalizând mai puternic localizările imprecise chiar dacă clasificarea speciei este corectă.
+
 Figura~\ref{fig:metrici-model} sintetizează relația dintre principalele metrici de evaluare utilizate în analiza performanței modelului.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
 \centering
 \begin{tikzpicture}[
   every node/.style={font=\small},
@@ -73,8 +77,8 @@ Figura~\ref{fig:metrici-model} sintetizează relația dintre principalele metric
 ]
 \node[met] (prec) at (0, 0)     {Precizie (P)};
 \node[met] (rec)  at (9, 0)     {Recall (R)};
-\node[met] (map)  at (4.5, -4.0){mAP@0.5};
-\node[met] (f1)   at (4.5, -8.0){F1 Score};
+\node[met] (map)  at (4.5, -3.0){mAP@0.5};
+\node[met] (f1)   at (4.5, -6.0){F1 Score};
 \draw[arrow] (prec) -- node[font=\footnotesize, fill=white, inner sep=2pt]{contribuie la} (map);
 \draw[arrow] (rec)  -- node[font=\footnotesize, fill=white, inner sep=2pt]{contribuie la} (map);
 \draw[arrow] (prec) to[bend right=12] node[font=\footnotesize, fill=white, inner sep=2pt, left]{combinate} (f1);
@@ -84,7 +88,7 @@ Figura~\ref{fig:metrici-model} sintetizează relația dintre principalele metric
 \label{fig:metrici-model}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[H]
 \centering
 \begin{tikzpicture}
 \begin{axis}[
@@ -141,7 +145,7 @@ Suprapunerea vizuală a rezultatelor pe video se realizează prin desenarea boun
 
 Reîncodarea finală a videoclipului procesat utilizează FFmpeg cu codecul H.264, care oferă un echilibru bun între dimensiunea fișierului rezultat și compatibilitatea cu majoritatea browserelor și dispozitivelor. Această alegere permite redarea directă în pagina web prin elementul HTML \texttt{video}, fără conversii sau plugin-uri suplimentare la client. Figura~\ref{fig:tracking-video-frame} ilustrează un cadru extras dintr-un videoclip procesat în aceste condiții.
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 \centering
 \includegraphics[width=\textwidth]{images/fish-recogResult.png}
 \caption{Frame dintr-un videoclip procesat: detecție YOLOv8 cu bounding box-uri și ID-uri de tracking ByteTrack}
