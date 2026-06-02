@@ -188,6 +188,7 @@ Sistemul de analiză media implică colaborarea dintre trei straturi: interfața
 
 Componenta este proiectată în jurul unui model asincron cu patru stări persistate: \emph{Pending}, \emph{Processing}, \emph{Completed} și \emph{Failed}. Utilizatorul încarcă fișierul, backend-ul returnează imediat un identificator, iar procesarea continuă asincron. Dacă serviciul Python este indisponibil, analiza este marcată ca \emph{Failed} fără a propaga eroarea spre utilizator.
 
+\needspace{18\baselineskip}
 \begin{lstlisting}[language={[Sharp]C}, caption={Trimiterea fișierului media la serviciul Python și actualizarea stării}]
 public async Task<MediaAnalysisResult> SendToAnalysisServiceAsync(
     Stream fileStream, string fileName, string mimeType,
@@ -267,6 +268,7 @@ Fiecare componentă a aplicației rulează într-un container Docker separat \ci
 
 Imaginile Docker sunt construite prin \emph{Dockerfile}-uri cu build multi-etapă. Separarea etapei de compilare de cea de execuție reduce semnificativ dimensiunea imaginii finale și elimină din containerul de producție toate uneltele de build, cum ar fi compilatorul .NET SDK, sursele și fișierele intermediare, care nu sunt necesare la rulare și ar reprezenta o suprafață de atac suplimentară.
 
+\needspace{15\baselineskip}
 \begin{lstlisting}[language=bash, caption={Dockerfile multi-etapă pentru backend-ul ASP.NET Core}]
 # Etapa 1: compilare
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
@@ -293,6 +295,7 @@ Modelul antrenat YOLOv8 este montat ca volum read-only în containerul Python (\
 
 Pipeline-ul HTTP al backend-ului include mai multe straturi de protecție configurate explicit în \texttt{Program.cs}. Rate limiting-ul este primul mecanism de apărare pentru endpoint-urile expuse la abuz: ASP.NET Core 7+ include middleware dedicat pentru limitarea numărului de cereri per interval de timp, fără dependențe externe.
 
+\needspace{19\baselineskip}
 \begin{lstlisting}[language={[Sharp]C}, caption={Configurarea rate limiting-ului cu politici diferențiate}]
 builder.Services.AddRateLimiter(options =>
 {
@@ -320,6 +323,7 @@ Endpoint-urile de autentificare aplică politica \texttt{"auth"} (5 cereri/minut
 
 Politicile CORS sunt diferențiate pe mediu: în dezvoltare originile sunt permise larg, în producție sunt restricționate la domeniile aplicației:
 
+\needspace{18\baselineskip}
 \begin{lstlisting}[language={[Sharp]C}, caption={Politica CORS diferențiată pe mediu de execuție}]
 builder.Services.AddCors(options =>
 {

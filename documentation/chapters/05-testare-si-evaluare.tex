@@ -76,6 +76,7 @@ Figura~\ref{fig:distributie-nr-teste} prezintă distribuția estimată a testelo
 
 Un exemplu clar sunt testele de integrare pentru autentificare: verifică înregistrarea unui utilizator, tratarea conflictelor de identitate, autentificarea și validarea tokenului primit.
 
+\needspace{27\baselineskip}
 \begin{lstlisting}[language={[Sharp]C}, caption={Test de integrare: înregistrare urmată de autentificare și validarea tokenului JWT}]
 [Fact]
 public async Task Register_ThenLogin_ReturnsValidJwtToken()

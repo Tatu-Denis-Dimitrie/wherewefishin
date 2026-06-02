@@ -177,6 +177,7 @@ Serviciul \texttt{api} depinde explicit de baza de date prin directiva \texttt{d
 
 Modelul antrenat este montat ca volum read-only (\texttt{:ro}) în containerul Python, fără a fi inclus în imaginea Docker. Această decizie reduce dimensiunea imaginii și permite actualizarea modelului prin simpla înlocuire a fișierului pe sistemul gazdă și repornirea containerului, fără a necesita un nou build sau o nouă publicare a imaginii.
 
+\needspace{29\baselineskip}
 \begin{lstlisting}[language=bash, caption={Structura serviciilor în docker-compose.yml}]
 services:
   frontend:
