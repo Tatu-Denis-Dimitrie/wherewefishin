@@ -105,18 +105,26 @@ Obiectivele specifice sunt:
   \item construirea unei soluții extensibile, care să poată fi îmbunătățită ulterior fără rescrierea arhitecturii.
 \end{enumerate}
 
-Contribuțiile originale ale acestei lucrări sunt:
+Contribuțiile lucrării se împart, în mod natural, în două categorii: decizii de proiectare (alegeri arhitecturale și de modelare a domeniului) și contribuții cu caracter aplicativ (artefacte tehnice produse efectiv în timpul proiectului). Această separare este importantă pentru a evita confuzia dintre lucrările de cercetare și cele de inginerie aplicată: o platformă software construită pe baza unor tehnologii existente nu produce, în mod tipic, contribuții științifice noi, ci aplică principii cunoscute la o problemă concretă.
 
+\textbf{Decizii de proiectare} (alegeri argumentate, nu rezultate științifice):
 \begin{enumerate}
-  \item integrarea într-o singură platformă a funcțiilor de descoperire, rezervare, administrare și analiză media.
-  \item modelul de roluri cu patru niveluri, fiecare cu permisiuni bine definite.
-  \item harta interactivă ca element central al navigării, inclusiv pentru delimitarea vizuală a pontoanelor.
-  \item mecanismul de verificare prin cod QR și token, pentru confirmarea prezenței la locație.
-  \item microserviciul Python cu YOLO și ByteTrack, integrat controlat în fluxul aplicației.
-  \item arhitectura modulară, potrivită pentru întreținere, testare și extindere ulterioară.
+  \item integrarea într-o singură platformă a funcțiilor de descoperire, rezervare, administrare și analiză media, alegere care reflectă o viziune unitară asupra fluxurilor operaționale ale pescuitului recreativ.
+  \item modelul de roluri cu patru niveluri (utilizator, angajat, manager, administrator), fiecare cu permisiuni bine definite și separare clară a responsabilităților.
+  \item harta interactivă ca element central al navigării, inclusiv pentru delimitarea vizuală a pontoanelor prin geometrie poligonală.
+  \item arhitectura modulară cu microserviciu separat pentru analiza media, potrivită pentru întreținere, testare și extindere ulterioară.
 \end{enumerate}
 
-Valoarea acestor contribuții nu stă în fiecare element separat, ci în combinarea lor. O hartă interactivă sau un sistem de rezervări pot fi găsite și în alte aplicații. Ceea ce diferențiază WhereWeFishin este integrarea lor coerentă cu administrarea operațională și analiza AI, într-un singur sistem orientat spre un domeniu concret.
+\textbf{Contribuții aplicative} (artefacte produse efectiv în cadrul proiectului):
+\begin{enumerate}
+  \item construirea și adnotarea manuală a unui set de date propriu cu specii de pești din pescuitul recreativ local, absent din seturile de date publice generice (COCO, Pascal VOC).
+  \item antrenarea și calibrarea unui model YOLOv8 specializat pe acest set de date, cu transfer learning de la greutăți preantrenate pe COCO.
+  \item integrarea pipeline-ului de detecție YOLO cu mecanismul de tracking ByteTrack într-un microserviciu Python expus printr-un API HTTP consumabil de orice client.
+  \item mecanismul de verificare prin cod QR și token unic pentru confirmarea prezenței la locație, mediat de angajat printr-o interfață optimizată pentru utilizare în teren.
+  \item infrastructura de deployment containerizată, cu rate limiting diferențiat pe endpoint, expusă public prin Cloudflare Tunnel fără adresă IP statică.
+\end{enumerate}
+
+Valoarea acestor contribuții nu stă în fiecare element separat, ci în combinarea lor coerentă. O hartă interactivă sau un sistem de rezervări pot fi găsite și în alte aplicații. Ceea ce diferențiază WhereWeFishin este integrarea acestor componente cu administrarea operațională și analiza AI bazată pe un model antrenat pe date proprii, într-un singur sistem orientat spre un domeniu concret. Cu aceste precizări, lucrarea își asumă caracterul de proiect de inginerie aplicată, nu de cercetare originală în viziune artificială sau arhitectură software.
 
 Lucrarea a fost prezentată în cadrul a două competiții studențești: SCSS (Sesiunea Cercurilor Științifice Studențești ) și AFCO. La SCSS, proiectul a obținut locul 4 din 65 de lucrări participante, o recunoaștere externă a relevanței și calității abordării propuse.
 

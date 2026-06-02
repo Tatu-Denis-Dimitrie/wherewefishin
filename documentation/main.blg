@@ -34,6 +34,7 @@ Warning--to sort, need author or key in sqlserver
 Warning--to sort, need author or key in flask
 Warning--to sort, need author or key in stripe
 Warning--to sort, need author or key in ultralytics
+Warning--to sort, need author or key in typescript
 Warning--to sort, need author or key in jwt
 Warning--to sort, need author or key in owasp
 Warning--to sort, need author or key in opencv
@@ -41,48 +42,49 @@ Warning--to sort, need author or key in ffmpeg
 Warning--to sort, need author or key in docker
 Warning--to sort, need author or key in cloudflare-tunnel
 Warning--to sort, need author or key in pytorch
-Warning--to sort, need author or key in typescript
 Warning--to sort, need author or key in xunit
 Warning--to sort, need author or key in nginx
-You've used 37 entries,
+Warning--empty booktitle in everingham2010pascal
+Warning--can't use both volume and number fields in everingham2010pascal
+You've used 47 entries,
             2773 wiz_defined-function locations,
-            768 strings with 10447 characters,
-and the built_in function-call counts, 12604 in all, are:
-= -- 1145
-> -- 504
-< -- 10
-+ -- 194
-- -- 156
-* -- 865
-:= -- 1623
-add.period$ -- 113
-call.type$ -- 37
-change.case$ -- 157
-chr.to.int$ -- 36
-cite$ -- 116
-duplicate$ -- 671
-empty$ -- 1321
-format.name$ -- 174
-if$ -- 2850
+            813 strings with 12027 characters,
+and the built_in function-call counts, 17977 in all, are:
+= -- 1611
+> -- 836
+< -- 19
++ -- 306
+- -- 258
+* -- 1292
+:= -- 2414
+add.period$ -- 143
+call.type$ -- 47
+change.case$ -- 221
+chr.to.int$ -- 46
+cite$ -- 138
+duplicate$ -- 932
+empty$ -- 1746
+format.name$ -- 288
+if$ -- 4005
 int.to.chr$ -- 2
 int.to.str$ -- 1
-missing$ -- 22
-newline$ -- 195
-num.names$ -- 64
-pop$ -- 518
+missing$ -- 36
+newline$ -- 245
+num.names$ -- 104
+pop$ -- 665
 preamble$ -- 1
-purify$ -- 126
+purify$ -- 180
 quote$ -- 0
-skip$ -- 526
+skip$ -- 740
 stack$ -- 0
-substring$ -- 199
-swap$ -- 72
-text.length$ -- 3
+substring$ -- 390
+swap$ -- 130
+text.length$ -- 9
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 362
-warning$ -- 21
-while$ -- 57
+type$ -- 452
+warning$ -- 23
+while$ -- 104
 width$ -- 0
-write$ -- 463
-(There were 21 warnings)
+write$ -- 593
+(There were 23 warnings)

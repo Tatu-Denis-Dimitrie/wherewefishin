@@ -2,7 +2,7 @@
 
 Acest capitol prezintă baza teoretică și tehnologică pe care se sprijină aplicația WhereWeFishin. Dacă în capitolul introductiv am descris motivația și obiectivele proiectului, acum mă concentrez pe conceptele care au ghidat proiectarea și implementarea efectivă a sistemului. Sunt analizate arhitectura generală, modelul de date, componenta geospațială, fluxul de rezervare, autentificarea și componenta de analiză media bazată pe inteligență artificială.
 
-Scopul nu este reproducerea detaliilor de cod, ci clarificarea principiilor pe care funcționează sistemul și justificarea alegerilor tehnologice. Această abordare urmează ideea clasică din ingineria software că structura unui sistem trebuie dedusă din cerințe și din separarea clară a responsabilităților \citep{sommerville2015,pressman2014}.
+Scopul nu este reproducerea detaliilor de cod, ci clarificarea principiilor pe care funcționează sistemul și justificarea alegerilor tehnologice. Această abordare urmează ideea clasică din ingineria software că structura unui sistem trebuie dedusă din cerințe și din separarea clară a responsabilităților \citep{sommerville2015,pressman2014,bass2012}.
 
 \section{Arhitectura generală a sistemului}
 
@@ -17,6 +17,27 @@ Persistența datelor se face printr-o bază de date relațională, accesată pri
 Un element distinctiv al arhitecturii este microserviciul separat pentru analiza imaginilor și videoclipurilor, implementat în Python cu Flask \citep{flask}. Separarea sa de API-ul principal are o justificare practică: procesarea media implică biblioteci specializate, cerințe diferite de execuție și timpi mai lungi de răspuns. Prin izolarea acestei responsabilități, se reduce riscul ca o operație costisitoare să afecteze stabilitatea backend-ului principal. Această abordare se aliniază principiilor arhitecturii orientate pe microservicii \citep{newman2015}, care recomandă descompunerea sistemelor pe baza unor capabilități de business clar delimitate.
 
 Modul în care componentele comunică este simplu: utilizatorul interacționează cu interfața Angular, aceasta trimite cereri către API-ul .NET, iar API-ul aplică regulile de business și salvează datele în baza de date. Când un fișier media trebuie analizat, backend-ul îl trimite microserviciului Python, primește rezultatele și le stochează.
+
+\section{Analiza comparativă a alegerilor tehnologice}
+\label{sec:alegeri-tehnologice}
+
+Fiecare componentă majoră a sistemului a presupus o decizie între mai multe tehnologii viabile. Această secțiune justifică explicit alegerile făcute prin compararea cu alternative populare, evitând reducerea deciziilor la simplul argument al familiarității cu o anumită tehnologie.
+
+\subsection{Angular versus React}
+
+Pentru interfața SPA, principalele alternative analizate au fost Angular și React. React este o bibliotecă pentru construirea de interfețe, în timp ce Angular este un framework complet care include rutare, formulare cu validare, injecție de dependențe și client HTTP integrat. WhereWeFishin combină mai multe zone funcționale cu cerințe diferite (hartă interactivă, formulare cu validare, panouri administrative, flux de plată), iar prezența nativă a acestor module în Angular reduce nevoia de a alege și integra biblioteci separate. TypeScript \citep{typescript} este obligatoriu în Angular, ceea ce ajută la detectarea timpurie a erorilor de contract între componente, un avantaj important într-o aplicație cu mai multe servicii și entități. React oferă o flexibilitate mai mare în alegerea ecosistemului, dar această flexibilitate ar fi introdus decizii suplimentare fără un beneficiu clar pentru scopul proiectului.
+
+\subsection{ASP.NET Core versus Node.js}
+
+Pentru backend, alegerea a fost între ASP.NET Core și Node.js (Express, NestJS sau Fastify). Ambele platforme au performanță comparabilă pentru un API REST mediu și un ecosistem matur. Avantajul concret al ASP.NET Core în acest proiect provine din tipurile statice ale C\#, din suportul nativ pentru autentificare și autorizare prin atribute declarative \texttt{[Authorize]}, din integrarea cu Entity Framework Core pentru acces la baza de date și din maturitatea Kestrel ca server web încorporat. Logica de business a aplicației include reguli complexe de disponibilitate, calcul de cost și control al accesului pe roluri. Aceste fluxuri beneficiază de verificările la compilare, care reduc riscul erorilor neobservate la runtime. Node.js cu TypeScript ar fi oferit beneficii similare, dar ar fi necesitat configurare suplimentară.
+
+\subsection{YOLO versus Faster R-CNN și alți detectori}
+
+Pentru componenta de detecție de obiecte, principalele familii analizate au fost detectoarele într-un singur pas (YOLO \citep{redmon2016yolo}, SSD \citep{liu2016ssd}) și cele în două etape (Faster R-CNN \citep{ren2015fasterrcnn}). Detectoarele în două etape oferă, în general, o acuratețe ușor mai bună pe seturi de date cu obiecte mici sau parțial acoperite, dar plătesc acest avantaj prin viteză de predicție semnificativ mai mică. WhereWeFishin trebuie să proceseze și videoclipuri cadru cu cadru, scenariu în care viteza este un factor decisiv: o diferență de câteva sute de milisecunde per cadru se acumulează la zeci de secunde pentru un clip scurt. Familia YOLO oferă un echilibru bun între acuratețe și viteză \citep{ultralytics}, este menținută activ și are documentație matură pentru transfer learning, ceea ce o face potrivită pentru un set de date propriu de dimensiune medie. Versiunea YOLOv8 a fost preferată celor mai noi (YOLOv9, YOLOv10) datorită maturității ecosistemului Ultralytics la momentul antrenării și stabilității documentate în producție.
+
+\subsection{Leaflet versus Mapbox GL și Google Maps}
+
+Pentru harta interactivă, alternativele evaluate au fost Leaflet, Mapbox GL JS și Google Maps JavaScript API. Mapbox GL oferă vizualizare vector tile cu performanță superioară pentru seturi mari de date geospațiale, dar necesită un cont și un model de licențiere pe utilizator. Google Maps oferă cea mai mare acoperire de date și un set de funcții bogat, dar are restricții comerciale și costuri lunare bazate pe utilizare. Leaflet \citep{leaflet} este open-source, ușor, fără cost și suficient pentru cerințele aplicației: marcarea locațiilor, desenarea poligonalelor pentru pontoane și interacțiuni de tip click/hover. Pentru un proiect cu trafic moderat, această alegere oferă control complet asupra dependențelor și evită cuplarea cu un furnizor extern.
 
 \section{Modelul de date și entitățile de domeniu}
 
@@ -66,7 +87,7 @@ Privit în ansamblu, modelul de date răspunde nevoii de coerență între lumea
 
 \section{Harta interactivă și componenta geospațială}
 
-În domeniul pescuitului recreativ, poziționarea geografică nu este un detaliu secundar. Utilizatorul nu caută doar un nume de locație, ci vrea să vadă unde se află aceasta, ce locuri există în apropiere și cum este organizat spațiul.
+În domeniul pescuitului recreativ, poziționarea geografică nu este un detaliu secundar. Utilizatorul nu caută doar un nume de locație, ci vrea să vadă unde se află aceasta, ce locuri există în apropiere și cum este organizat spațiul. Aceste cerințe plasează aplicația într-o categorie binecunoscută în literatura geospațială: sistemele informatice geografice (GIS) \citep{worboys2004gis,longley2015gis}, care studiază modul în care datele spațiale sunt reprezentate, stocate și prezentate utilizatorilor.
 
 Aplicația folosește biblioteca Leaflet pentru harta interactivă \citep{leaflet}. Aceasta este ușoară, bine documentată, compatibilă cu dispozitivele mobile și suportă marcarea locațiilor, desenarea zonelor, ferestre informative și actualizare dinamică a conținutului. Locațiile sunt descrise prin coordonate de latitudine și longitudine, suficiente pentru afișarea pe hartă și pentru operații de tip centrare sau zoom.
 
@@ -104,7 +125,7 @@ Securitatea nu se reduce la un singur mecanism. Ea include validarea datelor pri
 
 \section{Analiza imaginilor și videoclipurilor cu inteligență artificială}
 
-Una dintre componentele care diferențiază WhereWeFishin de o platformă obișnuită de rezervări este integrarea analizei media bazate pe inteligență artificială. Această zonă aparține domeniului viziunii artificiale, ramura AI care extrage automat informații din imagini și secvențe video \citep{goodfellow2016}. Interesul principal este detectarea și identificarea speciilor de pești în fișierele încărcate de utilizator.
+Una dintre componentele care diferențiază WhereWeFishin de o platformă obișnuită de rezervări este integrarea analizei media bazate pe inteligență artificială. Această zonă aparține domeniului viziunii artificiale, ramura AI care extrage automat informații din imagini și secvențe video \citep{szeliski2022,goodfellow2016}. Progresele recente din această ramură au fost impulsionate de antrenarea rețelelor convoluționale profunde pe seturi mari de date adnotate, precum ImageNet \citep{krizhevsky2012alexnet}, și de arhitecturi care permit antrenarea stabilă a modelelor cu sute de straturi \citep{he2016resnet}. Interesul principal pentru WhereWeFishin este detectarea și identificarea speciilor de pești în fișierele încărcate de utilizator.
 
 În analiza imaginilor statice, problema de bază este detecția obiectelor: localizarea peștelui în imagine și clasificarea sa. Familia de modele YOLO este larg utilizată în acest domeniu datorită vitezei și eficienței practice \citep{ultralytics,redmon2016yolo}. Pentru WhereWeFishin, aceasta este alegerea potrivită deoarece funcționează bine atât pe imagini, cât și pe secvențe video.
 

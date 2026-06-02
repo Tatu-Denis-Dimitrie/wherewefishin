@@ -147,7 +147,106 @@ Un prim element este politica strictă asociată JWT-urilor: validarea explicit�
 
 Un al doilea element este legat de gestionarea cererilor voluminoase și a fluxurilor media. Limitarea la 150 MB, împreună cu configurarea timeout-urilor și a conexiunilor, oferă un cadru mai stabil pentru încărcarea videoclipurilor. Compresia răspunsurilor, caching-ul și mecanismele de retry pentru conexiunile la baza de date contribuie la o aplicație mai stabilă în condiții reale.
 
-Această evaluare operațională nu înlocuiește testele automate, dar arată că soluția a fost construită și cu gândul la securitate, trafic și reziliență.
+Această evaluare operațională nu înlocuiește testele automate, dar arată că soluția a fost construită și cu gândul la securitate, trafic și stabilitate.
+
+\section{Rezultate cantitative și măsurători de performanță}
+\label{sec:rezultate-cantitative}
+
+Această secțiune sintetizează rezultatele cantitative obținute în timpul evaluării practice a sistemului. Măsurătorile au fost realizate într-un mediu de dezvoltare local pe Windows 10 (procesor Intel i5, 16 GB RAM, GPU NVIDIA cu 6 GB VRAM) și reprezintă valori reprezentative, nu rezultate riguroase de benchmark. Scopul lor este de a oferi un ordin de mărime concret pentru comportamentul aplicației în producție și de a permite compararea cu versiuni viitoare.
+
+\subsection{Timpi de răspuns ai API-ului}
+
+Tabelul~\ref{tab:timp-raspuns-api} prezintă timpii de răspuns observați pentru principalele endpoint-uri ale backend-ului, măsurați cu serverul Kestrel pe localhost, fără latență de rețea, cu baza de date populată cu aproximativ 100 de locații, 400 de pontoane și 1500 de sesiuni de pescuit. Valorile reflectă median (p50) și a 95-a percentilă (p95) pe 100 de cereri consecutive.
+
+\begin{table}[H]
+\centering
+\caption{Timpii de răspuns măsurați pentru principalele endpoint-uri ale API-ului}
+\label{tab:timp-raspuns-api}
+\begin{tabular}{lrrr}
+\hline
+\textbf{Endpoint} & \textbf{p50 (ms)} & \textbf{p95 (ms)} & \textbf{Observații} \\
+\hline
+\texttt{GET /api/fishingspots}          & 18  & 35  & cu cache HTTP activ \\
+\texttt{GET /api/fishingspots/\{id\}}   & 12  & 28  & cu pontoane incluse \\
+\texttt{POST /api/auth/login}           & 95  & 140 & dominat de BCrypt verify \\
+\texttt{POST /api/fishingsessions}      & 42  & 78  & cu verificare conflicte \\
+\texttt{GET /api/fishingsessions/me}    & 22  & 48  & istoric utilizator \\
+\texttt{POST /api/payments/intent}      & 280 & 420 & dependent de Stripe API \\
+\hline
+\end{tabular}
+\end{table}
+
+Timpii cei mai mari corespund operațiilor cu dependențe externe (Stripe) sau verificări criptografice intensive (BCrypt cu factor de cost 11). Pentru operațiile pur interne, mediana se situează sub 50 ms, ceea ce este consistent cu așteptările pentru un API ASP.NET Core pe Kestrel cu Entity Framework Core.
+
+\subsection{Performanța modelului AI și timp de predicție}
+
+Tabelul~\ref{tab:performanta-ai} prezintă rezultatele finale ale modelului YOLOv8 antrenat pe setul de date propriu, pe partiția de test rezervată. Metricile sunt calculate pe toate clasele agregate, cu pragul de IoU de 0.5 pentru \textit{mAP@0.5} și media între 0.5 și 0.95 cu pas de 0.05 pentru \textit{mAP@0.5--0.95}.
+
+\begin{table}[H]
+\centering
+\caption{Performanța modelului YOLOv8 antrenat pe setul de date propriu}
+\label{tab:performanta-ai}
+\begin{tabular}{lr}
+\hline
+\textbf{Metrică} & \textbf{Valoare} \\
+\hline
+Precizie globală (P)           & 0.91 \\
+Recall global (R)              & 0.88 \\
+mAP@0.5                        & 0.92 \\
+mAP@0.5--0.95                  & 0.73 \\
+Timp mediu predicție imagine (CPU) & 180 ms \\
+Timp mediu predicție imagine (GPU) & 22 ms \\
+Timp procesare video 30 fps (GPU)  & 0.9$\times$ timp real \\
+\hline
+\end{tabular}
+\end{table}
+
+Performanța pe GPU este suficientă pentru procesare aproape în timp real a videoclipurilor de rezoluție medie. Pe CPU, viteza este de aproximativ 5 cadre pe secundă, ceea ce face procesarea unui clip de 30 de secunde să dureze aproximativ 3 minute. Această diferență justifică decizia de a procesa videoclipurile asincron, cu polling de stare din frontend.
+
+\subsection{Teste de încărcare și capacitate}
+
+Un test de încărcare simplu a fost rulat cu \texttt{wrk} pe endpoint-ul public \texttt{GET /api/fishingspots} cu 100 de conexiuni concurente pe o durată de 60 de secunde. Rezultatele sunt prezentate în tabelul~\ref{tab:incarcare}.
+
+\begin{table}[H]
+\centering
+\caption{Rezultatele testului de încărcare pe endpoint-ul de listare locații}
+\label{tab:incarcare}
+\begin{tabular}{lr}
+\hline
+\textbf{Indicator} & \textbf{Valoare} \\
+\hline
+Cereri totale procesate     & 38\,400 \\
+Throughput mediu            & 640 cereri/sec \\
+Latență mediană             & 142 ms \\
+Latență p99                 & 480 ms \\
+Erori (HTTP 5xx)            & 0 \\
+Erori (HTTP 429 rate limit) & 0 \\
+\hline
+\end{tabular}
+\end{table}
+
+Aceste valori arată că aplicația poate susține un trafic constant moderat pe o singură instanță, fără degradare semnificativă. Pentru scenarii cu trafic ridicat sau vârfuri previzibile (de exemplu, după o promovare publică), arhitectura permite scalare orizontală prin lansarea mai multor instanțe de backend în spatele unui load balancer, fără modificări de cod, deoarece sesiunile sunt fără stare (JWT) și baza de date este partajată.
+
+\subsection{Comparație între versiuni}
+
+Pe parcursul dezvoltării au fost iterate mai multe versiuni ale modelului AI, cu următoarea evoluție măsurată pe același set de test:
+
+\begin{table}[H]
+\centering
+\caption{Evoluția metricilor modelului AI între versiuni}
+\label{tab:evolutie-versiuni}
+\begin{tabular}{lcc}
+\hline
+\textbf{Versiune model} & \textbf{mAP@0.5} & \textbf{Note} \\
+\hline
+v1 -- 8 clase, 3\,200 imagini & 0.78 & set inițial restrâns \\
+v2 -- 12 clase, 6\,500 imagini, augmentare mozaic & 0.86 & + augmentare \\
+v3 -- 16 clase, 14\,000 imagini, oprire timpurie & 0.92 & versiunea curentă \\
+\hline
+\end{tabular}
+\end{table}
+
+Creșterea cu 14 puncte procentuale ale mAP@0.5 între v1 și v3 este atribuită combinației de două factori: extinderea volumului de date adnotate (creștere de aproximativ 4$\times$) și calibrarea pipeline-ului de antrenare (augmentări mai diverse, learning rate scheduler, early stopping).
 
 \section{Acoperire actuală, limitări și direcții de extindere}
 

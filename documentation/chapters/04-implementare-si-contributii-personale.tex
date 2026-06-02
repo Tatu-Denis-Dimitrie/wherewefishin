@@ -30,13 +30,12 @@ Am introdus extensii de autorizare pentru resursele dependente de un loc de pesc
 
 Figura~\ref{fig:flux-autentificare} ilustrează fluxul de autentificare, de la cererea clientului până la validarea tokenului JWT.
 
-\begin{figure}[htbp]
+\begin{figure}[H]
 \centering
-\resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
-  node distance=2.2cm,
-  every node/.style={font=\normalsize},
-  fstep/.style={draw, rounded corners, align=center, minimum width=4.0cm, minimum height=1.5cm, fill=gray!10, line width=0.7pt},
+  node distance=0.6cm,
+  every node/.style={font=\small},
+  fstep/.style={draw, rounded corners, align=center, text width=2.4cm, minimum height=0.9cm, inner sep=3pt, fill=gray!10, line width=0.7pt},
   arrow/.style={-Latex, thick}
 ]
 \node[fstep] (b1) {Credențiale\\trimise};
@@ -48,8 +47,7 @@ Figura~\ref{fig:flux-autentificare} ilustrează fluxul de autentificare, de la c
 \draw[arrow] (b2) -- (b3);
 \draw[arrow] (b3) -- (b4);
 \draw[arrow] (b4) -- (b5);
-\end{tikzpicture}%
-}
+\end{tikzpicture}
 \caption{Fluxul de autentificare bazat pe tokenuri JWT}
 \label{fig:flux-autentificare}
 \end{figure}
@@ -346,13 +344,13 @@ app.UseCors(corsPolicy);
 
 Limitarea dimensiunii corpului cererilor HTTP este configurată la nivelul serverului Kestrel: cererile obișnuite au o limită de 5 MB, iar endpoint-urile de upload media sunt configurate explicit la 150 MB. Fișierele care depășesc această limită sunt respinse de Kestrel înainte de a atinge controllerul, fără a consuma resurse de procesare.
 
-\subsection{Health check-uri și reziliența serviciilor}
+\subsection{Health check-uri și stabilitatea serviciilor}
 
 Fiecare serviciu Docker expune un health check configurat în \texttt{docker-compose.yml}. Health check-ul SQL Server verifică că motorul de baze de date acceptă conexiuni prin execuția unui \texttt{SELECT 1} cu credențialele de serviciu. ASP.NET Core expune un endpoint \texttt{/health} prin middleware-ul \texttt{HealthChecks}, care verifică conexiunea la baza de date și disponibilitatea serviciului Python.
 
 Această configurare servește două scopuri. La pornire, Docker Compose folosește starea health check-urilor pentru a ordona inițializarea serviciilor: backend-ul nu pornește până când baza de date nu este gata. În producție, un orchestrator sau un script de monitorizare poate detecta și reporni automat serviciile degradate. Separarea health check-ului de logica aplicației menține un punct de verificare neutral, disponibil fără autentificare, dar inaccesibil public prin configurația Cloudflare Tunnel.
 
-Reziliența comunicării dintre backend și serviciul Python este implementată prin politici de retry configurate pe clientul HTTP. Erorile tranziente de rețea, cum ar fi timeout sau conexiune refuzată, declanșează reîncercarea de maximum două ori, cu interval exponențial. Erorile permanente (HTTP 4xx de la serviciul Python) nu sunt reîncercate, deoarece retrimiterea aceluiași fișier invalid nu va produce un rezultat diferit. Această separare între erori tranziente și permanente reduce zgomotul din loguri și evită supraîncărcarea unui serviciu deja degradat.
+Stabilitatea comunicării dintre backend și serviciul Python este implementată prin politici de retry configurate pe clientul HTTP. Erorile tranziente de rețea, cum ar fi timeout sau conexiune refuzată, declanșează reîncercarea de maximum două ori, cu interval exponențial. Erorile permanente (HTTP 4xx de la serviciul Python) nu sunt reîncercate, deoarece retrimiterea aceluiași fișier invalid nu va produce un rezultat diferit. Această separare între erori tranziente și permanente reduce zgomotul din loguri și evită supraîncărcarea unui serviciu deja degradat.
 
 \subsection{Expunerea publică prin Cloudflare Tunnel}
 
