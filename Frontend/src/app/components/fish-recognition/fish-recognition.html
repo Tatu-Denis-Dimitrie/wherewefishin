@@ -108,7 +108,7 @@
             [attr.data-analysis-id]="a.id"
           >
             @if (isVideoVisible(a.id)) {
-              <video [src]="getVideoUrl(a.processedVideoUrl)" controls preload="metadata"></video>
+              <video [src]="getVideoUrl(a.processedVideoUrl) + '#t=0.1'" controls preload="metadata" playsinline></video>
             } @else {
               <div class="card-media-placeholder">Video loads when it enters the screen</div>
             }
