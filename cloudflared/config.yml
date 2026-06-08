@@ -11,4 +11,11 @@
 #     - Connect Timeout: 30s
 #     - HTTP Host Header: (leave empty)
 #     - No TLS Verify: OFF (we use HTTP, not HTTPS)
+#     - HTTP/2 connection: OFF  <-- CRITICAL
+#         nginx (frontend) listens on `listen 80;` = HTTP/1.1 only.
+#         If "HTTP/2 connection" is ON, cloudflared speaks HTTP/2 (h2c) to
+#         nginx, which only does HTTP/1.1 -> connection breaks -> intermittent
+#         502 on every page and API call (worse from browsers, which open many
+#         parallel HTTP/2 streams). Verified: h2c -> curl code 000; HTTP/1.1 -> 200.
+#         Keep this OFF unless nginx is reconfigured for h2c.
 # ────────────────────────────────────────────────────
