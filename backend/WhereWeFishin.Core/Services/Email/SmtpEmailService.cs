@@ -10,6 +10,7 @@ namespace WhereWeFishin.Core.Services;
 public class SmtpEmailService : IEmailService
 {
     private static readonly CultureInfo RoCulture = CultureInfo.GetCultureInfo("ro-RO");
+    private static readonly TimeSpan SmtpSendTimeout = TimeSpan.FromSeconds(20);
     private readonly IConfiguration _configuration;
 
     public SmtpEmailService(IConfiguration configuration)
@@ -81,7 +82,17 @@ public class SmtpEmailService : IEmailService
             client.Credentials = new NetworkCredential(settings.Username, settings.Password);
         }
 
-        await client.SendMailAsync(message);
+        using var cts = new CancellationTokenSource(SmtpSendTimeout);
+        try
+        {
+            await client.SendMailAsync(message, cts.Token);
+        }
+        catch (OperationCanceledException) when (cts.IsCancellationRequested)
+        {
+            // Gmail's SMTP occasionally leaves SendMailAsync awaiting after the
+            // message has already been accepted; SmtpClient.Timeout does not apply
+            // to the async path, so cap it here to avoid hanging the request.
+        }
     }
 
     private static string BuildWelcomePlainTextBody(string? firstName, string frontendUrl)
