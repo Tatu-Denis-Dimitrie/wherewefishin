@@ -75,10 +75,12 @@ export class Login {
         next: () => {
           this.isLoading = false;
           this.view = 'reset';
+          this.cdr.detectChanges();
         },
         error: () => {
           this.isLoading = false;
           this.view = 'reset';
+          this.cdr.detectChanges();
         }
       });
     }
@@ -97,10 +99,12 @@ export class Login {
         next: () => {
           this.isLoading = false;
           this.view = 'done';
+          this.cdr.detectChanges();
         },
         error: (error) => {
           this.isLoading = false;
           this.errorMessage = error.error?.message || 'Invalid or expired code. Please try again.';
+          this.cdr.detectChanges();
         }
       });
     }
