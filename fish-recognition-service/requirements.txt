@@ -1,7 +1,11 @@
 flask==3.0.0
 flask-cors==4.0.0
-ultralytics
-lapx
-opencv-python
-torch
-numpy
+ultralytics==8.4.14
+lap==0.5.13
+opencv-python==4.13.0.92
+numpy==2.4.2
+# torch is provided by the Docker base image (pytorch/pytorch:2.5.1-cuda12.4) and
+# is skipped there. For local dev, the pinned version matches the project setup.
+# GPU users should install the CUDA build:
+#   pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cu121
+torch==2.5.1

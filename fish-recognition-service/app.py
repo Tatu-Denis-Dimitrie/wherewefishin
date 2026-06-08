@@ -280,7 +280,7 @@ def process_video(video_path, output_path, use_ffmpeg_reencode=True, use_av1=Fal
     if use_ffmpeg_reencode and reencode_video(temp_output, output_path, use_av1):
         try:
             os.remove(temp_output)
-        except:
+        except OSError:
             pass
     elif temp_output != output_path:
         os.rename(temp_output, output_path)

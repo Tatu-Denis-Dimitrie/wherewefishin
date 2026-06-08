@@ -174,6 +174,22 @@ cd ..\..
 cp .env.example .env
 ```
 
+### Handoff Notes — For Whoever Takes Over
+
+The repository intentionally does **not** track generated, heavy, or runtime artifacts (they are all in `.gitignore`). After cloning — or when taking over the project — regenerate them with the steps above. Nothing here is lost by deleting it locally; it only frees disk space.
+
+| Item | Not in repo | How to restore |
+|---|---|---|
+| Frontend dependencies | `Frontend/node_modules/` | `cd Frontend && npm install` |
+| Python environment | `fish-recognition-service/venv/` | `python -m venv venv` → `pip install -r requirements.txt` |
+| .NET build output | `**/bin/`, `**/obj/` | regenerated automatically on `dotnet build` / `dotnet run` |
+| Angular build cache | `Frontend/.angular/cache/` | regenerated automatically on `ng serve` / `ng build` |
+| YOLO model weights | `fish-recognition-service/models/best.pt` | obtain the trained weights separately and place the file there |
+| Runtime data | `uploads/`, `outputs/` | created automatically at runtime; safe to delete anytime |
+| Secrets | `.env`, `appsettings.Development.json` | copy `.env.example` → `.env` and fill in (see [Configuration](#configuration)) |
+
+> Dependency versions in `fish-recognition-service/requirements.txt` are **pinned** to the versions this project was built and tested against, so a fresh `pip install -r requirements.txt` reproduces the exact environment.
+
 ---
 
 ## Configuration
@@ -446,7 +462,7 @@ source venv/bin/activate         # Linux/macOS
 
 # Install dependencies
 pip install -r requirements.txt
-# Note: lapx (ByteTrack) and torch are included
+# Note: lap (ByteTrack assignment solver) and torch are pinned in requirements.txt
 
 # Run dev server
 python app.py                    # → http://localhost:5001
